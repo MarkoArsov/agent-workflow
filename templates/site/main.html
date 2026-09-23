@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block next_prev %}{% endblock %}
+{% block content %}
+{% if page and page.file.src_uri == "index.md" %}
+<div class="col-12 workflow-home" role="main">{{ page.content }}</div>
+{% else %}
+{{ super() }}
+{% endif %}
+{% endblock %}
+{% block footer %}
+<div class="workflow-footer"><strong>agent-workflow</strong><span>Project-owned workflows. Observable results.</span><a href="{{ 'coverage/' | url }}">Coverage &amp; limitations</a><span>MIT · Built with MkDocs</span></div>
+{% endblock %}

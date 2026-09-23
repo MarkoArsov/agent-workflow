@@ -1,0 +1,60 @@
+site_name: agent-workflow
+site_description: Your workflow. Every project. Verified.
+site_url: https://MarkoArsov.github.io/agent-workflow/
+repo_url: https://github.com/MarkoArsov/agent-workflow
+repo_name: GitHub
+edit_uri: ""
+theme:
+  name: mkdocs
+  locale: en
+  color_mode: light
+  user_color_mode_toggle: false
+  highlightjs: false
+  navigation_depth: 2
+  custom_dir: templates/site
+extra_css:
+  - assets/workflow.css?v=2
+markdown_extensions:
+  - admonition
+  - attr_list
+  - tables
+  - toc:
+      permalink: true
+plugins:
+  - search
+hooks:
+  - scripts/docs_hook.py
+validation:
+  nav:
+    omitted_files: warn
+  links:
+    not_found: warn
+    anchors: warn
+nav:
+  - Start:
+      - Overview: index.md
+      - Install: install.md
+      - Set up: setup.md
+      - Update & remove: lifecycle.md
+  - Use:
+      - Task lifecycle: tasks.md
+      - Review & delivery: review.md
+      - Skills: generated/skills.md
+  - Configure:
+      - Project layout: projects.md
+      - Commands & permissions: execution.md
+      - Test environments: environments.md
+      - Profile reference: profile.md
+  - Customize:
+      - Skills & stages: customize.md
+      - Rules & references: rules.md
+      - Connectors: connectors.md
+  - Verify:
+      - Evidence & checks: verification.md
+      - Coverage & host checks: coverage.md
+  - Maintain:
+      - Recovery: recovery.md
+      - Development: development.md
+      - Models & costs: models.md
+      - Publish: publish.md
+      - Schema reference: generated/schemas.md

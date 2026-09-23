@@ -1,9 +1,8 @@
 __pycache__/
 *.py[cod]
 .venv/
-site/
+/site/
 .build/
 .dist/
 *.egg-info/
 .DS_Store
-
