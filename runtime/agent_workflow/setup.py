@@ -17,7 +17,8 @@ def merge(base, current, detected, path="", resolutions=None):
     resolutions = resolutions or {}
     conflicts = []
     if path in resolutions:
-        return (copy.deepcopy(detected) if resolutions[path] == "detected" else copy.deepcopy(current)), []
+        selected = detected if resolutions[path] == "detected" else current
+        return (selected if selected is MISSING else copy.deepcopy(selected)), []
     if current == base:
         return (detected if detected is MISSING else copy.deepcopy(detected)), []
     if detected == base or current == detected:
@@ -127,6 +128,13 @@ def propose(root: Path, answers: dict | None = None) -> dict:
         if old != desired:
             changes.append({"path": relative, "before": file_hash(destination), "content": desired,
                             "diff": "".join(difflib.unified_diff((old or "").splitlines(True), desired.splitlines(True), fromfile=relative, tofile=relative))})
+    for relative, old_generated in baseline_files.items():
+        if relative in files or "/skills/aw-" not in relative:
+            continue
+        destination = contained(root, relative, allow_root=False)
+        if destination.is_file() and destination.read_text() == old_generated:
+            changes.append({"path": relative, "before": file_hash(destination), "content": None,
+                            "diff": "".join(difflib.unified_diff(old_generated.splitlines(True), [], fromfile=relative, tofile=relative))})
     proposal = {"schema_version": 1, "root": str(root), "profile": profile, "findings": detected["findings"],
                 "questions": [] if answers.get("confirmed_defaults") or current is not MISSING else detected["questions"],
                 "conflicts": conflicts, "changes": changes, "baseline": {"profile": detected["profile"], "files": generation_base},
@@ -154,7 +162,10 @@ def apply(proposal: dict, approval: str) -> dict:
     backups = {p: p.read_bytes() if p.exists() else None for p, _ in paths}
     try:
         for path, content in paths:
-            atomic_write(path, content)
+            if content is None:
+                path.unlink(missing_ok=True)
+            else:
+                atomic_write(path, content)
         text = json_text(proposal["baseline"])
         if not baseline_path.exists() or baseline_path.read_text() != text:
             atomic_write(baseline_path, text)

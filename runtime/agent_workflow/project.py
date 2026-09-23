@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 from .profile import validate
-from .util import WorkflowError, common_dir, contained, read_json, user_data
+from .util import WorkflowError, common_dir, contained, read_json, user_data, run
 
 @dataclass
 class Project:
@@ -52,12 +52,19 @@ def resolve(start: Path | str = ".", explicit: Path | str | None = None) -> Proj
         if not project.accepts(start):
             raise WorkflowError("The active repository does not belong to the requested project")
         return project
+    common = common_dir(start)
+    metadata = run(["git", "rev-parse", "--git-dir"], start, check=False)
+    is_worktree = bool(common and metadata.returncode == 0 and (start / metadata.stdout.strip()).resolve() != common)
     for candidate in [start, *start.parents]:
         ref = read_json(candidate / ".agent-workflow/project-ref.json")
         if ref:
             target = (candidate / ref["root"]).resolve()
+            if is_worktree and not (target / ".agent-workflow/project.json").is_file():
+                continue
             project = load(target)
             if not project.accepts(start):
+                if is_worktree:
+                    continue
                 raise WorkflowError("Project reference does not include the active repository")
             return project
         if (candidate / ".agent-workflow/project.json").is_file():

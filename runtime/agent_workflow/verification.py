@@ -52,19 +52,20 @@ def parse(check, output, code, phase="green"):
     return {"passed": not failures, "problems": failures, "parser": parser,
             "phase": phase, "identities": check.get("identities", [])}
 
-def command_environment(command):
+def command_environment(command, inherited=None):
     env = dict(os.environ)
+    env.update(inherited or {})
     env.update({str(k): str(v) for k, v in command.get("env", {}).items()})
     for name in command.get("env_refs", []):
-        if name not in os.environ:
+        if name not in env:
             raise WorkflowError(f"Command requires environment variable {name}")
     return env
 
-def check(project, definition, checkouts, *, phase="green", cancel=None):
+def check(project, definition, checkouts, *, phase="green", cancel=None, environment=None):
     command = command_for(project, definition)
     root = Path(checkouts[definition["repository"]])
     cwd = contained(root, command.get("cwd", "."))
-    result = execute(command["argv"], cwd, env=command_environment(command),
+    result = execute(command["argv"], cwd, env=command_environment(command, environment),
                      timeout=command.get("timeout_seconds", 300),
                      inactivity=command.get("inactivity_seconds", command.get("timeout_seconds", 300)),
                      cancel=cancel)
@@ -82,4 +83,14 @@ def run_checks(project, manifest, checkouts, *, phase="green", names=None, cance
     selected = [c for c in manifest["checks"] if (c["id"] in names if names is not None else phase in c.get("phases", ["green"]))]
     if not selected:
         raise WorkflowError(f"No {phase} checks selected")
-    return [check(project, c, checkouts, phase=phase, cancel=cancel) for c in selected]
+    from contextlib import ExitStack
+    from .environments import lease
+    with ExitStack() as stack:
+        environments = {}
+        for definition in selected:
+            name = definition.get("environment")
+            if name and name not in environments:
+                environments[name] = stack.enter_context(lease(project, name, checkouts, cancel))
+        return [check(project, c, checkouts, phase=phase,
+                      cancel=environments[c["environment"]][1] if c.get("environment") else cancel,
+                      environment=environments[c["environment"]][0] if c.get("environment") else None) for c in selected]

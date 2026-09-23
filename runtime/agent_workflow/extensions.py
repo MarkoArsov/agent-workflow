@@ -1,6 +1,7 @@
 """Resolve user-owned extensions without editing installed defaults."""
 from __future__ import annotations
 import re
+import json
 import shutil
 from pathlib import Path
 from .util import WorkflowError, contained, digest, identifier, package_root, read_json, write_json
@@ -16,7 +17,8 @@ def metadata(path: Path) -> dict:
         raise WorkflowError(f"Skill needs name and description: {path}")
     if name[1] != path.parent.name:
         raise WorkflowError(f"Skill folder/name mismatch: {path}")
-    return {"name": name[1], "description": description[1].strip().strip("'\"")}
+    text = description[1].strip()
+    return {"name": name[1], "description": json.loads(text) if text.startswith('"') else text.strip("'")}
 
 def catalog(project=None, package=None) -> dict:
     package = Path(package) if package else package_root()
@@ -65,7 +67,7 @@ def new_skill(project, name: str, description: str) -> Path:
     if path.exists():
         raise WorkflowError("Skill already exists")
     path.parent.mkdir(parents=True)
-    path.write_text(f"---\nname: {name}\ndescription: {description}\n---\n\n# {name.replace('-', ' ').title()}\n\nDescribe the intended outcome and project-specific procedure here.\n")
+    path.write_text(f"---\nname: {name}\ndescription: {json.dumps(description)}\n---\n\n# {name.replace('-', ' ').title()}\n\nDescribe the intended outcome and project-specific procedure here.\n")
     return path
 
 def snapshot(project, package=None) -> dict:

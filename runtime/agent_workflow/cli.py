@@ -28,9 +28,11 @@ def parser():
     skill.add_argument("action", choices=["list", "resolve", "copy", "new"])
     skill.add_argument("name", nargs="?")
     skill.add_argument("--description", default="A project-specific workflow.")
-    for name in ("validate-plan", "preflight", "run"):
+    for name in ("validate-plan", "preflight", "run", "verify"):
         command = sub.add_parser(name)
         command.add_argument("manifest", type=Path)
+        if name == "verify":
+            command.add_argument("--phase", choices=["red", "green"], default="green")
         if name == "run":
             command.add_argument("--detach", action="store_true")
             command.add_argument("--dry-run", action="store_true")
@@ -61,6 +63,9 @@ def parser():
     command.add_argument("action", choices=["comments", "issue", "checks", "failure-log", "bots"])
     command.add_argument("repository")
     command.add_argument("value")
+    command = sub.add_parser("environment")
+    command.add_argument("action", choices=["status", "release"])
+    command.add_argument("name")
     for name in ("update", "uninstall", "doctor"):
         command = sub.add_parser(name)
         command.add_argument("--global", dest="global_install", action="store_true")
@@ -93,10 +98,20 @@ def execute(args):
         if not args.local_source:
             raise WorkflowError("Select a reviewed release checkout with --local-source (or use its pinned bootstrap)")
         return install.install(args.local_source, project=target, dry_run=args.dry_run)
-    if args.command in {"validate-plan", "preflight", "run"}:
+    if args.command == "environment":
+        from . import environments
+        function = environments.status if args.action == "status" else environments.release
+        return function(context(args), args.name)
+    if args.command in {"validate-plan", "preflight", "run", "verify"}:
         from . import manifest, runner
         project = context(args)
         plan = manifest.load(args.manifest, project)
+        if args.command == "verify":
+            from . import verification, state
+            saved = read_json(state.directory(project, plan["task"]) / "state.json", {})
+            checkouts = saved.get("checkouts", {row["id"]: str(project.repo_path(row["id"])) for row in plan["repositories"]})
+            checks = verification.run_checks(project, plan, checkouts, phase=args.phase)
+            return {"status": "complete" if all(c["passed"] for c in checks) else "failed", "checks": checks}
         if args.command == "validate-plan":
             runner.binding(project, plan)
             return {"valid": True, "task": plan["task"]}
@@ -144,7 +159,7 @@ def execute(args):
         if args.action == "list":
             return connectors.catalog(context(args))
         if args.action == "read":
-            return connectors.invoke(context(args), args.name, args.capability, read_json(args.file, {}))
+            return connectors.invoke(context(args), args.name, args.capability, read_json(args.file, {}) if args.file else {})
         if args.action == "preview":
             if not args.target or not args.file or not args.name:
                 raise WorkflowError("Connector preview needs --target, --name, and --file")

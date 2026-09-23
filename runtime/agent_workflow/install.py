@@ -1,6 +1,7 @@
 """Versioned payloads and receipt-owned adapters; project extensions are never inputs."""
 from __future__ import annotations
 import argparse
+import json
 import os
 import shutil
 import tempfile
@@ -9,7 +10,7 @@ from .detect import repositories
 from .extensions import catalog
 from .util import WorkflowError, atomic_write, digest, file_hash, json_text, package_root, read_json, user_data, write_json
 
-PAYLOAD = ("workflow-package.json", "LICENSE", "README.md", "pyproject.toml", "bin", "runtime",
+PAYLOAD = ("workflow-package.json", "package-files.json", "LICENSE", "README.md", "pyproject.toml", "bin", "runtime",
            "skills", "references", "schemas", "templates", ".claude-plugin", "install.py", "install.sh")
 IGNORE = {"__pycache__", ".DS_Store", ".git", ".venv", "node_modules"}
 
@@ -41,6 +42,11 @@ def validate_source(source):
         if not (source / required).is_file():
             raise WorkflowError(f"Package is missing {required}")
     catalog(package=source)
+    checksums = read_json(source / "package-files.json")
+    if checksums is not None:
+        observed = {str(p.relative_to(source)): file_hash(p) for p in files_in(source) if p.name != "package-files.json"}
+        if checksums != observed:
+            raise WorkflowError("Package checksum manifest does not match the payload")
     return marker
 
 def installation_root(project=None):
@@ -61,7 +67,7 @@ def wrappers(source, project, agents):
     for location in locations:
         for name, info in catalog(package=source).items():
             folder = location / ("aw-" + name)
-            result[folder / "SKILL.md"] = f"---\nname: aw-{name}\ndescription: {info['description']}\n---\n\nRun this skill folder's scripts/dispatch.py with the current project as its working directory. Read the returned effective skill file, then follow its procedure. Project overrides take precedence. Do not use defaults from another project.\n"
+            result[folder / "SKILL.md"] = f"---\nname: aw-{name}\ndescription: {json.dumps(info['description'])}\n---\n\nRun this skill folder's scripts/dispatch.py with the current project as its working directory. Read the returned effective skill file, then follow its procedure. Project overrides take precedence. Do not use defaults from another project.\n"
             result[folder / "scripts/dispatch.py"] = template.replace("SKILL_NAME = None", f"SKILL_NAME = {name!r}")
     return result
 
@@ -77,7 +83,10 @@ def install(source, *, project=None, agents=None, dry_run=False):
     receipt_path = root / "receipt.json"
     receipt_before = file_hash(receipt_path)
     receipt = read_json(receipt_path, {"files": {}, "versions": {}})
-    desired = wrappers(source, project, agents or ["claude", "codex", "cursor"])
+    profile_path = project / ".agent-workflow/project.json" if project else None
+    profile = read_json(profile_path) if profile_path else None
+    agents = agents or (profile.get("agents") if profile else None) or receipt.get("agents") or ["claude", "codex", "cursor"]
+    desired = wrappers(source, project, agents)
     launcher = project / ".agent-workflow/bin/agent-workflow" if project else Path.home() / ".local/bin/agent-workflow"
     code = (source / "templates/adapters/launch.py").read_text()
     if project:
@@ -97,8 +106,6 @@ def install(source, *, project=None, agents=None, dry_run=False):
     content_hash = payload_digest(source)
     if target.exists() and payload_digest(target) != content_hash:
         conflicts.append(f"Version {version} already has different content; use a new package version")
-    profile_path = project / ".agent-workflow/project.json" if project else None
-    profile = read_json(profile_path) if profile_path else None
     if profile and profile.get("schema_version") != marker["schema_version"]:
         conflicts.append("Project profile needs a schema migration before this package can activate")
     result = {"mode": "project" if project else "global", "version": version, "target": str(target),
@@ -144,7 +151,7 @@ def install(source, *, project=None, agents=None, dry_run=False):
             versions = dict(receipt.get("versions", {}))
             versions[version] = {"path": str(target), "sha256": content_hash}
             write_json(receipt_path, {"schema_version": 1, "backend": "standalone", "version": version,
-                                      "mode": result["mode"], "project": str(project) if project else None,
+                                      "mode": result["mode"], "project": str(project) if project else None, "agents": agents,
                                       "versions": versions,
                                       "files": {str(p): {"sha256": file_hash(p)} for p in desired}})
         except BaseException:
@@ -220,9 +227,20 @@ def uninstall(*, project=None, dry_run=False):
 def doctor(project=None):
     root = installation_root(project)
     receipt = read_json(root / "receipt.json", {})
+    native = []
+    native_error = None
+    if shutil.which("claude"):
+        try:
+            from .util import run
+            listed = json.loads(run(["claude", "plugin", "list", "--json"], Path(project) if project else Path.cwd(), timeout=10).stdout)
+            native = [{k: item.get(k) for k in ("id", "version", "scope", "enabled", "installPath")}
+                      for item in listed if item.get("id") == "agent-workflow@agent-workflow"]
+        except (WorkflowError, ValueError, TypeError) as exc:
+            native_error = str(exc)
     return {"root": str(root), "active": read_json(root / "active.json"), "backend": receipt.get("backend"),
             "modified_owned_files": [p for p, info in receipt.get("files", {}).items() if file_hash(Path(p)) != info["sha256"]],
-            "native_plugin": "Use claude plugin list to inspect native plugin ownership; avoid duplicate entry points.",
+            "native_plugins": native, "native_inspection_error": native_error,
+            "duplicate_claude_backends": bool(native and receipt.get("backend") and "claude" in receipt.get("agents", [])),
             "project_extensions": "Preserved outside the installed payload"}
 
 def main(argv=None):

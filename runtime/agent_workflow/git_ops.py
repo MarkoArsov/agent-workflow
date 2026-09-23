@@ -22,10 +22,12 @@ def snapshot(project, checkouts=None):
     for repo in project.profile["repositories"]:
         root = Path(checkouts.get(repo["id"], project.repo_path(repo["id"])))
         result[repo["id"]] = {"head": git(root, "rev-parse", "HEAD"), "branch": git(root, "branch", "--show-current"),
+                              "index": digest(git(root, "ls-files", "--stage", "-z")),
                               "files": files(root)}
         parked = project.repo_path(repo["id"])
         if root.resolve() != parked.resolve():
             result[repo["id"] + ":parked"] = {"head": git(parked, "rev-parse", "HEAD"),
+                                               "index": digest(git(parked, "ls-files", "--stage", "-z")),
                                                "branch": git(parked, "branch", "--show-current"), "files": files(parked)}
     return result
 
@@ -48,6 +50,8 @@ def guard(before, after, manifest, stage, *, allow_commits=False, custom=None):
             patterns = [p["path"] for p in custom.get("outputs", []) if p["repository"] == name]
         if not allow_commits and (before[name]["head"], before[name]["branch"]) != (after[name]["head"], after[name]["branch"]):
             failures.append(f"{name}: stage changed Git HEAD or branch")
+        if not allow_commits and before[name].get("index") != after[name].get("index"):
+            failures.append(f"{name}: stage changed the Git index")
         for path in paths:
             if row.get("access") != "write" or not matches(path, patterns):
                 failures.append(f"{name}/{path}: outside stage write contract")
@@ -152,4 +156,3 @@ def sync_base(project, names):
         git(root, "fetch", repo["remote"], repo["base_branch"])
         results[name] = git(root, "merge", "--ff-only", "FETCH_HEAD")
     return results
-

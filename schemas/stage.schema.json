@@ -1,0 +1,152 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Custom stage",
+  "description": "A project-owned extension to the ordered pipeline. Completion still requires observed checks.",
+  "type": "object",
+  "required": [
+    "id",
+    "inputs",
+    "outputs",
+    "checks"
+  ],
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "skill": {
+      "type": "string"
+    },
+    "command": {
+      "type": "object",
+      "required": [
+        "argv"
+      ],
+      "properties": {
+        "argv": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "cwd": {
+          "type": "string"
+        },
+        "timeout_seconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 86400
+        },
+        "env": {
+          "type": "object"
+        },
+        "env_refs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "before": {
+      "type": "string"
+    },
+    "after": {
+      "type": "string"
+    },
+    "inputs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "repository",
+          "path"
+        ],
+        "properties": {
+          "repository": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "outputs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "repository",
+          "path"
+        ],
+        "properties": {
+          "repository": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "checks": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    }
+  },
+  "additionalProperties": true,
+  "allOf": [
+    {
+      "oneOf": [
+        {
+          "required": [
+            "skill"
+          ],
+          "not": {
+            "required": [
+              "command"
+            ]
+          }
+        },
+        {
+          "required": [
+            "command"
+          ],
+          "not": {
+            "required": [
+              "skill"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "required": [
+            "before"
+          ],
+          "not": {
+            "required": [
+              "after"
+            ]
+          }
+        },
+        {
+          "required": [
+            "after"
+          ],
+          "not": {
+            "required": [
+              "before"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

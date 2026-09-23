@@ -2,10 +2,21 @@
 from __future__ import annotations
 import copy
 import os
+import re
 import shutil
 from pathlib import Path
 from ..profile import validate_command
 from ..util import WorkflowError, contained, digest, identifier, json_text, read_json, write_json
+
+def reject_credentials(value):
+    if isinstance(value, dict):
+        for key, nested in value.items():
+            if re.search(r"(?i)(token|password|secret|api[_-]?key|authorization|credential)", key):
+                raise WorkflowError("Use host login or environment references; never put credentials in connector settings")
+            reject_credentials(nested)
+    elif isinstance(value, list):
+        for nested in value:
+            reject_credentials(nested)
 
 def catalog(project):
     result = {}
@@ -19,8 +30,7 @@ def catalog(project):
             raise WorkflowError(f"{name}: declare capabilities and provider availability")
         if value["transport"] == "command":
             validate_command(value["command"])
-        if any(key in value for key in ("token", "password", "secret", "api_key")):
-            raise WorkflowError("Store connector credentials in the host or environment, never declarations")
+        reject_credentials(value)
         result[name] = value
     return result
 
@@ -71,9 +81,7 @@ def patch_proposal(path, server_name, configuration):
     if not isinstance(value, dict):
         raise WorkflowError("Host MCP configuration must be a JSON object")
     # No credentials are accepted in a generated transport configuration.
-    import re
-    if re.search(r'(?i)"(?:token|password|secret|api[_-]?key)"\s*:', json_text(configuration)):
-        raise WorkflowError("Use host login or environment references in connector settings")
+    reject_credentials(configuration)
     after = copy.deepcopy(value)
     after.setdefault("mcpServers", {})[server_name] = configuration
     proposal = {"path": str(path), "before_sha256": digest(before) if before is not None else None,
@@ -92,4 +100,3 @@ def apply_patch(proposal, approval):
     from ..util import atomic_write
     atomic_write(path, proposal["content"])
     return {"updated": str(path)}
-

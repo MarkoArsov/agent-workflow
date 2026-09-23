@@ -13,8 +13,10 @@ for parent in [start, *start.parents]:
     ref = parent / ".agent-workflow/project-ref.json"
     profile = parent / ".agent-workflow/project.json"
     if ref.is_file():
-        project = (parent / json.loads(ref.read_text())["root"]).resolve()
-        break
+        target = (parent / json.loads(ref.read_text())["root"]).resolve()
+        if (target / ".agent-workflow/project.json").is_file():
+            project = target
+            break
     if profile.is_file():
         project = parent
         break

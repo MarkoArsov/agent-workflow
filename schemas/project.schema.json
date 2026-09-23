@@ -182,8 +182,11 @@
     },
     "delivery": {
       "type": "object"
+    },
+    "environments": {
+      "type": "object",
+      "description": "Named owned test services, readiness expressions, exported environment variables, and lease identifiers."
     }
   },
   "additionalProperties": true
 }
-

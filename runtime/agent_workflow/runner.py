@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import json
 import os
+import re
 import subprocess
 import sys
 import time
@@ -54,6 +55,10 @@ def preflight(project, manifest, *, check_providers=True):
             if Path(item["path"]).is_absolute() or ".." in Path(item["path"]).parts:
                 raise WorkflowError("Custom stage inputs/outputs must remain repository-relative")
     rules.definitions(project)
+    from .environments import definition as environment_definition
+    for check in manifest["checks"]:
+        if check.get("environment"):
+            environment_definition(project, check["environment"])
     from .integrations.connectors import preflight as check_connectors
     connectors = check_connectors(project, manifest)
     return {"task": manifest["task"], "stages": manifest["stages"], "repositories": manifest["repositories"],
@@ -72,6 +77,36 @@ def invalidate_from(old, new, stages, custom):
             return index
     return len(stages)
 
+def adopt_rebound_inputs(project, manifest, state, old, new):
+    """Preserve explicitly revised configuration as user-owned input, not task output."""
+    exact = {project.config / name for name in ("project.json", "package-lock.json", "overrides.lock.json")}
+    roots = set()
+    for bound in (old, new):
+        for key, value in bound["profile"]["extensions"].items():
+            target = contained(project.root, value)
+            (exact if key == "stages" else roots).add(target)
+        exact.update(Path(manifest["_directory"]) / name for name in bound["manifest"]["plan_files"])
+    exact.add(Path(manifest.get("_path", Path(manifest["_directory"]) / "pipeline.json")))
+    current = git_ops.snapshot(project, state["checkouts"])
+    adopted = {}
+    for name, paths in git_ops.changes(state["baseline"], current).items():
+        repo = name.removesuffix(":parked")
+        for path in paths:
+            canonical = (project.repo_path(repo) / path).resolve()
+            if canonical not in exact and not any(canonical.is_relative_to(root) for root in roots):
+                continue
+            adopted.setdefault(name, []).append(path)
+            for observed in (state["baseline"], state.get("stage_before", {})):
+                if name not in observed:
+                    continue
+                if path in current[name]["files"]:
+                    observed[name]["files"][path] = current[name]["files"][path]
+                else:
+                    observed[name]["files"].pop(path, None)
+            if not name.endswith(":parked"):
+                state["initial_dirty"][name] = sorted(set(state["initial_dirty"].get(name, [])) | {path})
+    return adopted
+
 def prompt_for(bound, manifest, stage, checkouts, before, feedback=None, custom=None):
     skill = (custom or {}).get("skill", stage)
     parts = [
@@ -79,7 +114,8 @@ def prompt_for(bound, manifest, stage, checkouts, before, feedback=None, custom=
         "This is a fresh agent-workflow stage. Do not commit, push, merge, post comments, change tracker state, or change Git branches; the runner owns delivery.",
         "Return a final JSON object: {\"status\":\"complete\",\"summary\":\"...\"}, or {\"status\":\"needs_input\",\"question\":\"...\"}, or {\"status\":\"blocked\",\"reason\":\"...\"}. Never claim checks ran when they did not.",
         "Trusted execution does not expand the approved paths. Read-only companion repositories must remain untouched. Do not weaken, skip, or delete tests to obtain green.",
-        bound["skills"][skill]["content"],
+        re.sub(r"<!-- resolver:start -->.*?<!-- resolver:end -->", "", bound["skills"][skill]["content"], flags=re.S),
+        "The supplied effective skill/resources are frozen for this run. Use them without reloading a live override. Use the verify command for named checks that need managed environments.",
         "PROJECT PROFILE\n" + json_text(bound["profile"]),
         "TASK CONTRACT\n" + json_text({k: v for k, v in manifest.items() if not k.startswith("_")}),
         "CHECKOUTS\n" + json_text(checkouts),
@@ -119,13 +155,24 @@ def prompt_for(bound, manifest, stage, checkouts, before, feedback=None, custom=
         parts.append("OBSERVED FAILED VERIFICATION; correct the cause within scope:\n" + json_text(feedback))
     return "\n\n".join(parts)
 
+def test_files(manifest, observed):
+    return {row["id"]: {name: value for name, value in observed[row["id"]]["files"].items()
+            if contracts.matches(name, row.get("test_paths", []))} for row in manifest["repositories"]}
+
+def accept_evidence(project, manifest, stage, state, evidence):
+    if stage == "implement-tests":
+        state["red_test_files"] = test_files(manifest, git_ops.snapshot(project, state["checkouts"]))
+    elif {c["id"] for c in manifest["checks"] if "green" in c.get("phases", ["green"])} <= {c["id"] for c in evidence["checks"]}:
+        state["green"] = evidence
+    state["completed"].append(stage)
+    state.pop("stage_before", None)
+
 def verify_stage(project, manifest, stage, state, before, *, custom=None, cancel=None):
     after = git_ops.snapshot(project, state["checkouts"])
     changed = git_ops.guard(before, after, manifest, stage, custom=custom)
     if stage != "implement-tests" and state.get("red_test_files"):
-        for repo, expected in state["red_test_files"].items():
-            if any(after[repo]["files"].get(name) != value for name, value in expected.items()):
-                raise WorkflowError("Assertion-proven tests changed after red evidence; revise the plan and rebind")
+        if test_files(manifest, after) != state["red_test_files"]:
+            raise WorkflowError("Assertion-proven tests changed after red evidence; revise the plan and rebind")
     # Never absorb existing user changes into an agent stage.
     cumulative = git_ops.changes(state["baseline"], after)
     for repo, paths in cumulative.items():
@@ -135,11 +182,12 @@ def verify_stage(project, manifest, stage, state, before, *, custom=None, cancel
         for item in custom["outputs"]:
             if not any(contracts.matches(path, [item["path"]]) for path in after[item["repository"]]["files"]):
                 raise WorkflowError(f"Missing required custom output: {item}")
-    findings = rules.evaluate(project, cumulative, state["checkouts"], cancel=cancel)
+    findings = rules.evaluate(project, cumulative, state["checkouts"], cancel=cancel, definitions_override=state.get("bound_rules"))
     phase = "red" if stage == "implement-tests" else "green"
     evidence = verification.run_checks(project, manifest, state["checkouts"], phase=phase,
                                        names=custom.get("checks") if custom else None, cancel=cancel)
     final = git_ops.snapshot(project, state["checkouts"])
+    git_ops.guard(after, final, manifest, stage, custom=custom)
     if git_ops.fingerprint(final) != git_ops.fingerprint(after):
         raise WorkflowError("Verification commands changed repository files; fix their output/cleanup configuration")
     return {"passed": all(x["passed"] for x in evidence) and not any(x["enforcement"] == "blocking" for x in findings),
@@ -148,13 +196,14 @@ def verify_stage(project, manifest, stage, state, before, *, custom=None, cancel
 def publish_guard(project, manifest, state, cancel):
     current = git_ops.snapshot(project, state["checkouts"])
     changed = git_ops.guard(state["baseline"], current, manifest, "publish", allow_commits=True)
-    findings = rules.evaluate(project, changed, state["checkouts"], cancel=cancel)
+    findings = rules.evaluate(project, changed, state["checkouts"], cancel=cancel, definitions_override=state.get("bound_rules"))
     if any(x["enforcement"] == "blocking" for x in findings):
         raise WorkflowError("Blocking rule/secret finding prevents publication")
     last = state.get("green")
     if not last or last["fingerprint"] != git_ops.fingerprint(current):
         checks = verification.run_checks(project, manifest, state["checkouts"], cancel=cancel)
         after = git_ops.snapshot(project, state["checkouts"])
+        git_ops.guard(current, after, manifest, "publish")
         if git_ops.fingerprint(current) != git_ops.fingerprint(after) or not all(x["passed"] for x in checks):
             raise WorkflowError("Current diff does not have passing verification")
         state["green"] = {"fingerprint": git_ops.fingerprint(after), "checks": checks}
@@ -184,8 +233,11 @@ def run(project, manifest, *, resume=False, answer=None, rebind=False):
                 start = invalidate_from(old, bound, manifest["stages"], custom)
                 state.setdefault("revisions", []).append({"binding_sha256": state["binding_sha256"], "at": time.time(),
                                                           "completed": state["completed"], "invalidate_from": start})
+                state["revisions"][-1]["preserved_inputs"] = adopt_rebound_inputs(project, manifest, state, old, bound)
                 write_json(root / "revisions" / (state["binding_sha256"] + ".json"), old)
                 state["completed"] = state["completed"][:start]
+                state["stage_evidence"] = {name: evidence for name, evidence in state.get("stage_evidence", {}).items()
+                                           if name in state["completed"]}
                 if "implement-tests" not in state["completed"]:
                     state.pop("red_test_files", None)
                 state.pop("green", None); state.pop("pending_input", None)
@@ -203,6 +255,7 @@ def run(project, manifest, *, resume=False, answer=None, rebind=False):
                      "started_at": time.time(), "delivery": {}}
         state["manifest_path"] = manifest.get("_path", state["manifest_path"])
         state["pid"] = os.getpid()
+        state["bound_rules"] = [json.loads(value) for name, value in bound.get("rules", {}).items() if name.endswith(".json")]
         write_json(root / "binding.json", bound)
         (root / "cancel.json").unlink(missing_ok=True)
         cancelled = lambda: (root / "cancel.json").exists()
@@ -226,7 +279,8 @@ def run(project, manifest, *, resume=False, answer=None, rebind=False):
                 # Recover a completed but interrupted verification only when its diff still matches.
                 previous = state.get("stage_evidence", {}).get(stage)
                 if previous and previous["passed"] and previous["fingerprint"] == git_ops.fingerprint(git_ops.snapshot(project, state["checkouts"])):
-                    state["completed"].append(stage); save(); continue
+                    git_ops.guard(before, git_ops.snapshot(project, state["checkouts"]), manifest, stage, custom=definition)
+                    accept_evidence(project, manifest, stage, state, previous); save(); continue
                 pending = state.pop("pending_input", None)
                 feedback = None
                 routes = contracts.route_for(project, manifest, stage)
@@ -296,14 +350,7 @@ def run(project, manifest, *, resume=False, answer=None, rebind=False):
                         state.setdefault("stage_evidence", {})[stage] = evidence
                         write_json(root / "evidence" / f"{stage}-{index:04d}.json", evidence); save()
                         if evidence["passed"]:
-                            if stage != "implement-tests" and {c["id"] for c in manifest["checks"] if "green" in c.get("phases", ["green"])} <= {c["id"] for c in evidence["checks"]}:
-                                state["green"] = evidence
-                            elif stage == "implement-tests":
-                                observed = git_ops.snapshot(project, state["checkouts"])
-                                state["red_test_files"] = {row["id"]: {name: value for name, value in observed[row["id"]]["files"].items()
-                                    if contracts.matches(name, row.get("test_paths", []))} for row in manifest["repositories"]}
-                            state["completed"].append(stage)
-                            state.pop("stage_before", None)
+                            accept_evidence(project, manifest, stage, state, evidence)
                             succeeded = True; save(); break
                         feedback = evidence
                     if succeeded:
@@ -330,5 +377,8 @@ def detach(project, manifest_path):
                                   "--project", str(project.root), "run", str(Path(manifest_path).resolve())],
                                  stdin=subprocess.DEVNULL, stdout=output, stderr=output,
                                  cwd=project.root, start_new_session=True)
+    # Keep the Popen object alive and reap it if the launching Python process stays up.
+    import threading
+    threading.Thread(target=child.wait, daemon=True).start()
     return {"task": manifest["task"], "pid": child.pid, "log": str(root / "runner.log"),
             "next": f"agent-workflow --project {project.root} status {manifest['task']}"}

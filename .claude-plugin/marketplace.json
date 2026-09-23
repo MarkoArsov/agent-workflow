@@ -10,6 +10,6 @@
       "description": "Project-aware skills and a verified fresh-session runner.",
       "version": "0.1.0"
     }
-  ]
+  ],
+  "description": "Project-owned agent workflows with executable verification."
 }
-

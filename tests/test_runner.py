@@ -99,11 +99,19 @@ class RunnerTests(WorkspaceTest):
         self.fixture([{"report": {"status": "blocked", "reason": "fixture"}}, {}], stages=["implement"])
         self.assertEqual(runner.run(self.project, self.plan)["status"], "failed")
         self.project.profile["tracking"] = {"provider": "github"}
+        write_json(self.project.config / "project.json", self.project.profile)
         with self.assertRaisesRegex(WorkflowError, "rebind"):
             runner.run(self.project, self.plan, resume=True)
         result = runner.run(self.project, self.plan, resume=True, rebind=True)
         self.assertEqual(result["status"], "complete")
         self.assertEqual(len(result["revisions"]), 1)
+        self.assertIn(".agent-workflow/project.json", result["initial_dirty"]["app"])
+
+    def test_implementation_cannot_add_tests_outside_the_frozen_red_set(self):
+        self.fixture([{"writes": {"test_app.py": "import unittest\nfrom app import VALUE\nclass Behavior(unittest.TestCase):\n def test_behavior(self): self.assertEqual(VALUE, 2)\n"}},
+                      {"writes": {"app.py": "VALUE = 2\n", "test_extra.py": "# Unverified new test\n"}}])
+        with self.assertRaisesRegex(WorkflowError, "Assertion-proven"):
+            runner.run(self.project, self.plan)
 
     def test_inactivity_and_stalled_inner_tool_are_bounded(self):
         for behavior, expected in (({"sleep": 3}, "inactive"), ({"tool_stall": True}, "tool-stalled")):
@@ -138,4 +146,3 @@ class RunnerTests(WorkspaceTest):
         self.plan["outcomes"][0]["checks"] = ["missing"]
         with self.assertRaisesRegex(WorkflowError, "existing checks"):
             manifest.validate(self.plan, self.project)
-

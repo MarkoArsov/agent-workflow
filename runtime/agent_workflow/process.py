@@ -4,19 +4,46 @@ import os
 import selectors
 import signal
 import subprocess
+import sys
 import time
 from .util import redact
 
+def signal_group(process, sig):
+    process.poll()  # Reap our leader before probing a group containing only zombies.
+    try:
+        os.killpg(process.pid, sig)
+        return True
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        if sys.platform != "darwin":
+            raise
+        # Darwin returns EPERM for a group whose remaining members are zombies.
+        # Confirm that fact; never hide denied signals to a live process.
+        listing = subprocess.run(["ps", "-A", "-o", "pgid=,stat="], text=True, capture_output=True, check=True)
+        members = [line.split()[1] for line in listing.stdout.splitlines()
+                   if len(line.split()) == 2 and line.split()[0] == str(process.pid)]
+        if any(not status.startswith("Z") for status in members):
+            raise
+        return False
+
 def stop(process):
-    if process.poll() is None:
-        try:
-            os.killpg(process.pid, signal.SIGTERM)
-            process.wait(timeout=3)
-        except subprocess.TimeoutExpired:
-            os.killpg(process.pid, signal.SIGKILL)
-            process.wait()
-        except ProcessLookupError:
-            pass
+    if getattr(process, "_workflow_stopped", False):
+        return
+    process._workflow_stopped = True
+    # The session leader can exit while descendants still hold stdout or ignore TERM.
+    # Every caller created this process with start_new_session=True.
+    if not signal_group(process, signal.SIGTERM):
+        process.wait()
+        return
+    deadline = time.monotonic() + 3
+    while time.monotonic() < deadline:
+        if not signal_group(process, 0):
+            break
+        time.sleep(0.05)
+    else:
+        signal_group(process, signal.SIGKILL)
+    process.wait()
 
 def execute(argv, cwd, *, input_text=None, env=None, timeout=1800, inactivity=300,
             tool_timeout=600, cancel=None, on_line=None, on_start=None):
@@ -88,4 +115,3 @@ def execute(argv, cwd, *, input_text=None, env=None, timeout=1800, inactivity=30
         stop(process)
         selector.close()
         process.stdout.close()
-

@@ -30,9 +30,9 @@ def definitions(project):
         result.append(rule)
     return result
 
-def evaluate(project, changed, checkouts, *, cancel=None):
+def evaluate(project, changed, checkouts, *, cancel=None, definitions_override=None):
     findings = []
-    rules = definitions(project)
+    rules = definitions_override if definitions_override is not None else definitions(project)
     for repo, paths in changed.items():
         root = Path(checkouts.get(repo, project.repo_path(repo.split(":")[0])))
         for name in paths:
@@ -79,4 +79,3 @@ def record(project, rule_id, detail):
                     "next": "Review the repeated examples. Propose a reliable detector if possible; otherwise clarify scope, examples, or the workflow checkpoint.",
                     "enforcement_change": "none; requires a reviewed rule edit"}
     return {"recorded": rule_id, "corrective_review": proposal}
-
