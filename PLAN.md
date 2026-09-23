@@ -1,6 +1,6 @@
 # agent-workflow implementation plan
 
-Status: Approved; Phase 3 implementation in progress.
+Status: Local implementation, verification, and handoff complete. Publication remains a separate action.
 License: MIT.
 Delivery: a new public repository, developed and committed locally first.
 The runner is a core feature. Project setup and customization make it reusable.
@@ -44,14 +44,14 @@ Private templates and third-party skill bodies are not copied into this package.
 - [x] Phase 1: discover sources, compare active workflow files, agree port decisions.
 - [x] Phase 2: record the complete implementation and verification plan.
 - [x] Approval of this plan before any Phase 3 implementation.
-- [ ] Phase 3.1: repository skeleton and shared contracts.
-- [ ] Phase 3.2: project setup and customization, with fixtures.
-- [ ] Phase 3.3: generic skills, runner, and integrations.
-- [ ] Phase 3.4: installer, host adapters, and Claude plugin packaging.
-- [ ] Phase 3.5: documentation website.
-- [ ] Phase 3.6: root README and contribution guidance.
-- [ ] Phase 4: full verification and public-content review.
-- [ ] Phase 5: local handoff with exact publication instructions.
+- [x] Phase 3.1: repository skeleton and shared contracts.
+- [x] Phase 3.2: project setup and customization, with fixtures.
+- [x] Phase 3.3: generic skills, runner, and integrations.
+- [x] Phase 3.4: installer, host adapters, and Claude plugin packaging.
+- [x] Phase 3.5: documentation website.
+- [x] Phase 3.6: root README and contribution guidance.
+- [x] Phase 4: full verification and public-content review.
+- [x] Phase 5: local handoff with exact publication instructions.
 
 Update this checklist and a concise evidence log as work completes. A checkbox
 requires observed evidence; test plans and mocks are not live-provider results.
@@ -67,7 +67,7 @@ agent-workflow/
   README.md
   LICENSE
   AGENTS.md
-  CLAUDE.md
+  .claude/CLAUDE.md
   pyproject.toml
   install.sh
   install.py
@@ -685,6 +685,29 @@ Implementation evidence (local, initial runtime milestone):
   remain in progress; this milestone is not the completed acceptance matrix.
 
 ## 14. Handoff and publication boundary
+
+Final local evidence:
+
+- 50 automated acceptance tests passed on macOS/Python 3.14.6 and on Linux/Python
+  3.11.16 in a disposable container with network disabled. This includes executable
+  app/E2E checks, process cleanup, plan rebind, interrupted red recovery, frozen tests,
+  Git index guards, installation lifecycle, and the integration edge cases above.
+- 37 skills passed structural validation. Actual installed host command interfaces
+  passed; native Claude manifest validation and isolated marketplace/install/list/
+  update/uninstall passed with all 37 skills discovered.
+- MkDocs strict build and 985 internal page/anchor/asset checks passed. Desktop and
+  mobile appearance, navigation, and search were inspected through the browser.
+- Public source/site/history audit and the extracted 117-file release payload audit
+  had zero findings with an external private denylist. The final reachable history
+  is scanned again after local commits.
+- Account-authenticated model generation, native Codex/Cursor invocation, hosted CI,
+  Pages deployment, and remote bootstrap checks are explicitly documented release
+  smoke steps. No remote, push, deployment, or real agent installation was performed.
+- Small structural adjustments: one provider command/event module, installer-owned
+  layout rather than pip packaging, and native development instructions under
+  .claude/CLAUDE.md. These retain the approved contracts and minimal dependencies.
+
+HANDOFF.md contains the observed verification, limitations, and exact commands below.
 
 Deliver a concise report of what was built, plan deviations, observed verification,
 limitations, remaining manual checks, local commit history, and repository location.
