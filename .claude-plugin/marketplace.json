@@ -1,0 +1,15 @@
+{
+  "name": "agent-workflow",
+  "owner": {
+    "name": "agent-workflow contributors"
+  },
+  "plugins": [
+    {
+      "name": "agent-workflow",
+      "source": "./",
+      "description": "Project-aware skills and a verified fresh-session runner.",
+      "version": "0.1.0"
+    }
+  ]
+}
+

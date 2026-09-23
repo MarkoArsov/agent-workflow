@@ -1,0 +1,13 @@
+{
+  "name": "agent-workflow",
+  "version": "0.1.0",
+  "description": "A customizable development workflow with verified fresh-session stages.",
+  "author": {
+    "name": "agent-workflow contributors"
+  },
+  "homepage": "https://MarkoArsov.github.io/agent-workflow/",
+  "repository": "https://github.com/MarkoArsov/agent-workflow",
+  "license": "MIT",
+  "skills": "./skills/"
+}
+

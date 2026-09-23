@@ -1,6 +1,6 @@
 # agent-workflow implementation plan
 
-Status: Phase 2 complete; awaiting approval to build.
+Status: Approved; Phase 3 implementation in progress.
 License: MIT.
 Delivery: a new public repository, developed and committed locally first.
 The runner is a core feature. Project setup and customization make it reusable.
@@ -43,7 +43,7 @@ Private templates and third-party skill bodies are not copied into this package.
 
 - [x] Phase 1: discover sources, compare active workflow files, agree port decisions.
 - [x] Phase 2: record the complete implementation and verification plan.
-- [ ] Approval of this plan before any Phase 3 implementation.
+- [x] Approval of this plan before any Phase 3 implementation.
 - [ ] Phase 3.1: repository skeleton and shared contracts.
 - [ ] Phase 3.2: project setup and customization, with fixtures.
 - [ ] Phase 3.3: generic skills, runner, and integrations.
@@ -669,6 +669,21 @@ No remote is added during the build. Keep unrelated source workspaces unchanged.
 Evidence log at Phase 2: discovery and decisions completed; no implementation tests,
 installation, provider runs, website build, or publication have been performed.
 
+Implementation evidence (local, initial runtime milestone):
+
+- Setup, project extension resolution, provider command construction, and runner
+  verification: 19 isolated tests passed. Provider execution uses explicitly labeled
+  local doubles, including exact-session input, fresh fallback, and stalled tools.
+- Installer and executable fixtures: 8 tests passed with temporary homes/configuration.
+  Global/project install, update rollback, override preservation, native payload
+  relocation, and compatible global fallback are exercised.
+- The multi-repository fixture made a real HTTP request to a disposable local app;
+  its checks repository remained clean on its original branch and revision.
+- Initial public-content scan: 130 filesystem/history items, zero findings with
+  an external private denylist. No real provider generation or publication occurred.
+- Git delivery, integration edge cases, website, schemas, and final verification
+  remain in progress; this milestone is not the completed acceptance matrix.
+
 ## 14. Handoff and publication boundary
 
 Deliver a concise report of what was built, plan deviations, observed verification,
@@ -701,4 +716,3 @@ a real-host smoke check.
 - [Cursor CLI permissions](https://cursor.com/docs/cli/reference/permissions)
 - [MkDocs build and preview](https://www.mkdocs.org/getting-started/)
 - [GitHub Pages Actions workflow](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages)
-

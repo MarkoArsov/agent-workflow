@@ -1,0 +1,189 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Project profile",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "project",
+    "repositories",
+    "execution",
+    "planning"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "project": {
+      "type": "object",
+      "required": [
+        "id",
+        "kind"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "single-repo",
+            "multi-repo"
+          ]
+        }
+      }
+    },
+    "repositories": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "path",
+          "base_branch",
+          "remote",
+          "task_policy",
+          "checkout_strategy"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "base_branch": {
+            "type": "string"
+          },
+          "remote": {
+            "type": "string"
+          },
+          "task_policy": {
+            "enum": [
+              "always",
+              "when-changed",
+              "never"
+            ]
+          },
+          "checkout_strategy": {
+            "enum": [
+              "current-checkout",
+              "feature-branch",
+              "worktree"
+            ]
+          },
+          "commands": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "required": [
+                "argv"
+              ],
+              "properties": {
+                "argv": {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "cwd": {
+                  "type": "string"
+                },
+                "parser": {
+                  "type": "string"
+                },
+                "success_pattern": {
+                  "type": "string"
+                },
+                "failure_pattern": {
+                  "type": "string"
+                },
+                "timeout_seconds": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 86400
+                },
+                "shell": {
+                  "type": "boolean"
+                },
+                "env": {
+                  "type": "object"
+                },
+                "env_refs": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "additionalProperties": true
+            }
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "agents": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "codex",
+          "claude",
+          "cursor"
+        ]
+      }
+    },
+    "execution": {
+      "type": "object",
+      "required": [
+        "permission_mode"
+      ],
+      "properties": {
+        "permission_mode": {
+          "enum": [
+            "trusted",
+            "restricted"
+          ]
+        },
+        "provider_settings": {
+          "type": "object"
+        }
+      }
+    },
+    "planning": {
+      "type": "object",
+      "required": [
+        "directory",
+        "evidence_directory"
+      ],
+      "properties": {
+        "directory": {
+          "type": "string"
+        },
+        "evidence_directory": {
+          "type": "string"
+        }
+      }
+    },
+    "extensions": {
+      "type": "object"
+    },
+    "pipeline": {
+      "type": "object"
+    },
+    "tracking": {
+      "type": "object"
+    },
+    "delivery": {
+      "type": "object"
+    }
+  },
+  "additionalProperties": true
+}
+

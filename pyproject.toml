@@ -1,0 +1,8 @@
+[tool.agent-workflow]
+name = "agent-workflow"
+version = "0.1.0"
+description = "A configurable development workflow for coding agents."
+requires-python = ">=3.11"
+license = "MIT"
+installer = "python3 install.py"
+runtime-dependencies = []
