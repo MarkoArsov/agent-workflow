@@ -1,8 +1,16 @@
 ---
+title: Skills and stages
 description: Create project-owned skill overrides, skills, and custom stages.
+question: How do I change a skill or add a stage for one project?
 ---
 
 # Skills and stages
+
+!!! summary "In one minute"
+    - `skill copy` makes a project-owned override of a bundled skill; `skill new` adds your own.
+    - Overrides record the upstream version they came from, and updates report upstream changes without overwriting yours.
+    - Custom stages declare a skill or a command, inputs, outputs, completion checks, and a position before or after a named stage.
+    - Each run snapshots the effective configuration, so changes apply to the next run or a reviewed rebind.
 
 Each project can change its workflow without affecting another project.
 
@@ -59,3 +67,5 @@ Keep runtime payloads, evidence, machine-specific registrations, credentials, an
 
 A run snapshots effective configuration and skill resources.
 Package or extension changes affect the next run; a reviewed `resume --rebind` records changed inputs and invalidates affected stages.
+
+<!-- checkpoints: CTX-5, ORG-5 -->

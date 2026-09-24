@@ -1,0 +1,24 @@
+<div class="split-diagram">
+  <div class="split-diagram__col">
+    <p class="split-diagram__title">Models own the judgement</p>
+    <ul>
+      <li><strong>implement-tests</strong><span>route: your provider and model, then ordered fallbacks</span></li>
+      <li><strong>implement</strong><span>the same route, or a different one</span></li>
+      <li><strong>review</strong><span>optional; any confirmed route</span></li>
+      <li><strong>custom skill stages</strong><span>their own route, if you add them</span></li>
+    </ul>
+    <p class="split-diagram__note">Claude Code, Codex, or Cursor. Answers resume the session that asked.</p>
+  </div>
+  <div class="split-diagram__hub"><span>Confirmed plan</span></div>
+  <div class="split-diagram__col split-diagram__col--scripts">
+    <p class="split-diagram__title">Scripts own the process</p>
+    <ul>
+      <li><strong>verify</strong><span>runs and parses the named checks</span></li>
+      <li><strong>status, watch</strong><span>read the run journal</span></li>
+      <li><strong>commit-and-push, draft-pr</strong><span>runner-owned delivery</span></li>
+      <li><strong>custom command stages</strong><span>your command, no model</span></li>
+    </ul>
+    <p class="split-diagram__note">No model calls. No provider route to choose.</p>
+  </div>
+</div>
+<figcaption>You choose the worker for each job. The runner never switches it silently.</figcaption>

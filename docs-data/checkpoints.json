@@ -1,0 +1,269 @@
+{
+  "statuses": {
+    "implemented": {"label": "Implemented", "meaning": "The runner or a maintained skill enforces it and records evidence."},
+    "conditional": {"label": "Conditional", "meaning": "Enforced when the plan selects it."},
+    "partial": {"label": "Partial", "meaning": "Addresses part of the checkpoint; a material gap remains."},
+    "external": {"label": "External", "meaning": "Belongs to source control, identity, or organizational operations. External is not a pass."},
+    "gap": {"label": "Gap", "meaning": "Not provided by the current execution environment."},
+    "policy": {"label": "Policy choice", "meaning": "A deliberate design choice that differs from the checkpoint."}
+  },
+  "phases": [
+    {"id": "intake", "label": "Intake"},
+    {"id": "context", "label": "Context"},
+    {"id": "planning", "label": "Planning"},
+    {"id": "execution", "label": "Execution"},
+    {"id": "verification", "label": "Verification"},
+    {"id": "review", "label": "Review and merge"},
+    {"id": "post-merge", "label": "Post-merge"},
+    {"id": "organization", "label": "Organization"}
+  ],
+  "checkpoints": [
+    {
+      "id": "IN-1", "phase": "intake", "title": "Spec has a start locus and a completion artifact", "status": "implemented",
+      "how": "`specify` writes four plan files plus `pipeline.json`. Validation rejects a plan unless every outcome maps to an existing check with a green phase.",
+      "remains": "Plan quality still depends on your confirmation.",
+      "evidence": ["skills/specify/SKILL.md", "references/pipeline-contract.md", "runtime/agent_workflow/manifest.py"]
+    },
+    {
+      "id": "IN-2", "phase": "intake", "title": "Ambiguity surfaced before the first write", "status": "implemented",
+      "how": "`specify` reads instructions and nearby examples first, then asks only for genuinely missing decisions before anything starts.",
+      "remains": "Nothing within the workflow boundary.",
+      "evidence": ["skills/specify/SKILL.md"]
+    },
+    {
+      "id": "IN-3", "phase": "intake", "title": "Task prioritized before assignment", "status": "external",
+      "how": "Tracker connectors and the GitHub adapter can read an issue.",
+      "remains": "Priority and ownership belong to your tracker and team process.",
+      "evidence": ["runtime/agent_workflow/integrations/github.py", "runtime/agent_workflow/integrations/connectors.py"]
+    },
+    {
+      "id": "IN-4", "phase": "intake", "title": "Task size bounded", "status": "partial",
+      "how": "Declared writable path patterns bound what a task may change, per repository.",
+      "remains": "There is no line or file budget, and no split suggestion for a large diff.",
+      "evidence": ["runtime/agent_workflow/manifest.py", "runtime/agent_workflow/git_ops.py"]
+    },
+    {
+      "id": "CTX-1", "phase": "context", "title": "Agent instruction file at the repository root, in version control", "status": "implemented",
+      "how": "Setup writes `PROJECT_WORKFLOW.md` and a managed block in each repository's `AGENTS.md` and `CLAUDE.md`, preserving your prose.",
+      "remains": "In a non-Git parent folder, `PROJECT_WORKFLOW.md` is versioned only if you choose a configuration repository.",
+      "evidence": ["runtime/agent_workflow/setup.py"]
+    },
+    {
+      "id": "CTX-2", "phase": "context", "title": "Instruction file pruned, not just grown", "status": "partial",
+      "how": "`prune-context` proposes evidence-based removals and relocations; rules stay scoped instead of bloating root guidance.",
+      "remains": "It works from examples you supply and is proposal-only. Nothing collects evidence or schedules a pruning pass.",
+      "evidence": ["skills/prune-context/SKILL.md"]
+    },
+    {
+      "id": "CTX-3", "phase": "context", "title": "Environment declarative and snapshotted", "status": "partial",
+      "how": "Commands and test environments are declared in the profile. Each run snapshots the effective profile, skills, rules, and references.",
+      "remains": "Agent stages use the host environment, not an immutable environment image.",
+      "evidence": ["runtime/agent_workflow/runner.py", "runtime/agent_workflow/extensions.py", "runtime/agent_workflow/environments.py"]
+    },
+    {
+      "id": "CTX-4", "phase": "context", "title": "Docs and architecture layers machine-checked", "status": "partial",
+      "how": "Blocking rules can run any deterministic command or forbidden-pattern detector against changed files.",
+      "remains": "Documentation cross-links and layer checks belong in your repository's CI.",
+      "evidence": ["runtime/agent_workflow/rules.py"]
+    },
+    {
+      "id": "CTX-5", "phase": "context", "title": "Agent discoveries captured as skills and scripts", "status": "implemented",
+      "how": "`add-rule`, `rule record`, `skill new`, skill overrides, and custom stages turn repeated discoveries into project-owned controls.",
+      "remains": "Someone still has to choose to capture them.",
+      "evidence": ["skills/add-rule/SKILL.md", "runtime/agent_workflow/rules.py", "runtime/agent_workflow/extensions.py"]
+    },
+    {
+      "id": "PLN-1", "phase": "planning", "title": "Read-only explore phase before execution", "status": "implemented",
+      "how": "`specify` researches instructions and working examples before it proposes anything, and records the result as plan files.",
+      "remains": "The explore phase is a skill instruction, not a mechanically read-only sandbox.",
+      "evidence": ["skills/specify/SKILL.md"]
+    },
+    {
+      "id": "PLN-2", "phase": "planning", "title": "Plan reviewed by a non-author", "status": "implemented",
+      "how": "You review and confirm the complete plan. `validate-plan` and `preflight` check it mechanically before any stage runs.",
+      "remains": "A second automated plan critic is not a default stage.",
+      "evidence": ["skills/specify/SKILL.md", "skills/implement-pipeline/SKILL.md", "runtime/agent_workflow/cli.py"]
+    },
+    {
+      "id": "PLN-3", "phase": "planning", "title": "Planning and implementation contexts separated", "status": "implemented",
+      "how": "Stages start fresh sessions from the plan files. A plan revision changes the binding hash; `resume --rebind` archives the old inputs and invalidates affected stages.",
+      "remains": "Nothing within the workflow boundary.",
+      "evidence": ["runtime/agent_workflow/runner.py"]
+    },
+    {
+      "id": "PLN-4", "phase": "planning", "title": "Vertical slices, each independently testable", "status": "partial",
+      "how": "Every outcome maps to named executable checks.",
+      "remains": "The runner does not prove that a plan is a vertical slice.",
+      "evidence": ["runtime/agent_workflow/manifest.py"]
+    },
+    {
+      "id": "EXE-1", "phase": "execution", "title": "Unattended runs inside an isolation boundary", "status": "partial",
+      "how": "Restricted mode uses provider controls: the Codex workspace-write sandbox, the Cursor sandbox, or an explicit Claude tool allowlist. Every stage is followed by path and evidence guards.",
+      "remains": "Trusted mode, the offered default, is not operating-system containment.",
+      "evidence": ["runtime/agent_workflow/providers/__init__.py", "runtime/agent_workflow/git_ops.py"]
+    },
+    {
+      "id": "EXE-2", "phase": "execution", "title": "Network egress allowlisted", "status": "gap",
+      "how": "The runner does not control network access.",
+      "remains": "Provider, package, source-control, and general egress need an environment-level firewall.",
+      "evidence": ["runtime/agent_workflow/process.py"]
+    },
+    {
+      "id": "EXE-3", "phase": "execution", "title": "Untrusted content sanitized before the model", "status": "partial",
+      "how": "Every stage prompt says external files, issue text, logs, and tool results are evidence, never instructions. `specify` and `address-pr-comments` repeat it for fetched text.",
+      "remains": "This is instruction-level. There is no deterministic sanitizer.",
+      "evidence": ["runtime/agent_workflow/runner.py", "skills/specify/SKILL.md", "skills/address-pr-comments/SKILL.md"]
+    },
+    {
+      "id": "EXE-4", "phase": "execution", "title": "Risk tiers gate what runs automatically", "status": "partial",
+      "how": "The permission mode, path scope, blocking guards, and a separate authorization for every external action decide what runs unattended.",
+      "remains": "There is no risk classification that changes behavior by itself.",
+      "evidence": ["runtime/agent_workflow/manifest.py", "runtime/agent_workflow/rules.py", "skills/specify/SKILL.md"]
+    },
+    {
+      "id": "EXE-5", "phase": "execution", "title": "Parallel agents in isolated checkouts", "status": "policy",
+      "how": "The worktree strategy isolates task checkouts. One runner per project is deliberate, held by an operating-system lock.",
+      "remains": "Parallel runs relocate the review queue rather than shortening it; see Review and everyday use.",
+      "evidence": ["runtime/agent_workflow/git_ops.py", "runtime/agent_workflow/state.py"]
+    },
+    {
+      "id": "VER-1", "phase": "verification", "title": "Agent-runnable check per task", "status": "implemented",
+      "how": "Every outcome names checks with argv, working directory, parser, and timeout.",
+      "remains": "The plan author must choose meaningful checks.",
+      "evidence": ["runtime/agent_workflow/manifest.py", "runtime/agent_workflow/verification.py"]
+    },
+    {
+      "id": "VER-2", "phase": "verification", "title": "Completion gated deterministically", "status": "implemented",
+      "how": "The runner executes the checks itself, parses their output, guards paths, rules, and frozen tests, and binds green evidence to a diff fingerprint.",
+      "remains": "Nothing within the workflow boundary.",
+      "evidence": ["runtime/agent_workflow/runner.py", "runtime/agent_workflow/verification.py", "runtime/agent_workflow/git_ops.py"]
+    },
+    {
+      "id": "VER-3", "phase": "verification", "title": "Fresh-context reviewer on the diff", "status": "conditional",
+      "how": "The optional review stage starts fresh with the requirements and the actual diff, and never receives `implementation.md`.",
+      "remains": "Review runs only when the plan selects it.",
+      "evidence": ["runtime/agent_workflow/runner.py", "skills/review/SKILL.md"]
+    },
+    {
+      "id": "VER-4", "phase": "verification", "title": "Behavioral verification for user-facing changes", "status": "conditional",
+      "how": "Disposable environments with readiness patterns and leases, E2E skills, and `test-on-staging` cover behavior when the plan selects them.",
+      "remains": "Screenshots and recordings are not required.",
+      "evidence": ["runtime/agent_workflow/environments.py", "skills/e2e-test-engineering/SKILL.md", "skills/test-on-staging/SKILL.md"]
+    },
+    {
+      "id": "VER-5", "phase": "verification", "title": "Agent-written tests reviewed adversarially", "status": "implemented",
+      "how": "Tests are written first, must fail on an assertion rather than a setup error, and are frozen by hash for later stages.",
+      "remains": "Mutation testing is not provided.",
+      "evidence": ["runtime/agent_workflow/verification.py", "runtime/agent_workflow/runner.py", "skills/implement-tests/SKILL.md"]
+    },
+    {
+      "id": "VER-6", "phase": "verification", "title": "SAST, secret, and dependency scans before review", "status": "partial",
+      "how": "A built-in secret detector and your blocking rules run on every changed file, and again before publication.",
+      "remains": "No SAST or dependency analysis is supplied.",
+      "evidence": ["runtime/agent_workflow/rules.py"]
+    },
+    {
+      "id": "REV-1", "phase": "review", "title": "Named human approver, no self-merge", "status": "external",
+      "how": "The runner opens draft PRs only. It never approves or merges them; `merge-to-base` is a local, opt-in, user-requested skill.",
+      "remains": "Branch protection and named approvers are configured in source control.",
+      "evidence": ["runtime/agent_workflow/integrations/github.py", "skills/merge-to-base/SKILL.md"]
+    },
+    {
+      "id": "REV-2", "phase": "review", "title": "PR carries evidence, not assertions", "status": "partial",
+      "how": "Commands, parsed results, rules, and the diff fingerprint are recorded per stage. `pr-preflight` flags unsupported testing claims in a PR body.",
+      "remains": "The draft PR body is the approved body file; evidence is not attached automatically.",
+      "evidence": ["runtime/agent_workflow/runner.py", "runtime/agent_workflow/git_ops.py", "skills/pr-preflight/SKILL.md"]
+    },
+    {
+      "id": "REV-3", "phase": "review", "title": "Review capacity tracked as a constraint", "status": "external",
+      "how": "Each task produces the evidence a reviewer needs.",
+      "remains": "Review latency and queue size are organizational metrics.",
+      "evidence": ["docs/everyday.md"]
+    },
+    {
+      "id": "REV-4", "phase": "review", "title": "Auto-fix loops bounded", "status": "implemented",
+      "how": "Attempts per route (at most 5), run, inactivity, and tool timeouts, and bot polling (at most 10 rounds) are all bounded.",
+      "remains": "Review the limits as usage changes.",
+      "evidence": ["runtime/agent_workflow/manifest.py", "runtime/agent_workflow/process.py", "runtime/agent_workflow/integrations/github.py"]
+    },
+    {
+      "id": "PST-1", "phase": "post-merge", "title": "Agent authorship labeled", "status": "policy",
+      "how": "Commit skills deliberately forbid AI attribution trailers.",
+      "remains": "Provenance reporting needs a separate mechanism if you want it.",
+      "evidence": ["skills/commit/SKILL.md", "skills/commit-and-push/SKILL.md"]
+    },
+    {
+      "id": "PST-2", "phase": "post-merge", "title": "Sessions instrumented end to end", "status": "partial",
+      "how": "Each run keeps a journal, per-attempt records, evidence files, and provider usage when it is reported.",
+      "remains": "There is no central telemetry export.",
+      "evidence": ["runtime/agent_workflow/runner.py", "runtime/agent_workflow/state.py"]
+    },
+    {
+      "id": "PST-3", "phase": "post-merge", "title": "Failures feed back into instructions", "status": "partial",
+      "how": "`rule record` counts recurring examples and proposes a corrective review at the rule's `review_after` threshold.",
+      "remains": "No unattended loop analyzes sessions or edits instructions.",
+      "evidence": ["runtime/agent_workflow/rules.py", "skills/add-rule/SKILL.md"]
+    },
+    {
+      "id": "ORG-1", "phase": "organization", "title": "Stability metrics segmented by provenance", "status": "external",
+      "how": "Task evidence stays local to the project.",
+      "remains": "Stability and rework dashboards belong to your organization.",
+      "evidence": ["runtime/agent_workflow/state.py"]
+    },
+    {
+      "id": "ORG-2", "phase": "organization", "title": "Spend monitored, not incentivized", "status": "partial",
+      "how": "Usage and cost are recorded when the provider reports them; a missing cost stays unknown, never zero. Claude runs accept `max_budget_usd`.",
+      "remains": "No central per-task spend reporting.",
+      "evidence": ["runtime/agent_workflow/providers/__init__.py"]
+    },
+    {
+      "id": "ORG-3", "phase": "organization", "title": "Agent credentials scoped and audited", "status": "gap",
+      "how": "Credentials come only from host logins or named `env_refs`; literal secrets in commands and connector settings are rejected.",
+      "remains": "Credentials are inherited from the host, not issued per stage or short-lived.",
+      "evidence": ["runtime/agent_workflow/profile.py", "runtime/agent_workflow/integrations/connectors.py"]
+    },
+    {
+      "id": "ORG-4", "phase": "organization", "title": "Production access gated in multiple layers", "status": "external",
+      "how": "`test-on-staging` defaults to non-destructive reads and needs explicit authorization for mutations.",
+      "remains": "Identity, database, network, and audit layers are yours to provide.",
+      "evidence": ["skills/test-on-staging/SKILL.md"]
+    },
+    {
+      "id": "ORG-5", "phase": "organization", "title": "Skills inventoried and evaluated", "status": "partial",
+      "how": "`skill list` and `skill resolve` show effective sources; skill metadata is validated; updates report changed upstream skills.",
+      "remains": "There are no behavioral evaluations of skills.",
+      "evidence": ["runtime/agent_workflow/extensions.py", "runtime/agent_workflow/install.py"]
+    }
+  ],
+  "beyond_rubric": [
+    {"id": "plan-binding", "title": "Plan binding and rebind", "why": "Evidence belongs to one plan revision. A changed plan, profile, or skill stops the run until a reviewed `resume --rebind` archives the old inputs and invalidates affected stages.", "evidence": ["runtime/agent_workflow/runner.py"]},
+    {"id": "diff-fingerprint", "title": "Diff fingerprint", "why": "Green evidence is bound to a hash of the files. Any later change makes it stale, and delivery re-runs the checks.", "evidence": ["runtime/agent_workflow/git_ops.py", "runtime/agent_workflow/runner.py"]},
+    {"id": "frozen-tests", "title": "Frozen tests", "why": "After red proof, test-file hashes are recorded. Implementation and review cannot rewrite, add, or delete those tests to get green.", "evidence": ["runtime/agent_workflow/runner.py"]},
+    {"id": "assertion-red", "title": "Assertion-level red", "why": "Import, syntax, compile, and startup failures are rejected as red evidence; expected test identities must fail on assertions.", "evidence": ["runtime/agent_workflow/verification.py"]},
+    {"id": "no-silent-skips", "title": "No silent skips", "why": "Skipped or pending tests fail a check unless the plan records a justification.", "evidence": ["runtime/agent_workflow/verification.py"]},
+    {"id": "no-implicit-fallback", "title": "No implicit fallback", "why": "Only the ordered routes you approved are tried, and only for authentication, quota, or model failures.", "evidence": ["runtime/agent_workflow/runner.py", "runtime/agent_workflow/providers/__init__.py"]},
+    {"id": "exact-session-answers", "title": "Exact-session answers", "why": "An answer resumes the provider session that asked. It is never rerouted to another session or model.", "evidence": ["runtime/agent_workflow/runner.py"]},
+    {"id": "fresh-sessions", "title": "Fresh sessions", "why": "Every stage and every retry starts a new session, so no chat history carries over.", "evidence": ["runtime/agent_workflow/runner.py"]},
+    {"id": "independent-review", "title": "Review without the reasoning", "why": "The review stage never receives `implementation.md`; it sees requirements and the actual diff.", "evidence": ["runtime/agent_workflow/runner.py"]},
+    {"id": "partial-work", "title": "Partial work preserved", "why": "A scope violation fails the run but keeps the changes for inspection. Nothing is reset or committed automatically.", "evidence": ["runtime/agent_workflow/git_ops.py"]},
+    {"id": "clean-checks", "title": "Checks may not edit source", "why": "A verification command that changes repository files invalidates its own evidence.", "evidence": ["runtime/agent_workflow/runner.py"]},
+    {"id": "user-changes", "title": "Your changes stay yours", "why": "Pre-existing uncommitted changes are recorded at start. A stage that touches them fails, and delivery never commits them.", "evidence": ["runtime/agent_workflow/runner.py", "runtime/agent_workflow/git_ops.py"]},
+    {"id": "approval-digest", "title": "Approval-digest setup", "why": "Setup and connector patches apply only with the digest of the exact proposal you reviewed. A stale proposal is rejected.", "evidence": ["runtime/agent_workflow/setup.py", "runtime/agent_workflow/integrations/connectors.py"]},
+    {"id": "config-snapshot", "title": "Configuration snapshotted per run", "why": "Each run freezes the effective profile, skills, rules, and references, so a mid-run edit cannot change a stage's instructions.", "evidence": ["runtime/agent_workflow/runner.py", "runtime/agent_workflow/extensions.py"]},
+    {"id": "one-runner", "title": "One runner per project", "why": "An operating-system lock admits one runner per project. Cancellation asks the owner to stop its own process group and never kills a stale PID.", "evidence": ["runtime/agent_workflow/state.py", "runtime/agent_workflow/process.py"]},
+    {"id": "guarded-delivery", "title": "Guarded multi-repository delivery", "why": "Commits stage only task-owned paths, never base branches, never force-push, and resume per repository after a partial failure.", "evidence": ["runtime/agent_workflow/git_ops.py"]},
+    {"id": "companion-repos", "title": "Read-only companion repositories", "why": "A repository can supply checks without getting a branch; any change to it is a scope violation.", "evidence": ["runtime/agent_workflow/git_ops.py", "runtime/agent_workflow/manifest.py"]},
+    {"id": "redaction", "title": "Redacted questions and output", "why": "Tokens and keys are redacted from saved questions, errors, and command output.", "evidence": ["runtime/agent_workflow/util.py"]},
+    {"id": "honest-usage", "title": "Unknown cost stays unknown", "why": "Usage and cost appear only when the provider reports them. A missing cost is never shown as zero.", "evidence": ["runtime/agent_workflow/providers/__init__.py"]}
+  ],
+  "frontier": [
+    {"title": "Operating-system isolation", "checkpoints": ["EXE-1"], "detail": "Run trusted stages inside a container or VM boundary instead of relying on provider flags and post-stage guards."},
+    {"title": "Network egress control", "checkpoints": ["EXE-2"], "detail": "Allowlist provider, package, and source-control hosts per stage."},
+    {"title": "Scoped credentials", "checkpoints": ["ORG-3"], "detail": "Issue short-lived, stage-scoped credentials instead of inheriting host logins."},
+    {"title": "Evidence in the pull request", "checkpoints": ["REV-2"], "detail": "Attach the recorded check summary and fingerprint to the draft PR body."},
+    {"title": "Telemetry and organization metrics", "checkpoints": ["PST-2", "ORG-1", "ORG-2"], "detail": "Export run journals, usage, and outcomes to a privacy-preserving central store."},
+    {"title": "Deterministic untrusted-input handling", "checkpoints": ["EXE-3"], "detail": "Wrap and flag fetched text in code rather than only by instruction."},
+    {"title": "Size and slicing signals", "checkpoints": ["IN-4", "PLN-4"], "detail": "Record diff size against a plan budget and suggest splits."},
+    {"title": "Skill evaluations", "checkpoints": ["ORG-5"], "detail": "Behavioral evals for the most-used skills."}
+  ]
+}

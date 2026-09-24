@@ -1,0 +1,10 @@
+<div class="flow" role="list" aria-label="Red, frozen, green evidence">
+  <div class="flow__node flow__node--red" role="listitem"><span class="flow__kicker">Red</span><strong>Tests fail on an assertion</strong><small>Expected test identities must appear as assertion failures.</small><em class="flow__reject">Rejected: import, syntax, compile, or startup errors</em></div>
+  <span class="flow__arrow" aria-hidden="true"></span>
+  <div class="flow__node" role="listitem"><span class="flow__kicker">Frozen</span><strong>Test-file hashes recorded</strong><small>Later stages cannot rewrite, add, or delete those tests.</small><em class="flow__reject">Stops the run: a frozen test changed</em></div>
+  <span class="flow__arrow" aria-hidden="true"></span>
+  <div class="flow__node flow__node--green" role="listitem"><span class="flow__kicker">Green</span><strong>Parsed success, bound to the diff</strong><small>The runner executes every named check and records a fingerprint of the files.</small></div>
+  <span class="flow__arrow" aria-hidden="true"></span>
+  <div class="flow__node" role="listitem"><span class="flow__kicker">Deliver</span><strong>Fingerprint still matches?</strong><small>If anything changed since, delivery re-runs the checks first and stops if they fail.</small></div>
+</div>
+<figcaption>An agent saying the tests pass is a proposal. The runner's own observation is the evidence.</figcaption>

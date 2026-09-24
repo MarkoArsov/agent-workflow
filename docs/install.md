@@ -1,10 +1,18 @@
 ---
+title: Install
 description: Install Stagecoach globally or inside a project.
 footer: docs
 footer_order: 1
+question: How do I install Stagecoach?
 ---
 
 # Install
+
+!!! summary "In one minute"
+    - You need Python 3.11+, Git, and at least one authenticated agent CLI: Claude Code, Codex, or Cursor. GitHub delivery also uses `gh`.
+    - Install globally, or into one project so it carries its own runtime.
+    - Claude Code can also use the native plugin, which contains the same skills and runtime.
+    - Installation only enables discovery. Run the setup skill next.
 
 You need Python 3.11+, Git, and at least one authenticated agent CLI: Claude Code, Codex, or Cursor.
 GitHub delivery also uses `gh`. The runtime has no Python package dependencies.

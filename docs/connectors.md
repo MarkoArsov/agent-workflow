@@ -1,8 +1,16 @@
 ---
+title: Connectors
 description: Declare external capabilities and use them with explicit authorization.
+question: How does Stagecoach reach trackers and other services?
 ---
 
 # Connectors
+
+!!! summary "In one minute"
+    - GitHub uses the authenticated `gh` CLI. Other services use a host connector or a project command transport.
+    - Declarations list capabilities and verified headless availability per provider, never credentials.
+    - Reading and drafting follow the task. Posting, messaging, and tracker changes need explicit authorization.
+    - Without a connector, plans and issues stay in Markdown.
 
 GitHub uses the authenticated `gh` CLI.
 Linear, Notion, and other services use a host connector or a project command transport.
@@ -45,3 +53,5 @@ Posting comments, resolving threads, messaging, creating issues, and changing tr
 Selecting commit/push/draft-PR stages authorizes those delivery actions only.
 
 Missing access has an explicit alternative: Markdown issues/plans and no tracker.
+
+<!-- checkpoints: IN-3, ORG-3 -->

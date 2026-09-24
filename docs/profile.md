@@ -1,10 +1,18 @@
 ---
+title: Profile reference
 description: Reference the project profile that records workflow configuration.
 footer: reference
 footer_order: 1
+question: What does the project profile contain?
 ---
 
 # Profile reference
+
+!!! summary "In one minute"
+    - `.agent-workflow/project.json` is the authoritative configuration; `PROJECT_WORKFLOW.md` summarizes it.
+    - It records repositories, agents, planning locations, Git conventions, delivery, tracking, execution, routes, extensions, and environments.
+    - Unknown extension keys are preserved across re-setup.
+    - Change it through setup, and inspect the resolved result with `agent-workflow inspect`.
 
 The authoritative file is `.agent-workflow/project.json`.
 PROJECT_WORKFLOW.md is the concise human-readable summary; setup updates its managed block while preserving your surrounding prose.

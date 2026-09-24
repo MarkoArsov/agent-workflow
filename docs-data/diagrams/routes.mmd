@@ -1,0 +1,9 @@
+%% Routes: the plan is the contract, models are workers, scripts own the process. Rendered by hand as routes.html.
+flowchart LR
+    P[Confirmed plan] --> T[Test session]
+    P --> I[Implement session]
+    P --> R[Review session, if selected]
+    T --> H[Claude Code, Codex, or Cursor with your model]
+    I --> H
+    R --> H
+    P --> S[Scripts: verify, status, watch, commit, push, draft PR]
