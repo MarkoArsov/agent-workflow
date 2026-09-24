@@ -1,7 +1,7 @@
 <header class="site-header" data-site-header>
   <div class="site-header__inner">
     <a class="brand" href="{{ '' | url }}" aria-label="{{ config.site_name }} overview">
-      <img src="{{ 'assets/brand/mark.svg' | url }}" width="24" height="24" alt="">
+      <img src="{{ 'assets/brand/mark.svg' | url }}?v={{ config.extra.asset_version }}" width="28" height="28" alt="">
       <span>{{ config.extra.brand }}</span>
     </a>
     <nav class="header-tabs" aria-label="Documentation sections">

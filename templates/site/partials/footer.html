@@ -7,6 +7,6 @@
       <section><p>Reference</p><ul>{% for item in footer.reference|sort(attribute='meta.footer_order') %}<li><a href="{{ item.url | url }}">{{ item.title }}</a></li>{% endfor %}</ul></section>
       <section><p>Project</p><ul><li><a href="{{ 'open-source/' | url }}">Open source</a></li><li><a href="{{ 'development/' | url }}">Contribute</a></li><li><a href="{{ config.repo_url }}">{{ config.repo_name }}</a></li><li><a href="{{ config.repo_url }}/blob/main/LICENSE">MIT license</a></li></ul></section>
     </div>
-    <p class="footer-signoff"><a class="brand brand--footer" href="{{ '' | url }}"><img src="{{ 'assets/brand/mark.svg' | url }}" width="20" height="20" alt=""><span>{{ config.extra.brand }}</span></a><span>{{ config.site_name }} · Open source under the MIT license · Built with MkDocs</span></p>
+    <p class="footer-signoff"><a class="brand brand--footer" href="{{ '' | url }}"><img src="{{ 'assets/brand/mark.svg' | url }}?v={{ config.extra.asset_version }}" width="24" height="24" alt=""><span>{{ config.extra.brand }}</span></a><span>{{ config.site_name }} · Open source under the MIT license · Built with MkDocs</span></p>
   </div>
 </footer>
