@@ -87,6 +87,36 @@
     table.before(wrapper); wrapper.append(table);
   });
 
+  const skillsFilter = document.querySelector('[data-skills-filter]');
+  const skillsInput = skillsFilter?.querySelector('[data-skills-filter-input]');
+  if (skillsFilter && skillsInput) {
+    const entries = [...document.querySelectorAll('.prose h3.skill-entry')].map((heading) => {
+      const nodes = [heading];
+      let sibling = heading.nextElementSibling;
+      while (sibling && !sibling.matches('h2, h3')) { nodes.push(sibling); sibling = sibling.nextElementSibling; }
+      let category = heading.previousElementSibling;
+      while (category && !category.matches('h2')) category = category.previousElementSibling;
+      return { heading, nodes, category, text: heading.dataset.skill || heading.textContent || '' };
+    });
+    const chips = [...skillsFilter.querySelectorAll('[data-skills-chip]')];
+    const empty = skillsFilter.querySelector('[data-skills-empty]');
+    const update = () => {
+      const query = skillsInput.value.trim().toLowerCase();
+      let visible = 0;
+      entries.forEach((entry) => {
+        const matches = !query || entry.text.toLowerCase().includes(query);
+        entry.nodes.forEach((node) => { node.hidden = !matches; });
+        if (matches) visible += 1;
+      });
+      chips.forEach((chip) => { chip.hidden = Boolean(query) && !chip.dataset.skillChipName.includes(query); });
+      [...new Set(entries.map((entry) => entry.category).filter(Boolean))].forEach((category) => {
+        category.hidden = !entries.some((entry) => entry.category === category && !entry.heading.hidden);
+      });
+      if (empty) empty.hidden = visible !== 0;
+    };
+    skillsInput.addEventListener('input', update);
+  }
+
   const tocLinks = [...document.querySelectorAll('[data-page-toc] a')];
   const headingById = tocLinks.map((link) => document.getElementById(link.getAttribute('href')?.slice(1))).filter(Boolean);
   if (headingById.length) {

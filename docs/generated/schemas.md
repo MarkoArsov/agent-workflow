@@ -1,3 +1,8 @@
+---
+description: Public configuration schemas for Stagecoach projects and task plans.
+footer: reference
+---
+
 # Schema reference
 
 These schemas describe public configuration. Runtime validation also checks repository membership, dependencies, and executable evidence.

@@ -44,5 +44,16 @@ mark { padding: 0; background: transparent; color: var(--accent); font-weight: 6
 .prev-next__card span { color: var(--text-muted); font-size: .75rem; }
 .prev-next__card strong { margin-top: 2px; font-size: .9375rem; }
 .edit-page { margin-top: var(--space-6); font-size: .875rem; }
+.skills-filter { margin: var(--space-6) 0 var(--space-10); padding: var(--space-4); border: 1px solid var(--border); border-radius: var(--radius-panel); background: var(--surface); }
+.skills-filter label { display: block; margin-bottom: var(--space-2); color: var(--text); font-size: .875rem; font-weight: 600; }
+.skills-filter input { width: 100%; height: 42px; padding: 0 var(--space-3); border: 1px solid var(--border-strong); border-radius: var(--radius-item); background: var(--bg); color: var(--text); }
+.skills-filter input::placeholder { color: var(--text-muted); }
+.skills-filter__index { display: flex; flex-wrap: wrap; gap: 6px; margin-top: var(--space-3); }
+.skills-filter__index a { padding: 3px 7px; border: 1px solid var(--border); border-radius: 999px; color: var(--text-muted); font: .6875rem/1.35 var(--font-mono); text-decoration: none; }
+.skills-filter__index a:hover { border-color: var(--accent); color: var(--accent); }
+.skills-filter__index a[hidden] { display: none; }
+.skills-filter [data-skills-empty] { margin: var(--space-3) 0 0; color: var(--text-muted); font-size: .875rem; }
+.prose h3.skill-entry { margin-top: var(--space-8); }
+.prose h3.skill-entry code { padding: .16em .42em; border: 1px solid var(--border); border-radius: var(--radius-item); background: var(--surface-sunken); color: var(--accent); font-size: .86em; }
 @media (hover: none) { .copy-code { opacity: 1; } }
 @media (max-width: 640px) { .prev-next { grid-template-columns: 1fr; } .prev-next__card--next { text-align: left; } .heading-anchor { right: 100%; } }
