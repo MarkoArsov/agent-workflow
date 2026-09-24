@@ -20,8 +20,8 @@ extra_javascript:
   - assets/js/site.js
   - assets/js/search.js
 extra:
-  brand: stageway ai
-  asset_version: stageway-2
+  brand: stageway
+  asset_version: stageway-3
 markdown_extensions:
   - admonition
   - attr_list
