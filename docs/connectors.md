@@ -1,7 +1,7 @@
 ---
 title: Connectors
 description: Declare external capabilities and use them with explicit authorization.
-question: How does Stagecoach reach trackers and other services?
+question: How does Stageway reach trackers and other services?
 ---
 
 # Connectors
@@ -29,7 +29,7 @@ Declare capabilities and availability instead of assuming one universal tool nam
 }
 ~~~
 
-Place the declaration under `.agent-workflow/connectors/`.
+Place the declaration under `.stageway/connectors/`.
 The availability entries are your verified configuration, not an automatic discovery guarantee.
 A connector that works in an interactive host may be absent in its headless CLI.
 

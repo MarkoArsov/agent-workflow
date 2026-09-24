@@ -1,7 +1,7 @@
 ---
 title: Checkpoint scorecard
-description: Stagecoach measured against 36 verification checkpoints, gaps included.
-question: What does Stagecoach cover, and what is still open?
+description: Stageway measured against 36 verification checkpoints, gaps included.
+question: What does Stageway cover, and what is still open?
 footer: reference
 footer_order: 3
 ---
@@ -14,7 +14,7 @@ footer_order: 3
     - The largest gaps are operating-system isolation, network egress, and scoped credentials. See the [open frontier](#the-open-frontier).
     - Every row cites the files that implement it, and the build checks that those files exist.
 
-Most tools tell you they're safe. Stagecoach publishes the scorecard: what the runner enforces, what's partial, what belongs to your organization, and what's still open.
+Most tools tell you they're safe. Stageway publishes the scorecard: what the runner enforces, what's partial, what belongs to your organization, and what's still open.
 
 <!-- scorecard: grid -->
 
@@ -37,7 +37,7 @@ Most tools tell you they're safe. Stagecoach publishes the scorecard: what the r
 
 ## Beyond the rubric
 
-Some controls matter precisely because agent execution is stateful, fallible, and easy to misrepresent. The rubric doesn't name them, but Stagecoach relies on them.
+Some controls matter precisely because agent execution is stateful, fallible, and easy to misrepresent. The rubric doesn't name them, but Stageway relies on them.
 
 <!-- scorecard: beyond -->
 

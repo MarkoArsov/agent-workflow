@@ -1,10 +1,10 @@
 /* Guide-page components: question lead, one-minute summary, checkpoint views, and diagrams. */
 .prose .page-question { margin: calc(var(--space-2) * -1) 0 var(--space-6); color: var(--text-muted); font-size: 1.125rem; line-height: 1.6; }
-.prose .admonition.summary { margin: 0 0 var(--space-8); padding: var(--space-4) var(--space-5); border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border)); border-left: 3px solid var(--accent); border-radius: var(--radius-panel); background: var(--tint); }
+.prose .admonition.summary { margin: 0 0 var(--space-8); padding: var(--space-4) var(--space-5); border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border)); border-radius: var(--radius-panel); background: var(--tint); }
 .prose .admonition.summary .admonition-title { margin-bottom: var(--space-2); color: var(--accent); font: 500 .75rem/1.4 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; }
 .prose .admonition.summary ul { margin: 0; padding-left: 1.1rem; }
 .prose .admonition.summary li + li { margin-top: var(--space-1); }
-.prose .admonition.note, .prose .admonition.tip, .prose .admonition.info { border-left-color: var(--border-strong); background: var(--surface-sunken); }
+.prose .admonition.note, .prose .admonition.tip, .prose .admonition.info { border-color: var(--border); background: var(--surface-sunken); }
 .prose .code-label { margin: var(--space-5) 0 calc(var(--space-5) * -1 + 6px); color: var(--text-muted); font: 500 .6875rem/1.4 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; }
 
 /* Status palette. */

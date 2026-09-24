@@ -20,8 +20,8 @@ def project_files(root: Path, profile: dict) -> dict[str, str]:
             locations.append(prefix / ".claude/skills")
     for location in locations:
         for name, info in skills.items():
-            entry = location / ("aw-" + name)
-            text = f"---\nname: aw-{name}\ndescription: {json.dumps(info['description'])}\n---\n\nRun this skill folder's scripts/dispatch.py with the current project as its working directory. Read the returned effective skill file, then follow its procedure. Project overrides take precedence. Do not use defaults from another project.\n"
+            entry = location / ("sw-" + name)
+            text = f"---\nname: sw-{name}\ndescription: {json.dumps(info['description'])}\n---\n\nRun this skill folder's scripts/dispatch.py with the current project as its working directory. Read the returned effective skill file, then follow its procedure. Project overrides take precedence. Do not use defaults from another project.\n"
             files[(entry / "SKILL.md").as_posix()] = text
             files[(entry / "scripts/dispatch.py").as_posix()] = template.replace("SKILL_NAME = None", f"SKILL_NAME = {name!r}")
     return files

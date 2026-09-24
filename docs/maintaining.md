@@ -28,9 +28,9 @@ Don't fix the same problem in several places unless those places have different 
 | Change | Where it belongs |
 |---|---|
 | A fact everyone working in the project needs | `PROJECT_WORKFLOW.md` and your native instructions (`AGENTS.md`, `CLAUDE.md`), outside the managed block |
-| One command's behavior | A project skill override: `agent-workflow skill copy NAME` |
-| A new command | A new project skill: `agent-workflow skill new NAME` |
-| Detailed guidance for one kind of work | `.agent-workflow/references/`, named by the plans that need it |
+| One command's behavior | A project skill override: `stageway skill copy NAME` |
+| A new command | A new project skill: `stageway skill new NAME` |
+| Detailed guidance for one kind of work | `.stageway/references/`, named by the plans that need it |
 | A check that can be enforced mechanically | A blocking rule, or a custom stage with completion checks |
 | One task's scope | That task's plan: a complete revision, then `resume --rebind` |
 | Repositories, commands, routes, or permissions | Setup: re-run it, review the proposal, apply by digest |
@@ -39,11 +39,11 @@ Don't fix the same problem in several places unless those places have different 
 ## A safe way to make a change
 
 1. **Describe** the recurring problem in plain language.
-2. **Find** the file that already owns that part of the workflow. `agent-workflow inspect` and `skill resolve` show the effective sources.
+2. **Find** the file that already owns that part of the workflow. `stageway inspect` and `skill resolve` show the effective sources.
 3. **Change** only what is needed to solve the problem.
 4. **Document** it where people will look, so the change is discoverable.
 5. **Test** it at the level where it runs: a rule against compliant and violating examples, a skill with a small task, a stage with a dry run.
-6. **Refresh** host discovery with `agent-workflow refresh` if you added or renamed skills, and apply the reviewed proposal.
+6. **Refresh** host discovery with `stageway refresh` if you added or renamed skills, and apply the reviewed proposal.
 7. **Ask** whether the workflow is now clearer and safer. If not, reconsider.
 
 A running task snapshots its configuration, so your change affects the next run. An active run continues with what it bound, until a reviewed `resume --rebind`.
@@ -58,7 +58,7 @@ Use `add-rule` when the same issue keeps appearing. It helps choose the honest l
 | The signal is useful but exceptions are legitimate | An **advisory** rule, recorded with the evidence |
 | It needs human judgement | A **prose** rule: short, scoped guidance |
 
-Keep rules as narrow as possible, by path and repository. Record new examples with `agent-workflow rule record RULE --detail "…"`; at the rule's `review_after` threshold, you get a proposal for a corrective review, never an automatic promotion to blocking.
+Keep rules as narrow as possible, by path and repository. Record new examples with `stageway rule record RULE --detail "…"`; at the rule's `review_after` threshold, you get a proposal for a corrective review, never an automatic promotion to blocking.
 See [rules and references](rules.md).
 
 ## Adding or changing a skill

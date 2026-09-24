@@ -10,7 +10,7 @@ import tempfile
 from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "runtime"))
-from agent_workflow.install import files_in
+from stageway.install import files_in
 
 def main():
     results = []
@@ -45,12 +45,12 @@ def main():
             run("plugin strict validation", ["claude", "plugin", "validate", "--strict", str(source / ".claude-plugin/plugin.json")])
             added = run("local marketplace add", ["claude", "plugin", "marketplace", "add", str(source)])
             if added:
-                installed = run("native install", ["claude", "plugin", "install", "agent-workflow@agent-workflow", "--scope", "user"])
+                installed = run("native install", ["claude", "plugin", "install", "stageway@stageway", "--scope", "user"])
                 if installed:
                     run("native list", ["claude", "plugin", "list", "--json"])
-                    run("native details", ["claude", "plugin", "details", "agent-workflow@agent-workflow"])
-                    run("native update", ["claude", "plugin", "update", "agent-workflow@agent-workflow", "--scope", "user"])
-                    run("native uninstall", ["claude", "plugin", "uninstall", "agent-workflow@agent-workflow", "--scope", "user"])
+                    run("native details", ["claude", "plugin", "details", "stageway@stageway"])
+                    run("native update", ["claude", "plugin", "update", "stageway@stageway", "--scope", "user"])
+                    run("native uninstall", ["claude", "plugin", "uninstall", "stageway@stageway", "--scope", "user"])
         print(json.dumps(results, indent=2))
     return 1 if any(row["exit_code"] not in (0, None) for row in results) else 0
 

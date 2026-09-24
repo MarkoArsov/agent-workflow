@@ -11,7 +11,7 @@ footer_order: 5
 !!! summary "In one minute"
     - Start with `specify`. Then `implement` for a small change, or `implement-pipeline` for the full run.
     - The other 34 skills are for focused work, review, delivery, recovery, and maintenance.
-    - Standalone installs invoke **aw-NAME**; the native Claude plugin uses **agent-workflow:NAME**.
+    - Standalone installs invoke **sw-NAME**; the native Claude plugin uses **stageway:NAME**.
     - Project overrides take precedence in direct invocation and in runner stages.
 
 ## Fast lookup
@@ -168,7 +168,7 @@ Detect repositories and conventions, confirm missing choices, and configure a cu
 
 Use this for a new project, a changed repository layout, or a deliberate update to workflow preferences. The project can be a single repository or a non-Git folder containing several repositories.
 
-1. Locate the bundled bin/agent-workflow launcher relative to this skill's package. Run its setup command for the intended project root. It reads facts and prints a proposal; it does not apply changes.
+1. Locate the bundled bin/stageway launcher relative to this skill's package. Run its setup command for the intended project root. It reads facts and prints a proposal; it does not apply changes.
 2. Read existing project instructions. Explain detected repositories, roles, commands, branch/worktree conventions, delivery, and integrations, citing the detector's evidence. Distinguish findings from suggestions.
 3. Ask only for missing consequential choices. Repository roles do not prove branch policies. Confirm which repositories participate always, when changed, or never; an unchanged E2E repo may supply checks without getting a task branch.
 4. Confirm agents, exact model routes and approved fallbacks. Trusted execution is the offered default; explain that it uses provider permission-bypass flags. Restricted execution is available where the selected provider supports it. Save the choice once.

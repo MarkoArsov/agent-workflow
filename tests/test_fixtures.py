@@ -5,8 +5,8 @@ import shutil
 import subprocess
 import sys
 from tests.helpers import PACKAGE, WorkspaceTest
-from agent_workflow.project import resolve
-from agent_workflow.setup import propose
+from stageway.project import resolve
+from stageway.setup import propose
 
 class ExecutableFixtureTests(WorkspaceTest):
     def fixture(self, name, source):

@@ -1,5 +1,5 @@
-[tool.agent-workflow]
-name = "agent-workflow"
+[tool.stageway]
+name = "stageway"
 version = "0.1.0"
 description = "A configurable development workflow for coding agents."
 requires-python = ">=3.11"

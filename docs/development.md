@@ -1,13 +1,13 @@
 ---
 title: Contribute and develop
-description: Contribute to Stagecoach, run its checks, and change a public contract safely.
-question: How do I contribute to Stagecoach?
+description: Contribute to Stageway, run its checks, and change a public contract safely.
+question: How do I contribute to Stageway?
 ---
 
 # Contribute and develop
 
 !!! summary "In one minute"
-    - Stagecoach is MIT-licensed and developed in the open. Contributions are welcome.
+    - Stageway is MIT-licensed and developed in the open. Contributions are welcome.
     - Runtime code is Python 3.11+ with the standard library only, and no new dependencies without a concrete need.
     - A good change comes with tests for its behavior and failure modes, and keeps schemas, validation, skills, and docs aligned.
     - Run the same checks CI runs before you open a pull request.

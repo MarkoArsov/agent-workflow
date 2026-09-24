@@ -11,7 +11,7 @@ from .profile import validate
 from .util import WorkflowError, atomic_write, contained, digest, file_hash, json_text, read_json, write_json
 
 MISSING = object()
-BEGIN, END = "<!-- agent-workflow:start -->", "<!-- agent-workflow:end -->"
+BEGIN, END = "<!-- stageway:start -->", "<!-- stageway:end -->"
 
 def merge(base, current, detected, path="", resolutions=None):
     resolutions = resolutions or {}
@@ -69,18 +69,18 @@ def managed(existing: str, block: str) -> str:
 
 def generated(root: Path, profile: dict) -> dict[str, str]:
     rows = "\n".join(f"- {r['id']}: {r['path']}; {', '.join(r['roles'])}; {r['checkout_strategy']}; participate {r['task_policy']}." for r in profile["repositories"])
-    guidance = f"# Project workflow\n\n{rows}\n\nPlans: {profile['planning']['directory']}/<task>/.\nExecution: {profile['execution']['permission_mode']}. Tracker: {profile['tracking']['provider']}.\nProject skills, rules, and connectors live under .agent-workflow/.\nResolve this project's profile before using workflow defaults. Native instructions and explicit user requests take precedence."
+    guidance = f"# Project workflow\n\n{rows}\n\nPlans: {profile['planning']['directory']}/<task>/.\nExecution: {profile['execution']['permission_mode']}. Tracker: {profile['tracking']['provider']}.\nProject skills, rules, and connectors live under .stageway/.\nResolve this project's profile before using workflow defaults. Native instructions and explicit user requests take precedence."
     result = {
-        ".agent-workflow/project.json": json_text(profile),
-        ".agent-workflow/package-lock.json": json_text({"version": profile["package"]["version"]}),
+        ".stageway/project.json": json_text(profile),
+        ".stageway/package-lock.json": json_text({"version": profile["package"]["version"]}),
         "PROJECT_WORKFLOW.md": managed((root / "PROJECT_WORKFLOW.md").read_text() if (root / "PROJECT_WORKFLOW.md").exists() else "", guidance),
-        ".gitignore": managed((root / ".gitignore").read_text() if (root / ".gitignore").exists() else "", ".agent-workflow/local/\n.agent-workflow/runtime/"),
+        ".gitignore": managed((root / ".gitignore").read_text() if (root / ".gitignore").exists() else "", ".stageway/local/\n.stageway/runtime/"),
     }
     for repo in profile["repositories"]:
         path = contained(root, repo["path"])
         relative = path.relative_to(root)
         if path != root:
-            result[(relative / ".agent-workflow/project-ref.json").as_posix()] = json_text({"root": os.path.relpath(root, path)})
+            result[(relative / ".stageway/project-ref.json").as_posix()] = json_text({"root": os.path.relpath(root, path)})
         for name in ("AGENTS.md", "CLAUDE.md"):
             destination = path / name
             old = destination.read_text() if destination.exists() else ""
@@ -92,8 +92,8 @@ def propose(root: Path, answers: dict | None = None) -> dict:
     answers = answers or {}
     detected = scan(root)
     root = Path(detected["root"])
-    baseline = read_json(root / ".agent-workflow/local/setup-baseline.json", {})
-    current = read_json(root / ".agent-workflow/project.json", MISSING)
+    baseline = read_json(root / ".stageway/local/setup-baseline.json", {})
+    current = read_json(root / ".stageway/project.json", MISSING)
     if current is MISSING:
         profile, conflicts = detected["profile"], []
     else:
@@ -110,9 +110,9 @@ def propose(root: Path, answers: dict | None = None) -> dict:
     for relative, desired in files.items():
         destination = contained(root, relative, allow_root=False)
         old = destination.read_text() if destination.is_file() else None
-        if old is not None and relative not in baseline_files and "/skills/aw-" in relative and old != desired:
+        if old is not None and relative not in baseline_files and "/skills/sw-" in relative and old != desired:
             conflicts.append({"path": "/files/" + relative, "reason": "Existing unowned discovery entry; move it or select a different namespace"})
-        if relative == ".agent-workflow/project.json" and current is not MISSING and profile == current:
+        if relative == ".stageway/project.json" and current is not MISSING and profile == current:
             desired = old
         elif old is not None and relative in baseline_files and old != baseline_files[relative] and old != desired:
             if BEGIN in desired and BEGIN in old:
@@ -122,14 +122,14 @@ def propose(root: Path, answers: dict | None = None) -> dict:
                 if old_block != base_block:
                     if answers.get("resolutions", {}).get("/files/" + relative) != "detected":
                         desired = old
-            elif relative != ".agent-workflow/project.json":
+            elif relative != ".stageway/project.json":
                 desired = old
         files[relative] = desired
         if old != desired:
             changes.append({"path": relative, "before": file_hash(destination), "content": desired,
                             "diff": "".join(difflib.unified_diff((old or "").splitlines(True), desired.splitlines(True), fromfile=relative, tofile=relative))})
     for relative, old_generated in baseline_files.items():
-        if relative in files or "/skills/aw-" not in relative:
+        if relative in files or "/skills/sw-" not in relative:
             continue
         destination = contained(root, relative, allow_root=False)
         if destination.is_file() and destination.read_text() == old_generated:
@@ -138,7 +138,7 @@ def propose(root: Path, answers: dict | None = None) -> dict:
     proposal = {"schema_version": 1, "root": str(root), "profile": profile, "findings": detected["findings"],
                 "questions": [] if answers.get("confirmed_defaults") or current is not MISSING else detected["questions"],
                 "conflicts": conflicts, "changes": changes, "baseline": {"profile": detected["profile"], "files": generation_base},
-                "baseline_before": file_hash(root / ".agent-workflow/local/setup-baseline.json")}
+                "baseline_before": file_hash(root / ".stageway/local/setup-baseline.json")}
     proposal["approval"] = digest(json_text(proposal))
     return proposal
 
@@ -150,7 +150,7 @@ def apply(proposal: dict, approval: str) -> dict:
         raise WorkflowError("Resolve setup questions/conflicts and generate a new proposal first")
     root = Path(proposal["root"]).resolve()
     validate(proposal["profile"], root)
-    baseline_path = root / ".agent-workflow/local/setup-baseline.json"
+    baseline_path = root / ".stageway/local/setup-baseline.json"
     if file_hash(baseline_path) != proposal.get("baseline_before"):
         raise WorkflowError("Setup state changed since preview; generate a new proposal")
     paths = []

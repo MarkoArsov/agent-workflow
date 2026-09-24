@@ -44,9 +44,9 @@ Both service and check repositories must participate in the plan.
 Read-only companion repositories stay unchanged.
 
 ~~~sh
-agent-workflow verify ai-plans/task-name/pipeline.json --phase green
-agent-workflow environment status local-app
-agent-workflow environment release local-app
+stageway verify ai-plans/task-name/pipeline.json --phase green
+stageway environment status local-app
+stageway environment release local-app
 ~~~
 
 Release asks the owning process to stop its services. It does not kill a saved PID.

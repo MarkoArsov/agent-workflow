@@ -1,6 +1,6 @@
 from __future__ import annotations
 from tests.helpers import WorkspaceTest
-from agent_workflow.detect import scan
+from stageway.detect import scan
 
 class DetectorTests(WorkspaceTest):
     def test_stack_and_branch_detection_uses_static_repository_facts(self):

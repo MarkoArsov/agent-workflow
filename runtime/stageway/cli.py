@@ -12,7 +12,7 @@ def context(args):
     return resolve(Path(args.project or "."))
 
 def parser():
-    p = argparse.ArgumentParser(prog="agent-workflow", description="One workflow, customized for each project.")
+    p = argparse.ArgumentParser(prog="stageway", description="One workflow, customized for each project.")
     p.add_argument("--version", action="version", version=__version__)
     p.add_argument("--project", help="Configured project root; defaults to the current location")
     sub = p.add_subparsers(dest="command", required=True)
@@ -86,7 +86,7 @@ def execute(args):
             verb = {"update": "update", "uninstall": "uninstall", "doctor": "list"}[args.command]
             argv = ["claude", "plugin", verb]
             if verb != "list":
-                argv += ["agent-workflow@agent-workflow", "--scope", "user" if args.global_install else "project"]
+                argv += ["stageway@stageway", "--scope", "user" if args.global_install else "project"]
             if args.dry_run:
                 return {"argv": argv, "cwd": str(args.target or Path.cwd())}
             return {"output": run(argv, args.target or Path.cwd()).stdout}

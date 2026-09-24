@@ -1,5 +1,5 @@
 from tests.helpers import WorkspaceTest
-from agent_workflow.verification import parse
+from stageway.verification import parse
 
 class VerificationTests(WorkspaceTest):
     def test_unittest_red_requires_identity_and_assertion_not_setup(self):
