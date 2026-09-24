@@ -11,11 +11,11 @@
     <meta property="og:site_name" content="{{ config.site_name }}">
     <meta property="og:title" content="{% if page and page.title %}{{ page.title }} · {% endif %}{{ config.site_name }}">
     <meta property="og:description" content="{{ description }}">
-    <meta property="og:image" content="{{ config.site_url }}assets/brand/og.png">
+    <meta property="og:image" content="{{ config.site_url }}assets/brand/og.png?v={{ config.extra.asset_version }}">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="{% if page and page.title %}{{ page.title }} · {% endif %}{{ config.site_name }}">
     <meta name="twitter:description" content="{{ description }}">
-    <meta name="twitter:image" content="{{ config.site_url }}assets/brand/og.png">
+    <meta name="twitter:image" content="{{ config.site_url }}assets/brand/og.png?v={{ config.extra.asset_version }}">
     <link rel="icon" href="{{ 'assets/brand/favicon.svg' | url }}?v={{ config.extra.asset_version }}" type="image/svg+xml">
     <link rel="apple-touch-icon" href="{{ 'assets/brand/apple-touch-icon.png' | url }}?v={{ config.extra.asset_version }}">
     <link rel="preload" href="{{ 'assets/fonts/IBMPlexSans-Regular-Latin1.woff2' | url }}" as="font" type="font/woff2" crossorigin>
