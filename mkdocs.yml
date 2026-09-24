@@ -10,14 +10,14 @@ theme:
   search_index_only: true
   custom_dir: templates/site
 extra_css:
-  - assets/css/tokens.css?v=stagecoach-1
-  - assets/css/base.css?v=stagecoach-1
-  - assets/css/layout.css?v=stagecoach-1
-  - assets/css/components.css?v=stagecoach-1
-  - assets/css/home.css?v=stagecoach-1
+  - assets/css/tokens.css
+  - assets/css/base.css
+  - assets/css/layout.css
+  - assets/css/components.css
+  - assets/css/home.css
 extra_javascript:
-  - assets/js/site.js?v=stagecoach-1
-  - assets/js/search.js?v=stagecoach-1
+  - assets/js/site.js
+  - assets/js/search.js
 extra:
   asset_version: stagecoach-1
 markdown_extensions:

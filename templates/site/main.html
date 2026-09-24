@@ -20,7 +20,7 @@
     <link rel="apple-touch-icon" href="{{ 'assets/brand/apple-touch-icon.png' | url }}">
     <link rel="preload" href="{{ 'assets/fonts/IBMPlexSans-Regular-Latin1.woff2' | url }}" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="{{ 'assets/fonts/IBMPlexMono-Regular-Latin1.woff2' | url }}" as="font" type="font/woff2" crossorigin>
-    {% for path in config.extra_css %}<link rel="stylesheet" href="{{ path | url }}">{% endfor %}
+    {% for path in config.extra_css %}<link rel="stylesheet" href="{{ path | url }}?v={{ config.extra.asset_version }}">{% endfor %}
   </head>
   <body data-page-url="{{ page.url if page else '' }}"{% if page and page.file.src_uri == 'index.md' %} data-page-home="true"{% endif %}>
     <a class="skip-link" href="#main-content">Skip to content</a>
@@ -33,6 +33,6 @@
     {% endblock %}
     {% include "partials/footer.html" %}
     {% include "partials/search.html" %}
-    {% for path in config.extra_javascript %}<script src="{{ path | url }}" defer></script>{% endfor %}
+    {% for path in config.extra_javascript %}<script src="{{ path | url }}?v={{ config.extra.asset_version }}" defer></script>{% endfor %}
   </body>
 </html>

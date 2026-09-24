@@ -1,5 +1,5 @@
 ---
-description: Install the agent-workflow CLI globally or inside a project.
+description: Install Stagecoach globally or inside a project.
 footer: docs
 ---
 
@@ -7,6 +7,8 @@ footer: docs
 
 You need Python 3.11+, Git, and at least one authenticated agent CLI: Claude Code, Codex, or Cursor.
 GitHub delivery also uses `gh`. The runtime has no Python package dependencies.
+
+The CLI and package are still named `agent-workflow` while the rename is in progress.
 
 macOS and Linux use the same installer. Use WSL on Windows; native Windows is not yet supported.
 
@@ -30,7 +32,7 @@ curl -fsSL https://raw.githubusercontent.com/MarkoArsov/agent-workflow/v0.1.0/in
 ~~~
 
 These URLs require the matching published tag. Review the pinned script before running it if that is your normal installation policy.
-The bootstrap checks archive paths and staged payload integrity; it does not provide an independent publisher signature.
+The installer checks archive paths and staged payload integrity; it does not provide an independent publisher signature.
 
 ## From a checkout
 
