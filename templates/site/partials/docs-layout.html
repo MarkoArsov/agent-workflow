@@ -1,4 +1,25 @@
-<article class="content-column prose">
-  <p class="section-label">{{ page.parent.title|lower if page and page.parent else 'docs' }}</p>
-  {{ page.content }}
-</article>
+{% set toc_items = page.toc.items[0].children if page.toc.items and page.toc.items[0].level == 1 else page.toc.items %}
+<div class="docs-grid">
+  <aside class="docs-sidebar" aria-label="Documentation navigation">
+    {% include "partials/sidebar.html" %}
+  </aside>
+  <div class="docs-main">
+    {% if toc_items|length > 1 %}
+      <details class="compact-toc">
+        <summary>On this page</summary>
+        {% include "partials/toc.html" %}
+      </details>
+    {% endif %}
+    <article class="content-column prose">
+      <p class="section-label">{{ page.parent.title|lower if page and page.parent else 'docs' }}</p>
+      {{ page.content }}
+      {% include "partials/prev-next.html" %}
+    </article>
+  </div>
+  {% if toc_items|length > 1 %}
+    <aside class="page-toc" aria-label="On this page" data-page-toc>
+      <p class="page-toc__title">On this page</p>
+      {% include "partials/toc.html" %}
+    </aside>
+  {% endif %}
+</div>

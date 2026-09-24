@@ -1,3 +1,7 @@
+---
+description: Review changes and complete the delivery steps selected for a task.
+---
+
 # Review and delivery
 
 **review** starts from requirements and the actual diff.

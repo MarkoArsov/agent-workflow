@@ -1,3 +1,7 @@
+---
+description: Declare external capabilities and use them with explicit authorization.
+---
+
 # Connectors
 
 GitHub uses the authenticated `gh` CLI.

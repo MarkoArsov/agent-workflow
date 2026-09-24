@@ -1,3 +1,7 @@
+---
+description: Define owned test services with readiness checks and safe cleanup.
+---
+
 # Disposable test environments
 
 A named environment starts owned services, waits for observed readiness, exports connection details to checks, and cleans up even on failure.

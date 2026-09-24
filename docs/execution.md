@@ -1,3 +1,7 @@
+---
+description: Configure commands, permissions, and provider routes for checked work.
+---
+
 # Commands and permissions
 
 Commands use argument arrays, a repository-relative working directory, and a bounded timeout.

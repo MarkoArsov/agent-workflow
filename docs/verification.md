@@ -1,3 +1,7 @@
+---
+description: Understand red and green evidence, current artifacts, and task checks.
+---
+
 # Evidence and checks
 
 A successful agent response is a proposal to complete the stage.

@@ -1,3 +1,7 @@
+---
+description: Create project-owned skill overrides, skills, and custom stages.
+---
+
 # Skills and stages
 
 Each project can change its workflow without affecting another project.

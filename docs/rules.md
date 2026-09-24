@@ -1,3 +1,7 @@
+---
+description: Add scoped project conventions and bring relevant guidance into tasks.
+---
+
 # Rules and references
 
 Rules live in the configured project rule directory. Give each rule a stable ID, useful guidance, and relevant paths.

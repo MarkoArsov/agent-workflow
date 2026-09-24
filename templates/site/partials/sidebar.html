@@ -1,0 +1,16 @@
+<nav class="sidebar-nav">
+  {% for section in nav %}
+    {% if section.children %}
+      <section class="sidebar-group" aria-labelledby="sidebar-section-{{ loop.index }}">
+        <p id="sidebar-section-{{ loop.index }}">{{ section.title }}</p>
+        <ul>
+          {% for item in section.children %}
+            {% if item.is_page %}
+              <li><a href="{{ item.url | url }}"{% if item.active %} aria-current="page"{% endif %}>{{ item.title }}</a></li>
+            {% endif %}
+          {% endfor %}
+        </ul>
+      </section>
+    {% endif %}
+  {% endfor %}
+</nav>

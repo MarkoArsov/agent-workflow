@@ -1,3 +1,7 @@
+---
+description: Prepare and publish a reviewed release of the package.
+---
+
 # Publish a release
 
 Publication is a separate maintainer action after local verification.

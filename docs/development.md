@@ -1,3 +1,7 @@
+---
+description: Build, test, and update the standalone agent-workflow package.
+---
+
 # Develop the workflow
 
 Python 3.11+ runs the installer, runtime, and tests with the standard library.

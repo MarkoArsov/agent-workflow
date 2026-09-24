@@ -1,3 +1,8 @@
+---
+description: Choose a task lane, define a plan, and run the checked workflow.
+footer: docs
+---
+
 # Task lifecycle
 
 ## Choose a lane

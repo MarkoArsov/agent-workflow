@@ -1,0 +1,8 @@
+{% macro render(items) -%}
+  <ul>
+  {%- for item in items %}
+    <li class="toc-level-{{ item.level }}"><a href="{{ item.url }}">{{ item.title }}</a>{% if item.children %}{{ render(item.children) }}{% endif %}</li>
+  {%- endfor %}
+  </ul>
+{%- endmacro %}
+{{ render(toc_items) }}

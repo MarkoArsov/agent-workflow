@@ -1,3 +1,8 @@
+---
+template: home.html
+description: A project-owned workflow that moves coding-agent tasks through checked stages.
+---
+
 <div class="hero">
 <p class="eyebrow">OPEN SOURCE · PROJECT OWNED · MIT</p>
 <h1>Your workflow.<br>Every project. Verified.</h1>

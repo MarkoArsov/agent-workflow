@@ -12,3 +12,37 @@
 .search-dialog__status { margin: var(--space-4); color: var(--text-muted); font-size: .875rem; }
 .search-results { margin: 0; padding: 0 var(--space-2) var(--space-2); list-style: none; }
 .search-results:empty { display: none; }
+.search-result { display: block; padding: var(--space-3); border-radius: var(--radius-item); color: var(--text); text-decoration: none; }
+.search-result:hover, .search-result:focus { background: var(--tint); }
+.search-result span, .search-result small { display: block; }
+.search-result span { font-size: .9375rem; font-weight: 500; }
+.search-result small { margin-top: 2px; color: var(--text-muted); font-size: .8125rem; line-height: 1.45; }
+mark { padding: 0; background: transparent; color: var(--accent); font-weight: 600; }
+.prose { min-width: 0; }
+.prose h1 { scroll-margin-top: calc(var(--header-h) + 16px); }
+.prose h2, .prose h3 { position: relative; scroll-margin-top: calc(var(--header-h) + 16px); }
+.prose h1 + p { color: var(--text-muted); font-size: 1.125rem; line-height: 1.65; }
+.heading-anchor { position: absolute; right: calc(100% + 8px); color: var(--text-muted); font-family: var(--font-mono); font-size: .85em; font-weight: 400; opacity: 0; text-decoration: none; transition: opacity var(--duration-fast) var(--ease-out); }
+.prose h2:hover .heading-anchor, .prose h3:hover .heading-anchor, .heading-anchor:focus { opacity: 1; }
+.prose pre { position: relative; margin: var(--space-5) 0; padding: var(--space-5); overflow: auto; border: 1px solid var(--border); border-radius: var(--radius-panel); background: var(--surface-sunken); color: var(--text); font-size: .875rem; line-height: 1.65; }
+.prose pre code { color: inherit; font-size: inherit; overflow-wrap: normal; white-space: pre; }
+.prose :not(pre) > code { padding: .1em .32em; border-radius: 4px; background: var(--surface-sunken); color: var(--text); font-size: .875em; }
+.copy-code { position: absolute; top: var(--space-2); right: var(--space-2); min-height: 32px; padding: 0 var(--space-2); border: 1px solid var(--border); border-radius: var(--radius-item); background: var(--surface); color: var(--text-muted); font-size: .75rem; opacity: 0; cursor: pointer; transition: opacity var(--duration-fast) var(--ease-out); }
+.prose pre:hover .copy-code, .copy-code:focus { opacity: 1; }
+.copy-code.is-copied { color: var(--signal-green); }
+.table-wrap { width: 100%; margin: var(--space-5) 0; overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius-panel); }
+.prose table { width: 100%; min-width: 540px; border-collapse: collapse; font-size: .9375rem; }
+.prose th { padding: var(--space-3) var(--space-4); background: var(--surface-sunken); color: var(--text); font-size: .8125rem; font-weight: 600; text-align: left; }
+.prose td { padding: var(--space-3) var(--space-4); border-top: 1px solid var(--border); vertical-align: top; }
+.prose .admonition { margin: var(--space-6) 0; padding: var(--space-3) var(--space-4); border-left: 3px solid var(--accent); border-radius: 0 var(--radius-item) var(--radius-item) 0; background: var(--tint); }
+.prose .admonition-title { margin: 0 0 var(--space-1); color: var(--text); font-weight: 600; }
+.prose .admonition.warning, .prose .admonition.danger { border-left-color: var(--signal-red); background: color-mix(in srgb, var(--signal-red) 7%, var(--surface)); }
+.prev-next { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); margin-top: var(--space-12); }
+.prev-next__card { display: flex; min-height: 86px; flex-direction: column; justify-content: center; padding: var(--space-3) var(--space-4); border: 1px solid var(--border); border-radius: var(--radius-panel); color: var(--text); text-decoration: none; }
+.prev-next__card:hover { border-color: var(--border-strong); background: var(--surface); color: var(--accent); }
+.prev-next__card--next { text-align: right; }
+.prev-next__card span { color: var(--text-muted); font-size: .75rem; }
+.prev-next__card strong { margin-top: 2px; font-size: .9375rem; }
+.edit-page { margin-top: var(--space-6); font-size: .875rem; }
+@media (hover: none) { .copy-code { opacity: 1; } }
+@media (max-width: 640px) { .prev-next { grid-template-columns: 1fr; } .prev-next__card--next { text-align: left; } .heading-anchor { right: 100%; } }

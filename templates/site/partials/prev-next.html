@@ -1,0 +1,11 @@
+<nav class="prev-next" aria-label="Page navigation">
+  {% if page.previous_page %}
+    <a class="prev-next__card" href="{{ page.previous_page.url | url }}"><span>Previous · {{ page.previous_page.parent.title if page.previous_page.parent else 'Docs' }}</span><strong>{{ page.previous_page.title }}</strong></a>
+  {% endif %}
+  {% if page.next_page %}
+    <a class="prev-next__card prev-next__card--next" href="{{ page.next_page.url | url }}"><span>Next · {{ page.next_page.parent.title if page.next_page.parent else 'Docs' }}</span><strong>{{ page.next_page.title }}</strong></a>
+  {% endif %}
+</nav>
+{% if page.edit_url and not page.file.src_uri.startswith('generated/') %}
+<p class="edit-page"><a href="{{ page.edit_url }}">Edit this page on GitHub</a></p>
+{% endif %}

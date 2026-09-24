@@ -1,3 +1,8 @@
+---
+description: Install the agent-workflow CLI globally or inside a project.
+footer: docs
+---
+
 # Install
 
 You need Python 3.11+, Git, and at least one authenticated agent CLI: Claude Code, Codex, or Cursor.

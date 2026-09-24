@@ -1,3 +1,8 @@
+---
+description: Reference the project profile that records workflow configuration.
+footer: reference
+---
+
 # Profile reference
 
 The authoritative file is `.agent-workflow/project.json`.

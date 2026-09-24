@@ -7,6 +7,7 @@
   let opener = null;
   let index = null;
   let active = -1;
+  const root = new URL(document.querySelector('meta[name="site-root"]')?.content || '/', document.baseURI);
   const open = (trigger) => { opener = trigger || document.activeElement; dialog.hidden = false; document.body.style.overflow = 'hidden'; input.focus(); };
   const close = () => { dialog.hidden = true; document.body.style.overflow = ''; if (opener && opener.focus) opener.focus(); };
   document.querySelectorAll('[data-search-open]').forEach((button) => button.addEventListener('click', () => open(button)));
@@ -14,13 +15,13 @@
   document.addEventListener('keydown', (event) => {
     const inField = /input|textarea|select/i.test(document.activeElement?.tagName || '');
     if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') { event.preventDefault(); open(document.activeElement); }
-    if (!inField && !dialog.hidden && event.key === 'Escape') close();
+    if (!dialog.hidden && event.key === 'Escape') { event.preventDefault(); close(); }
     if (!inField && dialog.hidden && (event.key === '/' || event.key.toLowerCase() === 's')) { event.preventDefault(); open(document.activeElement); }
   });
   const load = async () => {
     if (index) return index;
     status.textContent = 'Loading search index…';
-    const response = await fetch(new URL('search/search_index.json', document.baseURI));
+    const response = await fetch(new URL('search/search_index.json', root));
     index = (await response.json()).docs || [];
     return index;
   };
@@ -39,7 +40,7 @@
         const text = doc.text.replace(/\s+/g, ' ');
         const found = text.toLowerCase().indexOf(query.toLowerCase());
         const snippet = text.slice(Math.max(0, found - 64), found + query.length + 116);
-        return `<li><a class="search-result" data-search-result href="${escape(new URL(doc.location, document.baseURI).href)}" data-index="${position}"><span>${highlight(doc.title, query)}</span><small>${highlight(snippet, query)}…</small></a></li>`;
+        return `<li><a class="search-result" data-search-result href="${escape(new URL(doc.location, root).href)}" data-index="${position}"><span>${highlight(doc.title, query)}</span><small>${highlight(snippet, query)}…</small></a></li>`;
       }).join('');
     } catch (_) { status.textContent = 'Search is unavailable right now.'; }
   };

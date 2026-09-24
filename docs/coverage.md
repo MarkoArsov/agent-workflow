@@ -1,3 +1,8 @@
+---
+description: See automated coverage, real-host checks, and known limitations.
+footer: reference
+---
+
 # Coverage and host checks
 
 The automated suite uses temporary repositories, bare local remotes, isolated homes/configuration, and labeled provider/connector doubles.

@@ -1,3 +1,7 @@
+---
+description: Inspect paused work, answer a stage, resume safely, or cancel a run.
+---
+
 # Recover a run
 
 Start with `status TASK` and the saved evidence under the configured local evidence directory.

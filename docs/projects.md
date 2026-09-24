@@ -1,3 +1,7 @@
+---
+description: Understand the project-owned files, repositories, and task checkouts.
+---
+
 # Project layout
 
 A project is one Git repository or a parent folder containing registered repositories.

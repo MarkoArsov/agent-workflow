@@ -1,3 +1,8 @@
+---
+description: Configure repositories, agents, checks, and delivery choices for a project.
+footer: docs
+---
+
 # Set up your project
 
 Open the intended repository or multi-repository parent and invoke **aw-project-setup**

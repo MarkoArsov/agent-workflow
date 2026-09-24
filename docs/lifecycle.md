@@ -1,3 +1,7 @@
+---
+description: Update, diagnose, or remove an existing agent-workflow installation.
+---
+
 # Update and remove
 
 Project configuration and extensions belong to you.
