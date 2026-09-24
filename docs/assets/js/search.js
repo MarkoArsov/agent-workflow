@@ -8,6 +8,7 @@
   let index = null;
   let active = -1;
   const root = new URL(document.querySelector('meta[name="site-root"]')?.content || '/', document.baseURI);
+  const focusable = () => [...dialog.querySelectorAll('a, button, input, [tabindex]:not([tabindex="-1"])')].filter((item) => !item.hasAttribute('disabled'));
   const open = (trigger) => { opener = trigger || document.activeElement; dialog.hidden = false; document.body.style.overflow = 'hidden'; input.focus(); };
   const close = () => { dialog.hidden = true; document.body.style.overflow = ''; if (opener && opener.focus) opener.focus(); };
   document.querySelectorAll('[data-search-open]').forEach((button) => button.addEventListener('click', () => open(button)));
@@ -50,5 +51,20 @@
     if (!links.length) return;
     if (event.key === 'ArrowDown' || event.key === 'ArrowUp') { event.preventDefault(); active = (active + (event.key === 'ArrowDown' ? 1 : -1) + links.length) % links.length; links[active].focus(); }
     if (event.key === 'Enter' && active >= 0) links[active].click();
+  });
+  results.addEventListener('keydown', (event) => {
+    const links = [...results.querySelectorAll('[data-search-result]')];
+    const position = links.indexOf(document.activeElement);
+    if (position < 0) return;
+    if (event.key === 'ArrowDown') { event.preventDefault(); links[(position + 1) % links.length]?.focus(); }
+    if (event.key === 'ArrowUp') { event.preventDefault(); (position ? links[position - 1] : input).focus(); }
+  });
+  dialog.addEventListener('keydown', (event) => {
+    if (event.key !== 'Tab') return;
+    const items = focusable();
+    if (!items.length) return;
+    const first = items[0], last = items.at(-1);
+    if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+    if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
   });
 })();

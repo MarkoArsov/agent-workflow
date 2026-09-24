@@ -1,5 +1,5 @@
 ---
-description: Build, test, and update the standalone agent-workflow package.
+description: Build, test, and update the standalone Stagecoach package.
 ---
 
 # Develop the workflow

@@ -1,5 +1,5 @@
 ---
-description: Update, diagnose, or remove an existing agent-workflow installation.
+description: Update, diagnose, or remove an existing Stagecoach installation.
 ---
 
 # Update and remove
@@ -9,7 +9,7 @@ Installed payloads live in separate versioned directories.
 
 ## Update
 
-Use a reviewed release checkout or its pinned bootstrap:
+Use a reviewed release checkout or its pinned installer:
 
 ~~~sh
 agent-workflow update --global --local-source /path/to/release --dry-run

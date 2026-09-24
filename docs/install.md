@@ -1,6 +1,7 @@
 ---
 description: Install Stagecoach globally or inside a project.
 footer: docs
+footer_order: 1
 ---
 
 # Install

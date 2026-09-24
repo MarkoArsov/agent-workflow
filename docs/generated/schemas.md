@@ -1,6 +1,7 @@
 ---
 description: Public configuration schemas for Stagecoach projects and task plans.
 footer: reference
+footer_order: 2
 ---
 
 # Schema reference

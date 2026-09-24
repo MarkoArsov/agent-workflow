@@ -1,6 +1,7 @@
 ---
 description: Choose a task lane, define a plan, and run the checked workflow.
 footer: docs
+footer_order: 3
 ---
 
 # Task lifecycle

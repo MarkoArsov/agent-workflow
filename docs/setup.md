@@ -1,6 +1,7 @@
 ---
 description: Configure repositories, agents, checks, and delivery choices for a project.
 footer: docs
+footer_order: 2
 ---
 
 # Set up your project

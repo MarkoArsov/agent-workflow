@@ -1,6 +1,7 @@
 ---
 description: Reference the project profile that records workflow configuration.
 footer: reference
+footer_order: 1
 ---
 
 # Profile reference

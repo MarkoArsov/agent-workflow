@@ -1,6 +1,7 @@
 ---
 description: Browse project-owned skills and their checked responsibilities.
 footer: docs
+footer_order: 4
 ---
 
 # Skill reference

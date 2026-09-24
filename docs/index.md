@@ -8,6 +8,7 @@ description: A project-owned workflow that moves coding-agent tasks through chec
     <p class="home-kicker">OPEN SOURCE · PROJECT OWNED · MIT</p>
     <h1 id="home-title">Your coding agents,<br>checked at every stage.</h1>
     <p class="home-lead">Stagecoach gives coding agents a project-owned path from a clear plan to checked code. Each runner stage starts fresh, then checks the actual files and command output before it advances.</p>
+    <p class="rename-note">The CLI and package are still named <code>agent-workflow</code> while the rename is in progress.</p>
     <div class="home-actions">
       <a class="button button-primary" href="install/">Install Stagecoach <span aria-hidden="true">→</span></a>
       <a class="button button-secondary" href="#how-it-works">See how it works</a>

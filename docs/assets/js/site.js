@@ -30,6 +30,7 @@
   menus.forEach((menu) => {
     const toggle = menu.querySelector('[data-menu-toggle]');
     const panel = menu.querySelector('[data-menu-panel]');
+    let openTimer = null;
     let closeTimer = null;
     toggle?.addEventListener('click', () => menu.classList.contains('is-open') ? closeMenus() : openMenu(menu));
     toggle?.addEventListener('keydown', (event) => {
@@ -45,11 +46,13 @@
     });
     menu.addEventListener('pointerenter', () => {
       if (!matchMedia('(hover: hover) and (pointer: fine)').matches) return;
-      clearTimeout(closeTimer); window.setTimeout(() => openMenu(menu), 70);
+      clearTimeout(closeTimer);
+      openTimer = window.setTimeout(() => openMenu(menu), 160);
     });
     menu.addEventListener('pointerleave', () => {
       if (!matchMedia('(hover: hover) and (pointer: fine)').matches) return;
-      closeTimer = window.setTimeout(() => closeMenus(), 150);
+      clearTimeout(openTimer);
+      closeTimer = window.setTimeout(() => closeMenus(), 100);
     });
   });
   document.addEventListener('pointerdown', (event) => { if (!event.target.closest('[data-menu]')) closeMenus(); });
@@ -65,11 +68,12 @@
     heading.prepend(link);
   });
 
-  document.querySelectorAll('.prose pre').forEach((block) => {
+  document.querySelectorAll('.prose pre, .install-command pre, .code-card pre, .tree-card pre').forEach((block) => {
     const button = document.createElement('button');
     button.className = 'copy-code';
     button.type = 'button';
     button.textContent = 'Copy';
+    button.setAttribute('aria-live', 'polite');
     button.addEventListener('click', async () => {
       try {
         await navigator.clipboard.writeText(block.querySelector('code')?.textContent || block.textContent || '');

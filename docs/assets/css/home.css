@@ -1,23 +1,27 @@
 .home-shell { padding-bottom: var(--space-16); }
 .home-shell > section { margin: 0 auto; }
 .home-hero { display: grid; grid-template-columns: minmax(0, 1.08fr) minmax(340px, .92fr); gap: clamp(40px, 8vw, 112px); align-items: center; min-height: 640px; padding: clamp(64px, 10vw, 128px) 0 clamp(48px, 8vw, 96px); }
+.home-hero-copy, .run-panel, .code-card, .tree-card { min-width: 0; }
 .home-kicker, .section-label, .install-command > span, .code-card > p, .tree-card > p { font-size: .75rem; font-weight: 500; letter-spacing: .08em; line-height: 1.4; }
 .home-kicker { margin-bottom: var(--space-5); color: var(--accent); }
 .home-hero h1 { max-width: 720px; margin-bottom: var(--space-5); font-size: clamp(2.7rem, 5.4vw, 5.2rem); font-weight: 600; line-height: .98; letter-spacing: -.045em; }
 .home-lead { max-width: 650px; margin-bottom: var(--space-6); color: var(--text-muted); font-size: clamp(1.05rem, 1.5vw, 1.25rem); line-height: 1.65; }
+.rename-note { margin-top: calc(var(--space-5) * -1); margin-bottom: var(--space-6); color: var(--text-muted); font-size: .8125rem; line-height: 1.5; }
+.rename-note code { padding: .08em .3em; border-radius: 4px; background: var(--surface-sunken); color: var(--text); }
 .home-actions { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; }
 .home-actions .button { min-height: 44px; }
 .button-secondary { border-color: var(--border); background: var(--surface); color: var(--text); }
 .button-secondary:hover { border-color: var(--border-strong); background: var(--surface-sunken); color: var(--accent); }
 .install-command { max-width: 650px; margin-top: var(--space-8); padding-top: var(--space-4); border-top: 1px solid var(--border); }
 .install-command > span { display: block; margin-bottom: 6px; color: var(--accent); }
-.install-command pre { margin: 0; overflow-x: auto; color: var(--text); font-size: .75rem; line-height: 1.55; white-space: pre; }
+.install-command pre { position: relative; margin: 0; padding-right: 54px; overflow-x: auto; color: var(--text); font-size: .75rem; line-height: 1.55; white-space: pre; }
+.install-command .copy-code { opacity: 1; }
 .install-command p { margin: 6px 0 0; color: var(--text-muted); font-size: .8125rem; }
 .run-panel { padding: clamp(20px, 3vw, 32px); border: 1px solid var(--border-strong); border-radius: var(--radius-card); background: var(--surface); box-shadow: var(--shadow-pop); }
 .run-panel-top { display: flex; align-items: center; gap: 8px; padding-bottom: var(--space-3); border-bottom: 1px solid var(--border); color: var(--text); font: 500 .8125rem/1.4 var(--font-mono); }
 .run-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--signal-green); box-shadow: 0 0 0 4px color-mix(in srgb, var(--signal-green) 12%, transparent); }
 .run-live { margin-left: auto; color: var(--signal-green); font-size: .6875rem; letter-spacing: .06em; }
-.run-command { margin: var(--space-4) 0; padding: var(--space-3); overflow-x: auto; border-radius: var(--radius-item); background: var(--surface-sunken); color: var(--text); font: 400 .8125rem/1.5 var(--font-mono); white-space: pre; }
+.run-command { min-width: 0; margin: var(--space-4) 0; padding: var(--space-3); overflow-x: auto; border-radius: var(--radius-item); background: var(--surface-sunken); color: var(--text); font: 400 .8125rem/1.5 var(--font-mono); white-space: pre; }
 .run-command span { color: var(--accent); }
 .run-status { display: grid; grid-template-columns: 1fr auto; gap: 2px var(--space-3); padding-bottom: var(--space-4); border-bottom: 1px solid var(--border); font-size: .8125rem; }
 .run-status > span:first-child { color: var(--text-muted); font-family: var(--font-mono); }

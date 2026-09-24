@@ -1,6 +1,7 @@
 ---
 description: See automated coverage, real-host checks, and known limitations.
 footer: reference
+footer_order: 3
 ---
 
 # Coverage and host checks

@@ -14,7 +14,7 @@ Publication is a separate maintainer action after local verification.
 6. Verify installation from the published pinned revision in an isolated environment.
 
 The default site is [MarkoArsov.github.io/agent-workflow](https://MarkoArsov.github.io/agent-workflow/).
-The v0.1.0 bootstrap expects a matching v0.1.0 tag.
+The v0.1.0 installer expects a matching v0.1.0 tag.
 
 ## Custom domain later
 

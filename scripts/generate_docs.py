@@ -39,7 +39,7 @@ def rendered():
     for entry in entries:
         grouped[category_for(entry[0])].append(entry)
     skills = [
-        "---\ndescription: Browse project-owned skills and their checked responsibilities.\nfooter: docs\n---\n",
+        "---\ndescription: Browse project-owned skills and their checked responsibilities.\nfooter: docs\nfooter_order: 4\n---\n",
         "# Skill reference\n",
         "Standalone entry points use **aw-NAME**; Claude's native plugin uses **agent-workflow:NAME**. Project overrides take precedence in direct invocation and runner stages.\n",
         '<div class="skills-filter" data-skills-filter>\n<label for="skills-filter-input">Filter skills</label>\n<input id="skills-filter-input" type="search" placeholder="Try review, test, or worktree" autocomplete="off" data-skills-filter-input>\n<div class="skills-filter__index" aria-label="Skill index">\n',
@@ -54,7 +54,7 @@ def rendered():
             searchable = html.escape(f"{name} {description}", quote=True)
             skills += [f'### `{name}` {{ .skill-entry data-skill="{searchable}" }}\n', description + "\n", body + "\n"]
     schemas = [
-        "---\ndescription: Public configuration schemas for Stagecoach projects and task plans.\nfooter: reference\n---\n",
+        "---\ndescription: Public configuration schemas for Stagecoach projects and task plans.\nfooter: reference\nfooter_order: 2\n---\n",
         "# Schema reference\n",
         "These schemas describe public configuration. Runtime validation also checks repository membership, dependencies, and executable evidence.\n",
     ]
