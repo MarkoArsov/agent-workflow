@@ -1,0 +1,26 @@
+<header class="site-header" data-site-header>
+  <div class="site-header__inner">
+    <a class="brand" href="{{ '' | url }}" aria-label="{{ config.site_name }} overview">
+      <img src="{{ 'assets/brand/mark.svg' | url }}" width="24" height="24" alt="">
+      <span>{{ config.site_name|lower }}</span>
+    </a>
+    <nav class="header-tabs" aria-label="Documentation sections">
+      {% for section in nav %}
+        {% if section.children %}
+          <a class="header-tab{% if section.active %} is-active{% endif %}" href="{{ section.children[0].url | url }}">{{ section.title }}</a>
+        {% endif %}
+      {% endfor %}
+    </nav>
+    <div class="header-actions">
+      <button class="search-trigger" type="button" data-search-open aria-label="Search documentation">
+        <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"></circle><path d="m16 16 4 4"></path></svg><span>Search docs</span><kbd data-key-hint>⌘K</kbd>
+      </button>
+      <a class="github-link" href="{{ config.repo_url }}" aria-label="{{ config.repo_name }} repository">
+        <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 2.5a9.5 9.5 0 0 0-3 18.51c.48.09.65-.2.65-.46v-1.83c-2.66.58-3.22-1.13-3.22-1.13-.43-1.11-1.06-1.4-1.06-1.4-.87-.59.07-.58.07-.58.96.07 1.47.99 1.47.99.86 1.46 2.25 1.04 2.79.79.08-.62.33-1.04.6-1.28-2.12-.24-4.35-1.06-4.35-4.71 0-1.04.37-1.89.98-2.55-.1-.24-.42-1.21.09-2.52 0 0 .8-.26 2.61.97a9.12 9.12 0 0 1 4.75 0c1.81-1.23 2.61-.97 2.61-.97.51 1.31.19 2.28.09 2.52.61.66.98 1.51.98 2.55 0 3.66-2.23 4.46-4.36 4.7.34.3.65.88.65 1.77v2.63c0 .26.17.55.66.46A9.5 9.5 0 0 0 12 2.5Z"></path></svg><span>{{ config.repo_name }}</span>
+      </a>
+      <button class="drawer-trigger" type="button" aria-controls="site-drawer" aria-expanded="false" aria-label="Open documentation menu" data-drawer-open>
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</header>

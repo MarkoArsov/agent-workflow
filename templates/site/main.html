@@ -1,12 +1,36 @@
-{% extends "base.html" %}
-{% block next_prev %}{% endblock %}
-{% block content %}
-{% if page and page.file.src_uri == "index.md" %}
-<div class="col-12 workflow-home" role="main">{{ page.content }}</div>
-{% else %}
-{{ super() }}
-{% endif %}
-{% endblock %}
-{% block footer %}
-<div class="workflow-footer"><strong>agent-workflow</strong><span>Project-owned workflows. Observable results.</span><a href="{{ 'coverage/' | url }}">Coverage &amp; limitations</a><span>MIT · Built with MkDocs</span></div>
-{% endblock %}
+<!doctype html>
+<html lang="{{ config.theme.locale|default('en') }}">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    {% set description = page.meta.get('description') if page and page.meta else config.site_description %}
+    <title>{% if page and page.title %}{{ page.title }} · {% endif %}{{ config.site_name }}</title>
+    <meta name="description" content="{{ description }}">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="{{ config.site_name }}">
+    <meta property="og:title" content="{% if page and page.title %}{{ page.title }} · {% endif %}{{ config.site_name }}">
+    <meta property="og:description" content="{{ description }}">
+    <meta property="og:image" content="{{ config.site_url }}assets/brand/og.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{% if page and page.title %}{{ page.title }} · {% endif %}{{ config.site_name }}">
+    <meta name="twitter:description" content="{{ description }}">
+    <meta name="twitter:image" content="{{ config.site_url }}assets/brand/og.png">
+    <link rel="icon" href="{{ 'assets/brand/favicon.svg' | url }}" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="{{ 'assets/brand/apple-touch-icon.png' | url }}">
+    <link rel="preload" href="{{ 'assets/fonts/IBMPlexSans-Regular-Latin1.woff2' | url }}" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="{{ 'assets/fonts/IBMPlexMono-Regular-Latin1.woff2' | url }}" as="font" type="font/woff2" crossorigin>
+    {% for path in config.extra_css %}<link rel="stylesheet" href="{{ path | url }}">{% endfor %}
+  </head>
+  <body data-page-url="{{ page.url if page else '' }}"{% if page and page.file.src_uri == 'index.md' %} data-page-home="true"{% endif %}>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    {% include "partials/header.html" %}
+    {% block body %}
+      <main id="main-content" class="page-shell" tabindex="-1">
+        {% include "partials/docs-layout.html" %}
+      </main>
+    {% endblock %}
+    {% include "partials/footer.html" %}
+    {% include "partials/search.html" %}
+    {% for path in config.extra_javascript %}<script src="{{ path | url }}" defer></script>{% endfor %}
+  </body>
+</html>

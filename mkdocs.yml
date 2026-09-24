@@ -1,25 +1,31 @@
-site_name: agent-workflow
-site_description: Your workflow. Every project. Verified.
+site_name: Stagecoach
+site_description: A project-owned workflow for coding agents, checked at every stage.
 site_url: https://MarkoArsov.github.io/agent-workflow/
 repo_url: https://github.com/MarkoArsov/agent-workflow
 repo_name: GitHub
-edit_uri: ""
+edit_uri: edit/main/docs/
 theme:
-  name: mkdocs
+  name: null
   locale: en
-  color_mode: light
-  user_color_mode_toggle: false
-  highlightjs: false
-  navigation_depth: 2
+  search_index_only: true
   custom_dir: templates/site
 extra_css:
-  - assets/workflow.css?v=2
+  - assets/css/tokens.css?v=stagecoach-1
+  - assets/css/base.css?v=stagecoach-1
+  - assets/css/layout.css?v=stagecoach-1
+  - assets/css/components.css?v=stagecoach-1
+  - assets/css/home.css?v=stagecoach-1
+extra_javascript:
+  - assets/js/site.js?v=stagecoach-1
+  - assets/js/search.js?v=stagecoach-1
+extra:
+  asset_version: stagecoach-1
 markdown_extensions:
   - admonition
   - attr_list
   - tables
   - toc:
-      permalink: true
+      permalink: false
 plugins:
   - search
 hooks:

@@ -1,0 +1,43 @@
+@font-face { font-family: "IBM Plex Sans"; src: url("../fonts/IBMPlexSans-Regular-Latin1.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "IBM Plex Sans"; src: url("../fonts/IBMPlexSans-Medium-Latin1.woff2") format("woff2"); font-weight: 500; font-style: normal; font-display: swap; }
+@font-face { font-family: "IBM Plex Sans"; src: url("../fonts/IBMPlexSans-SemiBold-Latin1.woff2") format("woff2"); font-weight: 600; font-style: normal; font-display: swap; }
+@font-face { font-family: "IBM Plex Mono"; src: url("../fonts/IBMPlexMono-Regular-Latin1.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "IBM Plex Mono"; src: url("../fonts/IBMPlexMono-Medium-Latin1.woff2") format("woff2"); font-weight: 500; font-style: normal; font-display: swap; }
+
+:root {
+  color-scheme: light;
+  --bg: #fbfcfa;
+  --surface: #ffffff;
+  --surface-sunken: #f2f6f2;
+  --tint: #eef4ee;
+  --border: #dce4df;
+  --border-strong: #c5d2ca;
+  --text: #17272d;
+  --text-muted: #526268;
+  --accent: #17614e;
+  --accent-hover: #104b3d;
+  --signal-red: #b04f2c;
+  --signal-green: #1f7a58;
+  --font-sans: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --space-1: .25rem;
+  --space-2: .5rem;
+  --space-3: .75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --radius-item: 6px;
+  --radius-panel: 10px;
+  --radius-card: 14px;
+  --shadow-pop: 0 1px 2px rgb(23 39 45 / .06), 0 10px 28px -8px rgb(23 39 45 / .18);
+  --ease-out: cubic-bezier(.2, .8, .2, 1);
+  --duration-fast: 120ms;
+  --duration: 160ms;
+  --duration-slow: 220ms;
+  --header-h: 60px;
+  --container: 1384px;
+}
