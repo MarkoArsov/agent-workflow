@@ -1,8 +1,16 @@
 ---
+title: Commands and permissions
 description: Configure commands, permissions, and provider routes for checked work.
+question: How are commands, permissions, and model routes configured?
 ---
 
 # Commands and permissions
+
+!!! summary "In one minute"
+    - Commands are argument arrays with a repository-relative working directory and a timeout; no shell is inserted.
+    - Trusted mode uses provider permission-bypass flags. Restricted mode uses each provider's own controls.
+    - Trusted mode is not operating-system containment.
+    - Routes name a provider and model per stage, with an ordered list of fallbacks.
 
 Commands use argument arrays, a repository-relative working directory, and a bounded timeout.
 No shell is inserted automatically.
@@ -53,3 +61,5 @@ Setup records your chosen models. Preflight checks command compatibility; model/
 Cursor effort belongs in its supported model expression.
 
 [Model and cost choices](models.md) · [Evidence formats](verification.md)
+
+<!-- checkpoints: EXE-1, EXE-4, ORG-3 -->

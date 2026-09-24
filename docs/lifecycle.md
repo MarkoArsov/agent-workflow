@@ -1,8 +1,16 @@
 ---
+title: Update and remove
 description: Update, diagnose, or remove an existing Stagecoach installation.
+question: How do I update, diagnose, or remove an installation?
 ---
 
 # Update and remove
+
+!!! summary "In one minute"
+    - Updates stage and validate a new payload before switching, and roll back on failure.
+    - Your project configuration, skills, rules, and connectors are never overwritten.
+    - Uninstall removes only unchanged files the installer owns.
+    - The native Claude plugin is managed through Claude's own plugin commands.
 
 Project configuration and extensions belong to you.
 Installed payloads live in separate versioned directories.

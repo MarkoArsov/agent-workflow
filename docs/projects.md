@@ -1,8 +1,16 @@
 ---
+title: Project layout
 description: Understand the project-owned files, repositories, and task checkouts.
+question: Which files does a project own, and how do repositories join a task?
 ---
 
 # Project layout
+
+!!! summary "In one minute"
+    - A project is one repository or a parent folder of registered repositories.
+    - Project-owned files live in `.agent-workflow/` and `PROJECT_WORKFLOW.md`; plans live in `ai-plans/`.
+    - Each task chooses which repositories participate, read or write. Only writable ones get branches and delivery.
+    - Runtime evidence stays in an ignored local directory.
 
 A project is one Git repository or a parent folder containing registered repositories.
 
@@ -34,7 +42,7 @@ project/
 | Repository | Its base branch, remote, commands, and role. |
 | Task checkout | Selected writable code for one task. |
 
-The package never discovers unrelated sibling repositories by a hard-coded name.
+Stagecoach never discovers unrelated sibling repositories by a hard-coded name.
 Child references, registered Git common directories, and explicit membership determine the project.
 Nested folders, spaces, symlinks, and Git worktrees resolve to the same profile.
 
@@ -50,3 +58,5 @@ Only declared writable path patterns may change.
 For a single repository, plans default to tracked `ai-plans/<task>/`.
 For several repositories, they live at the configured shared project root.
 Runtime evidence stays ignored.
+
+<!-- checkpoints: CTX-1, EXE-5 -->

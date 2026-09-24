@@ -1,8 +1,15 @@
 ---
+title: Publish a release
 description: Prepare and publish a reviewed release of the package.
+question: How is a Stagecoach release published?
 ---
 
 # Publish a release
+
+!!! summary "In one minute"
+    - Publication is a separate maintainer action after local verification.
+    - Push the reviewed branch and tag, then deploy this site with GitHub Pages.
+    - Verify installation from the published pinned revision in an isolated environment.
 
 Publication is a separate maintainer action after local verification.
 
