@@ -12,7 +12,7 @@ footer_order: 4
     - Every task starts with **specify**, which researches and writes one complete plan for you to confirm.
     - A small, contained change then runs **implement** in the same session. A broad one runs the full pipeline with **implement-pipeline**.
     - The runner executes each selected stage in a fresh session, runs the named checks itself, and keeps the evidence.
-    - It stops only for a safety problem or a decision that is genuinely yours. Answers resume the session that asked.
+    - It stops only for a safety or verification problem, or a decision that is genuinely yours. Answers resume the session that asked.
     - Delivery is optional and guarded. Nothing posts, approves, or merges as you.
 
 ## Choose a lane

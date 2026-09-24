@@ -11,7 +11,7 @@ question: Which lane fits this change?
     - **Manual:** `implement` in the same session. Small, contained changes with an established pattern.
     - **Full pipeline:** `implement-pipeline`. Fresh stages, saved evidence, optional review and delivery.
     - The manual lane is first-class, not a reduced-quality run: same rules, same named checks.
-    - A bugfix is a normal task that must prove its regression check fails before the fix.
+    - A bugfix is a normal task whose regression check should fail before the fix and pass after it.
 
 ## Two lanes
 
