@@ -1,0 +1,14 @@
+<div class="flow flow--loop" role="list" aria-label="Pull-request feedback loop">
+  <div class="flow__node" role="listitem"><span class="flow__kicker">Open</span><strong>Draft PR</strong><small>Created by the runner, never marked ready.</small></div>
+  <span class="flow__arrow" aria-hidden="true"></span>
+  <div class="flow__node" role="listitem"><span class="flow__kicker">Read</span><strong>address-pr-comments</strong><small>Paginated comments, reviews, threads, bounded bot polling.</small></div>
+  <span class="flow__arrow" aria-hidden="true"></span>
+  <div class="flow__node flow__node--person" role="listitem"><span class="flow__kicker">You</span><strong>Select fixes</strong><small>Replies are drafts until you authorize them.</small></div>
+  <span class="flow__arrow" aria-hidden="true"></span>
+  <div class="flow__node" role="listitem"><span class="flow__kicker">Verify</span><strong>Named checks</strong><small>Then <code>commit-and-push</code>.</small></div>
+  <span class="flow__arrow" aria-hidden="true"></span>
+  <div class="flow__node" role="listitem"><span class="flow__kicker">CI</span><strong>Pass or diagnose</strong><small>Failures go to <code>diagnose-ci</code>, then back to fixes.</small></div>
+  <span class="flow__arrow" aria-hidden="true"></span>
+  <div class="flow__node flow__node--person" role="listitem"><span class="flow__kicker">People</span><strong>Approve and merge</strong><small>A named human. Never the workflow.</small></div>
+</div>
+<figcaption>Nothing posts, resolves, approves, or merges as you without explicit authorization for that action and its content.</figcaption>

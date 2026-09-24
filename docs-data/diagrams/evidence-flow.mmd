@@ -1,0 +1,11 @@
+%% Red -> frozen -> green evidence flow. Rendered by hand as evidence-flow.html.
+flowchart LR
+    A[implement-tests] --> B[Runner runs red checks]
+    B -->|Import, syntax, compile, startup error| X[Rejected: not red evidence]
+    B -->|Expected tests fail on assertions| C[Test-file hashes recorded]
+    C --> D[implement]
+    D --> E[Runner runs green checks]
+    E -->|Frozen test changed| Y[Stops the run]
+    E -->|All checks pass| F[Green evidence bound to the diff fingerprint]
+    F --> G[Any later change]
+    G --> H[Delivery re-runs the checks]

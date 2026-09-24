@@ -1,0 +1,18 @@
+<ol class="sequence" aria-label="Full-lane task timeline">
+  <li><span class="actor actor--you">You</span><span class="sequence__to">specify</span><p>Start the task.</p></li>
+  <li><span class="actor actor--agent">specify</span><span class="sequence__to">itself</span><p>Read instructions and nearby working examples before proposing anything.</p></li>
+  <li><span class="actor actor--agent">specify</span><span class="sequence__to">You</span><p>Ask only the decisions the repository cannot answer.</p></li>
+  <li><span class="actor actor--you">You</span><span class="sequence__to">specify</span><p>Confirm scope, checks, stages, routes, and delivery.</p></li>
+  <li><span class="actor actor--agent">specify</span><span class="sequence__to">You</span><p>Four plan files and a validated <code>pipeline.json</code>.</p></li>
+  <li><span class="actor actor--you">You</span><span class="sequence__to">Runner</span><p><code>run --detach</code></p></li>
+  <li><span class="actor actor--runner">Runner</span><span class="sequence__to">itself</span><p>Preflight, take the project lock, bind the plan.</p></li>
+  <li><span class="actor actor--runner">Runner</span><span class="sequence__to">Test agent</span><p>Fresh session: write the tests. Only test paths may change.</p></li>
+  <li><span class="actor actor--runner">Runner</span><span class="sequence__to">itself</span><p>Run red checks. Require assertion failures. Freeze test-file hashes.</p></li>
+  <li><span class="actor actor--runner">Runner</span><span class="sequence__to">Implement agent</span><p>Fresh session: implement within the declared paths.</p></li>
+  <li><span class="actor actor--runner">Runner</span><span class="sequence__to">itself</span><p>Run green checks. Bind the evidence to the diff fingerprint.</p></li>
+  <li class="is-optional"><span class="actor actor--runner">Runner</span><span class="sequence__to">Review agent</span><p>Fresh session: requirements and the actual diff, without the implementation reasoning.</p></li>
+  <li><span class="actor actor--runner">Runner</span><span class="sequence__to">itself</span><p>Re-run checks and rules, then the publication guard.</p></li>
+  <li class="is-optional"><span class="actor actor--runner">Runner</span><span class="sequence__to">Git and GitHub</span><p>Commit, push, draft PR, when selected.</p></li>
+  <li><span class="actor actor--runner">Runner</span><span class="sequence__to">You</span><p><code>complete</code>, with evidence on disk.</p></li>
+</ol>
+<figcaption>Every agent session starts fresh from the plan and the repository. Dashed rows are optional stages.</figcaption>

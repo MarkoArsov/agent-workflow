@@ -1,0 +1,12 @@
+<div class="decision">
+  <p class="decision__root"><code>agent-workflow status TASK</code></p>
+  <ul class="decision__branches">
+    <li><code>starting</code> · <code>running</code><span>Keep watching. Do not start a duplicate run.</span></li>
+    <li><code>needs_input</code><span>Answer the exact saved question with <code>answer --file</code>. The asking session resumes.</span></li>
+    <li><code>failed</code>, check or guard<span>Read the recorded error and evidence. Fix the cause within scope, then <code>resume</code>.</span></li>
+    <li><code>failed</code>, plan wrong<span>Revise the complete plan, review it, then <code>resume --rebind</code>.</span></li>
+    <li><code>cancelled</code><span><code>resume</code> when you are ready.</span></li>
+    <li><code>complete</code><span>Review the diff, the evidence, and the delivery state.</span></li>
+  </ul>
+</div>
+<figcaption>Advisory findings never appear here as a stop. A failed safety check never appears as complete.</figcaption>

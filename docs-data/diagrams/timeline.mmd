@@ -1,0 +1,26 @@
+%% End-to-end timeline of a full-lane task. Rendered by hand as timeline.html.
+sequenceDiagram
+    actor Y as You
+    participant S as specify agent
+    participant R as Runner
+    participant T as Test agent
+    participant I as Implement agent
+    participant V as Review agent
+    Y->>S: specify the task
+    S->>S: Read instructions and nearby working examples
+    S->>Y: Ask only the decisions still missing
+    Y->>S: Confirm scope, checks, stages, routes, delivery
+    S-->>Y: Plan files and pipeline.json, validated
+    Y->>R: run --detach
+    R->>R: Preflight, take the project lock, bind the plan
+    R->>T: Fresh session: write the tests
+    T-->>R: Test-only diff
+    R->>R: Run red checks, require assertion failures, freeze test hashes
+    R->>I: Fresh session: implement
+    I-->>R: Code diff
+    R->>R: Run green checks, bind evidence to the diff fingerprint
+    R->>V: Fresh session: requirements and the actual diff (optional)
+    V-->>R: Findings and in-scope corrections
+    R->>R: Re-run checks and rules, then the publication guard
+    R->>R: Commit, push, draft PR (when selected)
+    R-->>Y: status complete, evidence on disk

@@ -69,6 +69,11 @@ def rendered():
     return {"skills.md": "\n".join(skills), "schemas.md": "\n".join(schemas)}
 
 def generate(check=False):
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("workflow_docs_content", Path(__file__).with_name("docs_content.py"))
+    content = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(content)
+    content.validate()
     directory = ROOT / "docs/generated"
     if not check:
         directory.mkdir(parents=True, exist_ok=True)

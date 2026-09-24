@@ -1,0 +1,8 @@
+%% What runs when you start a run. Rendered by hand as run-path.html.
+flowchart LR
+    A[implement-pipeline skill] --> B[bin/agent-workflow]
+    B --> C[cli.py]
+    C --> D[runner.py]
+    D --> E[providers: claude, codex, agent]
+    D --> F[verification.py, rules.py, git_ops.py]
+    D --> G[Evidence directory]

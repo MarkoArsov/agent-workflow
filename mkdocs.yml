@@ -14,15 +14,17 @@ extra_css:
   - assets/css/base.css
   - assets/css/layout.css
   - assets/css/components.css
+  - assets/css/content.css
   - assets/css/home.css
 extra_javascript:
   - assets/js/site.js
   - assets/js/search.js
 extra:
-  asset_version: stagecoach-1
+  asset_version: stagecoach-2
 markdown_extensions:
   - admonition
   - attr_list
+  - md_in_html
   - tables
   - toc:
       permalink: false
@@ -39,28 +41,39 @@ validation:
 nav:
   - Start:
       - Overview: index.md
+      - The verification gap: why.md
+      - Design principles: principles.md
+      - Open source: open-source.md
       - Install: install.md
-      - Set up: setup.md
-      - Update & remove: lifecycle.md
+      - Set up your project: setup.md
+      - Your first task: first-task.md
   - Use:
       - Task lifecycle: tasks.md
-      - Review & delivery: review.md
+      - Lanes and bugfixes: lanes.md
+      - Review and everyday use: everyday.md
+      - When a task stops: recovery.md
       - Skills: generated/skills.md
+  - Inside:
+      - Code map: code-map.md
+      - Evidence and checks: verification.md
+      - Review and delivery: review.md
+      - Cost and models: models.md
   - Configure:
       - Project layout: projects.md
-      - Commands & permissions: execution.md
+      - Commands and permissions: execution.md
       - Test environments: environments.md
       - Profile reference: profile.md
   - Customize:
-      - Skills & stages: customize.md
-      - Rules & references: rules.md
+      - Skills and stages: customize.md
+      - Rules and references: rules.md
       - Connectors: connectors.md
-  - Verify:
-      - Evidence & checks: verification.md
-      - Coverage & host checks: coverage.md
+      - Keep the workflow clear: maintaining.md
+  - Trust:
+      - Checkpoint scorecard: scorecard.md
+      - Security boundary: security.md
+      - How it's tested: coverage.md
   - Maintain:
-      - Recovery: recovery.md
-      - Development: development.md
-      - Models & costs: models.md
-      - Publish: publish.md
+      - Update and remove: lifecycle.md
+      - Contribute and develop: development.md
+      - Publish a release: publish.md
       - Schema reference: generated/schemas.md

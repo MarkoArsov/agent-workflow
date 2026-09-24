@@ -1,0 +1,17 @@
+<div class="flow" role="list" aria-label="Stagecoach stages in order">
+  <div class="flow__node" role="listitem"><span class="flow__kicker">Input</span><strong>Task</strong><small>A request or an issue</small></div>
+  <span class="flow__arrow" aria-hidden="true"></span>
+  <div class="flow__node" role="listitem"><span class="flow__kicker">Plan</span><strong>specify</strong><small>Research, questions, one complete plan</small></div>
+  <span class="flow__arrow" aria-hidden="true"></span>
+  <div class="flow__node flow__node--person" role="listitem"><span class="flow__kicker">You</span><strong>Confirm</strong><small>Approve, or revise the whole plan</small></div>
+  <span class="flow__arrow" aria-hidden="true"></span>
+  <div class="flow__node flow__node--optional" role="listitem"><span class="flow__kicker">Optional</span><strong>implement-tests</strong><small>Red on an assertion, then frozen</small></div>
+  <span class="flow__arrow" aria-hidden="true"></span>
+  <div class="flow__node" role="listitem"><span class="flow__kicker">Always</span><strong>implement</strong><small>Build, run named checks, fix</small></div>
+  <span class="flow__arrow" aria-hidden="true"></span>
+  <div class="flow__node flow__node--optional" role="listitem"><span class="flow__kicker">Optional</span><strong>review</strong><small>Fresh session, actual diff</small></div>
+  <span class="flow__arrow" aria-hidden="true"></span>
+  <div class="flow__node flow__node--optional" role="listitem"><span class="flow__kicker">Optional</span><strong>deliver</strong><small>commit-and-push, draft-pr</small></div>
+</div>
+<p class="flow-bypass"><span>Manual lane</span> <code>specify</code> → <code>implement</code> in the same session: the same plan and named checks, no detached run.</p>
+<figcaption>Optional stages may be skipped; their order never changes. Custom stages slot in before or after a named stage and cannot follow publication.</figcaption>
