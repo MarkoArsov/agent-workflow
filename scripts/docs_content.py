@@ -142,7 +142,7 @@ def phase_tables(data):
             for row in rows)
         out.append(f"## {number}. {phase['label']}\n\n"
                    '<table class="scorecard-table"><thead><tr><th>Checkpoint</th><th>Status</th>'
-                   "<th>How Stagecoach addresses it</th><th>What remains</th></tr></thead>"
+                   "<th>How Stageway addresses it</th><th>What remains</th></tr></thead>"
                    f"<tbody>{body}</tbody></table>\n")
     return "\n".join(out)
 

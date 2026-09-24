@@ -1,8 +1,8 @@
 from __future__ import annotations
 from pathlib import Path
 from tests.helpers import WorkspaceTest
-from agent_workflow import git_ops
-from agent_workflow.util import WorkflowError
+from stageway import git_ops
+from stageway.util import WorkflowError
 
 class GitTests(WorkspaceTest):
     def configured(self, multiple=False, worktrees=False):
@@ -24,7 +24,7 @@ class GitTests(WorkspaceTest):
         paths = git_ops.prepare(project, plan)
         self.assertNotEqual(Path(paths["app"]), roots[0])
         self.assertEqual(Path(paths["checks"]), roots[1])
-        from agent_workflow.project import resolve
+        from stageway.project import resolve
         self.assertEqual(resolve(Path(paths["app"])).root, project.root)
         for index, root in enumerate(roots):
             self.assertEqual(self.git(root, "branch", "--show-current"), "main")

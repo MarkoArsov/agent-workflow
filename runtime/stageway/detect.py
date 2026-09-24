@@ -9,7 +9,7 @@ from pathlib import Path
 from .profile import defaults
 from .util import WorkflowError, common_dir, git, run
 
-SKIP = {".git", ".agent-workflow", ".venv", "venv", "node_modules", "vendor", "dist", "build", "__pycache__", ".local", "ai-plans", "worktrees"}
+SKIP = {".git", ".stageway", ".venv", "venv", "node_modules", "vendor", "dist", "build", "__pycache__", ".local", "ai-plans", "worktrees"}
 
 def repositories(root: Path) -> list[Path]:
     if (root / ".git").exists():

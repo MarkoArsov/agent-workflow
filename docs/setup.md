@@ -3,19 +3,19 @@ title: Set up your project
 description: Configure repositories, agents, checks, and delivery choices for a project.
 footer: docs
 footer_order: 2
-question: How do I configure Stagecoach for my repositories?
+question: How do I configure Stageway for my repositories?
 ---
 
 # Set up your project
 
 !!! summary "In one minute"
-    - Invoke `aw-project-setup` in your agent. It reads your repositories and reports what it found, with sources.
+    - Invoke `sw-project-setup` in your agent. It reads your repositories and reports what it found, with sources.
     - You confirm repositories, commands, branch policy, routes, permissions, and integrations.
     - Nothing is written until you approve the complete proposal by its digest.
     - Re-running setup keeps your manual edits, and leaves files byte-identical when nothing changed.
 
-Open the intended repository or multi-repository parent and invoke **aw-project-setup**
-(**agent-workflow:project-setup** in the native Claude plugin).
+Open the intended repository or multi-repository parent and invoke **sw-project-setup**
+(**stageway:project-setup** in the native Claude plugin).
 
 The setup skill reads existing instructions, manifests, commands, Git conventions, and CI configuration.
 It reports findings with their sources, asks about unresolved choices, and presents a complete proposal.
@@ -40,14 +40,14 @@ Trusted execution is the offered default. It uses provider permission-bypass fla
 For a CLI preview:
 
 ~~~sh
-agent-workflow setup . --output /tmp/workflow-proposal.json
+stageway setup . --output /tmp/workflow-proposal.json
 ~~~
 
 The skill gathers answers, regenerates the proposal, and shows its file changes.
 Applying requires that proposal's exact approval digest:
 
 ~~~sh
-agent-workflow setup --apply /tmp/workflow-proposal.json --approve APPROVED_DIGEST
+stageway setup --apply /tmp/workflow-proposal.json --approve APPROVED_DIGEST
 ~~~
 
 An unresolved or stale proposal is rejected. Do not reuse an approval after changing its contents.

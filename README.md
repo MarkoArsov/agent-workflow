@@ -1,4 +1,4 @@
-# agent-workflow
+# stageway
 
 A customizable development workflow for **Claude Code, Codex, and Cursor**.
 
@@ -32,24 +32,24 @@ Claude's native plugin uses the same payload:
 
 ~~~sh
 claude plugin marketplace add MarkoArsov/agent-workflow
-claude plugin install agent-workflow@agent-workflow
+claude plugin install stageway@stageway
 ~~~
 
 The remote commands require publication. Review the pinned bootstrap before executing it.
 
 ## Set up and run
 
-1. Open your project in an agent and invoke **aw-project-setup** (native Claude: **agent-workflow:project-setup**).
+1. Open your project in an agent and invoke **sw-project-setup** (native Claude: **stageway:project-setup**).
 2. Confirm repositories, commands, branch policies, models, permissions, and integrations. Review the complete proposal before it writes.
-3. Invoke **aw-specify** for a task, then **aw-implement-pipeline** for the approved full plan—or use **aw-implement** directly for the manual lane.
+3. Invoke **sw-specify** for a task, then **sw-implement-pipeline** for the approved full plan—or use **sw-implement** directly for the manual lane.
 
 ~~~sh
-agent-workflow preflight ai-plans/task-name/pipeline.json
-agent-workflow run ai-plans/task-name/pipeline.json --detach
-agent-workflow status task-name
+stageway preflight ai-plans/task-name/pipeline.json
+stageway run ai-plans/task-name/pipeline.json --detach
+stageway status task-name
 ~~~
 
-A project install uses `.agent-workflow/bin/agent-workflow`; global installs use `~/.local/bin`.
+A project install uses `.stageway/bin/stageway`; global installs use `~/.local/bin`.
 
 Trusted unattended execution is the offered default, including Codex's
 `--dangerously-bypass-approvals-and-sandbox`. Setup can select restricted controls instead.
@@ -58,9 +58,9 @@ Task scope and evidence guards remain in force. Comments, messages, and tracker 
 ## Make it yours
 
 ~~~sh
-agent-workflow skill copy review
-agent-workflow skill new release-notes --description "Draft release notes from verified changes."
-agent-workflow refresh
+stageway skill copy review
+stageway skill new release-notes --description "Draft release notes from verified changes."
+stageway refresh
 ~~~
 
 Edit project-owned copies, review the discovery proposal, and apply it.

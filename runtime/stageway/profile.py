@@ -84,12 +84,12 @@ def defaults(root: Path, repositories: list[dict]) -> dict:
         "package": {"version": __version__},
         "agents": ["claude", "codex", "cursor"],
         "repositories": repositories,
-        "planning": {"directory": "ai-plans", "evidence_directory": ".agent-workflow/local/evidence"},
-        "git": {"branch_template": "feature/{task}", "commit_style": "imperative", "worktree_directory": ".agent-workflow/local/worktrees"},
+        "planning": {"directory": "ai-plans", "evidence_directory": ".stageway/local/evidence"},
+        "git": {"branch_template": "feature/{task}", "commit_style": "imperative", "worktree_directory": ".stageway/local/worktrees"},
         "delivery": {"pull_requests": "draft", "publish": "plan-selected", "merge_to_base": "explicit"},
         "tracking": {"provider": "none"},
         "execution": {"permission_mode": "trusted", "provider_settings": {}},
         "pipeline": {"enabled": True, "default_stages": BASE_STAGES, "routes": {}},
-        "extensions": {name: ".agent-workflow/" + name for name in ("skills", "rules", "references", "connectors")} | {"stages": ".agent-workflow/stages.json"}
+        "extensions": {name: ".stageway/" + name for name in ("skills", "rules", "references", "connectors")} | {"stages": ".stageway/stages.json"}
     }
 

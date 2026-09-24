@@ -1,4 +1,4 @@
-site_name: Stagecoach
+site_name: Stageway
 site_description: A project-owned workflow for coding agents, checked at every stage.
 site_url: https://MarkoArsov.github.io/agent-workflow/
 repo_url: https://github.com/MarkoArsov/agent-workflow
@@ -20,7 +20,8 @@ extra_javascript:
   - assets/js/site.js
   - assets/js/search.js
 extra:
-  asset_version: stagecoach-2
+  brand: stageway ai
+  asset_version: stageway-2
 markdown_extensions:
   - admonition
   - attr_list

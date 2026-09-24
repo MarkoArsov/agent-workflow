@@ -6,8 +6,6 @@
 .home-kicker { margin-bottom: var(--space-5); color: var(--accent); }
 .home-hero h1 { max-width: 720px; margin-bottom: var(--space-5); font-size: clamp(2.7rem, 5.4vw, 5.2rem); font-weight: 600; line-height: .98; letter-spacing: -.045em; }
 .home-lead { max-width: 650px; margin-bottom: var(--space-6); color: var(--text-muted); font-size: clamp(1.05rem, 1.5vw, 1.25rem); line-height: 1.65; }
-.rename-note { margin-top: calc(var(--space-3) * -1); margin-bottom: var(--space-6); color: var(--text-muted); font-size: .8125rem; line-height: 1.5; }
-.rename-note code { padding: .08em .3em; border-radius: 4px; background: var(--surface-sunken); color: var(--text); }
 .home-actions { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; }
 .home-actions .button { min-height: 44px; }
 .button-secondary { border-color: var(--border); background: var(--surface); color: var(--text); }

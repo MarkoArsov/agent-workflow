@@ -6,8 +6,6 @@
     header.before(sentinel);
     new IntersectionObserver(([entry]) => header.classList.toggle('is-scrolled', !entry.isIntersecting)).observe(sentinel);
   }
-  const keyHint = document.querySelector('[data-key-hint]');
-  if (keyHint && !navigator.platform.includes('Mac')) keyHint.textContent = 'Ctrl K';
 
   const menus = [...document.querySelectorAll('[data-menu]')];
   const closeMenus = (except = null) => menus.forEach((menu) => {
@@ -81,7 +79,9 @@
         window.setTimeout(() => { button.textContent = 'Copy'; button.classList.remove('is-copied'); }, 1500);
       } catch (_) { button.textContent = 'Copy failed'; }
     });
-    block.append(button);
+    const wrapper = document.createElement('div');
+    wrapper.className = 'code-block';
+    block.before(wrapper); wrapper.append(block, button);
   });
 
   document.querySelectorAll('.prose table').forEach((table) => {

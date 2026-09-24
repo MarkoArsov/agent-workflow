@@ -1,11 +1,11 @@
 {
-  "name": "agent-workflow",
+  "name": "stageway",
   "owner": {
-    "name": "agent-workflow contributors"
+    "name": "stageway contributors"
   },
   "plugins": [
     {
-      "name": "agent-workflow",
+      "name": "stageway",
       "source": "./",
       "description": "Project-aware skills and a verified fresh-session runner.",
       "version": "0.1.0"

@@ -1,6 +1,6 @@
 ---
 title: Update and remove
-description: Update, diagnose, or remove an existing Stagecoach installation.
+description: Update, diagnose, or remove an existing Stageway installation.
 question: How do I update, diagnose, or remove an installation?
 ---
 
@@ -20,8 +20,8 @@ Installed payloads live in separate versioned directories.
 Use a reviewed release checkout or its pinned installer:
 
 ~~~sh
-agent-workflow update --global --local-source /path/to/release --dry-run
-agent-workflow update --global --local-source /path/to/release
+stageway update --global --local-source /path/to/release --dry-run
+stageway update --global --local-source /path/to/release
 ~~~
 
 For a project install, replace `--global` with `--target /path/to/project`.
@@ -35,8 +35,8 @@ Overrides are preserved, with changed upstream skill hashes reported for review.
 ## Diagnose
 
 ~~~sh
-agent-workflow doctor --global
-agent-workflow doctor --target /path/to/project
+stageway doctor --global
+stageway doctor --target /path/to/project
 ~~~
 
 The report identifies installation ownership and modified owned files.
@@ -45,8 +45,8 @@ If a pinned version is missing, install that version or deliberately update the 
 ## Remove
 
 ~~~sh
-agent-workflow uninstall --global --dry-run
-agent-workflow uninstall --global
+stageway uninstall --global --dry-run
+stageway uninstall --global
 ~~~
 
 Only unchanged receipt-owned files are removed.
