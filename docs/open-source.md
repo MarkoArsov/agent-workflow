@@ -42,7 +42,7 @@ Nothing is judged by a service you can't see. The [code map](code-map.md) shows 
 
 - The runtime is standard-library Python with zero runtime dependencies.
 - The runtime opens no network connections of its own. Network traffic goes through your agent CLIs, `git`, and `gh`. The optional bootstrap installer uses `curl` to download the pinned release archive.
-- Credentials stay in your agent and GitHub logins, or in environment variables you name with `env_refs`. Literal secrets in commands and connector settings are rejected.
+- Credentials stay in your agent and GitHub logins, or in environment variables you name with `env_refs`. Command environments and connector settings reject literal values with secret-looking names.
 - There is no Stagecoach account, server, or telemetry. Run evidence stays in your project.
 - This site has no analytics, remote fonts, or connection to your local workflow state.
 

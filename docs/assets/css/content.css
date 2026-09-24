@@ -11,9 +11,9 @@
 .checkpoint-chip, .checkpoint-cell, .status-pill, .checkpoint-swatch { --status-fg: var(--text-muted); --status-bg: var(--surface); --status-border: var(--border-strong); --status-style: solid; }
 .checkpoint-chip--implemented, .checkpoint-cell--implemented, .status-pill--implemented, .checkpoint-swatch--implemented { --status-fg: var(--surface); --status-bg: var(--signal-green); --status-border: var(--signal-green); }
 .checkpoint-chip--conditional, .checkpoint-cell--conditional, .status-pill--conditional, .checkpoint-swatch--conditional,
-.checkpoint-chip--partial, .checkpoint-cell--partial, .status-pill--partial, .checkpoint-swatch--partial { --status-fg: var(--accent); --status-bg: color-mix(in srgb, var(--accent) 12%, var(--surface)); --status-border: color-mix(in srgb, var(--accent) 45%, var(--surface)); }
-.checkpoint-chip--conditional, .checkpoint-cell--conditional, .status-pill--conditional, .checkpoint-swatch--conditional { --status-bg: color-mix(in srgb, var(--accent) 22%, var(--surface)); }
-.checkpoint-chip--external, .checkpoint-cell--external, .status-pill--external, .checkpoint-swatch--external { --status-fg: var(--text-muted); --status-bg: var(--surface-sunken); --status-border: var(--border-strong); }
+.checkpoint-chip--partial, .checkpoint-cell--partial, .status-pill--partial, .checkpoint-swatch--partial { --status-fg: var(--accent); --status-bg: color-mix(in srgb, var(--accent) 9%, var(--surface)); --status-border: color-mix(in srgb, var(--accent) 50%, var(--surface)); }
+.checkpoint-chip--conditional, .checkpoint-cell--conditional, .status-pill--conditional, .checkpoint-swatch--conditional { --status-bg: color-mix(in srgb, var(--accent) 24%, var(--surface)); --status-border: var(--accent); }
+.checkpoint-chip--external, .checkpoint-cell--external, .status-pill--external, .checkpoint-swatch--external { --status-fg: var(--text-muted); --status-bg: var(--bg); --status-border: var(--border); }
 .checkpoint-chip--gap, .checkpoint-cell--gap, .status-pill--gap, .checkpoint-swatch--gap { --status-fg: var(--signal-red); --status-bg: var(--surface); --status-border: var(--signal-red); }
 .checkpoint-chip--policy, .checkpoint-cell--policy, .status-pill--policy, .checkpoint-swatch--policy { --status-fg: var(--text); --status-bg: var(--surface); --status-border: var(--text-muted); --status-style: dashed; }
 
