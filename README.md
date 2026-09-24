@@ -1,79 +1,75 @@
-# stageway
+<p align="center">
+  <img src="docs/assets/brand/mark.svg" width="72" height="72" alt="Stageway logo">
+</p>
 
-A customizable development workflow for **Claude Code, Codex, and Cursor**.
+<h1 align="center">Stageway</h1>
 
-Install once, set up a repository or a folder of repositories, and keep each project's skills, rules, connectors, and stages under your control. The runner starts fresh agent sessions and verifies their work with executable checks.
+<p align="center">
+  <strong>Agents write the code. Stageway makes them prove it.</strong><br>
+  An open-source workflow for Claude Code, Codex, and Cursor that checks every stage.
+</p>
 
-**Plan → tests → implement → review → deliver**, with a small manual lane when a full pipeline is unnecessary.
+<p align="center">
+  <a href="https://MarkoArsov.github.io/agent-workflow/"><strong>Website and docs</strong></a> ·
+  <a href="https://MarkoArsov.github.io/agent-workflow/first-task/">Your first task</a> ·
+  <a href="https://MarkoArsov.github.io/agent-workflow/scorecard/">Checkpoint scorecard</a> ·
+  <a href="LICENSE">MIT license</a>
+</p>
 
-[Documentation](https://MarkoArsov.github.io/agent-workflow/) · [Local docs](docs/index.md) · [Coverage](docs/coverage.md) · [MIT license](LICENSE)
+---
+
+## What it does
+
+You confirm one plan. Stageway runs it in stages, and each stage has to show its work:
+
+| Stage | What happens | What the runner keeps |
+|---|---|---|
+| **Specify** | Research first, then one complete plan where every outcome maps to a named check. | Plan files and a validated `pipeline.json` |
+| **Tests** *(optional)* | Written before the code. They must fail on an assertion, then they're frozen. | Red proof and test-file hashes |
+| **Implement** | Build, run the named checks, fix. The runner then runs the checks itself. | Parsed results tied to the current diff |
+| **Review** *(optional)* | A fresh session that sees the requirements and diff, not the author's reasoning. | Findings, and checks re-run after fixes |
+| **Deliver** *(optional)* | Commit, push, and draft PR. Never to a base branch, never a force push. | A delivery record per repository |
+
+Small change? Run `specify`, then `implement`, in one session.
 
 ## Install
 
-Requires Python 3.11+, Git, and an authenticated agent CLI. macOS/Linux; WSL for Windows.
-GitHub delivery also requires the GitHub CLI. No runtime Python dependencies.
+Requires Python 3.11+, Git, and at least one signed-in agent CLI (Claude Code, Codex, or Cursor). The GitHub CLI is needed only for pull requests. macOS and Linux; use WSL on Windows. No Python dependencies.
 
-From this checkout:
+```sh
+git clone https://github.com/MarkoArsov/agent-workflow.git
+cd agent-workflow
+python3 install.py --global                    # for all projects
+python3 install.py --project /path/to/project  # or for one project
+```
 
-~~~sh
-python3 install.py --global
-# Or install into a single repository or multi-repository parent:
-python3 install.py --project /path/to/project
-~~~
+A one-line `curl` installer and the native Claude plugin are available once a release is tagged. See [Install](https://MarkoArsov.github.io/agent-workflow/install/).
 
-After the v0.1.0 release is published:
+## Quick start
 
-~~~sh
-curl -fsSL https://raw.githubusercontent.com/MarkoArsov/agent-workflow/v0.1.0/install.sh | sh -s -- --global
-curl -fsSL https://raw.githubusercontent.com/MarkoArsov/agent-workflow/v0.1.0/install.sh | sh -s -- --project .
-~~~
+1. In your project, ask your agent to run **`sw-project-setup`** and approve the proposal it shows you.
+2. Run **`sw-specify`** with your task and confirm the plan.
+3. For a small change, run **`sw-implement`**. For the full pipeline:
 
-Claude's native plugin uses the same payload:
+```sh
+stageway run ai-plans/my-task/pipeline.json --detach
+stageway status my-task
+```
 
-~~~sh
-claude plugin marketplace add MarkoArsov/agent-workflow
-claude plugin install stageway@stageway
-~~~
+In the native Claude plugin, the skills are named `stageway:specify` and so on.
 
-The remote commands require publication. Review the pinned bootstrap before executing it.
+## Why trust it
 
-## Set up and run
+- **Evidence, not claims.** The runner runs every check itself and records what it saw.
+- **Stops only for what matters.** Scope, secrets, frozen tests, failed checks, and delivery guards block. Review notes don't.
+- **Honest about limits.** A public [36-point scorecard](https://MarkoArsov.github.io/agent-workflow/scorecard/) shows what's covered and what isn't.
+- **Yours to change.** Override skills, add rules, stages, and connectors per project, without forking.
+- **Open and local.** MIT license, standard-library Python, no account, no server, no telemetry.
 
-1. Open your project in an agent and invoke **sw-project-setup** (native Claude: **stageway:project-setup**).
-2. Confirm repositories, commands, branch policies, models, permissions, and integrations. Review the complete proposal before it writes.
-3. Invoke **sw-specify** for a task, then **sw-implement-pipeline** for the approved full plan—or use **sw-implement** directly for the manual lane.
+## Contributing
 
-~~~sh
-stageway preflight ai-plans/task-name/pipeline.json
-stageway run ai-plans/task-name/pipeline.json --detach
-stageway status task-name
-~~~
+```sh
+python3 -m unittest discover -s tests -v
+```
 
-A project install uses `.stageway/bin/stageway`; global installs use `~/.local/bin`.
-
-Trusted unattended execution is the offered default, including Codex's
-`--dangerously-bypass-approvals-and-sandbox`. Setup can select restricted controls instead.
-Task scope and evidence guards remain in force. Comments, messages, and tracker changes need their own authorization.
-
-## Make it yours
-
-~~~sh
-stageway skill copy review
-stageway skill new release-notes --description "Draft release notes from verified changes."
-stageway refresh
-~~~
-
-Edit project-owned copies, review the discovery proposal, and apply it.
-Add [rules](docs/rules.md), [custom stages](docs/customize.md), or [connectors](docs/connectors.md).
-Updates preserve these extensions.
-
-## What the runner verifies
-
-- Named acceptance checks, behavioral red evidence, and green evidence for the current diff.
-- Writable paths and repository participation, including unchanged test companions.
-- Fresh stage/fallback sessions, exact-session input answers, bounded recovery, and cancellation.
-- Guarded feature commits/pushes, draft PRs, and resumable partial delivery.
-- Effective project skill overrides and declared custom-stage completion checks.
-
-[Run the tests and build the docs](CONTRIBUTING.md). Provider doubles are labeled;
-[real-host checks and limitations](docs/coverage.md) remain explicit.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for docs builds and checks, and [Contribute and develop](https://MarkoArsov.github.io/agent-workflow/development/) for the full guide.
