@@ -5,9 +5,25 @@
 .brand { display: inline-flex; flex: 0 0 260px; align-items: center; gap: 9px; color: var(--text); font-size: 1.125rem; font-weight: 600; letter-spacing: -.01em; line-height: 1; text-decoration: none; }
 .brand img { color: var(--text); }
 .header-tabs { display: flex; align-self: stretch; align-items: center; gap: var(--space-1); }
-.header-tab { position: relative; display: inline-flex; align-items: center; height: 100%; padding: 0 10px; color: var(--text-muted); font-size: .875rem; font-weight: 500; line-height: 1; text-decoration: none; }
-.header-tab:hover, .header-tab.is-active { color: var(--accent); }
-.header-tab.is-active::after { position: absolute; right: 10px; bottom: -1px; left: 10px; height: 2px; background: var(--accent); content: ""; }
+.header-menu { position: relative; display: flex; height: 100%; align-items: center; }
+.header-tab { position: relative; display: inline-flex; min-height: 40px; align-items: center; padding: 0 4px 0 10px; color: var(--text-muted); font-size: .875rem; font-weight: 500; line-height: 1; text-decoration: none; }
+.header-tab:hover, .header-menu.is-active .header-tab { color: var(--accent); }
+.header-menu.is-active::after { position: absolute; right: 4px; bottom: -1px; left: 10px; height: 2px; background: var(--accent); content: ""; }
+.menu-toggle { display: inline-grid; width: 32px; height: 40px; place-items: center; padding: 0; border: 0; background: transparent; color: var(--text-muted); cursor: pointer; }
+.menu-toggle svg { width: 12px; height: 12px; fill: none; opacity: .6; stroke: currentColor; stroke-width: 1.5; transition: transform var(--duration) var(--ease-out); }
+.menu-toggle[aria-expanded="true"] svg { transform: rotate(180deg); }
+.menu-toggle:hover, .menu-toggle[aria-expanded="true"] { color: var(--text); }
+.tab-menu { position: absolute; z-index: 50; top: calc(100% + 8px); left: 0; width: max-content; min-width: 280px; max-width: 340px; padding: 6px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); box-shadow: var(--shadow-pop); opacity: 0; pointer-events: none; transform: translateY(-4px) scale(.98); transform-origin: top left; transition: opacity 100ms var(--ease-out), transform 100ms var(--ease-out), visibility 100ms; visibility: hidden; }
+.tab-menu::before { position: absolute; top: -10px; right: 0; left: 0; height: 10px; content: ""; }
+.header-menu.is-open .tab-menu { opacity: 1; pointer-events: auto; transform: translateY(0) scale(1); transition-duration: 160ms; visibility: visible; }
+.tab-menu a { position: relative; display: block; padding: 8px 12px; border-radius: var(--radius-item); color: var(--text); text-decoration: none; }
+.tab-menu a:hover, .tab-menu a:focus { background: var(--tint); color: var(--accent); outline: 0; }
+.tab-menu a[aria-current="page"] { background: var(--tint); color: var(--accent); }
+.tab-menu a[aria-current="page"]::before { position: absolute; top: 8px; bottom: 8px; left: 0; width: 3px; border-radius: 3px; background: var(--accent); content: ""; }
+.tab-menu span, .tab-menu small { display: block; }
+.tab-menu span { font-size: .875rem; font-weight: 500; line-height: 1.35; }
+.tab-menu small { margin-top: 2px; color: var(--text-muted); font-size: .8125rem; line-height: 1.35; }
+@media (hover: hover) and (pointer: fine) { .header-menu.is-open .tab-menu { transition-duration: 160ms; } }
 .header-actions { display: flex; align-items: center; gap: var(--space-2); margin-left: auto; }
 .search-trigger, .github-link { display: inline-flex; min-height: 32px; align-items: center; gap: 6px; border: 0; border-radius: 999px; background: transparent; color: var(--text-muted); font-size: .875rem; text-decoration: none; }
 .search-trigger { padding: 0 10px; cursor: pointer; }

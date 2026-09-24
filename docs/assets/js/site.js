@@ -9,6 +9,52 @@
   const keyHint = document.querySelector('[data-key-hint]');
   if (keyHint && !navigator.platform.includes('Mac')) keyHint.textContent = 'Ctrl K';
 
+  const menus = [...document.querySelectorAll('[data-menu]')];
+  const closeMenus = (except = null) => menus.forEach((menu) => {
+    if (menu === except) return;
+    menu.classList.remove('is-open');
+    const toggle = menu.querySelector('[data-menu-toggle]');
+    const panel = menu.querySelector('[data-menu-panel]');
+    toggle?.setAttribute('aria-expanded', 'false'); panel?.setAttribute('aria-hidden', 'true');
+    panel?.querySelectorAll('a').forEach((link) => link.tabIndex = -1);
+  });
+  const openMenu = (menu, focusFirst = false) => {
+    closeMenus(menu); menu.classList.add('is-open');
+    const toggle = menu.querySelector('[data-menu-toggle]');
+    const panel = menu.querySelector('[data-menu-panel]');
+    toggle?.setAttribute('aria-expanded', 'true'); panel?.setAttribute('aria-hidden', 'false');
+    const links = [...(panel?.querySelectorAll('a') || [])];
+    links.forEach((link) => link.tabIndex = 0);
+    if (focusFirst) links[0]?.focus();
+  };
+  menus.forEach((menu) => {
+    const toggle = menu.querySelector('[data-menu-toggle]');
+    const panel = menu.querySelector('[data-menu-panel]');
+    let closeTimer = null;
+    toggle?.addEventListener('click', () => menu.classList.contains('is-open') ? closeMenus() : openMenu(menu));
+    toggle?.addEventListener('keydown', (event) => {
+      if (event.key === 'ArrowDown' || event.key === 'Enter' || event.key === ' ') { event.preventDefault(); openMenu(menu, true); }
+    });
+    panel?.addEventListener('keydown', (event) => {
+      const links = [...panel.querySelectorAll('a')];
+      const index = links.indexOf(document.activeElement);
+      if (event.key === 'Escape') { event.preventDefault(); closeMenus(); toggle?.focus(); }
+      if (event.key === 'ArrowDown' || event.key === 'ArrowUp') { event.preventDefault(); links[(index + (event.key === 'ArrowDown' ? 1 : -1) + links.length) % links.length]?.focus(); }
+      if (event.key === 'Home') { event.preventDefault(); links[0]?.focus(); }
+      if (event.key === 'End') { event.preventDefault(); links.at(-1)?.focus(); }
+    });
+    menu.addEventListener('pointerenter', () => {
+      if (!matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+      clearTimeout(closeTimer); window.setTimeout(() => openMenu(menu), 70);
+    });
+    menu.addEventListener('pointerleave', () => {
+      if (!matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+      closeTimer = window.setTimeout(() => closeMenus(), 150);
+    });
+  });
+  document.addEventListener('pointerdown', (event) => { if (!event.target.closest('[data-menu]')) closeMenus(); });
+  document.addEventListener('focusin', (event) => { if (!event.target.closest('[data-menu]')) closeMenus(); });
+
   document.querySelectorAll('.prose h2, .prose h3').forEach((heading) => {
     if (!heading.id || heading.querySelector('.heading-anchor')) return;
     const link = document.createElement('a');

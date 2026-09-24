@@ -7,7 +7,17 @@
     <nav class="header-tabs" aria-label="Documentation sections">
       {% for section in nav %}
         {% if section.children %}
-          <a class="header-tab{% if section.active %} is-active{% endif %}" href="{{ section.children[0].url | url }}">{{ section.title }}</a>
+          <div class="header-menu{% if section.active %} is-active{% endif %}" data-menu>
+            <a class="header-tab" href="{{ section.children[0].url | url }}">{{ section.title }}</a>
+            <button class="menu-toggle" type="button" aria-label="Show {{ section.title }} pages" aria-expanded="false" aria-controls="menu-panel-{{ loop.index }}" data-menu-toggle>
+              <svg aria-hidden="true" viewBox="0 0 12 12"><path d="m2.25 4.5 3.75 3.75 3.75-3.75"></path></svg>
+            </button>
+            <div id="menu-panel-{{ loop.index }}" class="tab-menu" aria-hidden="true" data-menu-panel>
+              {% for item in section.children if item.is_page %}
+                <a href="{{ item.url | url }}"{% if item.active %} aria-current="page"{% endif %} tabindex="-1"><span>{{ item.title }}</span><small>{{ item.meta.description if item.meta and item.meta.description else config.site_description }}</small></a>
+              {% endfor %}
+            </div>
+          </div>
         {% endif %}
       {% endfor %}
     </nav>
