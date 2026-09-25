@@ -1,7 +1,7 @@
 ---
 title: Security boundary
 description: What the runner enforces, and what your environment must provide.
-question: What does Stageway protect, and what must your environment protect?
+question: What does Scorebook protect, and what must your environment protect?
 ---
 
 # Security boundary
@@ -49,7 +49,7 @@ See [commands and permissions](execution.md) for configuration.
 
 ## What your environment must provide
 
-These are gaps or external controls on the [scorecard](scorecard.md). Stageway documents them rather than claiming them.
+These are gaps or external controls on the [scorecard](scorecard.md). Scorebook documents them rather than claiming them.
 
 | Control | Why | Checkpoint |
 |---|---|---|

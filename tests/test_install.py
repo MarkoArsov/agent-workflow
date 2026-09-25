@@ -6,13 +6,13 @@ import subprocess
 import sys
 from unittest.mock import patch
 from tests.helpers import PACKAGE, WorkspaceTest
-from stageway import install
-from stageway.extensions import copy_skill
-from stageway.util import WorkflowError, read_json, write_json
+from scorebook import install
+from scorebook.extensions import copy_skill
+from scorebook.util import WorkflowError, read_json, write_json
 
 class InstallTests(WorkspaceTest):
     def clean_env(self):
-        return {k: v for k, v in self.env.items() if k != "STAGEWAY_PACKAGE"}
+        return {k: v for k, v in self.env.items() if k != "SCOREBOOK_PACKAGE"}
 
     def source_version(self, version):
         source = self.root / ("source-" + version)
@@ -20,8 +20,8 @@ class InstallTests(WorkspaceTest):
             target = source / path.relative_to(PACKAGE)
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(path, target)
-        write_json(source / "workflow-package.json", {"name": "stageway", "schema_version": 1, "version": version})
-        (source / "runtime/stageway/__init__.py").write_text('__version__ = "' + version + '"\n')
+        write_json(source / "workflow-package.json", {"name": "scorebook", "schema_version": 1, "version": version})
+        (source / "runtime/scorebook/__init__.py").write_text('__version__ = "' + version + '"\n')
         return source
 
     def invoke(self, path, cwd, *args):
@@ -33,13 +33,13 @@ class InstallTests(WorkspaceTest):
         foreign.parent.mkdir(parents=True); foreign.write_text("user content")
         result = install.install(PACKAGE)
         self.assertEqual(result["version"], "0.1.0")
-        shim = self.home / ".local/bin/stageway"
+        shim = self.home / ".local/bin/scorebook"
         self.assertEqual(self.invoke(shim, root, "--version").strip(), "0.1.0")
-        wrapper = self.home / ".agents/skills/sw-project-setup/scripts/dispatch.py"
+        wrapper = self.home / ".agents/skills/sb-project-setup/scripts/dispatch.py"
         resolved = self.invoke(wrapper, root).strip()
         self.assertIn("/versions/0.1.0/skills/project-setup/SKILL.md", resolved)
         install.install(PACKAGE)
-        modified = self.home / ".agents/skills/sw-review/SKILL.md"
+        modified = self.home / ".agents/skills/sb-review/SKILL.md"
         modified.write_text("user-modified adapter")
         removed = install.uninstall()
         self.assertIn(str(modified), removed["preserve_modified"])
@@ -50,13 +50,13 @@ class InstallTests(WorkspaceTest):
     def test_project_install_before_setup_and_compatible_global_fallback(self):
         root = self.repo("project")
         install.install(PACKAGE, project=root)
-        wrapper = root / ".agents/skills/sw-project-setup/scripts/dispatch.py"
-        self.assertIn(str(root / ".stageway/runtime"), self.invoke(wrapper, root))
+        wrapper = root / ".agents/skills/sb-project-setup/scripts/dispatch.py"
+        self.assertIn(str(root / ".scorebook/runtime"), self.invoke(wrapper, root))
         project = self.setup_project(root)
-        self.assertIn(str(root / ".stageway/runtime"), self.invoke(wrapper, root))
+        self.assertIn(str(root / ".scorebook/runtime"), self.invoke(wrapper, root))
         install.install(PACKAGE)
-        global_wrapper = self.home / ".agents/skills/sw-review/scripts/dispatch.py"
-        self.assertIn(str(root / ".stageway/runtime"), self.invoke(global_wrapper, root))
+        global_wrapper = self.home / ".agents/skills/sb-review/scripts/dispatch.py"
+        self.assertIn(str(root / ".scorebook/runtime"), self.invoke(global_wrapper, root))
         custom = copy_skill(project, "review")
         with custom.open("a") as output:
             output.write("\nPROJECT CUSTOMIZATION\n")
@@ -79,7 +79,7 @@ class InstallTests(WorkspaceTest):
         self.assertEqual(read_json(project.config / "project.json")["package"]["version"], "0.1.1")
         self.assertEqual(old, custom.read_bytes())
         self.assertEqual(result["override_updates"][0]["skill"], "review")
-        self.assertEqual(self.invoke(project.config / "bin/stageway", root, "--version").strip(), "0.1.1")
+        self.assertEqual(self.invoke(project.config / "bin/scorebook", root, "--version").strip(), "0.1.1")
         self.assertTrue((project.config / "runtime/versions/0.1.0").exists())
 
     def test_non_git_parent_and_relocated_native_payload(self):
@@ -87,8 +87,8 @@ class InstallTests(WorkspaceTest):
         parent = app.parent
         install.install(PACKAGE, project=parent)
         for child in (app, checks):
-            output = self.invoke(child / ".claude/skills/sw-project-setup/scripts/dispatch.py", child)
-            self.assertIn(str(parent / ".stageway/runtime"), output)
+            output = self.invoke(child / ".claude/skills/sb-project-setup/scripts/dispatch.py", child)
+            self.assertIn(str(parent / ".scorebook/runtime"), output)
         project = self.setup_project(parent)
         relocated = self.source_version("0.1.0")
         install.uninstall(project=parent)
@@ -99,19 +99,19 @@ class InstallTests(WorkspaceTest):
         root = self.repo("project")
         install.install(PACKAGE, project=root)
         source = self.source_version("0.1.1")
-        receipt = root / ".stageway/runtime/receipt.json"
+        receipt = root / ".scorebook/runtime/receipt.json"
         old = receipt.read_bytes()
         real_write = install.atomic_write
         def fail(path, *args, **kwargs):
-            if path.name == "stageway":
+            if path.name == "scorebook":
                 raise OSError("simulated write failure")
             return real_write(path, *args, **kwargs)
-        with patch("stageway.install.atomic_write", side_effect=fail):
+        with patch("scorebook.install.atomic_write", side_effect=fail):
             with self.assertRaisesRegex(OSError, "simulated"):
                 install.install(source, project=root)
         self.assertEqual(receipt.read_bytes(), old)
-        self.assertFalse((root / ".stageway/runtime/versions/0.1.1").exists())
-        wrapper = root / ".agents/skills/sw-review/SKILL.md"
+        self.assertFalse((root / ".scorebook/runtime/versions/0.1.1").exists())
+        wrapper = root / ".agents/skills/sb-review/SKILL.md"
         wrapper.write_text("Unowned user edit")
         with self.assertRaisesRegex(WorkflowError, "conflicts"):
             install.install(source, project=root)
@@ -122,5 +122,5 @@ class InstallTests(WorkspaceTest):
         result = subprocess.run(["sh", str(PACKAGE / "install.sh"), "--local-source", str(PACKAGE), "--project", str(root)],
                                 cwd=root, env=self.clean_env(), text=True, capture_output=True, check=True)
         self.assertEqual(json.loads(result.stdout)["mode"], "project")
-        self.assertFalse((self.home / ".local/bin/stageway").exists())
+        self.assertFalse((self.home / ".local/bin/scorebook").exists())
 

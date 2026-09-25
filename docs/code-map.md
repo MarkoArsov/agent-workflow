@@ -8,8 +8,8 @@ question: Where do plans, evidence, and runner code live?
 
 !!! summary "In one minute"
     - Two places matter for a task: the **task checkout**, where code changes, and **`ai-plans/<task>/`**, where the agreed plan lives.
-    - Run evidence goes to an ignored directory, by default `.stageway/local/evidence/<task>/`.
-    - The runner is ordinary standard-library Python under `runtime/stageway/`, not an AI agent.
+    - Run evidence goes to an ignored directory, by default `.scorebook/local/evidence/<task>/`.
+    - The runner is ordinary standard-library Python under `runtime/scorebook/`, not an AI agent.
     - When something is unclear, `status`, the evidence files, and `inspect` answer most questions.
 
 ## The two places that matter for a task
@@ -26,7 +26,7 @@ Evidence is a third, ignored place. It records what the runner actually observed
 ~~~text
 project/
 ├── PROJECT_WORKFLOW.md        # human-readable summary; setup manages one block
-├── .stageway/
+├── .scorebook/
 │   ├── project.json           # the authoritative profile
 │   ├── package-lock.json      # the pinned package version
 │   ├── skills/                # your overrides and new skills
@@ -102,12 +102,12 @@ Everything below is standard-library Python with zero runtime dependencies.
 |---|---|
 | What did we agree to build? | `ai-plans/<task>/requirements.md` and `pipeline.json` |
 | Which files may change? | The `paths` and `test_paths` of each writable repository in `pipeline.json` |
-| What is happening right now? | `stageway status <task>` or `watch <task>` |
+| What is happening right now? | `scorebook status <task>` or `watch <task>` |
 | Why did a check pass or fail? | `evidence/STAGE-NNNN.json` in the task's evidence directory |
 | What did the agent actually say? | `attempts/NNNN.json` |
 | What changed in a rebind? | `revisions/` and the `revisions` list in `state.json` |
-| Which skill will a stage use? | `stageway skill resolve <name>` |
-| What is this project's configuration? | `stageway inspect` |
+| Which skill will a stage use? | `scorebook skill resolve <name>` |
+| What is this project's configuration? | `scorebook inspect` |
 
 ## Important boundary
 

@@ -44,7 +44,7 @@ See [stop or flag](principles.md#stop-or-flag).
 
 ## If something failed
 
-Start with `stageway status TASK`. The `error` field names the failure; the evidence directory holds each attempt's output and each stage's check results.
+Start with `scorebook status TASK`. The `error` field names the failure; the evidence directory holds each attempt's output and each stage's check results.
 Read the failing command or provider result before retrying.
 
 | What happened | Best next step |
@@ -66,10 +66,10 @@ The runner retries temporary problems and resumes saved progress. It does not si
 ## Answer, resume, rebind, cancel
 
 ~~~sh
-stageway answer csv-export --file answer.txt
-stageway resume csv-export
-stageway resume csv-export --rebind
-stageway cancel csv-export
+scorebook answer csv-export --file answer.txt
+scorebook resume csv-export
+scorebook resume csv-export --rebind
+scorebook cancel csv-export
 ~~~
 
 - **Answer** resumes the exact provider session that asked. Retries and fallbacks always start fresh sessions.

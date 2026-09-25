@@ -22,7 +22,7 @@ class WorkspaceTest(unittest.TestCase):
                     "GIT_CONFIG_NOSYSTEM": "1", "GIT_CONFIG_GLOBAL": os.devnull,
                     "GIT_AUTHOR_NAME": "Fixture", "GIT_AUTHOR_EMAIL": "fixture@example.invalid",
                     "GIT_COMMITTER_NAME": "Fixture", "GIT_COMMITTER_EMAIL": "fixture@example.invalid",
-                    "PYTHONDONTWRITEBYTECODE": "1", "STAGEWAY_PACKAGE": str(PACKAGE)}
+                    "PYTHONDONTWRITEBYTECODE": "1", "SCOREBOOK_PACKAGE": str(PACKAGE)}
         self.patch = unittest.mock.patch.dict(os.environ, self.env, clear=True)
         self.patch.start()
         self.addCleanup(self.patch.stop)
@@ -40,14 +40,14 @@ class WorkspaceTest(unittest.TestCase):
         return path
 
     def setup_project(self, path, patch=None):
-        from stageway.setup import apply, propose
+        from scorebook.setup import apply, propose
         p = propose(path, {"confirmed_defaults": True, "profile": patch or {}})
         apply(p, p["approval"])
-        from stageway.project import load
+        from scorebook.project import load
         return load(path)
 
     def cli(self, *args, cwd=None, check=True):
-        return subprocess.run([sys.executable, str(PACKAGE / "bin/stageway"), *map(str, args)],
+        return subprocess.run([sys.executable, str(PACKAGE / "bin/scorebook"), *map(str, args)],
                               cwd=cwd or PACKAGE, env=self.env, text=True, capture_output=True, check=check)
 
 import unittest.mock

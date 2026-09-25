@@ -12,7 +12,7 @@ class Project:
 
     @property
     def config(self):
-        return self.root / ".stageway"
+        return self.root / ".scorebook"
 
     def repository(self, name: str) -> dict:
         for repo in self.profile["repositories"]:
@@ -37,7 +37,7 @@ class Project:
 
 def load(root: Path) -> Project:
     root = root.expanduser().resolve()
-    path = root / ".stageway/project.json"
+    path = root / ".scorebook/project.json"
     data = read_json(path)
     if data is None:
         raise WorkflowError(f"No project profile at {root}; run project-setup")
@@ -56,10 +56,10 @@ def resolve(start: Path | str = ".", explicit: Path | str | None = None) -> Proj
     metadata = run(["git", "rev-parse", "--git-dir"], start, check=False)
     is_worktree = bool(common and metadata.returncode == 0 and (start / metadata.stdout.strip()).resolve() != common)
     for candidate in [start, *start.parents]:
-        ref = read_json(candidate / ".stageway/project-ref.json")
+        ref = read_json(candidate / ".scorebook/project-ref.json")
         if ref:
             target = (candidate / ref["root"]).resolve()
-            if is_worktree and not (target / ".stageway/project.json").is_file():
+            if is_worktree and not (target / ".scorebook/project.json").is_file():
                 continue
             project = load(target)
             if not project.accepts(start):
@@ -67,7 +67,7 @@ def resolve(start: Path | str = ".", explicit: Path | str | None = None) -> Proj
                     continue
                 raise WorkflowError("Project reference does not include the active repository")
             return project
-        if (candidate / ".stageway/project.json").is_file():
+        if (candidate / ".scorebook/project.json").is_file():
             project = load(candidate)
             if project.accepts(start):
                 return project
@@ -75,9 +75,9 @@ def resolve(start: Path | str = ".", explicit: Path | str | None = None) -> Proj
     if common:
         original = common.parent
         for candidate in [original, *original.parents]:
-            ref = read_json(candidate / ".stageway/project-ref.json")
+            ref = read_json(candidate / ".scorebook/project-ref.json")
             target = (candidate / ref["root"]).resolve() if ref else candidate
-            if (target / ".stageway/project.json").is_file():
+            if (target / ".scorebook/project.json").is_file():
                 project = load(target)
                 if project.accepts(start):
                     return project

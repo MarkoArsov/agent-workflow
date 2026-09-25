@@ -14,14 +14,14 @@ footer_order: 3
     - The manual lane implements it in your session. The full lane runs fresh stages and keeps evidence on disk.
     - Every command below exists; output blocks show the real format, trimmed.
 
-Before you start, [install](install.md) Stageway and [set up your project](setup.md).
+Before you start, [install](install.md) Scorebook and [set up your project](setup.md).
 
 ## 1. Specify
 
-In your agent, invoke `sw-specify` (or `stageway:specify` in the native Claude plugin):
+In your agent, invoke `sb-specify` (or `scorebook:specify` in the native Claude plugin):
 
 ~~~text
-sw-specify Add CSV export to the reports endpoint.
+sb-specify Add CSV export to the reports endpoint.
 ~~~
 
 It reads the project workflow, repository instructions, and the nearest working examples, then asks only what it can't find out.
@@ -82,7 +82,7 @@ Approve when another engineer could implement it without inventing behavior:
 For a change this small you could stop here and implement in the same session:
 
 ~~~text
-sw-implement
+sb-implement
 ~~~
 
 `implement` follows the plan's path boundaries, writes the test and the code, runs `csv-export-behavior`, fixes what fails, and inspects the final diff.
@@ -93,7 +93,7 @@ It reports what it observed and what remains. It doesn't commit or push.
 Validate the plan and check readiness:
 
 ~~~sh
-stageway validate-plan ai-plans/csv-export/pipeline.json
+scorebook validate-plan ai-plans/csv-export/pipeline.json
 ~~~
 
 Example output
@@ -107,7 +107,7 @@ Example output
 ~~~
 
 ~~~sh
-stageway preflight ai-plans/csv-export/pipeline.json
+scorebook preflight ai-plans/csv-export/pipeline.json
 ~~~
 
 Example output, trimmed
@@ -135,7 +135,7 @@ Example output, trimmed
 `run --dry-run` prints the same report and stops. When you're ready, start the run in the background:
 
 ~~~sh
-stageway run ai-plans/csv-export/pipeline.json --detach
+scorebook run ai-plans/csv-export/pipeline.json --detach
 ~~~
 
 Example output
@@ -143,8 +143,8 @@ Example output
 
 ~~~json
 {
-  "log": "/path/to/project/.stageway/local/evidence/csv-export/runner.log",
-  "next": "stageway --project /path/to/project status csv-export",
+  "log": "/path/to/project/.scorebook/local/evidence/csv-export/runner.log",
+  "next": "scorebook --project /path/to/project status csv-export",
   "pid": 48213,
   "task": "csv-export"
 }
@@ -153,7 +153,7 @@ Example output
 Follow it:
 
 ~~~sh
-stageway watch csv-export --seconds 300
+scorebook watch csv-export --seconds 300
 ~~~
 
 Example output
@@ -184,10 +184,10 @@ A `ModuleNotFoundError` or a syntax error in the same place would have been reje
 
 ## 5. Read the evidence
 
-Everything the runner observed stays in the project's evidence directory, by default `.stageway/local/evidence/csv-export/`:
+Everything the runner observed stays in the project's evidence directory, by default `.scorebook/local/evidence/csv-export/`:
 
 ~~~text
-.stageway/local/evidence/csv-export/
+.scorebook/local/evidence/csv-export/
 ├── state.json           # the run journal: status, stages, attempts, delivery
 ├── binding.json         # the plan, profile, skills, and rules this run is bound to
 ├── attempts/0000.json   # each agent attempt: route, session, usage, output

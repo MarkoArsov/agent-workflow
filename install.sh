@@ -6,7 +6,7 @@ if [ "${1:-}" = "--local-source" ]; then
   shift 2
   exec python3 "$workflow_source/install.py" --local-source "$workflow_source" "$@"
 fi
-workflow_ref="${STAGEWAY_REF:-v0.1.0}"
+workflow_ref="${SCOREBOOK_REF:-v0.1.0}"
 workflow_temp=$(mktemp -d)
 trap 'rm -rf "$workflow_temp"' EXIT HUP INT TERM
 curl -fsSL "https://github.com/MarkoArsov/agent-workflow/archive/refs/tags/$workflow_ref.tar.gz" -o "$workflow_temp/package.tar.gz"

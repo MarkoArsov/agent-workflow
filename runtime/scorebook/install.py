@@ -33,12 +33,12 @@ def payload_digest(source):
 
 def validate_source(source):
     marker = read_json(source / "workflow-package.json")
-    if not marker or marker.get("name") != "stageway" or marker.get("schema_version") != 1:
-        raise WorkflowError("Not a compatible stageway package")
+    if not marker or marker.get("name") != "scorebook" or marker.get("schema_version") != 1:
+        raise WorkflowError("Not a compatible scorebook package")
     version = marker.get("version", "")
     from .util import identifier
     identifier(version)
-    for required in ("bin/stageway", "runtime/stageway/cli.py", "skills/project-setup/SKILL.md"):
+    for required in ("bin/scorebook", "runtime/scorebook/cli.py", "skills/project-setup/SKILL.md"):
         if not (source / required).is_file():
             raise WorkflowError(f"Package is missing {required}")
     catalog(package=source)
@@ -50,7 +50,7 @@ def validate_source(source):
     return marker
 
 def installation_root(project=None):
-    return Path(project).expanduser().resolve() / ".stageway/runtime" if project else user_data()
+    return Path(project).expanduser().resolve() / ".scorebook/runtime" if project else user_data()
 
 def wrappers(source, project, agents):
     template = (source / "templates/adapters/dispatch.py").read_text()
@@ -66,8 +66,8 @@ def wrappers(source, project, agents):
             locations += [Path(os.environ.get("CLAUDE_CONFIG_DIR", str(Path.home() / ".claude"))) / "skills"]
     for location in locations:
         for name, info in catalog(package=source).items():
-            folder = location / ("sw-" + name)
-            result[folder / "SKILL.md"] = f"---\nname: sw-{name}\ndescription: {json.dumps(info['description'])}\n---\n\nRun this skill folder's scripts/dispatch.py with the current project as its working directory. Read the returned effective skill file, then follow its procedure. Project overrides take precedence. Do not use defaults from another project.\n"
+            folder = location / ("sb-" + name)
+            result[folder / "SKILL.md"] = f"---\nname: sb-{name}\ndescription: {json.dumps(info['description'])}\n---\n\nRun this skill folder's scripts/dispatch.py with the current project as its working directory. Read the returned effective skill file, then follow its procedure. Project overrides take precedence. Do not use defaults from another project.\n"
             result[folder / "scripts/dispatch.py"] = template.replace("SKILL_NAME = None", f"SKILL_NAME = {name!r}")
     return result
 
@@ -83,11 +83,11 @@ def install(source, *, project=None, agents=None, dry_run=False):
     receipt_path = root / "receipt.json"
     receipt_before = file_hash(receipt_path)
     receipt = read_json(receipt_path, {"files": {}, "versions": {}})
-    profile_path = project / ".stageway/project.json" if project else None
+    profile_path = project / ".scorebook/project.json" if project else None
     profile = read_json(profile_path) if profile_path else None
     agents = agents or (profile.get("agents") if profile else None) or receipt.get("agents") or ["claude", "codex", "cursor"]
     desired = wrappers(source, project, agents)
-    launcher = project / ".stageway/bin/stageway" if project else Path.home() / ".local/bin/stageway"
+    launcher = project / ".scorebook/bin/scorebook" if project else Path.home() / ".local/bin/scorebook"
     code = (source / "templates/adapters/launch.py").read_text()
     if project:
         code = code.replace("LOCAL_RUNTIME = None", "LOCAL_RUNTIME = Path(__file__).resolve().parents[1] / 'runtime'")
@@ -121,7 +121,7 @@ def install(source, *, project=None, agents=None, dry_run=False):
             raise WorkflowError("Installation changed during preparation; retry the reviewed update")
         backup_paths = set(desired) | set(obsolete) | {root / "active.json", receipt_path}
         if profile_path and profile:
-            backup_paths |= {profile_path, project / ".stageway/package-lock.json"}
+            backup_paths |= {profile_path, project / ".scorebook/package-lock.json"}
         backups = {p: p.read_bytes() if p.is_file() else None for p in backup_paths}
         created_version = False
         try:
@@ -146,7 +146,7 @@ def install(source, *, project=None, agents=None, dry_run=False):
             if profile:
                 profile["package"]["version"] = version
                 write_json(profile_path, profile)
-                write_json(project / ".stageway/package-lock.json", {"version": version, "schema_version": 1})
+                write_json(project / ".scorebook/package-lock.json", {"version": version, "schema_version": 1})
             write_json(root / "active.json", {"version": version, "path": str(target), "backend": "standalone"})
             versions = dict(receipt.get("versions", {}))
             versions[version] = {"path": str(target), "sha256": content_hash}
@@ -165,13 +165,13 @@ def install(source, *, project=None, agents=None, dry_run=False):
                 shutil.rmtree(target)
             raise
     result["override_updates"] = override_updates(project, target) if project else []
-    result["next"] = "Run sw-project-setup in your agent, or stageway setup PATH."
+    result["next"] = "Run sb-project-setup in your agent, or scorebook setup PATH."
     return result
 
 def override_updates(project, package):
     if not project:
         return []
-    lock = read_json(project / ".stageway/overrides.lock.json", {})
+    lock = read_json(project / ".scorebook/overrides.lock.json", {})
     updates = []
     for name, base in lock.items():
         current = package / "skills" / name / "SKILL.md"
@@ -210,7 +210,7 @@ def uninstall(*, project=None, dry_run=False):
         for path in remove:
             path.unlink()
             parent = path.parent
-            while parent.name.startswith("sw-") or parent.name == "scripts":
+            while parent.name.startswith("sb-") or parent.name == "scripts":
                 try:
                     parent.rmdir()
                 except OSError:
@@ -234,7 +234,7 @@ def doctor(project=None):
             from .util import run
             listed = json.loads(run(["claude", "plugin", "list", "--json"], Path(project) if project else Path.cwd(), timeout=10).stdout)
             native = [{k: item.get(k) for k in ("id", "version", "scope", "enabled", "installPath")}
-                      for item in listed if item.get("id") == "stageway@stageway"]
+                      for item in listed if item.get("id") == "scorebook@scorebook"]
         except (WorkflowError, ValueError, TypeError) as exc:
             native_error = str(exc)
     return {"root": str(root), "active": read_json(root / "active.json"), "backend": receipt.get("backend"),
@@ -244,7 +244,7 @@ def doctor(project=None):
             "project_extensions": "Preserved outside the installed payload"}
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(description="Install stageway without pip.")
+    parser = argparse.ArgumentParser(description="Install scorebook without pip.")
     location = parser.add_mutually_exclusive_group(required=True)
     location.add_argument("--global", dest="global_install", action="store_true")
     location.add_argument("--project", type=Path)

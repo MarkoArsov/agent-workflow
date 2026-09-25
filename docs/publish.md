@@ -1,7 +1,7 @@
 ---
 title: Publish a release
 description: Prepare and publish a reviewed release of the package.
-question: How is a Stageway release published?
+question: How is a Scorebook release published?
 ---
 
 # Publish a release

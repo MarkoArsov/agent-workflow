@@ -1,9 +1,9 @@
 import json
 from pathlib import Path
 from tests.helpers import WorkspaceTest
-from stageway.setup import apply, merge, propose
-from stageway.project import resolve
-from stageway.util import WorkflowError
+from scorebook.setup import apply, merge, propose
+from scorebook.project import resolve
+from scorebook.util import WorkflowError
 
 class SetupTests(WorkspaceTest):
     def test_read_only_preview_approval_and_idempotence(self):
@@ -21,13 +21,13 @@ class SetupTests(WorkspaceTest):
         self.assertFalse(again["changes"])
         apply(again, again["approval"])
         self.assertEqual(first, {str(p): p.read_bytes() for p in repo.rglob("*") if p.is_file()})
-        profile = json.loads((repo / ".stageway/project.json").read_text())
+        profile = json.loads((repo / ".scorebook/project.json").read_text())
         self.assertEqual(profile["repositories"][0]["commands"]["test"]["parser"], "unittest")
 
     def test_manual_configuration_and_prose_survive_multiple_reruns(self):
         repo = self.repo("custom")
         self.setup_project(repo)
-        p = repo / ".stageway/project.json"
+        p = repo / ".scorebook/project.json"
         data = json.loads(p.read_text())
         data["tracking"]["provider"] = "linear"
         data["my_extension"] = {"enabled": True}
@@ -48,7 +48,7 @@ class SetupTests(WorkspaceTest):
         (repo / "AGENTS.md").write_text("New instructions\n")
         with self.assertRaisesRegex(WorkflowError, "changed since preview"):
             apply(p, p["approval"])
-        self.assertFalse((repo / ".stageway/project.json").exists())
+        self.assertFalse((repo / ".scorebook/project.json").exists())
 
     def test_multi_repo_membership_nested_and_external_worktree(self):
         app = self.repo("space project/app")

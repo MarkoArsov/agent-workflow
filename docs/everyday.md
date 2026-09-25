@@ -23,7 +23,7 @@ The scarce work is now:
 - judging whether it is the *right* change, not only a green one;
 - reviewing other people's pull requests at the same increased volume.
 
-Stageway can open a draft pull request. It never approves or merges one.
+Scorebook can open a draft pull request. It never approves or merges one.
 
 <!-- checkpoints: REV-3, REV-1 -->
 
@@ -46,7 +46,7 @@ Neither replaces the named approver.
 ## Prefer a short queue
 
 Worktrees isolate parallel checkouts. That is an isolation feature, not a throughput target.
-Stageway also admits only one runner per project, held by an operating-system lock, so concurrent runs can't fight over the same files.
+Scorebook also admits only one runner per project, held by an operating-system lock, so concurrent runs can't fight over the same files.
 
 Running many tasks at once produces:
 

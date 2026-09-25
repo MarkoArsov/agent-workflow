@@ -1,4 +1,4 @@
-# stageway
+# scorebook
 
 This repository is a standalone public package. PLAN.md defines the approved scope.
 Work in this checkout; do not route package development through an installed personal workflow.

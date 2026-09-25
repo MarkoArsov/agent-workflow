@@ -1,7 +1,7 @@
 ---
 title: Design principles
-description: The design decisions behind Stageway, each answering a failure mode.
-question: What is Stageway, and why is it designed this way?
+description: The design decisions behind Scorebook, each answering a failure mode.
+question: What is Scorebook, and why is it designed this way?
 ---
 
 # Design principles
@@ -15,7 +15,7 @@ question: What is Stageway, and why is it designed this way?
 
 ## At a glance
 
-Stageway takes one task from a written plan to a draft pull request.
+Scorebook takes one task from a written plan to a draft pull request.
 Think of fresh horses at every stage: each stage starts a new agent session with the plan, the project's rules, and the repository, so no chat history or bias carries over.
 
 <!-- diagram: workflow -->
@@ -105,7 +105,7 @@ The rule behind the table: a check may stop the run only when every match is gen
 
 ## Where it came from
 
-Stageway started from spec-driven development, in the spirit of [GitHub Spec Kit](https://developer.microsoft.com/blog/spec-driven-development-spec-kit/): specify first, then implement.
+Scorebook started from spec-driven development, in the spirit of [GitHub Spec Kit](https://developer.microsoft.com/blog/spec-driven-development-spec-kit/): specify first, then implement.
 It grew out of daily use on production codebases, one failure mode at a time.
 
 `specify` interviewed the engineer and wrote the plan. `implement` built it. `review` looked at the result independently.

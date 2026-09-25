@@ -44,9 +44,9 @@ Both service and check repositories must participate in the plan.
 Read-only companion repositories stay unchanged.
 
 ~~~sh
-stageway verify ai-plans/task-name/pipeline.json --phase green
-stageway environment status local-app
-stageway environment release local-app
+scorebook verify ai-plans/task-name/pipeline.json --phase green
+scorebook environment status local-app
+scorebook environment release local-app
 ~~~
 
 Release asks the owning process to stop its services. It does not kill a saved PID.

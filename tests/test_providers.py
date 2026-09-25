@@ -1,6 +1,6 @@
 from tests.helpers import WorkspaceTest
-from stageway.providers import command, Events
-from stageway.util import WorkflowError
+from scorebook.providers import command, Events
+from scorebook.util import WorkflowError
 import json
 
 class ProviderTests(WorkspaceTest):

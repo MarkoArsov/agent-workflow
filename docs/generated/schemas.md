@@ -1,5 +1,5 @@
 ---
-description: Public configuration schemas for Stageway projects and task plans.
+description: Public configuration schemas for Scorebook projects and task plans.
 footer: reference
 footer_order: 2
 ---

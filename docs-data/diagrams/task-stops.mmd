@@ -1,6 +1,6 @@
 %% When a task stops: decision tree on run status. Rendered by hand as task-stops.html.
 flowchart TD
-    A[stageway status TASK] --> B{status}
+    A[scorebook status TASK] --> B{status}
     B -->|starting or running| C[Keep watching; do not start a duplicate]
     B -->|needs_input| D[Answer the saved question with answer --file]
     B -->|failed: check or guard| E[Read the error and evidence, fix the cause, resume]

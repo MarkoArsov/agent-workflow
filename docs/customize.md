@@ -17,7 +17,7 @@ Each project can change its workflow without affecting another project.
 ## Change a skill
 
 ~~~sh
-stageway skill copy review
+scorebook skill copy review
 ~~~
 
 Edit the returned project-owned SKILL.md. The override records its upstream base hash.
@@ -26,11 +26,11 @@ Updates report changed upstream guidance while preserving your copy.
 ## Add a skill
 
 ~~~sh
-stageway skill new release-notes --description "Draft release notes from verified changes."
+scorebook skill new release-notes --description "Draft release notes from verified changes."
 ~~~
 
 Replace the scaffold with a complete procedure, clear trigger, and any supporting resources.
-Then run `stageway refresh` to preview discovery changes.
+Then run `scorebook refresh` to preview discovery changes.
 Save and approve the proposal through the same setup apply command.
 
 Use `skill list` or `skill resolve NAME` to confirm the effective source.
@@ -53,7 +53,7 @@ A custom stage extends the ordered pipeline:
 ]
 ~~~
 
-Store it at `.stageway/stages.json`. Add the stage and its named check to the task manifest.
+Store it at `.scorebook/stages.json`. Add the stage and its named check to the task manifest.
 Use exactly one skill or command, plus exactly one before or after dependency.
 Outputs must also fit the task's writable scope. Custom stages cannot follow publication.
 

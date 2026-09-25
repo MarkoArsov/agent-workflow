@@ -2,8 +2,8 @@ from __future__ import annotations
 import shutil
 import sys
 from tests.helpers import PACKAGE, WorkspaceTest
-from stageway import environments, verification
-from stageway.util import WorkflowError
+from scorebook import environments, verification
+from scorebook.util import WorkflowError
 
 class EnvironmentTests(WorkspaceTest):
     def fixture(self):

@@ -1,11 +1,11 @@
 {
-  "name": "stageway",
+  "name": "scorebook",
   "owner": {
-    "name": "stageway contributors"
+    "name": "scorebook contributors"
   },
   "plugins": [
     {
-      "name": "stageway",
+      "name": "scorebook",
       "source": "./",
       "description": "Project-aware skills and a verified fresh-session runner.",
       "version": "0.1.0"
