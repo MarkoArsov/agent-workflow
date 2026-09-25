@@ -1,13 +1,13 @@
 ---
 template: home.html
 title: Overview
-description: Agents write the code. Stageway makes them prove it, with an open-source runner that checks every stage.
+description: Agents write the code. Scorebook makes them prove it, with an open-source runner that checks every stage.
 ---
 
 <section class="home-hero" aria-labelledby="home-title">
   <div class="home-hero-copy">
     <p class="home-kicker">OPEN SOURCE · MIT · CLAUDE CODE · CODEX · CURSOR</p>
-    <h1 id="home-title">Agents write the code. Stageway makes them prove it.</h1>
+    <h1 id="home-title">Agents write the code. Scorebook makes them prove it.</h1>
     <p class="home-lead">One confirmed plan becomes a staged run: tests that fail for the right reason, an implementation checked against real command output, an optional independent review, and a guarded draft PR. Every stage starts a fresh agent session. Every check that counts is one the runner ran itself.</p>
     <div class="home-actions">
       <a class="button button-primary" href="install/">Install <span aria-hidden="true">→</span></a>
@@ -21,9 +21,9 @@ description: Agents write the code. Stageway makes them prove it, with an open-s
     </div>
     <p class="home-trust-strip">MIT · zero runtime dependencies · runs locally · no account · no telemetry</p>
   </div>
-  <div class="run-panel" aria-label="Example Stageway run">
+  <div class="run-panel" aria-label="Example Scorebook run">
     <div class="run-panel-top"><span class="run-dot" aria-hidden="true"></span><span>csv-export</span><span class="run-live">RUNNING</span></div>
-    <div class="run-command"><span>$</span> stageway status csv-export</div>
+    <div class="run-command"><span>$</span> scorebook status csv-export</div>
     <div class="run-status"><span>stage</span><strong>review</strong><span class="status-signal">green evidence bound to diff c0045111…</span></div>
     <ol class="run-stages">
       <li class="is-complete" data-run-stage><span>01</span><strong>Plan</strong><em>confirmed</em></li>
@@ -46,7 +46,7 @@ description: Agents write the code. Stageway makes them prove it, with an open-s
     <div class="stat-tile"><p class="stat-figure">≈ 24 pts</p><p class="stat-label">average gap between the automated grader and the maintainers' merge decisions</p><p class="stat-source"><a href="https://metr.org/notes/2026-03-10-many-swe-bench-passing-prs-would-not-be-merged-into-main/">METR, March 2026</a></p></div>
     <div class="stat-tile"><p class="stat-figure">46%</p><p class="stat-label">of agent-proposed fixes from Copilot, Devin, Cursor, and Claude rejected</p><p class="stat-source"><a href="https://arxiv.org/abs/2606.13468">AIDev study, 2026</a></p></div>
   </div>
-  <p class="home-closing-line">Writing code stopped being the hard part. Proving a change is right is the new bottleneck, and Stageway is built around it. <a class="text-link" href="why/">Read the research <span aria-hidden="true">→</span></a></p>
+  <p class="home-closing-line">Writing code stopped being the hard part. Proving a change is right is the new bottleneck, and Scorebook is built around it. <a class="text-link" href="why/">Read the research <span aria-hidden="true">→</span></a></p>
 </section>
 
 <section class="how-it-works" id="how-it-works" aria-labelledby="how-it-works-title">
@@ -101,7 +101,7 @@ description: Agents write the code. Stageway makes them prove it, with an open-s
   <div class="section-intro">
     <p class="section-label">THE SCORECARD</p>
     <h2 id="scorecard-title">Measured against <!-- scorecard: total --> checkpoints. Gaps included.</h2>
-    <p>Most tools tell you they're safe. Stageway publishes the scorecard: what the runner enforces, what's partial, what belongs to your organization, and what's still open.</p>
+    <p>Most tools tell you they're safe. Scorebook publishes the scorecard: what the runner enforces, what's partial, what belongs to your organization, and what's still open.</p>
   </div>
 <!-- scorecard: grid -->
   <p class="beyond-title">Beyond the rubric</p>
@@ -118,7 +118,7 @@ description: Agents write the code. Stageway makes them prove it, with an open-s
   <div class="tile-grid">
     <div class="tile"><h3>MIT-licensed</h3><p>Use it at work, change it, ship it.</p></div>
     <div class="tile"><h3>Read the runner</h3><p>Standard-library Python with zero runtime dependencies. The runner, parsers, and guards are ordinary code, not a hidden service.</p></div>
-    <div class="tile"><h3>Runs on your machine</h3><p>Your agent CLIs, your logins, your repositories. No Stageway account, server, or telemetry.</p></div>
+    <div class="tile"><h3>Runs on your machine</h3><p>Your agent CLIs, your logins, your repositories. No Scorebook account, server, or telemetry.</p></div>
     <div class="tile"><h3>Built in the open</h3><p>Public CI on Linux and macOS, public tests, public scorecard, gaps included.</p></div>
   </div>
   <div class="home-actions">
@@ -160,7 +160,7 @@ description: Agents write the code. Stageway makes them prove it, with an open-s
 <section class="home-split" aria-labelledby="review-title">
   <div class="section-intro">
     <p class="section-label">REVIEW</p>
-    <h2 id="review-title">Review is the new bottleneck. Stageway treats it that way.</h2>
+    <h2 id="review-title">Review is the new bottleneck. Scorebook treats it that way.</h2>
     <p>Agents produce diffs faster than anyone can responsibly merge them. Use AI to understand a change before you judge it, keep your own queue short, and spend the waits reviewing. A named human still approves.</p>
   </div>
   <div class="mono-chips"><code>understand</code><code>review-guide</code><code>peer-pr-review</code><code>address-pr-comments</code><code>pr-preflight</code></div>
@@ -176,14 +176,14 @@ description: Agents write the code. Stageway makes them prove it, with an open-s
   <div class="ownership-grid">
     <div class="code-card">
       <p>CHANGE WHAT YOUR AGENTS KNOW</p>
-      <pre><code>stageway skill copy review
-stageway skill new release-notes --description "Draft release notes from verified changes."
-stageway refresh</code></pre>
+      <pre><code>scorebook skill copy review
+scorebook skill new release-notes --description "Draft release notes from verified changes."
+scorebook refresh</code></pre>
       <a href="customize/">Customize skills and stages <span aria-hidden="true">→</span></a>
     </div>
     <div class="tree-card">
       <p>KEEP EXTENSIONS WITH THE PROJECT</p>
-      <pre aria-label="Project extension file tree"><code>.stageway/
+      <pre aria-label="Project extension file tree"><code>.scorebook/
 ├── skills/
 ├── rules/
 ├── references/

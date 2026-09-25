@@ -7,8 +7,8 @@ question: What exactly is open, and how can I use, audit, and extend it?
 # Open source
 
 !!! summary "In one minute"
-    - Stageway is MIT-licensed. Everything that runs is in the public repository.
-    - It runs locally with your own agent CLIs. There is no Stageway account, server, or telemetry.
+    - Scorebook is MIT-licensed. Everything that runs is in the public repository.
+    - It runs locally with your own agent CLIs. There is no Scorebook account, server, or telemetry.
     - Change it per project without forking, or fork the whole thing.
     - Its own [checkpoint scorecard](scorecard.md) is public, gaps included. Contributions are welcome.
 
@@ -16,7 +16,7 @@ question: What exactly is open, and how can I use, audit, and extend it?
 
 | Folder | What it is |
 |---|---|
-| [`runtime/stageway/`](https://github.com/MarkoArsov/agent-workflow/tree/main/runtime/stageway) | The runner, check parsers, path and rule guards, run journal, provider commands, environments, and delivery. See the [code map](code-map.md). |
+| [`runtime/scorebook/`](https://github.com/MarkoArsov/agent-workflow/tree/main/runtime/scorebook) | The runner, check parsers, path and rule guards, run journal, provider commands, environments, and delivery. See the [code map](code-map.md). |
 | [`skills/`](https://github.com/MarkoArsov/agent-workflow/tree/main/skills) | Every bundled skill. The [skill reference](generated/skills.md) is generated from these files. |
 | [`schemas/`](https://github.com/MarkoArsov/agent-workflow/tree/main/schemas) | The public formats for projects, plans, rules, stages, and connectors. See the [schema reference](generated/schemas.md). |
 | [`references/`](https://github.com/MarkoArsov/agent-workflow/tree/main/references) | The plan contract, project profile guidance, and environment lifecycle guidance that stages load on demand. |
@@ -28,7 +28,7 @@ question: What exactly is open, and how can I use, audit, and extend it?
 ## Why it matters for a verification tool
 
 A verification layer you can't inspect is just another claim to trust.
-With Stageway you can read exactly what "passed" means:
+With Scorebook you can read exactly what "passed" means:
 
 - the [parsers](verification.md#green-evidence) that decide whether a unittest, pytest, .NET, Jest, TAP, or generic check succeeded;
 - the rule that rejects import and compile errors as red evidence;
@@ -43,7 +43,7 @@ Nothing is judged by a service you can't see. The [code map](code-map.md) shows 
 - The runtime is standard-library Python with zero runtime dependencies.
 - The runtime opens no network connections of its own. Network traffic goes through your agent CLIs, `git`, and `gh`. The optional bootstrap installer uses `curl` to download the pinned release archive.
 - Credentials stay in your agent and GitHub logins, or in environment variables you name with `env_refs`. Command environments and connector settings reject literal values with secret-looking names.
-- There is no Stageway account, server, or telemetry. Run evidence stays in your project.
+- There is no Scorebook account, server, or telemetry. Run evidence stays in your project.
 - This site has no analytics, remote fonts, or connection to your local workflow state.
 
 ## No lock-in
@@ -73,7 +73,7 @@ Good first areas are the [open frontier](scorecard.md#the-open-frontier) and any
 
 ## License
 
-Stageway is released under the [MIT license](https://github.com/MarkoArsov/agent-workflow/blob/main/LICENSE): use it, change it, and ship it, keeping the copyright and license notice.
+Scorebook is released under the [MIT license](https://github.com/MarkoArsov/agent-workflow/blob/main/LICENSE): use it, change it, and ship it, keeping the copyright and license notice.
 
 <!-- checkpoints: ORG-5, CTX-1 -->
 

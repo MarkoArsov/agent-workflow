@@ -9,12 +9,12 @@ question: What does the project profile contain?
 # Profile reference
 
 !!! summary "In one minute"
-    - `.stageway/project.json` is the authoritative configuration; `PROJECT_WORKFLOW.md` summarizes it.
+    - `.scorebook/project.json` is the authoritative configuration; `PROJECT_WORKFLOW.md` summarizes it.
     - It records repositories, agents, planning locations, Git conventions, delivery, tracking, execution, routes, extensions, and environments.
     - Unknown extension keys are preserved across re-setup.
-    - Change it through setup, and inspect the resolved result with `stageway inspect`.
+    - Change it through setup, and inspect the resolved result with `scorebook inspect`.
 
-The authoritative file is `.stageway/project.json`.
+The authoritative file is `.scorebook/project.json`.
 PROJECT_WORKFLOW.md is the concise human-readable summary; setup updates its managed block while preserving your surrounding prose.
 
 | Field | Meaning |
@@ -35,7 +35,7 @@ PROJECT_WORKFLOW.md is the concise human-readable summary; setup updates its man
 
 Unknown extension keys are preserved. Repository and command collections use stable IDs/keys during re-setup.
 
-Use `stageway inspect` to see the resolved profile and effective skill origins.
+Use `scorebook inspect` to see the resolved profile and effective skill origins.
 Use setup for reviewable configuration changes; do not edit installed defaults.
 
 [Schema reference](generated/schemas.md) · [Project layout](projects.md)

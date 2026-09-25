@@ -4,7 +4,7 @@ import signal
 import sys
 import time
 from tests.helpers import WorkspaceTest
-from stageway.process import execute
+from scorebook.process import execute
 
 class ProcessTests(WorkspaceTest):
     def test_cancel_cleans_descendants_after_leader_exit_including_term_resistant_child(self):

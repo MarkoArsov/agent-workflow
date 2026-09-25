@@ -3,9 +3,9 @@ import json
 from types import SimpleNamespace
 from unittest.mock import patch
 from tests.helpers import WorkspaceTest
-from stageway.integrations import connectors, github
-from stageway import rules
-from stageway.util import WorkflowError, write_json
+from scorebook.integrations import connectors, github
+from scorebook import rules
+from scorebook.util import WorkflowError, write_json
 
 class IntegrationTests(WorkspaceTest):
     def test_connector_patch_preserves_other_settings_and_rejects_stale_approval(self):
@@ -65,7 +65,7 @@ class IntegrationTests(WorkspaceTest):
                     "nodes": [{"id": "thread-1", "comments": {"nodes": [{"id": "comment-1"}], "pageInfo": {"hasNextPage": True, "endCursor": "inner"}}}],
                     "pageInfo": {"hasNextPage": True, "endCursor": "outer"}}}}}}
             return SimpleNamespace(stdout=json.dumps(body))
-        with patch("stageway.integrations.github.run", side_effect=response):
+        with patch("scorebook.integrations.github.run", side_effect=response):
             data = github.comments(self.root, {"github": "example/project"}, 1)
         self.assertEqual(len(data["issue_comments"]), 2)
         self.assertEqual(len(data["threads"][0]["comments"]["nodes"]), 2)
@@ -76,8 +76,8 @@ class IntegrationTests(WorkspaceTest):
         def command(argv, cwd):
             calls.append(argv)
             return SimpleNamespace(stdout='{"isDraft":true}' if "view" in argv else "")
-        with patch("stageway.integrations.github.run", side_effect=command), \
-             patch("stageway.integrations.github.comments", side_effect=WorkflowError("fixture failure")):
+        with patch("scorebook.integrations.github.run", side_effect=command), \
+             patch("scorebook.integrations.github.comments", side_effect=WorkflowError("fixture failure")):
             with self.assertRaisesRegex(WorkflowError, "fixture"):
                 github.wait_bots(self.root, {"github": "example/project"}, 1, temporary_ready=True, authorized=True)
         self.assertIn("--undo", calls[-1])

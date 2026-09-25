@@ -1,5 +1,5 @@
 .site-header { position: sticky; z-index: 40; top: 0; height: var(--header-h); border-bottom: 1px solid transparent; background: rgb(251 252 250 / .78); backdrop-filter: saturate(1.4) blur(14px); -webkit-backdrop-filter: saturate(1.4) blur(14px); box-shadow: 0 1px 0 rgb(23 39 45 / .04); transition: border-color var(--duration) var(--ease-out), box-shadow var(--duration) var(--ease-out); }
-.site-header.is-scrolled { border-color: color-mix(in srgb, var(--border) 55%, var(--border-strong)); box-shadow: 0 1px 2px rgb(23 39 45 / .04), 0 8px 24px -12px rgb(23 39 45 / .15); }
+.site-header.is-scrolled { border-color: color-mix(in srgb, var(--border) 55%, var(--border-strong)); box-shadow: 0 1px 2px rgb(23 39 45 / .03), 0 8px 24px -12px rgb(23 39 45 / .10); }
 .site-header__inner, .page-shell, .home-shell, .site-footer__inner { width: min(calc(100% - 48px), var(--container)); margin: 0 auto; }
 .site-header__inner { display: flex; height: 100%; align-items: center; }
 .brand { display: inline-flex; flex: 0 0 260px; align-items: center; gap: 9px; color: var(--text); font-size: 1.125rem; font-weight: 600; letter-spacing: -.01em; line-height: 1; text-decoration: none; }

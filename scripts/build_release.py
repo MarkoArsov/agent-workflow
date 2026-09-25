@@ -11,11 +11,11 @@ import tarfile
 from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "runtime"))
-from stageway.install import files_in, validate_source
+from scorebook.install import files_in, validate_source
 
 def build(destination):
     marker = validate_source(ROOT)
-    prefix = "stageway-" + marker["version"]
+    prefix = "scorebook-" + marker["version"]
     paths = list(files_in(ROOT))
     checksums = {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest() for p in paths}
     contents = {str(p.relative_to(ROOT)): (p.read_bytes(), p.stat().st_mode & 0o777) for p in paths}

@@ -80,7 +80,7 @@ def common_dir(root: Path) -> Path | None:
     return (root / result.stdout.strip()).resolve()
 
 def user_data() -> Path:
-    return Path(os.environ.get("XDG_DATA_HOME", str(Path.home() / ".local/share"))) / "stageway"
+    return Path(os.environ.get("XDG_DATA_HOME", str(Path.home() / ".local/share"))) / "scorebook"
 
 def redact(text: str) -> str:
     text = re.sub(r"(?i)(bearer\s+)\S+", r"\1[redacted]", text)

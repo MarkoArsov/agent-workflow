@@ -1,7 +1,7 @@
 ---
 title: How it's tested
-description: Automated coverage, real-host checks, and known limitations of Stageway itself.
-question: How do we know Stageway itself works?
+description: Automated coverage, real-host checks, and known limitations of Scorebook itself.
+question: How do we know Scorebook itself works?
 footer: reference
 footer_order: 4
 ---

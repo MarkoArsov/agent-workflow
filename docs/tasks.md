@@ -24,7 +24,7 @@ There are two first-class lanes. Both start with `specify`.
 | Manual | `specify`, then `implement` | A small, contained change or follow-up with an established local pattern. |
 | Full pipeline | `specify`, then `implement-pipeline` | Test-first work, independent review, several repositories, risky areas, or automated delivery. |
 
-Invoke skills as `sw-specify` in standalone installs, or `stageway:specify` in the native Claude plugin.
+Invoke skills as `sb-specify` in standalone installs, or `scorebook:specify` in the native Claude plugin.
 [Lanes and bugfixes](lanes.md) has the full guidance, including how to handle a defect.
 
 ## End-to-end timeline
@@ -83,20 +83,20 @@ Rebinding archives the previous inputs and invalidates the affected stages. Chan
 These are optional. A normal run performs the same preflight automatically.
 
 ~~~sh
-stageway validate-plan ai-plans/csv-export/pipeline.json
-stageway preflight ai-plans/csv-export/pipeline.json
-stageway run ai-plans/csv-export/pipeline.json --dry-run
+scorebook validate-plan ai-plans/csv-export/pipeline.json
+scorebook preflight ai-plans/csv-export/pipeline.json
+scorebook run ai-plans/csv-export/pipeline.json --dry-run
 ~~~
 
 `validate-plan` checks the contract and that every plan file is complete.
 `preflight` also checks repositories, effective skills, rules, environments, connectors, and that each provider CLI is installed and supports the flags the route needs.
 `run --dry-run` prints the same preflight report without starting anything.
-For a project install, use `.stageway/bin/stageway`.
+For a project install, use `.scorebook/bin/scorebook`.
 
 ## Phase 4: Execute the selected stages
 
 ~~~sh
-stageway run ai-plans/csv-export/pipeline.json --detach
+scorebook run ai-plans/csv-export/pipeline.json --detach
 ~~~
 
 The runner takes the project lock, prepares the task checkout, and runs the selected stages in order.
@@ -138,8 +138,8 @@ Its findings are advisory unless a deterministic blocking guard backs them.
 ## Phase 5: Follow execution
 
 ~~~sh
-stageway status csv-export
-stageway watch csv-export --seconds 120
+scorebook status csv-export
+scorebook watch csv-export --seconds 120
 ~~~
 
 `status` prints the saved run state as JSON. `watch` prints a line whenever the status, stage, or pending question changes, and returns when the run is no longer running or the time is up.
@@ -159,7 +159,7 @@ If a stage needs a decision, the run pauses with status `needs_input` and saves 
 Write your answer to a file and pass it back:
 
 ~~~sh
-stageway answer csv-export --file answer.txt
+scorebook answer csv-export --file answer.txt
 ~~~
 
 The answer resumes the exact provider session that asked. It is never routed to another model or session. Retries and fallbacks, by contrast, always start fresh.

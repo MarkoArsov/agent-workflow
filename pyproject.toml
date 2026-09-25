@@ -1,5 +1,5 @@
-[tool.stageway]
-name = "stageway"
+[tool.scorebook]
+name = "scorebook"
 version = "0.1.0"
 description = "A configurable development workflow for coding agents."
 requires-python = ">=3.11"

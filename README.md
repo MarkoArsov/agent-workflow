@@ -1,11 +1,11 @@
 <p align="center">
-  <img src="docs/assets/brand/mark.svg" width="72" height="72" alt="Stageway logo">
+  <img src="docs/assets/brand/mark.svg" width="72" height="72" alt="Scorebook logo">
 </p>
 
-<h1 align="center">Stageway</h1>
+<h1 align="center">Scorebook</h1>
 
 <p align="center">
-  <strong>Agents write the code. Stageway makes them prove it.</strong><br>
+  <strong>Agents write the code. Scorebook makes them prove it.</strong><br>
   An open-source workflow for Claude Code, Codex, and Cursor that checks every stage.
 </p>
 
@@ -20,7 +20,7 @@
 
 ## What it does
 
-You confirm one plan. Stageway runs it in stages, and each stage has to show its work:
+You confirm one plan. Scorebook runs it in stages, and each stage has to show its work:
 
 | Stage | What happens | What the runner keeps |
 |---|---|---|
@@ -47,16 +47,16 @@ A one-line `curl` installer and the native Claude plugin are available once a re
 
 ## Quick start
 
-1. In your project, ask your agent to run **`sw-project-setup`** and approve the proposal it shows you.
-2. Run **`sw-specify`** with your task and confirm the plan.
-3. For a small change, run **`sw-implement`**. For the full pipeline:
+1. In your project, ask your agent to run **`sb-project-setup`** and approve the proposal it shows you.
+2. Run **`sb-specify`** with your task and confirm the plan.
+3. For a small change, run **`sb-implement`**. For the full pipeline:
 
 ```sh
-stageway run ai-plans/my-task/pipeline.json --detach
-stageway status my-task
+scorebook run ai-plans/my-task/pipeline.json --detach
+scorebook status my-task
 ```
 
-In the native Claude plugin, the skills are named `stageway:specify` and so on.
+In the native Claude plugin, the skills are named `scorebook:specify` and so on.
 
 ## Why trust it
 
