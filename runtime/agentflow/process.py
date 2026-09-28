@@ -203,7 +203,7 @@ def execute(argv, cwd, *, input_text=None, env=None, timeout=1800, inactivity=30
                 output_size += len(chunk)
                 while b"\n" in buffer:
                     line, buffer = buffer.split(b"\n", 1)
-                    line = line.decode(errors="replace")
+                    line = line.decode(errors="replace").removesuffix("\r")  # Windows programs end lines with \r\n
                     output.append(line)
                     if on_line:
                         event = on_line(line)
@@ -216,7 +216,7 @@ def execute(argv, cwd, *, input_text=None, env=None, timeout=1800, inactivity=30
                 stop(process)
                 break
         if buffer:
-            line = buffer.decode(errors="replace"); output.append(line)
+            line = buffer.decode(errors="replace").removesuffix("\r"); output.append(line)
             if on_line:
                 on_line(line)
         try:

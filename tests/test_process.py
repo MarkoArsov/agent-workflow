@@ -38,3 +38,10 @@ class ProcessTests(WorkspaceTest):
                             os.killpg(group, signal.SIGKILL)
                         except (ProcessLookupError, PermissionError):
                             pass
+
+    def test_windows_line_endings_do_not_leak_into_lines(self):
+        seen = []
+        result = execute([sys.executable, "-c", "import sys; sys.stdout.buffer.write(b'custom done\\r\\nlast\\r\\n')"],
+                         self.root, timeout=20, on_line=seen.append)
+        self.assertEqual(seen, ["custom done", "last"])
+        self.assertEqual(result["output"], "custom done\nlast")

@@ -72,7 +72,7 @@ def lease(project, name, checkouts, cancel=None):
                             buffer += chunk
                             while b"\n" in buffer:
                                 line, buffer = buffer.split(b"\n", 1)
-                                text = line.decode(errors="replace")
+                                text = line.decode(errors="replace").removesuffix("\r")  # Windows programs end lines with \r\n
                                 observed.append(text)
                                 ready = re.search(service["ready_pattern"], text)
                                 if ready:
