@@ -84,8 +84,9 @@ class Reader:
     def read(self, wait):
         """Return the output available within wait seconds. Sets open to False at end of output."""
         if WINDOWS:
+            chunks = []
             try:
-                chunks = [self.chunks.get(timeout=wait)]
+                chunks.append(self.chunks.get(timeout=wait))
                 while chunks[-1]:
                     chunks.append(self.chunks.get_nowait())
             except queue.Empty:

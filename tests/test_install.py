@@ -4,6 +4,7 @@ import os
 import shutil
 import subprocess
 import sys
+from pathlib import Path
 from unittest.mock import patch
 from tests.helpers import PACKAGE, WorkspaceTest
 from agentflow import install
@@ -47,7 +48,7 @@ class InstallTests(WorkspaceTest):
         self.assertEqual(self.invoke(shim, root, "--version").strip(), "0.1.0")
         wrapper = self.home / ".agents/skills/af-project-setup/scripts/dispatch.py"
         resolved = self.invoke(wrapper, root).strip()
-        self.assertIn("/versions/0.1.0/skills/project-setup/SKILL.md", resolved)
+        self.assertIn("/versions/0.1.0/skills/project-setup/SKILL.md", Path(resolved).as_posix())
         install.install(PACKAGE)
         modified = self.home / ".agents/skills/af-review/SKILL.md"
         modified.write_text("user-modified adapter")
