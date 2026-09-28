@@ -1,10 +1,10 @@
 from __future__ import annotations
 import os
-import selectors
 import shutil
 import subprocess
 import sys
 from tests.helpers import PACKAGE, WorkspaceTest
+from agentflow.process import Reader
 from agentflow.project import resolve
 from agentflow.setup import propose
 
@@ -38,16 +38,17 @@ class ExecutableFixtureTests(WorkspaceTest):
                 server.kill(); server.wait(timeout=5)
             server.stdout.close(); server.stderr.close()
         self.addCleanup(cleanup)
-        selector = selectors.DefaultSelector(); selector.register(server.stdout, selectors.EVENT_READ)
-        self.assertTrue(selector.select(5), "Application did not report readiness")
-        port = server.stdout.readline().strip()
+        reader = Reader(server.stdout)
+        output = b"".join(reader.read(5))
+        self.assertTrue(output, "Application did not report readiness")
+        port = output.decode().strip()
         if not port.isdigit():
             self.fail("Application failed to start: " + server.stderr.read())
         env = dict(self.env, SAMPLE_BASE_URL="http://127.0.0.1:" + port)
         result = subprocess.run([sys.executable, "-m", "unittest", "discover", "-s", "tests", "-v"],
                                 cwd=checks, env=env, text=True, capture_output=True)
         server.terminate(); server.wait(timeout=5)
-        server.stdout.close(); server.stderr.close(); selector.close()
+        reader.close(); server.stdout.close(); server.stderr.close()
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("test_readiness", result.stderr)
         self.assertEqual(self.git(checks, "rev-parse", "HEAD"), head)

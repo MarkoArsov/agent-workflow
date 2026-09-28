@@ -24,12 +24,10 @@ jobs:
       - run: python scripts/generate_docs.py --check
       - run: python scripts/check_public_content.py --history
   windows-install:
-    # The documented one-liner, run by Windows PowerShell 5.1 and PowerShell 7 against this commit.
-    strategy:
-      fail-fast: false
-      matrix:
-        shell: [powershell, pwsh]
+    # The documented one-liner against this commit: Windows PowerShell 5.1 installs, PowerShell 7 reinstalls.
     runs-on: windows-latest
+    env:
+      AGENTFLOW_REF: ${{ github.sha }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -37,13 +35,14 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
-      - name: Install with the one-liner
-        shell: ${{ matrix.shell }}
-        env:
-          AGENTFLOW_REF: ${{ github.sha }}
+      - name: Install from Windows PowerShell
+        shell: powershell
+        run: Get-Content install.ps1 -Raw | Invoke-Expression
+      - name: Reinstall from PowerShell 7
+        shell: pwsh
         run: Get-Content install.ps1 -Raw | Invoke-Expression
       - name: Run the installed command
-        shell: ${{ matrix.shell }}
+        shell: pwsh
         run: |
           & "$HOME\.local\bin\agentflow.cmd" --version
           if ($LASTEXITCODE -ne 0) { exit 1 }
