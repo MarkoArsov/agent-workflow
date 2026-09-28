@@ -1,9 +1,9 @@
 ---
 title: Install
-description: Install Scorebook globally or inside a project.
+description: Install Agent Flow globally or inside a project.
 footer: docs
 footer_order: 1
-question: How do I install Scorebook?
+question: How do I install Agent Flow?
 ---
 
 # Install
@@ -17,7 +17,7 @@ question: How do I install Scorebook?
 You need Python 3.11+, Git, and at least one authenticated agent CLI: Claude Code, Codex, or Cursor.
 GitHub delivery also uses `gh`. The runtime has no Python package dependencies.
 
-Scorebook was previously named agent-workflow. The GitHub repository still uses that name.
+Agent Flow was previously named Scorebook. The GitHub repository still uses its original name, agent-workflow.
 
 macOS and Linux use the same installer. Use WSL on Windows; native Windows is not yet supported.
 
@@ -55,10 +55,10 @@ python3 install.py --project /path/to/project
 
 Use `--agents codex claude` to install only selected host entries.
 Global commands live in `~/.local/bin`; add that directory to PATH if necessary.
-A project install provides `.scorebook/bin/scorebook`.
+A project install provides `.agentflow/bin/agentflow`.
 
 Installation enables discovery. It does not write a project profile.
-Open your project in the agent and invoke **sb-project-setup**.
+Open your project in the agent and invoke **af-project-setup**.
 Continue with [setup](setup.md).
 
 ## Claude's native plugin
@@ -67,10 +67,10 @@ After publication, add the marketplace and install the plugin:
 
 ~~~sh
 claude plugin marketplace add MarkoArsov/agent-workflow
-claude plugin install scorebook@scorebook
+claude plugin install agentflow@agentflow
 ~~~
 
-Use **scorebook:project-setup**. The plugin contains the same skills and runtime.
+Use **agentflow:project-setup**. The plugin contains the same skills and runtime.
 You can inspect a checkout with `claude --plugin-dir .` before publication.
 
 Choose one Claude discovery backend to avoid duplicate entry points.

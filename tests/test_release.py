@@ -4,8 +4,8 @@ import json
 import tarfile
 from pathlib import Path
 from tests.helpers import PACKAGE, WorkspaceTest
-from scorebook.install import validate_source
-from scorebook.util import WorkflowError
+from agentflow.install import validate_source
+from agentflow.util import WorkflowError
 
 class ReleaseTests(WorkspaceTest):
     def test_payload_is_deterministic_allowlisted_and_checksums_detect_edits(self):

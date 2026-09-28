@@ -10,7 +10,7 @@ import tempfile
 from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "runtime"))
-from scorebook.install import files_in
+from agentflow.install import files_in
 
 def main():
     results = []
@@ -45,12 +45,12 @@ def main():
             run("plugin strict validation", ["claude", "plugin", "validate", "--strict", str(source / ".claude-plugin/plugin.json")])
             added = run("local marketplace add", ["claude", "plugin", "marketplace", "add", str(source)])
             if added:
-                installed = run("native install", ["claude", "plugin", "install", "scorebook@scorebook", "--scope", "user"])
+                installed = run("native install", ["claude", "plugin", "install", "agentflow@agentflow", "--scope", "user"])
                 if installed:
                     run("native list", ["claude", "plugin", "list", "--json"])
-                    run("native details", ["claude", "plugin", "details", "scorebook@scorebook"])
-                    run("native update", ["claude", "plugin", "update", "scorebook@scorebook", "--scope", "user"])
-                    run("native uninstall", ["claude", "plugin", "uninstall", "scorebook@scorebook", "--scope", "user"])
+                    run("native details", ["claude", "plugin", "details", "agentflow@agentflow"])
+                    run("native update", ["claude", "plugin", "update", "agentflow@agentflow", "--scope", "user"])
+                    run("native uninstall", ["claude", "plugin", "uninstall", "agentflow@agentflow", "--scope", "user"])
         print(json.dumps(results, indent=2))
     return 1 if any(row["exit_code"] not in (0, None) for row in results) else 0
 

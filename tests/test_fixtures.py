@@ -5,8 +5,8 @@ import shutil
 import subprocess
 import sys
 from tests.helpers import PACKAGE, WorkspaceTest
-from scorebook.project import resolve
-from scorebook.setup import propose
+from agentflow.project import resolve
+from agentflow.setup import propose
 
 class ExecutableFixtureTests(WorkspaceTest):
     def fixture(self, name, source):

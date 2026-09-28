@@ -1,6 +1,6 @@
 ---
 title: Update and remove
-description: Update, diagnose, or remove an existing Scorebook installation.
+description: Update, diagnose, or remove an existing Agent Flow installation.
 question: How do I update, diagnose, or remove an installation?
 ---
 
@@ -20,8 +20,8 @@ Installed payloads live in separate versioned directories.
 Use a reviewed release checkout or its pinned installer:
 
 ~~~sh
-scorebook update --global --local-source /path/to/release --dry-run
-scorebook update --global --local-source /path/to/release
+agentflow update --global --local-source /path/to/release --dry-run
+agentflow update --global --local-source /path/to/release
 ~~~
 
 For a project install, replace `--global` with `--target /path/to/project`.
@@ -35,8 +35,8 @@ Overrides are preserved, with changed upstream skill hashes reported for review.
 ## Diagnose
 
 ~~~sh
-scorebook doctor --global
-scorebook doctor --target /path/to/project
+agentflow doctor --global
+agentflow doctor --target /path/to/project
 ~~~
 
 The report identifies installation ownership and modified owned files.
@@ -45,8 +45,8 @@ If a pinned version is missing, install that version or deliberately update the 
 ## Remove
 
 ~~~sh
-scorebook uninstall --global --dry-run
-scorebook uninstall --global
+agentflow uninstall --global --dry-run
+agentflow uninstall --global
 ~~~
 
 Only unchanged receipt-owned files are removed.

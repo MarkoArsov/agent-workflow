@@ -77,3 +77,11 @@
 @media (max-width: 1279px) { .brand { flex-basis: auto; } .header-tabs { display: none; } .drawer-trigger { display: block; } }
 @media (max-width: 1100px) { .brand { flex-basis: auto; } .header-tabs { display: none; } .github-link { display: none; } .search-trigger span { display: none; } .search-trigger { width: 40px; justify-content: center; padding: 0; } .drawer-trigger { display: block; } .docs-grid { display: block; } .docs-sidebar { display: none; } .content-column { max-width: 760px; margin: 0 auto; } }
 @media (max-width: 640px) { .site-header__inner, .page-shell, .home-shell, .site-footer__inner { width: min(calc(100% - 32px), var(--container)); } .footer-columns { gap: var(--space-6); } .footer-signoff { align-items: flex-start; flex-direction: column; } }
+
+/* Rename notice: one line above the header, dismissible per browser. */
+.rename-banner { display: flex; align-items: center; justify-content: center; gap: var(--space-3); min-height: 36px; padding: 6px 48px; border-bottom: 1px solid var(--border); background: var(--tint); color: var(--text); font-size: .8125rem; line-height: 1.4; text-align: center; position: relative; }
+.rename-banner p { margin: 0; }
+.rename-banner strong { color: var(--accent); font-weight: 600; }
+.rename-banner button { position: absolute; top: 50%; right: 12px; width: 28px; height: 28px; transform: translateY(-50%); border: 0; border-radius: var(--radius-item); background: transparent; color: var(--text-muted); font-size: 1.125rem; line-height: 1; cursor: pointer; }
+.rename-banner button:hover { background: var(--surface); color: var(--text); }
+.rename-banner[hidden] { display: none; }

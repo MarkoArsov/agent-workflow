@@ -1,5 +1,5 @@
 from tests.helpers import WorkspaceTest
-from scorebook.verification import parse
+from agentflow.verification import parse
 
 class VerificationTests(WorkspaceTest):
     def test_unittest_red_requires_identity_and_assertion_not_setup(self):

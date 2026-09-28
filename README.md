@@ -1,18 +1,18 @@
 <p align="center">
-  <img src="docs/assets/brand/mark.svg" width="72" height="72" alt="Scorebook logo">
+  <img src="docs/assets/brand/mark.svg" width="72" height="72" alt="Agent Flow logo">
 </p>
 
-<h1 align="center">Scorebook</h1>
+<h1 align="center">Agent Flow</h1>
 
 <p align="center">
-  <strong>Agents write the code. Scorebook makes them prove it.</strong><br>
+  <strong>Agents write the code. Agent Flow makes them prove it.</strong><br>
   An open-source workflow for Claude Code, Codex, and Cursor that checks every stage.
 </p>
 
 <p align="center">
-  <a href="https://MarkoArsov.github.io/agent-workflow/"><strong>Website and docs</strong></a> ·
-  <a href="https://MarkoArsov.github.io/agent-workflow/first-task/">Your first task</a> ·
-  <a href="https://MarkoArsov.github.io/agent-workflow/scorecard/">Checkpoint scorecard</a> ·
+  <a href="https://agentic.markoarsov.com/"><strong>Website and docs</strong></a> ·
+  <a href="https://agentic.markoarsov.com/first-task/">Your first task</a> ·
+  <a href="https://agentic.markoarsov.com/scorecard/">Checkpoint scorecard</a> ·
   <a href="LICENSE">MIT license</a>
 </p>
 
@@ -20,7 +20,7 @@
 
 ## What it does
 
-You confirm one plan. Scorebook runs it in stages, and each stage has to show its work:
+You confirm one plan. Agent Flow runs it in stages, and each stage has to show its work:
 
 | Stage | What happens | What the runner keeps |
 |---|---|---|
@@ -43,26 +43,26 @@ python3 install.py --global                    # for all projects
 python3 install.py --project /path/to/project  # or for one project
 ```
 
-A one-line `curl` installer and the native Claude plugin are available once a release is tagged. See [Install](https://MarkoArsov.github.io/agent-workflow/install/).
+A one-line `curl` installer and the native Claude plugin are available once a release is tagged. See [Install](https://agentic.markoarsov.com/install/).
 
 ## Quick start
 
-1. In your project, ask your agent to run **`sb-project-setup`** and approve the proposal it shows you.
-2. Run **`sb-specify`** with your task and confirm the plan.
-3. For a small change, run **`sb-implement`**. For the full pipeline:
+1. In your project, ask your agent to run **`af-project-setup`** and approve the proposal it shows you.
+2. Run **`af-specify`** with your task and confirm the plan.
+3. For a small change, run **`af-implement`**. For the full pipeline:
 
 ```sh
-scorebook run ai-plans/my-task/pipeline.json --detach
-scorebook status my-task
+agentflow run ai-plans/my-task/pipeline.json --detach
+agentflow status my-task
 ```
 
-In the native Claude plugin, the skills are named `scorebook:specify` and so on.
+In the native Claude plugin, the skills are named `agentflow:specify` and so on.
 
 ## Why trust it
 
 - **Evidence, not claims.** The runner runs every check itself and records what it saw.
 - **Stops only for what matters.** Scope, secrets, frozen tests, failed checks, and delivery guards block. Review notes don't.
-- **Honest about limits.** A public [36-point scorecard](https://MarkoArsov.github.io/agent-workflow/scorecard/) shows what's covered and what isn't.
+- **Honest about limits.** A public [36-point scorecard](https://agentic.markoarsov.com/scorecard/) shows what's covered and what isn't.
 - **Yours to change.** Override skills, add rules, stages, and connectors per project, without forking.
 - **Open and local.** MIT license, standard-library Python, no account, no server, no telemetry.
 
@@ -72,4 +72,4 @@ In the native Claude plugin, the skills are named `scorebook:specify` and so on.
 python3 -m unittest discover -s tests -v
 ```
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for docs builds and checks, and [Contribute and develop](https://MarkoArsov.github.io/agent-workflow/development/) for the full guide.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for docs builds and checks, and [Contribute and develop](https://agentic.markoarsov.com/development/) for the full guide.

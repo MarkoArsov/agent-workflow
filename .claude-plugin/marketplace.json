@@ -1,11 +1,11 @@
 {
-  "name": "scorebook",
+  "name": "agentflow",
   "owner": {
-    "name": "scorebook contributors"
+    "name": "Agent Flow contributors"
   },
   "plugins": [
     {
-      "name": "scorebook",
+      "name": "agentflow",
       "source": "./",
       "description": "Project-aware skills and a verified fresh-session runner.",
       "version": "0.1.0"

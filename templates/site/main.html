@@ -24,6 +24,10 @@
   </head>
   <body data-page-url="{{ page.url if page else '' }}"{% if page and page.file.src_uri == 'index.md' %} data-page-home="true"{% endif %}>
     <a class="skip-link" href="#main-content">Skip to content</a>
+    <div class="rename-banner" data-rename-banner>
+      <p><strong>Scorebook is now Agent Flow.</strong> Same project, new name and address.</p>
+      <button type="button" aria-label="Dismiss rename notice" data-rename-dismiss>×</button>
+    </div>
     {% include "partials/header.html" %}
     {% include "partials/drawer.html" %}
     {% block body %}

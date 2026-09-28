@@ -82,13 +82,13 @@ gh workflow run pages.yml --ref main --repo MarkoArsov/agent-workflow
 gh run list --repo MarkoArsov/agent-workflow
 ~~~
 
-Check [the documentation site](https://MarkoArsov.github.io/agent-workflow/), navigation, search, and assets under its project subpath. Review the Verify workflow results before announcing the release.
+Check [the documentation site](https://agentic.markoarsov.com/), navigation, search, and assets under the custom domain. Review the Verify workflow results before announcing the release.
 
 Build an optional downloadable payload:
 
 ~~~sh
 python3 scripts/build_release.py
-gh release create v0.1.0 .dist/scorebook-0.1.0.tar.gz .dist/scorebook-0.1.0.tar.gz.sha256 --repo MarkoArsov/agent-workflow --verify-tag --title "v0.1.0" --notes "Initial public release. See README and documentation for installation and support."
+gh release create v0.1.0 .dist/agentflow-0.1.0.tar.gz .dist/agentflow-0.1.0.tar.gz.sha256 --repo MarkoArsov/agent-workflow --verify-tag --title "v0.1.0" --notes "Initial public release. See README and documentation for installation and support."
 ~~~
 
 Finally, check the pinned bootstrap from a disposable home/project using both global and project install modes, then run the [real-host smoke procedure](docs/coverage.md#real-host-smoke-procedure) with an available model for each intended host.

@@ -1,6 +1,6 @@
 from __future__ import annotations
 from tests.helpers import WorkspaceTest
-from scorebook.detect import scan
+from agentflow.detect import scan
 
 class DetectorTests(WorkspaceTest):
     def test_stack_and_branch_detection_uses_static_repository_facts(self):

@@ -1,4 +1,13 @@
 (() => {
+  const banner = document.querySelector('[data-rename-banner]');
+  if (banner) {
+    const key = 'agentflow-rename-dismissed';
+    try { if (localStorage.getItem(key)) banner.hidden = true; } catch (_) {}
+    banner.querySelector('[data-rename-dismiss]')?.addEventListener('click', () => {
+      banner.hidden = true;
+      try { localStorage.setItem(key, '1'); } catch (_) {}
+    });
+  }
   const header = document.querySelector('[data-site-header]');
   if (header) {
     const sentinel = document.createElement('div');
