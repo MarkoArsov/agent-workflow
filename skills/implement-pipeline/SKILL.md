@@ -15,7 +15,7 @@ Run this skill folder's scripts/resolve.py from the active project once. If it r
 
 3. Use run with --dry-run to show the resolved stages and scope. Start run or run --detach when the user asks for the full pipeline. Detached output includes the task ID and log.
 
-4. Observe status or bounded watch. The runner owns one project lock, fresh stage sessions, verification, and delivery. Do not start competing agents against its files.
+4. Observe status or bounded watch. The orchestrator owns one project lock, fresh stage sessions, verification, and delivery. Do not start competing agents against its files.
 
 5. For needs_input, show the exact saved question. Write the user's answer to a local file and use answer --file; this resumes the asking session. Do not answer on the user's behalf.
 

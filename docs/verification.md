@@ -7,14 +7,14 @@ question: What counts as proof?
 # Evidence and checks
 
 !!! summary "In one minute"
-    - An agent's response is a proposal, not a completion. The runner runs the named checks itself and examines the files.
+    - An agent's response is a proposal, not a completion. The orchestrator runs the named checks itself and examines the files.
     - Red evidence means the expected tests failed on assertions, not on a setup error. Those tests are then frozen.
     - Green evidence is parsed from real output and bound to a fingerprint of the files it describes.
     - Any later change makes that evidence stale. Delivery re-runs the checks first.
 
 ## A proposal, not a completion
 
-When a stage's agent reports `complete`, the runner treats it as a request to finish the stage.
+When a stage's agent reports `complete`, the orchestrator treats it as a request to finish the stage.
 It then checks the changed files against the stage's contract and runs every named check itself.
 The agent's own summary is kept in the attempt record, but it never counts as evidence.
 
@@ -23,20 +23,20 @@ The agent's own summary is kept in the attempt record, but it never counts as ev
 ## Red evidence
 
 Test-first stages need expected test identities and observed assertion failures.
-The runner rejects output that shows a setup or compile failure, such as `ModuleNotFoundError`, `ImportError`, `SyntaxError`, `command not found`, a C# compiler error, or a collection error.
+The orchestrator rejects output that shows a setup or compile failure, such as `ModuleNotFoundError`, `ImportError`, `SyntaxError`, `command not found`, a C# compiler error, or a collection error.
 Those failures do not prove a behavior is missing.
 
 For unittest and pytest, each expected identity must itself appear as a failed test. For other parsers, the output must show an assertion failure.
 Generic checks need an explicit `failure_pattern` for red.
 
-After meaningful red evidence, the runner records the hashes of every file under the plan's `test_paths`.
+After meaningful red evidence, the orchestrator records the hashes of every file under the plan's `test_paths`.
 Implementation and review cannot rewrite, add, or delete those tests to make them pass; a change stops the run.
 A wrong requirement or test needs a complete plan revision, `resume --rebind`, and renewed red proof.
 
 ## Green evidence
 
 Every required outcome maps to at least one named check with a green phase.
-The runner executes each check with its argv, working directory, and timeout, then parses the output:
+The orchestrator executes each check with its argv, working directory, and timeout, then parses the output:
 
 | Parser | Green when | Red (assertion) when |
 |---|---|---|
@@ -94,7 +94,7 @@ Verification commands must not change repository files; if they do, their eviden
 Ignored build output is fine; configure cleanup and ignore files so checks leave the checkout unchanged.
 
 Every verified stage records the fingerprint of the files it checked. Review and custom stages that change files produce new evidence.
-Before delivery, the runner compares the latest green fingerprint with the current files. If they differ, it re-runs the checks and stops if they fail. It also re-runs the secret detector and blocking rules on the whole task diff.
+Before delivery, the orchestrator compares the latest green fingerprint with the current files. If they differ, it re-runs the checks and stops if they fail. It also re-runs the secret detector and blocking rules on the whole task diff.
 
 ## Behavior beyond unit tests
 

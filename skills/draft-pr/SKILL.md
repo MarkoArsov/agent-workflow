@@ -9,7 +9,7 @@ Run this skill folder's scripts/resolve.py from the active project once. If it r
 
 # draft pr
 
-1. Read current plan, actual commits, base branch, repository conventions, and observed check results. The runner handles creation when draft-pr is selected.
+1. Read current plan, actual commits, base branch, repository conventions, and observed check results. The orchestrator handles creation when draft-pr is selected.
 
 2. Write a concise title and body describing the problem and final behavior, with relevant validation and limitations. Use the project's PR template when present.
 

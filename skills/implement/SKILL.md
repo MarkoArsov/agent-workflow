@@ -21,9 +21,9 @@ Run this skill folder's scripts/resolve.py from the active project once. If it r
 
 6. Inspect the final diff for accidental files, credentials, unrelated formatting, and generated artifacts. Follow project rule detectors and scoped references.
 
-7. Do not perform runner-owned commit/push/PR mechanics. In direct use, separate completion from any unrequested delivery action.
+7. Do not perform orchestrator-owned commit/push/PR mechanics. In direct use, separate completion from any unrequested delivery action.
 
 8. When blocked by a concrete missing decision or inaccessible dependency, state exactly what is needed and why. Do not invent credentials, silently omit checks, or claim success from an agent narrative.
 
-9. Return complete only when implementation is ready for independent checks; include any material limitations. The runner validates outputs and may return observed failures for correction.
+9. Return complete only when implementation is ready for independent checks; include any material limitations. The orchestrator validates outputs and may return observed failures for correction.
 

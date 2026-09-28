@@ -46,7 +46,7 @@ Neither replaces the named approver.
 ## Prefer a short queue
 
 Worktrees isolate parallel checkouts. That is an isolation feature, not a throughput target.
-Agent Flow also admits only one runner per project, held by an operating-system lock, so concurrent runs can't fight over the same files.
+Agent Flow also admits only one orchestrator per project, held by an operating-system lock, so concurrent runs can't fight over the same files.
 
 Running many tasks at once produces:
 
@@ -57,7 +57,7 @@ Running many tasks at once produces:
 !!! summary "Rule of thumb"
     Finish **one** task at a time. Two or three are reasonable when they are small, independent, and already waiting on CI or a reviewer.
 
-This is a limit on attention, not on tools. The runner can still work unattended; you just don't start the next task only because you can.
+This is a limit on attention, not on tools. The orchestrator can still work unattended; you just don't start the next task only because you can.
 
 <!-- checkpoints: EXE-5 -->
 

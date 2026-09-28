@@ -35,7 +35,7 @@ ai-plans/csv-export/
 ├── requirements.md      # outcomes and acceptance criteria
 ├── implementation.md    # approach, existing patterns, scope
 ├── deferred.md          # what is deliberately left out, and why
-└── pipeline.json        # the contract the runner enforces
+└── pipeline.json        # the contract the orchestrator enforces
 ~~~
 
 The heart of `pipeline.json` is small. One writable repository with its paths, one check with its command and expected test identity, and one outcome mapped to it:
@@ -166,7 +166,7 @@ Example output
 {"status": "complete", "stage": "review", "completed": ["implement-tests", "implement", "review"], "pending_input": null, "error": null}
 ~~~
 
-In the `implement-tests` stage the runner accepted the red state only because the expected test failed on an assertion:
+In the `implement-tests` stage the orchestrator accepted the red state only because the expected test failed on an assertion:
 
 Example output from the red check
 {: .code-label }
@@ -184,7 +184,7 @@ A `ModuleNotFoundError` or a syntax error in the same place would have been reje
 
 ## 5. Read the evidence
 
-Everything the runner observed stays in the project's evidence directory, by default `.agentflow/local/evidence/csv-export/`:
+Everything the orchestrator observed stays in the project's evidence directory, by default `.agentflow/local/evidence/csv-export/`:
 
 ~~~text
 .agentflow/local/evidence/csv-export/
@@ -192,10 +192,10 @@ Everything the runner observed stays in the project's evidence directory, by def
 ├── binding.json         # the plan, profile, skills, and rules this run is bound to
 ├── attempts/0000.json   # each agent attempt: route, session, usage, output
 ├── evidence/            # each verified stage: checks, rules, fingerprint
-└── runner.log           # output of a detached runner
+└── runner.log           # output of a detached orchestrator
 ~~~
 
-A green record contains the command the runner ran, its parsed result, the rule findings, the changed paths, and the fingerprint of the files:
+A green record contains the command the orchestrator ran, its parsed result, the rule findings, the changed paths, and the fingerprint of the files:
 
 Example: evidence/implement-0001.json, trimmed
 {: .code-label }
@@ -227,7 +227,7 @@ Each attempt also records `usage` and `cost_usd` exactly as the provider reporte
 
 ## Next steps
 
-- Add `commit-and-push` and `draft-pr` to the stages, with an approved commit message, title, and body file, to let the runner deliver. See [review and delivery](review.md).
+- Add `commit-and-push` and `draft-pr` to the stages, with an approved commit message, title, and body file, to let the orchestrator deliver. See [review and delivery](review.md).
 - Learn what to do when a run pauses: [when a task stops](recovery.md).
 - Read how the evidence is judged: [evidence and checks](verification.md).
 

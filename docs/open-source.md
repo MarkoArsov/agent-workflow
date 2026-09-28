@@ -16,7 +16,7 @@ question: What exactly is open, and how can I use, audit, and extend it?
 
 | Folder | What it is |
 |---|---|
-| [`runtime/agentflow/`](https://github.com/MarkoArsov/agent-workflow/tree/main/runtime/agentflow) | The runner, check parsers, path and rule guards, run journal, provider commands, environments, and delivery. See the [code map](code-map.md). |
+| [`runtime/agentflow/`](https://github.com/MarkoArsov/agent-workflow/tree/main/runtime/agentflow) | The orchestrator, check parsers, path and rule guards, run journal, provider commands, environments, and delivery. See the [code map](code-map.md). |
 | [`skills/`](https://github.com/MarkoArsov/agent-workflow/tree/main/skills) | Every bundled skill. The [skill reference](generated/skills.md) is generated from these files. |
 | [`schemas/`](https://github.com/MarkoArsov/agent-workflow/tree/main/schemas) | The public formats for projects, plans, rules, stages, and connectors. See the [schema reference](generated/schemas.md). |
 | [`references/`](https://github.com/MarkoArsov/agent-workflow/tree/main/references) | The plan contract, project profile guidance, and environment lifecycle guidance that stages load on demand. |
@@ -57,7 +57,7 @@ Three ways, from lightest to heaviest:
 ## Built in the open
 
 - **Public CI.** On every push and pull request, GitHub Actions runs the test suite on Linux and macOS with Python 3.11 and 3.14, checks generated references, and scans the source and its history for private content. A separate job builds this site in strict mode, checks every internal link, and scans the built pages.
-- **A public scorecard.** The [checkpoint scorecard](scorecard.md) states what the runner enforces, what is partial, what belongs to your organization, and what is still missing.
+- **A public scorecard.** The [checkpoint scorecard](scorecard.md) states what the orchestrator enforces, what is partial, what belongs to your organization, and what is still missing.
 - **An open roadmap.** The [open frontier](scorecard.md#the-open-frontier) lists the next engineering problems. Those are the places contributions help most.
 
 ## Contribute

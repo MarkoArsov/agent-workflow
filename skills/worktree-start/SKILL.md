@@ -13,7 +13,7 @@ Run this skill folder's scripts/resolve.py from the active project once. If it r
 
 2. Check for existing user changes and worktree registrations. Do not move parked base checkouts onto task branches.
 
-3. Use the runner's preparation when launching a pipeline. For a manual task, use Git worktree add at the configured worktree directory with the approved branch/base; reuse a matching existing worktree.
+3. Use the orchestrator's preparation when launching a pipeline. For a manual task, use Git worktree add at the configured worktree directory with the approved branch/base; reuse a matching existing worktree.
 
 4. A feature-branch strategy deliberately switches only its selected writable checkout. Current-checkout means validate the existing branch.
 

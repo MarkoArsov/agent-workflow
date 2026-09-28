@@ -5,7 +5,7 @@
 <h1 align="center">Agent Flow</h1>
 
 <p align="center">
-  <strong>Agents write the code. Agent Flow makes them prove it.</strong><br>
+  <strong>Agents write the code. The orchestrator makes them prove it.</strong><br>
   An open-source workflow for Claude Code, Codex, and Cursor that checks every stage.
 </p>
 
@@ -22,11 +22,11 @@
 
 You confirm one plan. Agent Flow runs it in stages, and each stage has to show its work:
 
-| Stage | What happens | What the runner keeps |
+| Stage | What happens | What the orchestrator keeps |
 |---|---|---|
 | **Specify** | Research first, then one complete plan where every outcome maps to a named check. | Plan files and a validated `pipeline.json` |
 | **Tests** *(optional)* | Written before the code. They must fail on an assertion, then they're frozen. | Red proof and test-file hashes |
-| **Implement** | Build, run the named checks, fix. The runner then runs the checks itself. | Parsed results tied to the current diff |
+| **Implement** | Build, run the named checks, fix. The orchestrator then runs the checks itself. | Parsed results tied to the current diff |
 | **Review** *(optional)* | A fresh session that sees the requirements and diff, not the author's reasoning. | Findings, and checks re-run after fixes |
 | **Deliver** *(optional)* | Commit, push, and draft PR. Never to a base branch, never a force push. | A delivery record per repository |
 
@@ -60,7 +60,7 @@ In the native Claude plugin, the skills are named `agentflow:specify` and so on.
 
 ## Why trust it
 
-- **Evidence, not claims.** The runner runs every check itself and records what it saw.
+- **Evidence, not claims.** The orchestrator runs every check itself and records what it saw.
 - **Stops only for what matters.** Scope, secrets, frozen tests, failed checks, and delivery guards block. Review notes don't.
 - **Honest about limits.** A public [36-point scorecard](https://agentic.markoarsov.com/scorecard/) shows what's covered and what isn't.
 - **Yours to change.** Override skills, add rules, stages, and connectors per project, without forking.

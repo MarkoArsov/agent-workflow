@@ -9,7 +9,7 @@ footer_order: 4
 # How it's tested
 
 !!! summary "In one minute"
-    - The automated suite runs the real runner against temporary repositories, local bare remotes, and labeled provider doubles, in an isolated home.
+    - The automated suite runs the real orchestrator against temporary repositories, local bare remotes, and labeled provider doubles, in an isolated home.
     - It covers setup, customization, red and green evidence, frozen tests, scope guards, retries, fallbacks, exact-session answers, recovery, installation, delivery, and environments.
     - CI runs it on Linux and macOS with Python 3.11 and 3.14.
     - A provider double is not a live model. Account-authenticated runs are checked separately with the real-host smoke procedure below.

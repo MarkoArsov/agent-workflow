@@ -1,7 +1,7 @@
 ---
 title: Code map
-description: Where plans, evidence, and runner code live, and what runs when you start a run.
-question: Where do plans, evidence, and runner code live?
+description: Where plans, evidence, and orchestrator code live, and what runs when you start a run.
+question: Where do plans, evidence, and orchestrator code live?
 ---
 
 # Code map
@@ -9,7 +9,7 @@ question: Where do plans, evidence, and runner code live?
 !!! summary "In one minute"
     - Two places matter for a task: the **task checkout**, where code changes, and **`ai-plans/<task>/`**, where the agreed plan lives.
     - Run evidence goes to an ignored directory, by default `.agentflow/local/evidence/<task>/`.
-    - The runner is ordinary standard-library Python under `runtime/agentflow/`, not an AI agent.
+    - The orchestrator is ordinary standard-library Python under `runtime/agentflow/`, not an AI agent.
     - When something is unclear, `status`, the evidence files, and `inspect` answer most questions.
 
 ## The two places that matter for a task
@@ -19,7 +19,7 @@ question: Where do plans, evidence, and runner code live?
 | Task checkout | The code being changed. Depending on the repository's profile, this is the current checkout, a feature branch, or a worktree under the configured worktree directory. | Keeps task work isolated from base checkouts and from other tasks. |
 | `ai-plans/<task>/` | The confirmed plan: four Markdown files and `pipeline.json`. | Keeps the agreement about the work next to the code, in version control. |
 
-Evidence is a third, ignored place. It records what the runner actually observed, so it never mixes with the plan you approved.
+Evidence is a third, ignored place. It records what the orchestrator actually observed, so it never mixes with the plan you approved.
 
 ## Project map
 
@@ -54,7 +54,7 @@ Inside a task's evidence directory:
 | `attempts/NNNN.json` | One agent or command attempt: route, session, classification, usage, cost when reported, and redacted output. |
 | `evidence/STAGE-NNNN.json` | One verified stage: every check's command and parsed result, rule findings, changed paths, and the diff fingerprint. |
 | `revisions/HASH.json` | The previous binding, archived by `resume --rebind`. |
-| `runner.log` | Output of a detached runner. |
+| `runner.log` | Output of a detached orchestrator. |
 
 ## What runs when you start a run
 
@@ -85,9 +85,9 @@ Everything below is standard-library Python with zero runtime dependencies.
 | `install.py`, `adapters.py` | Versioned installation with receipts and rollback, owned-file uninstall, and host discovery entries. |
 | `util.py` | Atomic writes, path containment, identifiers, hashing, and redaction. |
 
-## What the runner does during a task
+## What the orchestrator does during a task
 
-1. **Lock.** Takes the project's runner lock. A second runner is refused.
+1. **Lock.** Takes the project's orchestrator lock. A second orchestrator is refused.
 2. **Bind.** Loads the plan, checks every plan file is complete, and hashes the plan, profile, skills, rules, and references together.
 3. **Preflight.** Validates the contract, repositories, effective skills, environments, connectors, and each provider CLI's flags.
 4. **Run stages in order.** Each stage starts a fresh agent session, or runs your command for a custom command stage.
@@ -111,7 +111,7 @@ Everything below is standard-library Python with zero runtime dependencies.
 
 ## Important boundary
 
-The runner records plans and evidence and guards outcomes after every stage. It is not, by itself, a complete security boundary around the machine it runs on.
+The orchestrator records plans and evidence and guards outcomes after every stage. It is not, by itself, a complete security boundary around the machine it runs on.
 Isolation, network egress, credentials, and branch protection need their own controls. See the [security boundary](security.md).
 
 <!-- checkpoints: CTX-3, PST-2, EXE-5 -->

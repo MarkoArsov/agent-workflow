@@ -9,7 +9,7 @@ question: What is Agent Flow, and why is it designed this way?
 !!! summary "In one minute"
     - You confirm the outcome, scope, checks, and delivery stages. Agents research, implement, and verify inside those limits.
     - Optional stages may be skipped. Their order never changes.
-    - Every important claim has an owned, observable proof. An agent's response is a proposal; the runner's observation is the evidence.
+    - Every important claim has an owned, observable proof. An agent's response is a proposal; the orchestrator's observation is the evidence.
     - The run stops only for safety. Advisory findings are recorded and the work continues.
     - All of it is open-source code that runs on your machine.
 
@@ -42,12 +42,12 @@ specify → implement-tests? → implement → review? → commit-and-push? → 
 | A fresh session per stage and per retry | Shared history biases later judgment. | Tests, implementation, review, and every retry start from the plan and the repository, not from each other's chat. |
 | Review never sees the implementation's reasoning | A reviewer that reads the author's story tends to agree with it. | The review stage receives the requirements and the actual diff, never `implementation.md`. |
 | Allow any confirmed route | A hard model split can block a valid plan. | One provider and model may run every stage, or each stage may differ. Fallbacks are explicit, ordered, and never silent. |
-| Verify mechanically | A confident report may still be wrong. | The runner runs the named checks itself and parses their output. |
+| Verify mechanically | A confident report may still be wrong. | The orchestrator runs the named checks itself and parses their output. |
 | Bind green evidence to the diff | Evidence goes stale when the code changes. | Green results carry a fingerprint of the files. Delivery re-runs the checks if anything changed since. |
 | Stop only on safety | Treating every finding as a stop turns automation into babysitting. | Scope, secret, frozen-test, verification, and delivery-guard failures stop the work. Review notes and advisory rules do not. |
 | Separate implementation from publishing | Correct code and permission to publish are different decisions. | A run can finish without committing, pushing, or opening a pull request. |
 | Every external action needs its own authorization | A broad "go ahead" can turn into messages and tracker changes nobody asked for. | Selecting `commit-and-push` and `draft-pr` authorizes exactly those actions. Comments, reviews, messages, and tracker updates each need their own approval. |
-| One runner per project | Concurrent runners fight over the same files and hide each other's evidence. | An operating-system lock admits one runner per project. |
+| One orchestrator per project | Concurrent orchestrators fight over the same files and hide each other's evidence. | An operating-system lock admits one orchestrator per project. |
 | Apply setup only with an approval digest | A proposal can change between review and apply. | Setup applies only the exact proposal you reviewed, identified by its digest. A stale proposal is rejected. |
 | Open source and local-first | A closed verification layer is one more claim to trust. | MIT-licensed, readable standard-library code that runs on your machine with your own agent CLIs. See [open source](open-source.md). |
 
@@ -60,7 +60,7 @@ specify → implement-tests? → implement → review? → commit-and-push? → 
 | Test agent | Plan-specified tests and a meaningful failing state | Product code |
 | Implement agent | The planned code and the complete verify-and-fix loop | Unapproved scope, delivery, or publishing |
 | Review agent | Independent correctness, regression, and test-adequacy checks; safe fixes within scope | Rewriting the agreed plan. Its findings are advisory unless a deterministic guard backs them |
-| Runner | Ordering, path limits, command parsing, state, evidence, safety gates, delivery mechanics | Product decisions, ever |
+| Orchestrator | Ordering, path limits, command parsing, state, evidence, safety gates, delivery mechanics | Product decisions, ever |
 
 ## When people are involved
 

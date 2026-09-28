@@ -44,11 +44,11 @@ Each item links to its row on the [scorecard](scorecard.md), where you can see h
 
 | Shift | Agent Flow's response |
 |---|---|
-| Verification became the named bottleneck, not code generation. | Evidence gates at every stage. The runner executes the checks itself. |
+| Verification became the named bottleneck, not code generation. | Evidence gates at every stage. The orchestrator executes the checks itself. |
 | Asynchronous runs overtook interactive sessions. If you weren't watching, the run must come back with proof. | Runs come back with evidence on disk, not a chat transcript. |
-| "Harness" became an engineering discipline. Planning, isolation, and verification are infrastructure, not a prompt. | The runner is ordinary, readable Python code. |
+| "Harness" became an engineering discipline. Planning, isolation, and verification are infrastructure, not a prompt. | The orchestrator is ordinary, readable Python code. |
 | Sandboxing moved from advice to product default. | Restricted mode uses provider controls, and the [security boundary](security.md) says plainly what trusted mode is not. |
-| Coordination replaced parallelism as the interesting problem. | One runner per project, and a short queue by design. See [review and everyday use](everyday.md). |
+| Coordination replaced parallelism as the interesting problem. | One orchestrator per project, and a short queue by design. See [review and everyday use](everyday.md). |
 | Agents entered the review seat. | An independent review stage that never sees the implementation's reasoning. People still approve and merge. |
 
 ## Open questions, and where Agent Flow stands
@@ -59,7 +59,7 @@ Some questions have no consensus yet. Agent Flow takes a position on each, and y
 |---|---|
 | How heavy should the spec process be? | Two lanes. A small change gets a concise plan and runs in one session. A broad change gets four plan files and a validated contract. See [lanes](lanes.md). |
 | Should unattended agents skip permission prompts by default? | Trusted execution is the offered default, backed by outcome checks after every stage. Restricted execution is available. Neither is called a sandbox. |
-| Does parallelism help, or just relocate the queue? | One runner per project. Worktrees isolate checkouts; they are not a throughput target. |
+| Does parallelism help, or just relocate the queue? | One orchestrator per project. Worktrees isolate checkouts; they are not a throughput target. |
 | Do agent-written tests count as verification? | Only after they fail on an assertion before the code exists. Then they are frozen. |
 | What does "good" look like in numbers? | Evidence is recorded per task. Agent Flow invents no targets. |
 | Does autonomous end-to-end testing generalize? | Disposable environments with observed readiness for local runs, and `test-on-staging` for deployed behavior. Screenshots are not required. |

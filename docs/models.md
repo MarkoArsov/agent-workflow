@@ -20,9 +20,9 @@ Agent Flow writes the repeatable procedure down once as skills and scripts, then
 | What looks expensive | Why it usually isn't |
 |---|---|
 | Many skills and reference files | A stage receives its one effective skill, the project's rules, and only the references the plan names. |
-| A runner, manifests, and evidence folders | Local scripts. They run commands, parse output, and write files. They bill no tokens. |
+| An orchestrator, manifests, and evidence folders | Local scripts. They run commands, parse output, and write files. They bill no tokens. |
 | Fresh sessions for tests, implementation, and review | Each is short and focused, and carries no long chat history into the next. Review is optional. |
-| Verify and fix after implementation | Runs inside the `implement` session. The runner's own verification is a script. |
+| Verify and fix after implementation | Runs inside the `implement` session. The orchestrator's own verification is a script. |
 | Watching a run | `status` and `watch` read the saved journal. No model. |
 | Delivery | Commit, push, and draft pull request are scripts, with no provider route. |
 

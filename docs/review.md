@@ -9,7 +9,7 @@ question: How does work get reviewed and delivered?
 !!! summary "In one minute"
     - Review is independent by construction: a fresh session with the requirements and the actual diff, never the implementation's reasoning.
     - Review findings are advisory unless a deterministic blocking guard backs them.
-    - The runner owns commit, push, and draft pull request. It refuses base branches, never force-pushes, and resumes after partial delivery.
+    - The orchestrator owns commit, push, and draft pull request. It refuses base branches, never force-pushes, and resumes after partial delivery.
     - Comments, replies, review requests, approvals, and merges are yours, each with its own authorization.
 
 ## Independent by construction
@@ -19,7 +19,7 @@ It never receives `implementation.md`, the implementer's reasoning. A reviewer t
 
 Review checks correctness, regressions, interfaces, authorization where relevant, failure handling, test adequacy, and unnecessary complexity, citing concrete paths and triggering scenarios.
 
-- **In a pipeline,** review may make safe corrections within the approved paths. It must preserve frozen tests and the intended design. The runner then re-runs the named checks and records new evidence.
+- **In a pipeline,** review may make safe corrections within the approved paths. It must preserve frozen tests and the intended design. The orchestrator then re-runs the named checks and records new evidence.
 - **In direct use,** review is check-only unless you ask for edits.
 
 Findings are advisory unless a deterministic blocking guard backs them, so a review note never holds delivery hostage.
@@ -29,7 +29,7 @@ An empty finding set is reported honestly rather than padded.
 
 ## Deliver selected repositories
 
-The runner owns commit, push, and draft pull request mechanics. Selecting `commit-and-push` and `draft-pr` in the plan authorizes exactly those actions, with the approved commit message, title, and body file.
+The orchestrator owns commit, push, and draft pull request mechanics. Selecting `commit-and-push` and `draft-pr` in the plan authorizes exactly those actions, with the approved commit message, title, and body file.
 
 | Guard | What it prevents |
 |---|---|
@@ -37,12 +37,12 @@ The runner owns commit, push, and draft pull request mechanics. Selecting `commi
 | Blocking rules and secrets | Publishing secret material or a blocking finding anywhere in the task diff. |
 | Explicit task branch | Delivering from a base branch, a detached HEAD, or an unexpected branch. |
 | Task-owned paths only | Committing your pre-existing changes, or anything already staged by someone else. |
-| Normal push | Force pushes. The runner has no force path. |
+| Normal push | Force pushes. The orchestrator has no force path. |
 | Recorded commit | Pushing after HEAD moved since the delivery commit. |
 | Existing pull request | Duplicate pull requests on resume. A matching open one is reused. |
 
 Repositories are independent. If one push fails after another succeeds, `status` records the partial result per repository, and `resume` continues from the recorded commits and pushes.
-Draft pull requests stay drafts: the runner never marks one ready, adds reviewers, or posts comments.
+Draft pull requests stay drafts: the orchestrator never marks one ready, adds reviewers, or posts comments.
 
 The draft body is the approved body file from the plan. Evidence isn't attached automatically yet; `pr-preflight` checks the body for testing claims the evidence doesn't support.
 

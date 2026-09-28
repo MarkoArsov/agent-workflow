@@ -34,7 +34,7 @@ Then run `agentflow refresh` to preview discovery changes.
 Save and approve the proposal through the same setup apply command.
 
 Use `skill list` or `skill resolve NAME` to confirm the effective source.
-Direct invocation and runner stages use that same source.
+Direct invocation and orchestrator stages use that same source.
 
 ## Add a stage
 
@@ -57,7 +57,7 @@ Store it at `.agentflow/stages.json`. Add the stage and its named check to the t
 Use exactly one skill or command, plus exactly one before or after dependency.
 Outputs must also fit the task's writable scope. Custom stages cannot follow publication.
 
-The runner verifies required artifacts and completion checks.
+The orchestrator verifies required artifacts and completion checks.
 Changes invalidate earlier green evidence; delivery requires checks against the final diff.
 
 ## Share your configuration

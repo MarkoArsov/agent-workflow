@@ -1,6 +1,6 @@
 {
   "statuses": {
-    "implemented": {"label": "Implemented", "meaning": "The runner or a maintained skill enforces it and records evidence."},
+    "implemented": {"label": "Implemented", "meaning": "The orchestrator or a maintained skill enforces it and records evidence."},
     "conditional": {"label": "Conditional", "meaning": "Enforced when the plan selects it."},
     "partial": {"label": "Partial", "meaning": "Addresses part of the checkpoint; a material gap remains."},
     "external": {"label": "External", "meaning": "Belongs to source control, identity, or organizational operations. External is not a pass."},
@@ -93,7 +93,7 @@
     {
       "id": "PLN-4", "phase": "planning", "title": "Vertical slices, each independently testable", "status": "partial",
       "how": "Every outcome maps to named executable checks.",
-      "remains": "The runner does not prove that a plan is a vertical slice.",
+      "remains": "The orchestrator does not prove that a plan is a vertical slice.",
       "evidence": ["runtime/agentflow/manifest.py"]
     },
     {
@@ -104,7 +104,7 @@
     },
     {
       "id": "EXE-2", "phase": "execution", "title": "Network egress allowlisted", "status": "gap",
-      "how": "The runner does not control network access.",
+      "how": "The orchestrator does not control network access.",
       "remains": "Provider, package, source-control, and general egress need an environment-level firewall.",
       "evidence": ["runtime/agentflow/process.py"]
     },
@@ -122,7 +122,7 @@
     },
     {
       "id": "EXE-5", "phase": "execution", "title": "Parallel agents in isolated checkouts", "status": "policy",
-      "how": "The worktree strategy isolates task checkouts. One runner per project is deliberate, held by an operating-system lock.",
+      "how": "The worktree strategy isolates task checkouts. One orchestrator per project is deliberate, held by an operating-system lock.",
       "remains": "Parallel runs relocate the review queue rather than shortening it; see Review and everyday use.",
       "evidence": ["runtime/agentflow/git_ops.py", "runtime/agentflow/state.py"]
     },
@@ -134,7 +134,7 @@
     },
     {
       "id": "VER-2", "phase": "verification", "title": "Completion gated deterministically", "status": "implemented",
-      "how": "The runner executes the checks itself, parses their output, guards paths, rules, and frozen tests, and binds green evidence to a diff fingerprint.",
+      "how": "The orchestrator executes the checks itself, parses their output, guards paths, rules, and frozen tests, and binds green evidence to a diff fingerprint.",
       "remains": "Nothing within the workflow boundary.",
       "evidence": ["runtime/agentflow/runner.py", "runtime/agentflow/verification.py", "runtime/agentflow/git_ops.py"]
     },
@@ -164,7 +164,7 @@
     },
     {
       "id": "REV-1", "phase": "review", "title": "Named human approver, no self-merge", "status": "external",
-      "how": "The runner opens draft PRs only. It never approves or merges them; `merge-to-base` is a local, opt-in, user-requested skill.",
+      "how": "The orchestrator opens draft PRs only. It never approves or merges them; `merge-to-base` is a local, opt-in, user-requested skill.",
       "remains": "Branch protection and named approvers are configured in source control.",
       "evidence": ["runtime/agentflow/integrations/github.py", "skills/merge-to-base/SKILL.md"]
     },
@@ -250,7 +250,7 @@
     {"id": "user-changes", "title": "Your changes stay yours", "why": "Pre-existing uncommitted changes are recorded at start. A stage that touches them fails, and delivery never commits them.", "evidence": ["runtime/agentflow/runner.py", "runtime/agentflow/git_ops.py"]},
     {"id": "approval-digest", "title": "Approval-digest setup", "why": "Setup and connector patches apply only with the digest of the exact proposal you reviewed. A stale proposal is rejected.", "evidence": ["runtime/agentflow/setup.py", "runtime/agentflow/integrations/connectors.py"]},
     {"id": "config-snapshot", "title": "Configuration snapshotted per run", "why": "Each run freezes the effective profile, skills, rules, and references, so a mid-run edit cannot change a stage's instructions.", "evidence": ["runtime/agentflow/runner.py", "runtime/agentflow/extensions.py"]},
-    {"id": "one-runner", "title": "One runner per project", "why": "An operating-system lock admits one runner per project. Cancellation asks the owner to stop its own process group and never kills a stale PID.", "evidence": ["runtime/agentflow/state.py", "runtime/agentflow/process.py"]},
+    {"id": "one-runner", "title": "One orchestrator per project", "why": "An operating-system lock admits one orchestrator per project. Cancellation asks the owner to stop its own process group and never kills a stale PID.", "evidence": ["runtime/agentflow/state.py", "runtime/agentflow/process.py"]},
     {"id": "guarded-delivery", "title": "Guarded multi-repository delivery", "why": "Commits stage only task-owned paths, never base branches, never force-push, and resume per repository after a partial failure.", "evidence": ["runtime/agentflow/git_ops.py"]},
     {"id": "companion-repos", "title": "Read-only companion repositories", "why": "A repository can supply checks without getting a branch; any change to it is a scope violation.", "evidence": ["runtime/agentflow/git_ops.py", "runtime/agentflow/manifest.py"]},
     {"id": "redaction", "title": "Redacted questions and output", "why": "Tokens and keys are redacted from saved questions, errors, and command output.", "evidence": ["runtime/agentflow/util.py"]},
