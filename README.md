@@ -34,29 +34,19 @@ Small change? Run `specify`, then `implement`, in one session.
 
 ## Install
 
-Requires Python 3.11+, Git, and at least one signed-in agent CLI (Claude Code, Codex, or Cursor). The GitHub CLI is needed only for pull requests. macOS and Linux; use WSL on Windows. No Python dependencies.
-
 ```sh
-git clone https://github.com/MarkoArsov/agent-workflow.git
-cd agent-workflow
-python3 install.py --global                    # for all projects
-python3 install.py --project /path/to/project  # or for one project
+curl -fsSL https://agentic.markoarsov.com/install.sh | sh
 ```
 
-A one-line `curl` installer and the native Claude plugin are available once a release is tagged. See [Install](https://agentic.markoarsov.com/install/).
+Needs Python 3.11+, Git, and Claude Code, Codex, or Cursor. macOS and Linux; WSL on Windows. The installer finds your agent CLIs and prints the next step. [Other ways to install](https://agentic.markoarsov.com/install/)
 
 ## Quick start
 
-1. In your project, ask your agent to run **`af-project-setup`** and approve the proposal it shows you.
-2. Run **`af-specify`** with your task and confirm the plan.
-3. For a small change, run **`af-implement`**. For the full pipeline:
+1. Open your project in your agent and run **`af-project-setup`** (in Claude Code: `/af-project-setup`). Approve the setup it proposes.
+2. Run **`af-specify`** with what you want built, and confirm the plan.
+3. Run **`af-implement`**.
 
-```sh
-agentflow run ai-plans/my-task/pipeline.json --detach
-agentflow status my-task
-```
-
-In the native Claude plugin, the skills are named `agentflow:specify` and so on.
+That's it. For bigger changes, `af-implement-pipeline` runs the full staged pipeline instead. See [your first task](https://agentic.markoarsov.com/first-task/).
 
 ## Why trust it
 

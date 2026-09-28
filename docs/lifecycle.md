@@ -17,7 +17,13 @@ Installed payloads live in separate versioned directories.
 
 ## Update
 
-Use a reviewed release checkout or its pinned installer:
+Run the install command again. It installs the newest release beside the current one and switches to it; your projects' skills, rules, and connectors stay as they are.
+
+~~~sh
+curl -fsSL https://agentic.markoarsov.com/install.sh | sh
+~~~
+
+To update from a reviewed checkout instead:
 
 ~~~sh
 agentflow update --global --local-source /path/to/release --dry-run

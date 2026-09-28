@@ -93,7 +93,7 @@ def install(source, *, project=None, agents=None, dry_run=False):
     receipt = read_json(receipt_path, {"files": {}, "versions": {}})
     profile_path = project / ".agentflow/project.json" if project else None
     profile = read_json(profile_path) if profile_path else None
-    agents = agents or (profile.get("agents") if profile else None) or receipt.get("agents") or detect_agents()
+    agents = agents or (profile.get("agents") if profile else None) or receipt.get("agents") or list(AGENT_BINARIES)
     desired = wrappers(source, project, agents)
     launcher = project / ".agentflow/bin/agentflow" if project else Path.home() / ".local/bin/agentflow"
     code = (source / "templates/adapters/launch.py").read_text()
@@ -279,7 +279,12 @@ def main(argv=None):
     parser.add_argument("--json", action="store_true", help="Print the machine-readable result")
     args = parser.parse_args(argv)
     try:
-        agents = args.agents or None
+        agents = args.agents
+        if not agents:
+            # Respect agents already chosen for this install or project; otherwise detect.
+            receipt = read_json(installation_root(args.project) / "receipt.json", {})
+            profile = read_json(Path(args.project).resolve() / ".agentflow/project.json", {}) if args.project else {}
+            agents = profile.get("agents") or receipt.get("agents") or detect_agents()
         result = install(args.local_source, project=args.project, agents=agents, dry_run=args.dry_run)
         receipt = read_json(installation_root(args.project) / "receipt.json", {})
         print(json_text(result) if args.json else summary(result, receipt.get("agents") or agents or detect_agents()), end="")

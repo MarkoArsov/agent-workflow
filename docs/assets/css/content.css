@@ -124,3 +124,8 @@
   .flow__arrow::before { left: 20px; }
   .flow__arrow::after { left: 16px; }
 }
+.prose details.more { margin: var(--space-3) 0; border: 1px solid var(--border); border-radius: var(--radius-panel); background: var(--surface); }
+.prose details.more > summary { padding: var(--space-3) var(--space-4); color: var(--text); font-weight: 500; cursor: pointer; }
+.prose details.more > summary:hover { color: var(--accent); }
+.prose details.more[open] > summary { border-bottom: 1px solid var(--border); }
+.prose details.more > :not(summary) { margin-right: var(--space-4); margin-left: var(--space-4); }

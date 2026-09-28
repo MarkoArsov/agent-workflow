@@ -124,3 +124,18 @@ class InstallTests(WorkspaceTest):
         self.assertEqual(json.loads(result.stdout)["mode"], "project")
         self.assertFalse((self.home / ".local/bin/agentflow").exists())
 
+
+    def test_plain_installer_detects_agents_and_explains_next_steps(self):
+        found = {"codex": "/usr/bin/codex"}
+        with patch("agentflow.install.shutil.which", side_effect=lambda name: found.get(name)):
+            self.assertEqual(install.detect_agents(), ["codex"])
+        with patch("agentflow.install.shutil.which", return_value=None):
+            self.assertEqual(install.detect_agents(), ["claude", "codex", "cursor"])
+        result = subprocess.run(["sh", str(PACKAGE / "install.sh"), "--local-source", str(PACKAGE), "--agents", "codex"],
+                                cwd=self.root, env=self.clean_env(), text=True, capture_output=True, check=True)
+        self.assertIn("installed (global)", result.stdout)
+        self.assertIn("af-* for Codex", result.stdout)
+        self.assertIn("af-project-setup", result.stdout)
+        self.assertIn("to your PATH", result.stdout)
+        self.assertTrue((self.home / ".local/bin/agentflow").exists())
+        self.assertFalse((self.home / "claude/skills").exists())

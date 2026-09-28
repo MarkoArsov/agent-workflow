@@ -94,8 +94,8 @@ gh release create v0.1.0 .dist/agentflow-0.1.0.tar.gz .dist/agentflow-0.1.0.tar.
 Finally, check the pinned bootstrap from a disposable home/project using both global and project install modes, then run the [real-host smoke procedure](docs/coverage.md#real-host-smoke-procedure) with an available model for each intended host.
 
 ~~~sh
-curl -fsSL https://raw.githubusercontent.com/MarkoArsov/agent-workflow/v0.1.0/install.sh | sh -s -- --global
-curl -fsSL https://raw.githubusercontent.com/MarkoArsov/agent-workflow/v0.1.0/install.sh | sh -s -- --project .
+curl -fsSL https://agentic.markoarsov.com/install.sh | sh
+curl -fsSL https://agentic.markoarsov.com/install.sh | sh -s -- --project .
 ~~~
 
 For a custom domain later, configure it and DNS in Pages, update `site_url` in `mkdocs.yml`, rebuild, and verify HTTPS and links. See [publication guidance](docs/publish.md).

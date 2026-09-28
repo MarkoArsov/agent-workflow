@@ -15,8 +15,8 @@ description: Agents write the code. The orchestrator makes them prove it, checki
     </div>
     <div class="install-command" aria-label="Global installation command">
       <span>INSTALL</span>
-      <pre><code>curl -fsSL https://raw.githubusercontent.com/MarkoArsov/agent-workflow/v0.1.0/install.sh | sh -s -- --global</code></pre>
-      <p>Requires the matching published tag. Review the pinned script first if that is your policy.</p>
+      <pre><code>curl -fsSL https://agentic.markoarsov.com/install.sh | sh</code></pre>
+      <p>Then run <code>af-project-setup</code> in your agent. Needs Python 3.11+ and Git.</p>
     </div>
   </div>
   <div class="run-panel" aria-label="Example Agent Flow run">
