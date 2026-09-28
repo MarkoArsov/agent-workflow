@@ -78,10 +78,13 @@
 @media (max-width: 1100px) { .brand { flex-basis: auto; } .header-tabs { display: none; } .github-link { display: none; } .search-trigger span { display: none; } .search-trigger { width: 40px; justify-content: center; padding: 0; } .drawer-trigger { display: block; } .docs-grid { display: block; } .docs-sidebar { display: none; } .content-column { max-width: 760px; margin: 0 auto; } }
 @media (max-width: 640px) { .site-header__inner, .page-shell, .home-shell, .site-footer__inner { width: min(calc(100% - 32px), var(--container)); } .footer-columns { gap: var(--space-6); } .footer-signoff { align-items: flex-start; flex-direction: column; } }
 
-/* Rename notice: one line above the header, dismissible per browser. */
-.rename-banner { display: flex; align-items: center; justify-content: center; gap: var(--space-3); min-height: 36px; padding: 6px 48px; border-bottom: 1px solid var(--border); background: var(--tint); color: var(--text); font-size: .8125rem; line-height: 1.4; text-align: center; position: relative; }
-.rename-banner p { margin: 0; }
-.rename-banner strong { color: var(--accent); font-weight: 600; }
-.rename-banner button { position: absolute; top: 50%; right: 12px; width: 28px; height: 28px; transform: translateY(-50%); border: 0; border-radius: var(--radius-item); background: transparent; color: var(--text-muted); font-size: 1.125rem; line-height: 1; cursor: pointer; }
-.rename-banner button:hover { background: var(--surface); color: var(--text); }
+/* Rename notice: one quiet line above the header, dismissible per browser. */
+.rename-banner { background: var(--text); color: rgb(255 255 255 / .82); font-size: .8125rem; line-height: 1; }
 .rename-banner[hidden] { display: none; }
+.rename-banner__inner { position: relative; display: flex; width: min(calc(100% - 48px), var(--container)); height: 34px; margin: 0 auto; align-items: center; justify-content: center; }
+.rename-banner p { margin: 0; letter-spacing: .005em; }
+.rename-banner strong { color: #fff; font-weight: 500; }
+.rename-banner button { position: absolute; right: -6px; display: grid; width: 26px; height: 26px; place-items: center; padding: 0; border: 0; border-radius: var(--radius-item); background: transparent; color: rgb(255 255 255 / .6); cursor: pointer; transition: color var(--duration-fast) var(--ease-out), background var(--duration-fast) var(--ease-out); }
+.rename-banner button:hover { background: rgb(255 255 255 / .08); color: #fff; }
+.rename-banner button svg { width: 10px; height: 10px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; }
+@media (max-width: 640px) { .rename-banner__inner { width: min(calc(100% - 32px), var(--container)); } }
