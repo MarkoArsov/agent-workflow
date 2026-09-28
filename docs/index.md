@@ -6,7 +6,7 @@ description: Agents write the code. The orchestrator makes them prove it, checki
 
 <section class="home-hero" aria-labelledby="home-title">
   <div class="home-hero-copy">
-    <h1 id="home-title">Agents write the code. The orchestrator makes them prove it.</h1>
+    <h1 id="home-title"><span>Agents write the code.</span> <span>The&nbsp;orchestrator makes them prove it.</span></h1>
     <p class="home-lead">One confirmed plan becomes a staged run: tests that fail for the right reason, an implementation checked against real command output, an optional independent review, and a guarded draft PR. Every stage starts a fresh agent session. Every check that counts is one the orchestrator ran itself.</p>
     <div class="home-actions">
       <a class="button button-primary" href="install/">Install <span aria-hidden="true">→</span></a>
