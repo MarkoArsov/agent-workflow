@@ -42,15 +42,15 @@ def scan(root, deny, history=False):
         for reason in violations(text, deny):
             findings.append((str(relative), reason))
     if history:
-        commits = subprocess.check_output(["git", "-C", str(root), "rev-list", "--all"], text=True).splitlines()
+        commits = subprocess.check_output(["git", "-C", str(root), "rev-list", "--all"], encoding="utf-8", errors="replace").splitlines()
         for commit in commits:
-            paths = subprocess.check_output(["git", "-C", str(root), "ls-tree", "-r", "--name-only", commit], text=True).splitlines()
+            paths = subprocess.check_output(["git", "-C", str(root), "ls-tree", "-r", "--name-only", commit], encoding="utf-8", errors="replace").splitlines()
             for name in paths:
                 data = subprocess.check_output(["git", "-C", str(root), "show", f"{commit}:{name}"])
                 count += 1
                 for reason in violations(name + "\n" + data.decode("utf-8", errors="replace"), deny):
                     findings.append((commit[:8] + ":" + name, reason))
-            message = subprocess.check_output(["git", "-C", str(root), "show", "-s", "--format=%B", commit], text=True)
+            message = subprocess.check_output(["git", "-C", str(root), "show", "-s", "--format=%B", commit], encoding="utf-8", errors="replace")
             findings += [(commit[:8] + ":message", reason) for reason in violations(message, deny)]
     return count, findings
 

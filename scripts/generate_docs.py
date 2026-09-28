@@ -54,7 +54,7 @@ def rendered():
     for path in sorted((ROOT / "skills").glob("*/SKILL.md")):
         if path.is_symlink():
             raise ValueError("Documentation sources must not be symlinks")
-        text = path.read_text()
+        text = path.read_text(encoding="utf-8")
         header, body = text.split("---", 2)[1:]
         name = re.search(r"^name:\s*(.+)$", header, re.M)[1]
         description = re.search(r"^description:\s*(.+)$", header, re.M)[1]
@@ -98,7 +98,7 @@ def rendered():
         "These schemas describe public configuration. Runtime validation also checks repository membership, dependencies, and executable evidence.\n",
     ]
     for path in sorted((ROOT / "schemas").glob("*.schema.json")):
-        value = json.loads(path.read_text())
+        value = json.loads(path.read_text(encoding="utf-8"))
         schemas += [f"## {value['title']}\n", value.get("description", "") + "\n",
                     "| Field | Required | Format |\n|---|---|---|"]
         for name, prop in value.get("properties", {}).items():
@@ -119,10 +119,11 @@ def generate(check=False):
     stale = []
     for name, content in rendered().items():
         path = directory / name
-        if not path.exists() or path.read_text() != content:
+        # Explicit UTF-8 and LF: Windows defaults to the ANSI code page and CRLF.
+        if not path.exists() or path.read_text(encoding="utf-8") != content:
             stale.append(name)
             if not check:
-                path.write_text(content)
+                path.write_text(content, encoding="utf-8", newline="")
     if check and stale:
         raise SystemExit("Stale generated references: " + ", ".join(stale))
     return stale
