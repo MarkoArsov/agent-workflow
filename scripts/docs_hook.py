@@ -29,5 +29,6 @@ def on_page_markdown(markdown, page, config, files):
         raise PluginError(f"{page.file.src_uri}: {exc}") from exc
 
 def on_post_build(config):
-    # Serve the one installer at the site root: curl -fsSL <site>/install.sh | sh
-    shutil.copyfile(Path(__file__).resolve().parents[1] / "install.sh", Path(config["site_dir"]) / "install.sh")
+    # Serve the installers at the site root: curl -fsSL <site>/install.sh | sh, irm <site>/install.ps1 | iex
+    for name in ("install.sh", "install.ps1"):
+        shutil.copyfile(Path(__file__).resolve().parents[1] / name, Path(config["site_dir"]) / name)

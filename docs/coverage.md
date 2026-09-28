@@ -44,7 +44,7 @@ For each enabled host:
 6. Ask for a deliberate input pause; answer and verify the same session resumes.
 7. Inspect actual evidence, usage fields, permission settings, and cleanup.
 
-Account-authenticated generation, hosted GitHub publication, GitHub Pages deployment, and native Windows are not claimed by isolated tests.
+Account-authenticated generation, hosted GitHub publication, and GitHub Pages deployment are not claimed by isolated tests. Native Windows runs the same test suite and the PowerShell installer in CI.
 See the local handoff for the specific checks performed for this release.
 
 <!-- checkpoints: ORG-5, VER-2 -->

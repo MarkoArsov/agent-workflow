@@ -22,7 +22,7 @@ Version 0.1.0 is implemented locally under the MIT license. Publication is a sep
 - The release archive is reproducible; its allowlisted file manifest detects tampering.
 - Source, generated site, existing Git history, and the 117-file extracted release payload passed the public-content scan with an external private denylist and zero findings. The scan includes names, content, and symlink targets.
 
-Provider doubles are not live model generation. Account-authenticated runs, native Codex/Cursor invocation, hosted CI, Pages deployment, and published bootstrap installation remain release smoke checks. Native Windows is unsupported; use WSL. Restricted behavior depends on the selected provider controls; trusted execution is not an operating-system sandbox.
+Provider doubles are not live model generation. Account-authenticated runs, native Codex/Cursor invocation, hosted CI, Pages deployment, and published bootstrap installation remain release smoke checks. Native Windows runs the test suite and the PowerShell installer in CI; live agent runs on Windows remain a release smoke check. Restricted behavior depends on the selected provider controls; trusted execution is not an operating-system sandbox.
 
 The implementation uses one provider command/event module and an installer-owned Python layout instead of separate provider files or a pip distribution. Documentation uses the built-in MkDocs theme with local CSS. These keep dependencies small without changing the agreed behavior.
 

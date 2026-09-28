@@ -22,6 +22,9 @@ class RunnerTests(WorkspaceTest):
         self.env["WORKFLOW_TEST_SCENARIO"] = str(self.scenario)
         binaries = self.root / "bin"; binaries.mkdir()
         for name in ("codex", "claude", "agent"):
+            if os.name == "nt":
+                (binaries / (name + ".cmd")).write_text(f'@"{sys.executable}" "{PACKAGE / "tests/fixtures/provider_double.py"}" %*\r\n')
+                continue
             shutil.copy(PACKAGE / "tests/fixtures/provider_double.py", binaries / name)
             (binaries / name).chmod(0o755)
         os.environ["PATH"] = str(binaries) + os.pathsep + self.env["PATH"]

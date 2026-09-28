@@ -23,6 +23,8 @@ Run the install command again. It installs the newest release beside the current
 curl -fsSL https://agentic.markoarsov.com/install.sh | sh
 ~~~
 
+On Windows, run `irm https://agentic.markoarsov.com/install.ps1 | iex` again.
+
 To update from a reviewed checkout instead:
 
 ~~~sh

@@ -11,7 +11,7 @@ from pathlib import Path
 from . import __version__
 from . import git_ops, manifest as contracts, providers, rules, state as journal, verification
 from .extensions import snapshot
-from .process import execute as execute_process
+from .process import detached, execute as execute_process
 from .util import WorkflowError, contained, digest, json_text, package_root, read_json, redact, write_json
 
 def binding(project, manifest):
@@ -376,7 +376,7 @@ def detach(project, manifest_path):
         child = subprocess.Popen([sys.executable, str(package_root() / "bin/agentflow"),
                                   "--project", str(project.root), "run", str(Path(manifest_path).resolve())],
                                  stdin=subprocess.DEVNULL, stdout=output, stderr=output,
-                                 cwd=project.root, start_new_session=True)
+                                 cwd=project.root, **detached())
     # Keep the Popen object alive and reap it if the launching Python process stays up.
     import threading
     threading.Thread(target=child.wait, daemon=True).start()

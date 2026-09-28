@@ -23,6 +23,11 @@ class WorkspaceTest(unittest.TestCase):
                     "GIT_AUTHOR_NAME": "Fixture", "GIT_AUTHOR_EMAIL": "fixture@example.invalid",
                     "GIT_COMMITTER_NAME": "Fixture", "GIT_COMMITTER_EMAIL": "fixture@example.invalid",
                     "PYTHONDONTWRITEBYTECODE": "1", "AGENTFLOW_PACKAGE": str(PACKAGE)}
+        if os.name == "nt":
+            # Path.home() reads USERPROFILE; child processes need the system variables.
+            self.env["USERPROFILE"] = str(self.home)
+            self.env.update({key: os.environ[key] for key in ("SYSTEMROOT", "SYSTEMDRIVE", "WINDIR", "COMSPEC",
+                                                              "PATHEXT", "TEMP", "TMP") if key in os.environ})
         self.patch = unittest.mock.patch.dict(os.environ, self.env, clear=True)
         self.patch.start()
         self.addCleanup(self.patch.stop)

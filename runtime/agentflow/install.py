@@ -4,6 +4,7 @@ import argparse
 import json
 import os
 import shutil
+import sys
 import tempfile
 from pathlib import Path
 from .detect import repositories
@@ -102,6 +103,9 @@ def install(source, *, project=None, agents=None, dry_run=False):
     if project:
         code = code.replace("LOCAL_RUNTIME = None", "LOCAL_RUNTIME = Path(__file__).resolve().parents[1] / 'runtime'")
     desired[launcher] = code
+    if os.name == "nt":
+        # Windows runs commands by extension; this shim makes `agentflow` work in cmd and PowerShell.
+        desired[launcher.with_suffix(".cmd")] = f'@"{sys.executable}" "%~dp0agentflow" %*\r\n'
     if project:
         desired[root / ".gitignore"] = "*\n"
     conflicts = []
@@ -257,14 +261,17 @@ def summary(result, agents):
     """Plain next steps for people; --json keeps the machine-readable result."""
     if result["dry_run"]:
         return json_text(result)
-    launcher = next((p for p in result["files"] if p.endswith("bin/agentflow")), "agentflow")
+    launcher = next((p for p in result["files"] if Path(p).name == "agentflow"), "agentflow")
     lines = [f"Agent Flow {result['version']} installed ({result['mode']}).",
              f"  Command: {launcher}",
              f"  Skills:  af-* for {', '.join(AGENT_NAMES[a] for a in agents)}", ""]
     bin_dir = str(Path(launcher).parent)
     if result["mode"] == "global" and bin_dir not in os.environ.get("PATH", "").split(os.pathsep):
-        lines += [f"Add {bin_dir} to your PATH to use the agentflow command:",
-                  f"  echo 'export PATH=\"{bin_dir}:$PATH\"' >> ~/.zshrc   # or ~/.bashrc", ""]
+        lines += [f"Add {bin_dir} to your PATH to use the agentflow command:"]
+        if os.name == "nt":
+            lines += [f"  [Environment]::SetEnvironmentVariable('Path', '{bin_dir};' + [Environment]::GetEnvironmentVariable('Path', 'User'), 'User')", ""]
+        else:
+            lines += [f"  echo 'export PATH=\"{bin_dir}:$PATH\"' >> ~/.zshrc   # or ~/.bashrc", ""]
     lines += ["Next, from your project folder, run:"]
     lines += [f"  {START_COMMANDS[a]}" for a in agents]
     lines += ["", "Docs: https://agentic.markoarsov.com/first-task/"]

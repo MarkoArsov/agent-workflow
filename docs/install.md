@@ -11,17 +11,27 @@ question: How do I install Agent Flow?
 !!! summary "In one minute"
     - Run one command. It installs the `agentflow` command and the `af-*` skills for the agent CLIs it finds.
     - Then, from your project folder, run the start command it prints, such as `claude "/af-setup"`.
-    - You need Python 3.11+, Git, and Claude Code, Codex, or Cursor. macOS and Linux; use WSL on Windows.
+    - You need Python 3.11+, Git, and Claude Code, Codex, or Cursor. Works on macOS, Linux, and Windows.
 
 ## 1. Install
+
+macOS and Linux
+{: .code-label }
 
 ~~~sh
 curl -fsSL https://agentic.markoarsov.com/install.sh | sh
 ~~~
 
+Windows (PowerShell)
+{: .code-label }
+
+~~~powershell
+irm https://agentic.markoarsov.com/install.ps1 | iex
+~~~
+
 The installer checks for Python and Git, downloads the latest release (or `main` until the first release is tagged), and installs for your user account.
 It adds skills for each agent CLI it finds on your machine: Claude Code, Codex, or Cursor.
-When it finishes, it prints where the `agentflow` command went and the command to start setup. If `~/.local/bin` isn't on your `PATH`, it prints the line to add.
+When it finishes, it prints where the `agentflow` command went and the command to start setup. If `~/.local/bin` isn't on your `PATH`, it prints the line to add; on Windows it adds `%USERPROFILE%\.local\bin` to your user `PATH` for you.
 
 ## 2. Set up your project
 
@@ -49,6 +59,9 @@ Run `af-specify` with what you want built, confirm the plan, then run `af-implem
 ~~~sh
 curl -fsSL https://agentic.markoarsov.com/install.sh | sh -s -- --project .
 ~~~
+~~~powershell
+& ([scriptblock]::Create((irm https://agentic.markoarsov.com/install.ps1))) --project .
+~~~
 The project gets its own copy at `.agentflow/bin/agentflow`, ignored by Git.
 
 </details>
@@ -59,6 +72,7 @@ The project gets its own copy at `.agentflow/bin/agentflow`, ignored by Git.
 curl -fsSL https://agentic.markoarsov.com/install.sh | sh -s -- --agents claude codex
 curl -fsSL https://agentic.markoarsov.com/install.sh | AGENTFLOW_REF=v0.1.0 sh
 ~~~
+On Windows, pass options the same way as the project install above, and pin with `$env:AGENTFLOW_REF = "v0.1.0"` before running the installer.
 
 </details>
 <details class="more" markdown>
@@ -66,7 +80,7 @@ curl -fsSL https://agentic.markoarsov.com/install.sh | AGENTFLOW_REF=v0.1.0 sh
 
 ~~~sh
 git clone https://github.com/MarkoArsov/agent-workflow.git
-python3 agent-workflow/install.py
+python3 agent-workflow/install.py   # on Windows: py agent-workflow\install.py
 ~~~
 Add `--project /path/to/project` to install into one project, or `--json` for machine-readable output.
 
@@ -85,7 +99,7 @@ Use either the plugin or the installer for Claude Code, not both, to avoid dupli
 
 ## Before you run it
 
-The script is short and readable: [install.sh](https://github.com/MarkoArsov/agent-workflow/blob/main/install.sh). It rejects unsafe archive paths and verifies the staged payload before switching versions; it does not verify a publisher signature.
+The scripts are short and readable: [install.sh](https://github.com/MarkoArsov/agent-workflow/blob/main/install.sh) and [install.ps1](https://github.com/MarkoArsov/agent-workflow/blob/main/install.ps1). They reject unsafe archive paths and verify the staged payload before switching versions; they do not verify a publisher signature.
 Agent Flow was previously named Scorebook. The GitHub repository still uses its original name, agent-workflow.
 
 To update or remove it later, see [update and remove](lifecycle.md).

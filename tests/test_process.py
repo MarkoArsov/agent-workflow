@@ -33,7 +33,7 @@ class ProcessTests(WorkspaceTest):
                     time.sleep(0.15)
                     self.assertEqual(heartbeat.read_text(), before, "Owned child survived process cleanup")
                 finally:
-                    for group in groups:
+                    for group in groups if hasattr(os, "killpg") else ():
                         try:
                             os.killpg(group, signal.SIGKILL)
                         except (ProcessLookupError, PermissionError):

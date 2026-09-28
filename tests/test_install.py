@@ -14,6 +14,16 @@ class InstallTests(WorkspaceTest):
     def clean_env(self):
         return {k: v for k, v in self.env.items() if k != "AGENTFLOW_PACKAGE"}
 
+    def bootstrap(self, *args, cwd):
+        """Run the platform's one-line installer from this checkout."""
+        if os.name == "nt":
+            command = ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(PACKAGE / "install.ps1")]
+            env = {**self.clean_env(), "AGENTFLOW_NO_MODIFY_PATH": "1"}
+        else:
+            command, env = ["sh", str(PACKAGE / "install.sh")], self.clean_env()
+        return subprocess.run([*command, "--local-source", str(PACKAGE), *map(str, args)],
+                              cwd=cwd, env=env, text=True, capture_output=True, check=True)
+
     def source_version(self, version):
         source = self.root / ("source-" + version)
         for path in install.files_in(PACKAGE):
@@ -119,8 +129,7 @@ class InstallTests(WorkspaceTest):
 
     def test_local_shell_bootstrap_only_uses_isolated_home(self):
         root = self.repo("project")
-        result = subprocess.run(["sh", str(PACKAGE / "install.sh"), "--local-source", str(PACKAGE), "--project", str(root), "--json"],
-                                cwd=root, env=self.clean_env(), text=True, capture_output=True, check=True)
+        result = self.bootstrap("--project", root, "--json", cwd=root)
         self.assertEqual(json.loads(result.stdout)["mode"], "project")
         self.assertFalse((self.home / ".local/bin/agentflow").exists())
 
@@ -131,8 +140,7 @@ class InstallTests(WorkspaceTest):
             self.assertEqual(install.detect_agents(), ["codex"])
         with patch("agentflow.install.shutil.which", return_value=None):
             self.assertEqual(install.detect_agents(), ["claude", "codex", "cursor"])
-        result = subprocess.run(["sh", str(PACKAGE / "install.sh"), "--local-source", str(PACKAGE), "--agents", "codex"],
-                                cwd=self.root, env=self.clean_env(), text=True, capture_output=True, check=True)
+        result = self.bootstrap("--agents", "codex", cwd=self.root)
         self.assertIn("installed (global)", result.stdout)
         self.assertIn("af-* for Codex", result.stdout)
         self.assertIn('codex "Use the af-setup skill"', result.stdout)

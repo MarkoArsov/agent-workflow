@@ -9,7 +9,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest]
         python: ["3.11", "3.14"]
     runs-on: ${{ matrix.os }}
     steps:
@@ -23,6 +23,31 @@ jobs:
       - run: python -m unittest discover -s tests -v
       - run: python scripts/generate_docs.py --check
       - run: python scripts/check_public_content.py --history
+  windows-install:
+    # The documented one-liner, run by Windows PowerShell 5.1 and PowerShell 7 against this commit.
+    strategy:
+      fail-fast: false
+      matrix:
+        shell: [powershell, pwsh]
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      - name: Install with the one-liner
+        shell: ${{ matrix.shell }}
+        env:
+          AGENTFLOW_REF: ${{ github.sha }}
+        run: Get-Content install.ps1 -Raw | Invoke-Expression
+      - name: Run the installed command
+        shell: ${{ matrix.shell }}
+        run: |
+          & "$HOME\.local\bin\agentflow.cmd" --version
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          if (-not (Test-Path "$HOME\.claude\skills\af-setup\SKILL.md")) { exit 1 }
   docs:
     runs-on: ubuntu-latest
     steps:

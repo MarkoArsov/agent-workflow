@@ -35,7 +35,7 @@ def atomic_write(path: Path, content: str, mode: int | None = None):
     path.parent.mkdir(parents=True, exist_ok=True)
     fd, temporary = tempfile.mkstemp(prefix="." + path.name, dir=path.parent)
     try:
-        with os.fdopen(fd, "w") as output:
+        with os.fdopen(fd, "w", encoding="utf-8", newline="") as output:
             output.write(content)
             output.flush()
             os.fsync(output.fileno())

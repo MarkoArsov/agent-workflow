@@ -38,7 +38,13 @@ Small change? Run `specify`, then `implement`, in one session.
 curl -fsSL https://agentic.markoarsov.com/install.sh | sh
 ```
 
-Needs Python 3.11+, Git, and Claude Code, Codex, or Cursor. macOS and Linux; WSL on Windows. The installer finds your agent CLIs and prints the command to start setup. [Other ways to install](https://agentic.markoarsov.com/install/)
+On Windows, in PowerShell:
+
+```powershell
+irm https://agentic.markoarsov.com/install.ps1 | iex
+```
+
+Needs Python 3.11+, Git, and Claude Code, Codex, or Cursor. The installer finds your agent CLIs and prints the command to start setup. [Other ways to install](https://agentic.markoarsov.com/install/)
 
 ## Quick start
 

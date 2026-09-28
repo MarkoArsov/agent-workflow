@@ -1,6 +1,5 @@
 """Atomic run journals and OS-held locks; stale PIDs never authorize a kill."""
 from __future__ import annotations
-import fcntl
 import os
 import time
 from contextlib import contextmanager
@@ -20,19 +19,39 @@ def save(root, state):
     state["updated_at"] = time.time()
     write_json(root / "state.json", state)
 
+if os.name == "nt":
+    import msvcrt
+
+    def _acquire(handle):
+        # Lock one byte far past any PID we write; the OS releases it if we die.
+        handle.seek(1 << 30)
+        msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
+
+    def _release(handle):
+        handle.seek(1 << 30)
+        msvcrt.locking(handle.fileno(), msvcrt.LK_UNLCK, 1)
+else:
+    import fcntl
+
+    def _acquire(handle):
+        fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+
+    def _release(handle):
+        fcntl.flock(handle, fcntl.LOCK_UN)
+
 @contextmanager
 def lock(path):
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("a+") as handle:
         try:
-            fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        except BlockingIOError as exc:
+            _acquire(handle)
+        except OSError as exc:
             raise WorkflowError("A runner owns this project/environment lock") from exc
         handle.seek(0); handle.truncate(); handle.write(str(os.getpid())); handle.flush()
         try:
             yield
         finally:
-            fcntl.flock(handle, fcntl.LOCK_UN)
+            _release(handle)
 
 def cancel(project, task):
     root = directory(project, task)
