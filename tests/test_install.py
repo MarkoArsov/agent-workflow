@@ -4,6 +4,7 @@ import os
 import shutil
 import subprocess
 import sys
+from pathlib import Path
 from unittest.mock import patch
 from tests.helpers import PACKAGE, WorkspaceTest
 from agentflow import install
@@ -13,6 +14,16 @@ from agentflow.util import WorkflowError, read_json, write_json
 class InstallTests(WorkspaceTest):
     def clean_env(self):
         return {k: v for k, v in self.env.items() if k != "AGENTFLOW_PACKAGE"}
+
+    def bootstrap(self, *args, cwd):
+        """Run the platform's one-line installer from this checkout."""
+        if os.name == "nt":
+            command = ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(PACKAGE / "install.ps1")]
+            env = {**self.clean_env(), "AGENTFLOW_NO_MODIFY_PATH": "1"}
+        else:
+            command, env = ["sh", str(PACKAGE / "install.sh")], self.clean_env()
+        return subprocess.run([*command, "--local-source", str(PACKAGE), *map(str, args)],
+                              cwd=cwd, env=env, text=True, capture_output=True, check=True)
 
     def source_version(self, version):
         source = self.root / ("source-" + version)
@@ -37,7 +48,7 @@ class InstallTests(WorkspaceTest):
         self.assertEqual(self.invoke(shim, root, "--version").strip(), "0.1.0")
         wrapper = self.home / ".agents/skills/af-project-setup/scripts/dispatch.py"
         resolved = self.invoke(wrapper, root).strip()
-        self.assertIn("/versions/0.1.0/skills/project-setup/SKILL.md", resolved)
+        self.assertIn("/versions/0.1.0/skills/project-setup/SKILL.md", Path(resolved).as_posix())
         install.install(PACKAGE)
         modified = self.home / ".agents/skills/af-review/SKILL.md"
         modified.write_text("user-modified adapter")
@@ -119,8 +130,22 @@ class InstallTests(WorkspaceTest):
 
     def test_local_shell_bootstrap_only_uses_isolated_home(self):
         root = self.repo("project")
-        result = subprocess.run(["sh", str(PACKAGE / "install.sh"), "--local-source", str(PACKAGE), "--project", str(root)],
-                                cwd=root, env=self.clean_env(), text=True, capture_output=True, check=True)
+        result = self.bootstrap("--project", root, "--json", cwd=root)
         self.assertEqual(json.loads(result.stdout)["mode"], "project")
         self.assertFalse((self.home / ".local/bin/agentflow").exists())
 
+
+    def test_plain_installer_detects_agents_and_explains_next_steps(self):
+        found = {"codex": "/usr/bin/codex"}
+        with patch("agentflow.install.shutil.which", side_effect=lambda name: found.get(name)):
+            self.assertEqual(install.detect_agents(), ["codex"])
+        with patch("agentflow.install.shutil.which", return_value=None):
+            self.assertEqual(install.detect_agents(), ["claude", "codex", "cursor"])
+        result = self.bootstrap("--agents", "codex", cwd=self.root)
+        self.assertIn("installed (global)", result.stdout)
+        self.assertIn("af-* for Codex", result.stdout)
+        self.assertIn('codex "Use the af-setup skill"', result.stdout)
+        self.assertNotIn("claude \"/af-setup\"", result.stdout)
+        self.assertIn("to your PATH", result.stdout)
+        self.assertTrue((self.home / ".local/bin/agentflow").exists())
+        self.assertFalse((self.home / "claude/skills").exists())

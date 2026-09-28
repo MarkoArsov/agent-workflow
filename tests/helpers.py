@@ -20,9 +20,17 @@ class WorkspaceTest(unittest.TestCase):
                     "XDG_CONFIG_HOME": str(self.home / "config"), "XDG_CACHE_HOME": str(self.home / "cache"),
                     "CODEX_HOME": str(self.home / "codex"), "CLAUDE_CONFIG_DIR": str(self.home / "claude"),
                     "GIT_CONFIG_NOSYSTEM": "1", "GIT_CONFIG_GLOBAL": os.devnull,
+                    # Background maintenance adds and removes .git files while tests compare trees.
+                    "GIT_CONFIG_COUNT": "2", "GIT_CONFIG_KEY_0": "maintenance.auto", "GIT_CONFIG_VALUE_0": "false",
+                    "GIT_CONFIG_KEY_1": "gc.auto", "GIT_CONFIG_VALUE_1": "0",
                     "GIT_AUTHOR_NAME": "Fixture", "GIT_AUTHOR_EMAIL": "fixture@example.invalid",
                     "GIT_COMMITTER_NAME": "Fixture", "GIT_COMMITTER_EMAIL": "fixture@example.invalid",
                     "PYTHONDONTWRITEBYTECODE": "1", "AGENTFLOW_PACKAGE": str(PACKAGE)}
+        if os.name == "nt":
+            # Path.home() reads USERPROFILE; child processes need the system variables.
+            self.env["USERPROFILE"] = str(self.home)
+            self.env.update({key: os.environ[key] for key in ("SYSTEMROOT", "SYSTEMDRIVE", "WINDIR", "COMSPEC",
+                                                              "PATHEXT", "TEMP", "TMP") if key in os.environ})
         self.patch = unittest.mock.patch.dict(os.environ, self.env, clear=True)
         self.patch.start()
         self.addCleanup(self.patch.stop)

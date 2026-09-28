@@ -6,6 +6,13 @@ import subprocess
 import sys
 from pathlib import Path
 
+if sys.platform == "win32" and not sys.flags.utf8_mode:
+    # Project files are UTF-8; Windows Python otherwise reads text in the ANSI code page.
+    try:
+        raise SystemExit(subprocess.call([sys.executable, "-X", "utf8", *sys.orig_argv[1:]]))
+    except KeyboardInterrupt:
+        raise SystemExit(130)
+
 LOCAL_RUNTIME = None
 start = Path.cwd().resolve()
 args = sys.argv[1:]

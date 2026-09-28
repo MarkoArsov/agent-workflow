@@ -6,17 +6,19 @@ description: Agents write the code. The orchestrator makes them prove it, checki
 
 <section class="home-hero" aria-labelledby="home-title">
   <div class="home-hero-copy">
-    <h1 id="home-title"><span>Agents write the code.</span> <span>The&nbsp;orchestrator makes them prove it.</span></h1>
-    <p class="home-lead">One confirmed plan becomes a staged run: tests that fail for the right reason, an implementation checked against real command output, an optional independent review, and a guarded draft PR. Every stage starts a fresh agent session. Every check that counts is one the orchestrator ran itself.</p>
+    <p class="home-kicker">open source · MIT · Claude Code · Codex · Cursor</p>
+    <h1 id="home-title">Done means proven.</h1>
+    <p class="home-lead">One confirmed plan becomes a staged run: failing tests first, checked implementation, optional review, guarded draft PR. Each stage runs in a fresh agent session, and only checks the runner ran itself count.</p>
     <div class="home-actions">
       <a class="button button-primary" href="install/">Install <span aria-hidden="true">→</span></a>
       <a class="button button-secondary" href="https://github.com/MarkoArsov/agent-workflow">View on GitHub</a>
-      <a class="text-link" href="#how-it-works">See how it works <span aria-hidden="true">→</span></a>
     </div>
+    <p class="home-more"><a class="text-link" href="#how-it-works">See how it works <span aria-hidden="true">→</span></a></p>
     <div class="install-command" aria-label="Global installation command">
-      <span>INSTALL</span>
-      <pre><code>curl -fsSL https://raw.githubusercontent.com/MarkoArsov/agent-workflow/v0.1.0/install.sh | sh -s -- --global</code></pre>
-      <p>Requires the matching published tag. Review the pinned script first if that is your policy.</p>
+      <span>install</span>
+      <pre><code>curl -fsSL https://agentic.markoarsov.com/install.sh | sh</code></pre>
+      <p>That's for Mac and Linux. On Windows, run <code>irm https://agentic.markoarsov.com/install.ps1 | iex</code> in PowerShell.</p>
+      <p>Then run <code>/af-setup</code> in your agent. Needs Python 3.11+ and Git.</p>
     </div>
   </div>
   <div class="run-panel" aria-label="Example Agent Flow run">
@@ -27,7 +29,7 @@ description: Agents write the code. The orchestrator makes them prove it, checki
       <li class="is-complete" data-run-stage><span>01</span><strong>Plan</strong><em>confirmed</em></li>
       <li class="is-complete" data-run-stage><span>02</span><strong>Tests</strong><em>red → frozen</em></li>
       <li class="is-complete" data-run-stage><span>03</span><strong>Implement</strong><em>green</em></li>
-      <li class="is-current" data-run-stage><span>04</span><strong>Review</strong><em>fresh session</em></li>
+      <li class="is-current" data-run-stage><span>04</span><strong>Review<i class="stage-pulse" aria-hidden="true"></i></strong><em>fresh session</em></li>
       <li data-run-stage><span>05</span><strong>Deliver</strong><em>queued</em></li>
     </ol>
     <p class="run-note">Example run. Checks, attempts, and evidence stay on disk with the project.</p>

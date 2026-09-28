@@ -21,7 +21,7 @@ class ContentError(ValueError):
 
 
 def load():
-    return json.loads((DATA / "checkpoints.json").read_text())
+    return json.loads((DATA / "checkpoints.json").read_text(encoding="utf-8"))
 
 
 def validate(data=None):
@@ -185,7 +185,7 @@ def diagram(name):
     if not path.is_file():
         raise ContentError(f"Unknown diagram: {name}")
     # Collapse to one block so Markdown never treats indented lines as code.
-    body = " ".join(line.strip() for line in path.read_text().splitlines() if line.strip())
+    body = " ".join(line.strip() for line in path.read_text(encoding="utf-8").splitlines() if line.strip())
     return f'<figure class="diagram diagram--{name}">{body}</figure>'
 
 
