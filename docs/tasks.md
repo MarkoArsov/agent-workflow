@@ -11,7 +11,7 @@ footer_order: 4
 !!! summary "In one minute"
     - Every task starts with **specify**, which researches and writes one complete plan for you to confirm.
     - A small, contained change then runs **implement** in the same session. A broad one runs the full pipeline with **implement-pipeline**.
-    - The runner executes each selected stage in a fresh session, runs the named checks itself, and keeps the evidence.
+    - The orchestrator executes each selected stage in a fresh session, runs the named checks itself, and keeps the evidence.
     - It stops only for a safety or verification problem, or a decision that is genuinely yours. Answers resume the session that asked.
     - Delivery is optional and guarded. Nothing posts, approves, or merges as you.
 
@@ -75,7 +75,7 @@ The full lane writes these files under the plan directory (by default `ai-plans/
 Approve when another engineer could implement the task without inventing behavior.
 
 If a material choice changes later, go back to `specify` and revise the complete plan: every file, coherently.
-A running task is bound to a hash of its plan, profile, and skills. After a revision, the runner refuses to continue until you review the change and run `resume --rebind`.
+A running task is bound to a hash of its plan, profile, and skills. After a revision, the orchestrator refuses to continue until you review the change and run `resume --rebind`.
 Rebinding archives the previous inputs and invalidates the affected stages. Changing which repositories participate needs a new task ID.
 
 ## Phase 3: Preview and preflight
@@ -99,7 +99,7 @@ For a project install, use `.agentflow/bin/agentflow`.
 agentflow run ai-plans/csv-export/pipeline.json --detach
 ~~~
 
-The runner takes the project lock, prepares the task checkout, and runs the selected stages in order.
+The orchestrator takes the project lock, prepares the task checkout, and runs the selected stages in order.
 
 | Stage | When selected | Completion evidence |
 |---|---|---|
@@ -112,12 +112,12 @@ The runner takes the project lock, prepares the task checkout, and runs the sele
 ### Why the test stage must fail meaningfully
 
 A red result proves a test can detect missing behavior only when it reaches the intended assertion.
-The runner rejects import errors, syntax errors, missing modules, compilation failures, and startup failures as red evidence, and requires the expected test identities to fail.
+The orchestrator rejects import errors, syntax errors, missing modules, compilation failures, and startup failures as red evidence, and requires the expected test identities to fail.
 Once red is proven, test-file hashes are recorded. Later stages cannot rewrite, add, or delete those tests.
 
 ### What implementation verifies
 
-The implement agent runs the named checks and fixes what fails. Then the runner checks independently:
+The implement agent runs the named checks and fixes what fails. Then the orchestrator checks independently:
 
 - every writable change is inside the declared paths, and read-only repositories are untouched;
 - frozen tests are unchanged, and your pre-existing changes are untouched;
@@ -130,7 +130,7 @@ The evidence records the fingerprint of the files it describes. If anything chan
 ### What review does, and doesn't do
 
 Review starts a fresh session with the requirements, the actual diff, and new files. It never receives `implementation.md`.
-It may make safe corrections within the approved paths, and the runner re-runs the checks afterwards.
+It may make safe corrections within the approved paths, and the orchestrator re-runs the checks afterwards.
 Its findings are advisory unless a deterministic blocking guard backs them.
 
 <!-- checkpoints: VER-1, VER-2, VER-3, VER-5 -->
@@ -150,7 +150,7 @@ Both only read the journal; they make no model calls.
 | `starting`, `running` | The run is making progress. | Keep watching. Do not start a duplicate run. |
 | `needs_input` | A stage needs a decision only you can make. | Answer the exact saved question. |
 | `failed` | A safety, verification, or delivery check did not pass, or attempts ran out. | Read the recorded error and evidence. See [when a task stops](recovery.md). |
-| `cancelled` | You asked the runner to stop. | Resume when ready. |
+| `cancelled` | You asked the orchestrator to stop. | Resume when ready. |
 | `complete` | Every selected stage finished and the final guard passed. | Review the diff, the evidence, and the delivery state. |
 
 ## Phase 6: Respond to input
@@ -167,7 +167,7 @@ If your answer changes scope, behavior, a public contract, or a required check, 
 
 ## Phase 7: Deliver and follow the pull request
 
-Delivery is separate and optional. The runner commits only task-owned paths with the approved message, pushes the task branch normally, and opens a draft pull request with the approved title and body.
+Delivery is separate and optional. The orchestrator commits only task-owned paths with the approved message, pushes the task branch normally, and opens a draft pull request with the approved title and body.
 It refuses base branches, never force-pushes, and resumes per repository after a partial failure.
 
 <!-- diagram: pr-loop -->
@@ -178,7 +178,7 @@ Fill the waits with review, not with new tasks. See [review and everyday use](ev
 ## Definition of done
 
 - The confirmed scope is implemented.
-- Every outcome is linked to passing evidence the runner recorded.
+- Every outcome is linked to passing evidence the orchestrator recorded.
 - All selected stages completed, with review findings noted if review ran.
 - The current diff matches the evidence fingerprint.
 - No scope, secret, blocking-rule, or frozen-test finding remains.

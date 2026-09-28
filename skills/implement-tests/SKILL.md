@@ -11,7 +11,7 @@ Run this skill folder's scripts/resolve.py from the active project once. If it r
 
 1. Read the approved requirements and test contract. Locate existing fixtures and same-domain tests. Write tests for required behavior, boundary cases, and expected failures using the repository's established style.
 
-2. In a runner stage, change only declared test_paths. Do not implement product behavior, commit, push, switch branches, or add unrelated test infrastructure.
+2. In an orchestrator stage, change only declared test_paths. Do not implement product behavior, commit, push, switch branches, or add unrelated test infrastructure.
 
 3. Run the precise named checks. A meaningful red result identifies the expected test and an assertion against existing behavior. Import errors, syntax errors, missing dependencies, broken startup, and compilation errors are setup failures to repair before claiming red.
 
@@ -19,7 +19,7 @@ Run this skill folder's scripts/resolve.py from the active project once. If it r
 
 5. If a test cannot fail meaningfully before a new public interface exists, expose the gap in the plan and ask for the minimal interface decision. Do not claim a compiler error proves the feature is missing.
 
-6. Report test identities, command results, affected paths, and genuine missing information. The runner executes the checks independently and freezes assertion-proven test files for implementation.
+6. Report test identities, command results, affected paths, and genuine missing information. The orchestrator executes the checks independently and freezes assertion-proven test files for implementation.
 
-7. Return the runner's requested JSON status. In a direct invocation, explain the observed red evidence and the next implementation boundary.
+7. Return the orchestrator's requested JSON status. In a direct invocation, explain the observed red evidence and the next implementation boundary.
 

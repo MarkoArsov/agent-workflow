@@ -34,7 +34,7 @@ Keep credentials in the host or named `env_refs`, never literal environment valu
 | Claude | --dangerously-skip-permissions | dontAsk with an explicit allowed_tools list |
 | Cursor | --force, --sandbox disabled, --trust | --sandbox enabled, --trust |
 
-The runner checks installed flags before execution. Unsupported controls stop preflight.
+The orchestrator checks installed flags before execution. Unsupported controls stop preflight.
 Restricted Claude requires `execution.provider_settings.claude.allowed_tools`.
 Use only the tools the task actually needs.
 

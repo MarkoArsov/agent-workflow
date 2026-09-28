@@ -14,7 +14,7 @@ footer_order: 3
     - The largest gaps are operating-system isolation, network egress, and scoped credentials. See the [open frontier](#the-open-frontier).
     - Every row cites the files that implement it, and the build checks that those files exist.
 
-Most tools tell you they're safe. Agent Flow publishes the scorecard: what the runner enforces, what's partial, what belongs to your organization, and what's still open.
+Most tools tell you they're safe. Agent Flow publishes the scorecard: what the orchestrator enforces, what's partial, what belongs to your organization, and what's still open.
 
 <!-- scorecard: grid -->
 
@@ -22,7 +22,7 @@ Most tools tell you they're safe. Agent Flow publishes the scorecard: what the r
 
 | Status | Meaning |
 |---|---|
-| Implemented | The runner or a maintained skill enforces it and records evidence. |
+| Implemented | The orchestrator or a maintained skill enforces it and records evidence. |
 | Conditional | Enforced when the plan selects it. |
 | Partial | Addresses part of the checkpoint; a material gap remains. |
 | External | Belongs to source control, identity, or organizational operations. **External is not a pass**; it needs its own evidence. |

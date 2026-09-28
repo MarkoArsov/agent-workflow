@@ -18,7 +18,7 @@ Use this for a new project, a changed repository layout, or a deliberate update 
 5. Put answers in a temporary JSON file with a profile object containing selected overrides and confirmed_defaults set to true only after the user has confirmed the proposed defaults. Resolve reported merge conflicts explicitly. Re-run setup with --answers and --output to produce the complete proposal.
 6. Show the operating summary and proposed file changes. Include profile location, plan location, rules/references, connector settings, and every host adapter or instruction edit. Wait for approval of those changes.
 7. Run setup --apply on that proposal with --approve and its exact digest. A stale proposal must be regenerated and shown again. Do not manufacture approval or apply a different proposal.
-8. Run inspect, explain how to start specify, and show how to customize this project's skills. A route left unconfigured means the runner is not ready; say what remains.
+8. Run inspect, explain how to start specify, and show how to customize this project's skills. A route left unconfigured means the orchestrator is not ready; say what remains.
 
 Re-running setup preserves manual settings, unknown extension keys, deleted optional values, and prose. Never edit installer-owned skills to customize a project. Use skill copy for a bundled override or skill new for a new project skill, then refresh discovery.
 

@@ -52,7 +52,7 @@ A profile's **task_policy** is always, when-changed, or never.
 A plan selects each participating repository as read or write.
 Only writable participants receive task branches/worktrees or delivery actions.
 
-Never means never writable through the runner; it may still be explicitly selected as a read-only check provider.
+Never means never writable through the orchestrator; it may still be explicitly selected as a read-only check provider.
 Only declared writable path patterns may change.
 
 For a single repository, plans default to tracked `ai-plans/<task>/`.

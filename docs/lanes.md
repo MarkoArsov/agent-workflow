@@ -18,13 +18,13 @@ question: Which lane fits this change?
 | Lane | Commands | Use when |
 |---|---|---|
 | Manual | `specify`, then `implement` | A small, contained change, especially a follow-up to work that already has an established local pattern. |
-| Full pipeline | `specify`, then `implement-pipeline` | Test-first work, several repositories, migrations, public contracts or access boundaries, or when you want independent review and runner-owned delivery. |
+| Full pipeline | `specify`, then `implement-pipeline` | Test-first work, several repositories, migrations, public contracts or access boundaries, or when you want independent review and orchestrator-owned delivery. |
 
 The manual lane keeps a concise, decision-complete plan instead of a detached manifest.
 `implement` owns tests plus implementation in the same session, follows the same path and authorization rules, runs the named checks, and reports what it observed.
-It does not start a runner, run an independent review, commit, or push.
+It does not start an orchestrator, run an independent review, commit, or push.
 
-The full lane writes the four plan files and `pipeline.json`, then lets the runner execute each selected stage in a fresh session, verify it independently, and keep the evidence.
+The full lane writes the four plan files and `pipeline.json`, then lets the orchestrator execute each selected stage in a fresh session, verify it independently, and keep the evidence.
 See [task lifecycle](tasks.md).
 
 ## Bugfixes
@@ -64,7 +64,7 @@ The full lane already has the ideal shape for a defect: `implement-tests` proves
 | Narrow feature follow-up with an established local pattern | Manual |
 | The regression needs several test layers, or the cause is uncertain | Full pipeline |
 | Authorization, money, schema or migrations, public contracts, data correction | Full pipeline with review |
-| Several repositories, or runner-owned delivery wanted | Full pipeline |
+| Several repositories, or orchestrator-owned delivery wanted | Full pipeline |
 
 Lane choice is guidance, not a gate. You confirm it when you approve the plan.
 

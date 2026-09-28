@@ -39,7 +39,7 @@ See [stop or flag](principles.md#stop-or-flag).
 | `starting`, `running` | The run is making progress. | Keep watching, or `watch` if you left. Don't start a duplicate; the project lock would refuse it anyway. |
 | `needs_input` | A stage needs a decision only you can make. | Answer the saved question with `answer --file`. |
 | `failed` | A safety, verification, or delivery check failed, or attempts ran out. | Read `error` and the latest evidence. Fix the cause, then `resume`. |
-| `cancelled` | You asked the runner to stop. | `resume` when ready. |
+| `cancelled` | You asked the orchestrator to stop. | `resume` when ready. |
 | `complete` | Every selected stage finished and the final guard passed. | Review the diff, evidence, and delivery state. |
 
 ## If something failed
@@ -49,8 +49,8 @@ Read the failing command or provider result before retrying.
 
 | What happened | Best next step |
 |---|---|
-| A connection or service was briefly unavailable | The runner already retried within its limits. If it keeps failing, investigate the environment, then `resume`. |
-| Authentication, quota, or model unavailable | The runner moved through your approved fallbacks. Repair access, or add a route you approve, then `resume`. |
+| A connection or service was briefly unavailable | The orchestrator already retried within its limits. If it keeps failing, investigate the environment, then `resume`. |
+| Authentication, quota, or model unavailable | The orchestrator moved through your approved fallbacks. Repair access, or add a route you approve, then `resume`. |
 | Timeout, inactivity, or a stalled tool | Inspect the attempt's output and the dependency's health. Don't raise limits indefinitely to hide a repeated failure. |
 | A named check failed | Fix the underlying code, test, or local setup within scope. Never weaken the check to make it pass. |
 | Scope violation | The changes are kept for inspection. Undo only the unauthorized edits, or revise the plan. |
@@ -61,7 +61,7 @@ Read the failing command or provider result before retrying.
 | Plan, profile, or skills changed | Review the complete revision, then `resume --rebind`. |
 | The task discovered a missing product decision | Revise the plan with `specify` before continuing. |
 
-The runner retries temporary problems and resumes saved progress. It does not silently change the approved route, or ignore a failed check.
+The orchestrator retries temporary problems and resumes saved progress. It does not silently change the approved route, or ignore a failed check.
 
 ## Answer, resume, rebind, cancel
 
@@ -75,7 +75,7 @@ agentflow cancel csv-export
 - **Answer** resumes the exact provider session that asked. Retries and fallbacks always start fresh sessions.
 - **Resume** continues from the first incomplete stage. A stage whose verified evidence still matches the current files is not repeated.
 - **Rebind** accepts a reviewed revision of the plan, profile, or skills. It archives the previous inputs and invalidates the stages they affect. Changing which repositories participate needs a new task ID.
-- **Cancel** asks the owning runner to stop its own process group. A stale PID in the journal never authorizes killing a process, and only one runner owns a project at a time.
+- **Cancel** asks the owning orchestrator to stop its own process group. A stale PID in the journal never authorizes killing a process, and only one orchestrator owns a project at a time.
 
 Retries, run time, inactivity, and stalled tools are bounded by the plan's limits.
 

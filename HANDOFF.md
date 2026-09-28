@@ -7,7 +7,7 @@ Version 0.1.0 is implemented locally under the MIT license. Publication is a sep
 - Global and self-contained project installers, ownership receipts, version pins, preserved overrides, rollback, and uninstall.
 - Setup for one repository or a parent folder, read-only detection, complete proposals, explicit apply, and repeatable customization.
 - 37 generic skills with Claude Code, Codex, and Cursor adapters; a validated native Claude plugin and marketplace.
-- A resumable runner with fresh stages, exact-session input, fallback routes, independent checks, frozen tests, scope/index guards, environment leases, and guarded delivery.
+- A resumable orchestrator with fresh stages, exact-session input, fallback routes, independent checks, frozen tests, scope/index guards, environment leases, and guarded delivery.
 - GitHub integration plus project connector declarations/command transports, configurable rules, and custom stages.
 - A responsive MkDocs site, generated references, local search, strict link checks, CI, and a GitHub Pages workflow.
 

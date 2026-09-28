@@ -21,7 +21,7 @@ extra_javascript:
   - assets/js/search.js
 extra:
   brand: agent flow
-  asset_version: agentflow-1
+  asset_version: agentflow-2
 markdown_extensions:
   - admonition
   - attr_list
