@@ -44,9 +44,9 @@ Both service and check repositories must participate in the plan.
 Read-only companion repositories stay unchanged.
 
 ~~~sh
-scorebook verify ai-plans/task-name/pipeline.json --phase green
-scorebook environment status local-app
-scorebook environment release local-app
+agentflow verify ai-plans/task-name/pipeline.json --phase green
+agentflow environment status local-app
+agentflow environment release local-app
 ~~~
 
 Release asks the owning process to stop its services. It does not kill a saved PID.

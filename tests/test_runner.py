@@ -5,8 +5,8 @@ import shutil
 import sys
 from pathlib import Path
 from tests.helpers import PACKAGE, WorkspaceTest
-from scorebook import runner, manifest, state
-from scorebook.util import WorkflowError, write_json
+from agentflow import runner, manifest, state
+from agentflow.util import WorkflowError, write_json
 
 class RunnerTests(WorkspaceTest):
     def fixture(self, steps, *, stages=None):
@@ -105,7 +105,7 @@ class RunnerTests(WorkspaceTest):
         result = runner.run(self.project, self.plan, resume=True, rebind=True)
         self.assertEqual(result["status"], "complete")
         self.assertEqual(len(result["revisions"]), 1)
-        self.assertIn(".scorebook/project.json", result["initial_dirty"]["app"])
+        self.assertIn(".agentflow/project.json", result["initial_dirty"]["app"])
 
     def test_implementation_cannot_add_tests_outside_the_frozen_red_set(self):
         self.fixture([{"writes": {"test_app.py": "import unittest\nfrom app import VALUE\nclass Behavior(unittest.TestCase):\n def test_behavior(self): self.assertEqual(VALUE, 2)\n"}},

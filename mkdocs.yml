@@ -1,6 +1,6 @@
-site_name: Scorebook
+site_name: Agent Flow
 site_description: A project-owned workflow for coding agents, checked at every stage.
-site_url: https://MarkoArsov.github.io/agent-workflow/
+site_url: https://agentic.markoarsov.com/
 repo_url: https://github.com/MarkoArsov/agent-workflow
 repo_name: GitHub
 edit_uri: edit/main/docs/
@@ -20,8 +20,8 @@ extra_javascript:
   - assets/js/site.js
   - assets/js/search.js
 extra:
-  brand: scorebook
-  asset_version: scorebook-1
+  brand: agent flow
+  asset_version: agentflow-1
 markdown_extensions:
   - admonition
   - attr_list

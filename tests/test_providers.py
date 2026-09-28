@@ -1,6 +1,6 @@
 from tests.helpers import WorkspaceTest
-from scorebook.providers import command, Events
-from scorebook.util import WorkflowError
+from agentflow.providers import command, Events
+from agentflow.util import WorkflowError
 import json
 
 class ProviderTests(WorkspaceTest):

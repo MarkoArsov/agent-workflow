@@ -1,7 +1,7 @@
 ---
 title: Publish a release
 description: Prepare and publish a reviewed release of the package.
-question: How is a Scorebook release published?
+question: How is a Agent Flow release published?
 ---
 
 # Publish a release
@@ -20,7 +20,7 @@ Publication is a separate maintainer action after local verification.
 5. Run the Pages workflow and check its deployment URL.
 6. Verify installation from the published pinned revision in an isolated environment.
 
-The default site is [MarkoArsov.github.io/agent-workflow](https://MarkoArsov.github.io/agent-workflow/).
+The site is served at [agentic.markoarsov.com](https://agentic.markoarsov.com/), a custom domain configured in the repository's Pages settings.
 The v0.1.0 installer expects a matching v0.1.0 tag.
 
 ## Custom domain later

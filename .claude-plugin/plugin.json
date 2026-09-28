@@ -1,11 +1,11 @@
 {
-  "name": "scorebook",
+  "name": "agentflow",
   "version": "0.1.0",
   "description": "A customizable development workflow with verified fresh-session stages.",
   "author": {
-    "name": "scorebook contributors"
+    "name": "Agent Flow contributors"
   },
-  "homepage": "https://MarkoArsov.github.io/agent-workflow/",
+  "homepage": "https://agentic.markoarsov.com/",
   "repository": "https://github.com/MarkoArsov/agent-workflow",
   "license": "MIT",
   "skills": "./skills/"

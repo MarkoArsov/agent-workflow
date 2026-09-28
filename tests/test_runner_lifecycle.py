@@ -4,8 +4,8 @@ import os
 import time
 from unittest.mock import patch
 from tests.helpers import WorkspaceTest
-from scorebook import runner, state
-from scorebook.util import WorkflowError, read_json, write_json
+from agentflow import runner, state
+from agentflow.util import WorkflowError, read_json, write_json
 
 class RunnerLifecycleTests(WorkspaceTest):
     def fixture(self, steps):

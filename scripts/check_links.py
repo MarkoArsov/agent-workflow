@@ -22,7 +22,7 @@ class Page(HTMLParser):
             if attrs.get(key):
                 self.links.append(attrs[key])
 
-def check(root, prefix="/agent-workflow/"):
+def check(root, prefix="/"):
     root = Path(root).resolve()
     pages = {p: Page(p.read_text()) for p in root.rglob("*.html")}
     failures, count = [], 0
@@ -60,7 +60,7 @@ def check(root, prefix="/agent-workflow/"):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("site", type=Path)
-    parser.add_argument("--prefix", default="/agent-workflow/")
+    parser.add_argument("--prefix", default="/")
     args = parser.parse_args()
     count, failures = check(args.site, args.prefix)
     for failure in failures:
