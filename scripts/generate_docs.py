@@ -9,7 +9,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 SKILL_CATEGORIES = {
-    "Core workflow": ("specify", "implement-pipeline", "list-pipeline", "pipeline-workflow", "project-setup", "issue-writer", "draft-rfc"),
+    "Core workflow": ("setup", "specify", "implement-pipeline", "list-pipeline", "pipeline-workflow", "project-setup", "issue-writer", "draft-rfc"),
     "Implementation and verification": ("implement-tests", "implement", "review", "understand", "review-guide"),
     "Git and delivery": ("checkout-branch", "sync-base", "commit", "push", "commit-and-push", "draft-pr", "merge-to-base"),
     "Worktrees and environments": ("worktree-start", "worktree-list", "worktree-remove", "environment-status", "environment-release"),
@@ -38,7 +38,8 @@ FAST_LOOKUP = (
     ("Write an issue", ("issue-writer",), ""),
     ("Capture a recurring rule", ("add-rule",), ""),
     ("Trim instructions", ("prune-context",), ""),
-    ("Set up or change the project workflow", ("project-setup", "project-customize"), "", " or "),
+    ("Set up a project", ("setup",), "(short for `project-setup`)"),
+    ("Change the project workflow", ("project-setup", "project-customize"), "", " or "),
     ("Understand or change the workflow itself", ("pipeline-workflow",), ""),
 )
 
@@ -76,7 +77,7 @@ def rendered():
     skills = [
         "---\ntitle: Skills\ndescription: Find the right skill for the job, then browse every bundled skill.\nquestion: Which skill should I use?\nfooter: docs\nfooter_order: 5\n---\n",
         "# Skill reference\n",
-        f"!!! summary \"In one minute\"\n    - Start with `specify`. Then `implement` for a small change, or `implement-pipeline` for the full run.\n    - The other {len(entries) - 3} skills are for focused work, review, delivery, recovery, and maintenance.\n    - Standalone installs invoke **af-NAME**; the native Claude plugin uses **agentflow:NAME**.\n    - Project overrides take precedence in direct invocation and in runner stages.\n",
+        f"!!! summary \"In one minute\"\n    - New project? Run `setup` first. Then `specify`, and `implement` for a small change or `implement-pipeline` for the full run.\n    - The other {len(entries) - 4} skills are for focused work, review, delivery, recovery, and maintenance.\n    - Standalone installs invoke **af-NAME**; the native Claude plugin uses **agentflow:NAME**.\n    - Project overrides take precedence in direct invocation and in runner stages.\n",
         "## Fast lookup\n",
         "\n".join(lookup) + "\n",
         "## All skills\n",

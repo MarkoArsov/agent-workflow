@@ -9,7 +9,7 @@ footer_order: 5
 # Skill reference
 
 !!! summary "In one minute"
-    - Start with `specify`. Then `implement` for a small change, or `implement-pipeline` for the full run.
+    - New project? Run `setup` first. Then `specify`, and `implement` for a small change or `implement-pipeline` for the full run.
     - The other 34 skills are for focused work, review, delivery, recovery, and maintenance.
     - Standalone installs invoke **af-NAME**; the native Claude plugin uses **agentflow:NAME**.
     - Project overrides take precedence in direct invocation and in runner stages.
@@ -36,7 +36,8 @@ footer_order: 5
 | Write an issue | [`issue-writer`](#issue-writer) |
 | Capture a recurring rule | [`add-rule`](#add-rule) |
 | Trim instructions | [`prune-context`](#prune-context) |
-| Set up or change the project workflow | [`project-setup`](#project-setup) or [`project-customize`](#project-customize) |
+| Set up a project | [`setup`](#setup) (short for `project-setup`) |
+| Change the project workflow | [`project-setup`](#project-setup) or [`project-customize`](#project-customize) |
 | Understand or change the workflow itself | [`pipeline-workflow`](#pipeline-workflow) |
 
 ## All skills
@@ -75,6 +76,7 @@ footer_order: 5
 <a href="#request-review" data-skills-chip data-skill-chip-name="request-review">request-review</a>
 <a href="#review" data-skills-chip data-skill-chip-name="review">review</a>
 <a href="#review-guide" data-skills-chip data-skill-chip-name="review-guide">review-guide</a>
+<a href="#setup" data-skills-chip data-skill-chip-name="setup">setup</a>
 <a href="#specify" data-skills-chip data-skill-chip-name="specify">specify</a>
 <a href="#sync-base" data-skills-chip data-skill-chip-name="sync-base">sync-base</a>
 <a href="#test-on-staging" data-skills-chip data-skill-chip-name="test-on-staging">test-on-staging</a>
@@ -182,6 +184,16 @@ Re-running setup preserves manual settings, unknown extension keys, deleted opti
 Keep credentials in the host's authentication system or referenced environment variables. Connector availability must be checked for each selected agent, including detached sessions. Show any host configuration patch before applying it.
 
 Do not create task branches, install dependencies, run detected repository commands, start a pipeline, or post tracker updates as part of setup. Those actions have their own workflows.
+
+### `setup` { .skill-entry data-skill="setup Set up Agent Flow for this project. Short name for project-setup." }
+
+Set up Agent Flow for this project. Short name for project-setup.
+
+This is the short name for **project-setup**.
+
+1. Find the project-setup skill. In a project that already has a profile, run the selected package's bin/agentflow skill resolve project-setup; it returns the project's override when one exists. Otherwise use project-setup/SKILL.md beside this skill's folder.
+2. Read that file and follow its procedure exactly, including its approval steps.
+3. Do not skip or shorten any step because this entry point has a shorter name.
 
 ### `specify` { .skill-entry data-skill="specify Turn a requested change into a complete, checkable plan with explicit repository participation." }
 

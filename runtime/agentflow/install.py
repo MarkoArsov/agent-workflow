@@ -51,6 +51,8 @@ def validate_source(source):
 
 AGENT_BINARIES = {"claude": ("claude",), "codex": ("codex",), "cursor": ("agent", "cursor-agent")}
 AGENT_NAMES = {"claude": "Claude Code", "codex": "Codex", "cursor": "Cursor"}
+START_COMMANDS = {"claude": 'claude "/af-setup"', "codex": 'codex "Use the af-setup skill"',
+                  "cursor": 'agent "Use the af-setup skill"'}
 
 def detect_agents():
     """Install for the agent CLIs on PATH; with none found, install for all so a later CLI works."""
@@ -173,7 +175,7 @@ def install(source, *, project=None, agents=None, dry_run=False):
                 shutil.rmtree(target)
             raise
     result["override_updates"] = override_updates(project, target) if project else []
-    result["next"] = "Run af-project-setup in your agent, or agentflow setup PATH."
+    result["next"] = "Run af-setup in your agent, or agentflow setup PATH."
     return result
 
 def override_updates(project, package):
@@ -263,9 +265,9 @@ def summary(result, agents):
     if result["mode"] == "global" and bin_dir not in os.environ.get("PATH", "").split(os.pathsep):
         lines += [f"Add {bin_dir} to your PATH to use the agentflow command:",
                   f"  echo 'export PATH=\"{bin_dir}:$PATH\"' >> ~/.zshrc   # or ~/.bashrc", ""]
-    lines += ["Next: open a project in your agent and run the af-project-setup skill",
-              "      (in Claude Code, type /af-project-setup).",
-              "Docs: https://agentic.markoarsov.com/first-task/"]
+    lines += ["Next, from your project folder, run:"]
+    lines += [f"  {START_COMMANDS[a]}" for a in agents]
+    lines += ["", "Docs: https://agentic.markoarsov.com/first-task/"]
     return "\n".join(lines) + "\n"
 
 def main(argv=None):

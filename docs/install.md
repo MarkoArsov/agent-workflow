@@ -10,7 +10,7 @@ question: How do I install Agent Flow?
 
 !!! summary "In one minute"
     - Run one command. It installs the `agentflow` command and the `af-*` skills for the agent CLIs it finds.
-    - Then open a project in your agent and run `af-project-setup`.
+    - Then, from your project folder, run the start command it prints, such as `claude "/af-setup"`.
     - You need Python 3.11+, Git, and Claude Code, Codex, or Cursor. macOS and Linux; use WSL on Windows.
 
 ## 1. Install
@@ -21,16 +21,19 @@ curl -fsSL https://agentic.markoarsov.com/install.sh | sh
 
 The installer checks for Python and Git, downloads the latest release (or `main` until the first release is tagged), and installs for your user account.
 It adds skills for each agent CLI it finds on your machine: Claude Code, Codex, or Cursor.
-When it finishes, it prints where the `agentflow` command went and what to do next. If `~/.local/bin` isn't on your `PATH`, it prints the line to add.
+When it finishes, it prints where the `agentflow` command went and the command to start setup. If `~/.local/bin` isn't on your `PATH`, it prints the line to add.
 
 ## 2. Set up your project
 
-Open your project in your agent and run the setup skill:
+From your project folder, start your agent with the setup skill:
 
-| Agent | Type |
+| Agent | Run |
 |---|---|
-| Claude Code | `/af-project-setup` |
-| Codex, Cursor | Ask it to use the `af-project-setup` skill |
+| Claude Code | `claude "/af-setup"` |
+| Codex | `codex "Use the af-setup skill"` |
+| Cursor | `agent "Use the af-setup skill"` |
+
+If your agent is already open, type `/af-setup` in Claude Code, or ask Codex or Cursor to use the `af-setup` skill. `af-setup` is the short name for `af-project-setup`; either works.
 
 Setup reads your repository, asks a few questions, and shows every file it would write. Nothing is written until you approve. See [set up your project](setup.md).
 

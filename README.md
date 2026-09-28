@@ -38,11 +38,11 @@ Small change? Run `specify`, then `implement`, in one session.
 curl -fsSL https://agentic.markoarsov.com/install.sh | sh
 ```
 
-Needs Python 3.11+, Git, and Claude Code, Codex, or Cursor. macOS and Linux; WSL on Windows. The installer finds your agent CLIs and prints the next step. [Other ways to install](https://agentic.markoarsov.com/install/)
+Needs Python 3.11+, Git, and Claude Code, Codex, or Cursor. macOS and Linux; WSL on Windows. The installer finds your agent CLIs and prints the command to start setup. [Other ways to install](https://agentic.markoarsov.com/install/)
 
 ## Quick start
 
-1. Open your project in your agent and run **`af-project-setup`** (in Claude Code: `/af-project-setup`). Approve the setup it proposes.
+1. From your project folder, run `claude "/af-setup"` (or ask Codex or Cursor to use the **`af-setup`** skill). Approve the setup it proposes.
 2. Run **`af-specify`** with what you want built, and confirm the plan.
 3. Run **`af-implement`**.
 

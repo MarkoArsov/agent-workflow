@@ -9,13 +9,13 @@ question: How do I configure Agent Flow for my repositories?
 # Set up your project
 
 !!! summary "In one minute"
-    - Invoke `af-project-setup` in your agent. It reads your repositories and reports what it found, with sources.
+    - Invoke `af-setup` (short for `af-project-setup`) in your agent. It reads your repositories and reports what it found, with sources.
     - You confirm repositories, commands, branch policy, routes, permissions, and integrations.
     - Nothing is written until you approve the complete proposal by its digest.
     - Re-running setup keeps your manual edits, and leaves files byte-identical when nothing changed.
 
-Open the intended repository or multi-repository parent and invoke **af-project-setup**
-(**agentflow:project-setup** in the native Claude plugin).
+Open the intended repository or multi-repository parent and invoke **af-setup**, or its full name **af-project-setup**
+(**agentflow:setup** in the native Claude plugin). From a terminal, `claude "/af-setup"` starts Claude Code with it.
 
 The setup skill reads existing instructions, manifests, commands, Git conventions, and CI configuration.
 It reports findings with their sources, asks about unresolved choices, and presents a complete proposal.
