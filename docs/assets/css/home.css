@@ -4,7 +4,7 @@
 .home-hero-copy, .run-panel, .code-card, .tree-card { min-width: 0; }
 .home-kicker, .section-label, .install-command > span, .code-card > p, .tree-card > p { font-size: .75rem; font-weight: 500; letter-spacing: .08em; line-height: 1.4; }
 .home-kicker { margin-bottom: var(--space-5); color: var(--accent); }
-.home-hero h1 { max-width: 720px; margin-bottom: var(--space-5); font-size: clamp(2.7rem, 5.4vw, 5.2rem); font-weight: 600; line-height: .98; letter-spacing: -.045em; }
+.home-hero h1 { max-width: 760px; text-wrap: balance; margin-bottom: var(--space-5); font-size: clamp(2.5rem, 4.6vw, 4.4rem); font-weight: 600; line-height: 1.02; letter-spacing: -.045em; }
 .home-lead { max-width: 650px; margin-bottom: var(--space-6); color: var(--text-muted); font-size: clamp(1.05rem, 1.5vw, 1.25rem); line-height: 1.65; }
 .home-actions { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; }
 .home-actions .button { min-height: 44px; }
@@ -62,7 +62,7 @@
 @media (prefers-reduced-motion: no-preference) { .run-stages li[data-run-stage] { animation: stage-in 420ms var(--ease-out) both; } .run-stages li[data-run-stage]:nth-child(1) { animation-delay: 80ms; } .run-stages li[data-run-stage]:nth-child(2) { animation-delay: 170ms; } .run-stages li[data-run-stage]:nth-child(3) { animation-delay: 260ms; } .run-stages li[data-run-stage]:nth-child(4) { animation-delay: 350ms; } .run-stages li[data-run-stage]:nth-child(5) { animation-delay: 440ms; } }
 @keyframes stage-in { from { opacity: 0; transform: translateX(-8px); } to { opacity: 1; transform: translateX(0); } }
 @media (max-width: 900px) { .home-hero { grid-template-columns: 1fr; min-height: 0; } .home-hero-copy { max-width: 720px; } .workflow-diagram { grid-template-columns: repeat(3, minmax(0, 1fr)); } .workflow-arrows { display: none; } }
-@media (max-width: 640px) { .home-hero { gap: var(--space-8); padding-top: var(--space-12); } .home-hero h1 { font-size: clamp(2.5rem, 13vw, 3.5rem); } .install-command pre { font-size: .6875rem; } .workflow-diagram { grid-template-columns: 1fr; } .workflow-step { min-height: 0; } .workflow-step > span { margin-bottom: var(--space-4); } .ownership-grid { grid-template-columns: 1fr; } .home-cta { padding: var(--space-8) var(--space-5); } }
+@media (max-width: 640px) { .home-hero { gap: var(--space-8); padding-top: var(--space-12); } .home-hero h1 { font-size: clamp(2rem, 9.6vw, 3.25rem); } .install-command pre { font-size: .6875rem; } .workflow-diagram { grid-template-columns: 1fr; } .workflow-step { min-height: 0; } .workflow-step > span { margin-bottom: var(--space-4); } .ownership-grid { grid-template-columns: 1fr; } .home-cta { padding: var(--space-8) var(--space-5); } }
 
 /* Narrative sections. */
 .home-actions--center { justify-content: center; }
@@ -123,3 +123,5 @@
 @media (max-width: 1100px) { .tile-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .path-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } .decision-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 900px) { .stat-grid { grid-template-columns: 1fr; } .stop-grid { grid-template-columns: 1fr; } .workflow-step { min-height: 0; } .point-list { grid-template-columns: 1fr; } }
 @media (max-width: 640px) { .tile-grid, .decision-grid, .path-grid { grid-template-columns: 1fr; } .home-scorecard .checkpoint-grid__row { grid-template-columns: 1fr; } .home-closing-line { font-size: 1rem; } .home-actions .text-link { width: 100%; } }
+.home-hero h1 span { display: block; }
+.home-hero h1 span + span { color: var(--accent); }
