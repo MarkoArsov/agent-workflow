@@ -1,5 +1,6 @@
 """MkDocs preview/build hook. Never inspect local project or run state."""
 import importlib.util
+import shutil
 from pathlib import Path
 from mkdocs.exceptions import PluginError
 from mkdocs.utils import get_relative_url
@@ -26,3 +27,7 @@ def on_page_markdown(markdown, page, config, files):
         return content.render(markdown, lambda target: get_relative_url(target, page.url), page.meta)
     except content.ContentError as exc:
         raise PluginError(f"{page.file.src_uri}: {exc}") from exc
+
+def on_post_build(config):
+    # Serve the one installer at the site root: curl -fsSL <site>/install.sh | sh
+    shutil.copyfile(Path(__file__).resolve().parents[1] / "install.sh", Path(config["site_dir"]) / "install.sh")

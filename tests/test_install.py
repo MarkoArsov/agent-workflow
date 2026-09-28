@@ -119,7 +119,7 @@ class InstallTests(WorkspaceTest):
 
     def test_local_shell_bootstrap_only_uses_isolated_home(self):
         root = self.repo("project")
-        result = subprocess.run(["sh", str(PACKAGE / "install.sh"), "--local-source", str(PACKAGE), "--project", str(root)],
+        result = subprocess.run(["sh", str(PACKAGE / "install.sh"), "--local-source", str(PACKAGE), "--project", str(root), "--json"],
                                 cwd=root, env=self.clean_env(), text=True, capture_output=True, check=True)
         self.assertEqual(json.loads(result.stdout)["mode"], "project")
         self.assertFalse((self.home / ".local/bin/agentflow").exists())

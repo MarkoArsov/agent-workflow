@@ -49,6 +49,14 @@ def validate_source(source):
             raise WorkflowError("Package checksum manifest does not match the payload")
     return marker
 
+AGENT_BINARIES = {"claude": ("claude",), "codex": ("codex",), "cursor": ("agent", "cursor-agent")}
+AGENT_NAMES = {"claude": "Claude Code", "codex": "Codex", "cursor": "Cursor"}
+
+def detect_agents():
+    """Install for the agent CLIs on PATH; with none found, install for all so a later CLI works."""
+    found = [name for name, binaries in AGENT_BINARIES.items() if any(shutil.which(b) for b in binaries)]
+    return found or list(AGENT_BINARIES)
+
 def installation_root(project=None):
     return Path(project).expanduser().resolve() / ".agentflow/runtime" if project else user_data()
 
@@ -85,7 +93,7 @@ def install(source, *, project=None, agents=None, dry_run=False):
     receipt = read_json(receipt_path, {"files": {}, "versions": {}})
     profile_path = project / ".agentflow/project.json" if project else None
     profile = read_json(profile_path) if profile_path else None
-    agents = agents or (profile.get("agents") if profile else None) or receipt.get("agents") or ["claude", "codex", "cursor"]
+    agents = agents or (profile.get("agents") if profile else None) or receipt.get("agents") or detect_agents()
     desired = wrappers(source, project, agents)
     launcher = project / ".agentflow/bin/agentflow" if project else Path.home() / ".local/bin/agentflow"
     code = (source / "templates/adapters/launch.py").read_text()
@@ -243,16 +251,37 @@ def doctor(project=None):
             "duplicate_claude_backends": bool(native and receipt.get("backend") and "claude" in receipt.get("agents", [])),
             "project_extensions": "Preserved outside the installed payload"}
 
+def summary(result, agents):
+    """Plain next steps for people; --json keeps the machine-readable result."""
+    if result["dry_run"]:
+        return json_text(result)
+    launcher = next((p for p in result["files"] if p.endswith("bin/agentflow")), "agentflow")
+    lines = [f"Agent Flow {result['version']} installed ({result['mode']}).",
+             f"  Command: {launcher}",
+             f"  Skills:  af-* for {', '.join(AGENT_NAMES[a] for a in agents)}", ""]
+    bin_dir = str(Path(launcher).parent)
+    if result["mode"] == "global" and bin_dir not in os.environ.get("PATH", "").split(os.pathsep):
+        lines += [f"Add {bin_dir} to your PATH to use the agentflow command:",
+                  f"  echo 'export PATH=\"{bin_dir}:$PATH\"' >> ~/.zshrc   # or ~/.bashrc", ""]
+    lines += ["Next: open a project in your agent and run the af-project-setup skill",
+              "      (in Claude Code, type /af-project-setup).",
+              "Docs: https://agentic.markoarsov.com/first-task/"]
+    return "\n".join(lines) + "\n"
+
 def main(argv=None):
-    parser = argparse.ArgumentParser(description="Install agentflow without pip.")
-    location = parser.add_mutually_exclusive_group(required=True)
-    location.add_argument("--global", dest="global_install", action="store_true")
-    location.add_argument("--project", type=Path)
+    parser = argparse.ArgumentParser(description="Install Agent Flow without pip. Installs globally unless --project is given.")
+    location = parser.add_mutually_exclusive_group()
+    location.add_argument("--global", dest="global_install", action="store_true", help="Install for your user account (default)")
+    location.add_argument("--project", type=Path, help="Install into one project folder instead")
     parser.add_argument("--local-source", type=Path, default=package_root())
-    parser.add_argument("--agents", nargs="+", choices=["claude", "codex", "cursor"])
+    parser.add_argument("--agents", nargs="+", choices=["claude", "codex", "cursor"], help="Default: the agent CLIs found on PATH")
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--json", action="store_true", help="Print the machine-readable result")
     args = parser.parse_args(argv)
     try:
-        print(json_text(install(args.local_source, project=args.project, agents=args.agents, dry_run=args.dry_run)))
+        agents = args.agents or None
+        result = install(args.local_source, project=args.project, agents=agents, dry_run=args.dry_run)
+        receipt = read_json(installation_root(args.project) / "receipt.json", {})
+        print(json_text(result) if args.json else summary(result, receipt.get("agents") or agents or detect_agents()), end="")
     except (WorkflowError, OSError) as exc:
         parser.exit(2, f"Error: {exc}\n")
