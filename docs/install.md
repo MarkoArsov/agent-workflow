@@ -9,47 +9,89 @@ question: How do I install Agent Flow?
 # Install
 
 !!! summary "In one minute"
-    - Run one command. It installs the `agentflow` command and the `af-*` skills for the agent CLIs it finds.
-    - Then, from your project folder, run the start command it prints, such as `claude "/af-setup"`.
-    - You need Python 3.11+, Git, and Claude Code, Codex, or Cursor. Works on macOS, Linux, and Windows.
+    - **Mac:** paste one command into Terminal. **Windows:** paste one command into PowerShell.
+    - Then open your project folder and start setup with `claude "/af-setup"` (or the Codex or Cursor equivalent).
+    - You need Python 3.11 or newer, Git, and Claude Code, Codex, or Cursor.
 
-## 1. Install
+## Before you start
 
-macOS and Linux
-{: .code-label }
+You need three things. If you already have them, skip ahead.
+
+| You need | Check it's installed | Get it |
+|---|---|---|
+| Python 3.11 or newer | Mac: `python3 --version`<br>Windows: `py --version` | [python.org](https://www.python.org/downloads/) |
+| Git | `git --version` | [git-scm.com](https://git-scm.com/downloads) |
+| An agent | `claude --version`, `codex --version`, or `agent --version` | Claude Code, Codex, or Cursor's CLI |
+
+On Windows, when you install Python, keep **Add python.exe to PATH** checked.
+
+## Install on Mac
+
+**1.** Open **Terminal**: press Command-Space, type *Terminal*, and press Enter.
+
+**2.** Paste this command and press Enter:
 
 ~~~sh
 curl -fsSL https://agentic.markoarsov.com/install.sh | sh
 ~~~
 
-Windows (PowerShell)
-{: .code-label }
+**3.** If the output says *Add … to your PATH*, run the line it shows, then open a new Terminal window.
+
+Linux works the same way: run the command in your terminal.
+
+## Install on Windows
+
+**1.** Open **PowerShell**: press the Windows key, type *PowerShell*, and press Enter.
+
+**2.** Paste this command and press Enter:
 
 ~~~powershell
 irm https://agentic.markoarsov.com/install.ps1 | iex
 ~~~
 
-The installer checks for Python and Git, downloads the latest release (or `main` until the first release is tagged), and installs for your user account.
-It adds skills for each agent CLI it finds on your machine: Claude Code, Codex, or Cursor.
-When it finishes, it prints where the `agentflow` command went and the command to start setup. If `~/.local/bin` isn't on your `PATH`, it prints the line to add; on Windows it adds `%USERPROFILE%\.local\bin` to your user `PATH` for you.
+**3.** Close PowerShell and open a new window, so it finds the `agentflow` command.
 
-## 2. Set up your project
+## Check that it worked
 
-From your project folder, start your agent with the setup skill:
+In a new terminal window, run:
 
-| Agent | Run |
+~~~sh
+agentflow --version
+~~~
+
+It prints a version number, such as `0.1.0`.
+The installer also added the `af-*` skills to each agent it found on your computer.
+
+## Start using it
+
+Go to your project folder, then start your agent with the setup skill:
+
+~~~sh
+cd path/to/your-project
+claude "/af-setup"
+~~~
+
+| Agent | Run from your project folder |
 |---|---|
 | Claude Code | `claude "/af-setup"` |
 | Codex | `codex "Use the af-setup skill"` |
 | Cursor | `agent "Use the af-setup skill"` |
 
-If your agent is already open, type `/af-setup` in Claude Code, or ask Codex or Cursor to use the `af-setup` skill. `af-setup` is the short name for `af-project-setup`; either works.
-
 Setup reads your repository, asks a few questions, and shows every file it would write. Nothing is written until you approve. See [set up your project](setup.md).
 
-## 3. Start a task
+Then describe your first change with `af-specify`, confirm the plan, and run `af-implement`. [Your first task](first-task.md) walks through it.
 
-Run `af-specify` with what you want built, confirm the plan, then run `af-implement`. [Your first task](first-task.md) walks through it.
+If your agent is already open, type `/af-setup` in Claude Code, or ask Codex or Cursor to use the `af-setup` skill. Its full name, `af-project-setup`, also works.
+
+## If something goes wrong
+
+| Message | What to do |
+|---|---|
+| *Python 3.11 or newer is required* | Install Python from [python.org](https://www.python.org/downloads/), open a new terminal, and run the install command again. |
+| *Git is required* | Install Git from [git-scm.com](https://git-scm.com/downloads), open a new terminal, and run the install command again. |
+| `agentflow: command not found` (Mac) | Run the *export PATH* line the installer printed, then open a new Terminal window. |
+| *agentflow is not recognized* (Windows) | Open a new PowerShell window. The installer added the command to your PATH, but windows that were already open don't see it. |
+| *running scripts is disabled* (Windows) | Use the exact install command above. It runs without changing your script policy. |
 
 ## Other ways to install
 

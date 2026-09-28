@@ -34,17 +34,21 @@ Small change? Run `specify`, then `implement`, in one session.
 
 ## Install
 
+You need Python 3.11+, Git, and Claude Code, Codex, or Cursor.
+
+**Mac or Linux:** open Terminal and run
+
 ```sh
 curl -fsSL https://agentic.markoarsov.com/install.sh | sh
 ```
 
-On Windows, in PowerShell:
+**Windows:** open PowerShell and run
 
 ```powershell
 irm https://agentic.markoarsov.com/install.ps1 | iex
 ```
 
-Needs Python 3.11+, Git, and Claude Code, Codex, or Cursor. The installer finds your agent CLIs and prints the command to start setup. [Other ways to install](https://agentic.markoarsov.com/install/)
+Then open a new terminal window and check it with `agentflow --version`. The installer finds your agents and prints the command to start setup. [Full install guide](https://agentic.markoarsov.com/install/)
 
 ## Quick start
 
