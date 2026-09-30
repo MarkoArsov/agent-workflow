@@ -45,7 +45,7 @@ description: Agents write the code. The orchestrator makes them prove it, checki
   <div class="stat-grid">
     <div class="stat-tile"><p class="stat-figure">1 in 2</p><p class="stat-label">AI pull requests that pass the tests would still be rejected by the project's maintainers.</p><p class="stat-source"><a href="https://metr.org/notes/2026-03-10-many-swe-bench-passing-prs-would-not-be-merged-into-main/">METR, 2026</a></p></div>
     <div class="stat-tile"><p class="stat-figure">46%</p><p class="stat-label">of fixes proposed by coding agents in real open-source projects were rejected.</p><p class="stat-source"><a href="https://arxiv.org/abs/2606.13468">AIDev, 2026</a></p></div>
-    <div class="stat-tile"><p class="stat-figure">52%</p><p class="stat-label">of developers don't always check AI-generated code before they commit it.</p><p class="stat-source"><a href="https://www.sonarsource.com/blog/state-of-code-developer-survey-report-the-current-reality-of-ai-coding/">Sonar, 2026</a></p></div>
+    <div class="stat-tile"><p class="stat-figure">3.7%</p><p class="stat-label">of engineering leaders say their processes are enough to keep quality and governance as agents take on more work.</p><p class="stat-source"><a href="https://www.qodo.ai/blog/state-of-ai-code-quality-report-2026/">Qodo, 2026</a></p></div>
   </div>
   <p class="home-closing-line">Writing code is no longer the hard part. Proving it's right is, so Agent Flow makes every stage prove it.</p>
   <p><a class="text-link" href="why/">Read the research <span aria-hidden="true">→</span></a></p>
