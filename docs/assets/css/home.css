@@ -74,9 +74,9 @@
 .home-actions--center { justify-content: center; }
 .home-closing-line { max-width: 820px; margin: var(--space-8) 0 0; color: var(--text); font-size: 1.125rem; line-height: 1.6; }
 .home-closing-line .text-link { margin-left: 6px; }
-.stat-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(32px, 6vw, 80px); margin-top: var(--space-10); }
+.stat-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(28px, 4vw, 56px); margin-top: var(--space-10); }
 .stat-tile { display: flex; flex-direction: column; padding-top: var(--space-6); border-top: 2px solid var(--accent); }
-.stat-figure { margin: 0 0 var(--space-4); color: var(--accent); font-size: clamp(3.5rem, 8vw, 6rem); font-weight: 600; letter-spacing: -.045em; line-height: .95; }
+.stat-figure { margin: 0 0 var(--space-4); color: var(--accent); font-size: clamp(3.25rem, 6vw, 5rem); font-weight: 600; letter-spacing: -.045em; line-height: .95; }
 .stat-label { max-width: 440px; margin: 0 0 var(--space-3); color: var(--text); font-size: clamp(1.0625rem, 1.5vw, 1.25rem); line-height: 1.5; }
 .stat-source { margin: auto 0 0; color: var(--text-muted); font-size: .8125rem; }
 .workflow-evidence { margin-top: auto !important; padding-top: var(--space-4); color: var(--text) !important; font: .75rem/1.5 var(--font-mono) !important; }
