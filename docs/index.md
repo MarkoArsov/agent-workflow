@@ -6,18 +6,19 @@ description: Agents write the code. The orchestrator makes them prove it, checki
 
 <section class="home-hero" aria-labelledby="home-title">
   <div class="home-hero-copy">
-    <p class="home-kicker">open source · MIT · Claude Code · Codex · Cursor</p>
+    <p class="home-kicker">Open Source · MIT · Claude Code · Codex · Cursor</p>
     <h1 id="home-title">Done means proven.</h1>
     <p class="home-lead">One confirmed plan becomes a staged run: failing tests first, checked implementation, optional review, guarded draft PR. Each stage runs in a fresh agent session, and only checks the runner ran itself count.</p>
     <div class="home-actions">
       <a class="button button-primary" href="install/">Install <span aria-hidden="true">→</span></a>
       <a class="button button-secondary" href="https://github.com/MarkoArsov/agent-workflow">View on GitHub</a>
     </div>
-    <p class="home-more"><a class="text-link" href="#how-it-works">See how it works <span aria-hidden="true">→</span></a></p>
     <div class="install-command" aria-label="Global installation command">
       <span>install</span>
+      <p class="install-os">macOS · Linux</p>
       <pre><code>curl -fsSL https://agentic.markoarsov.com/install.sh | sh</code></pre>
-      <p>That's for Mac and Linux. On Windows, run <code>irm https://agentic.markoarsov.com/install.ps1 | iex</code> in PowerShell.</p>
+      <p class="install-os">Windows · PowerShell</p>
+      <pre><code>irm https://agentic.markoarsov.com/install.ps1 | iex</code></pre>
       <p>Then run <code>/af-setup</code> in your agent. Needs Python 3.11+ and Git.</p>
     </div>
   </div>
@@ -39,14 +40,14 @@ description: Agents write the code. The orchestrator makes them prove it, checki
 <section class="home-problem" aria-labelledby="problem-title">
   <div class="section-intro">
     <p class="section-label">THE VERIFICATION GAP</p>
-    <h2 id="problem-title">Passing tests is not a merge signal.</h2>
+    <h2 id="problem-title">Green tests don't mean done.</h2>
   </div>
   <div class="stat-grid">
-    <div class="stat-tile"><p class="stat-figure">≈ 1 in 2</p><p class="stat-label">test-passing AI pull requests that the project's own maintainers would not merge</p><p class="stat-source"><a href="https://metr.org/notes/2026-03-10-many-swe-bench-passing-prs-would-not-be-merged-into-main/">METR, March 2026</a>: 296 AI-generated PRs reviewed by maintainers of 3 SWE-bench Verified repositories</p></div>
-    <div class="stat-tile"><p class="stat-figure">≈ 24 pts</p><p class="stat-label">average gap between the automated grader and the maintainers' merge decisions</p><p class="stat-source"><a href="https://metr.org/notes/2026-03-10-many-swe-bench-passing-prs-would-not-be-merged-into-main/">METR, March 2026</a></p></div>
-    <div class="stat-tile"><p class="stat-figure">46%</p><p class="stat-label">of agent-proposed fixes from Copilot, Devin, Cursor, and Claude rejected</p><p class="stat-source"><a href="https://arxiv.org/abs/2606.13468">AIDev study, 2026</a></p></div>
+    <div class="stat-tile"><p class="stat-figure">1 in 2</p><p class="stat-label">AI pull requests that pass the tests would still be rejected by the project's maintainers.</p><p class="stat-source"><a href="https://metr.org/notes/2026-03-10-many-swe-bench-passing-prs-would-not-be-merged-into-main/">METR, 2026</a></p></div>
+    <div class="stat-tile"><p class="stat-figure">46%</p><p class="stat-label">of fixes proposed by coding agents in real open-source projects were rejected.</p><p class="stat-source"><a href="https://arxiv.org/abs/2606.13468">AIDev, 2026</a></p></div>
   </div>
-  <p class="home-closing-line">Writing code stopped being the hard part. Proving a change is right is the new bottleneck, and Agent Flow is built around it. <a class="text-link" href="why/">Read the research <span aria-hidden="true">→</span></a></p>
+  <p class="home-closing-line">Writing code is no longer the hard part. Proving it's right is, so Agent Flow makes every stage prove it.</p>
+  <p><a class="text-link" href="why/">Read the research <span aria-hidden="true">→</span></a></p>
 </section>
 
 <section class="how-it-works" id="how-it-works" aria-labelledby="how-it-works-title">
@@ -66,37 +67,6 @@ description: Agents write the code. The orchestrator makes them prove it, checki
   <div class="manual-bypass"><span class="section-label">MANUAL LANE</span><p>Small change? Run <code>specify</code>, then <code>implement</code>, in one session: the same plan and named checks, no detached run.</p><a class="text-link" href="lanes/">Choose a lane <span aria-hidden="true">→</span></a></div>
 </section>
 
-<section class="home-stops" aria-labelledby="stops-title">
-  <div class="section-intro">
-    <p class="section-label">BOUNDED AUTONOMY</p>
-    <h2 id="stops-title">Runs unattended. Stops only for what matters.</h2>
-  </div>
-  <div class="stop-grid">
-    <div class="stop-col stop-col--flag">
-      <p class="stop-col__title">Recorded, run continues</p>
-      <ul>
-        <li>Review findings, which are advisory</li>
-        <li>Advisory rule findings</li>
-        <li>One route for every stage</li>
-        <li>Usage the provider didn't report, kept as unknown</li>
-      </ul>
-    </div>
-    <div class="stop-col stop-col--stop">
-      <p class="stop-col__title">Blocks completion</p>
-      <ul>
-        <li>Secret material or a blocking rule finding</li>
-        <li>Edits outside the declared paths, or to a read-only repository</li>
-        <li>A named check fails, or red or green evidence is missing</li>
-        <li>A frozen test changed, or your pre-existing changes were touched</li>
-        <li>Stale green evidence fails its re-run before delivery</li>
-        <li>A delivery guard trips: base branch, unrelated staged changes, a moved HEAD</li>
-        <li>Configured attempts or time limits run out</li>
-      </ul>
-    </div>
-  </div>
-  <p class="home-closing-line">Scope and guard violations stop the run at once. Failing checks go back to the agent as feedback first. Advisory findings never turn into babysitting, and a failed safety check never turns into a success summary.</p>
-</section>
-
 <section class="home-scorecard" aria-labelledby="scorecard-title">
   <div class="section-intro">
     <p class="section-label">THE SCORECARD</p>
@@ -104,27 +74,7 @@ description: Agents write the code. The orchestrator makes them prove it, checki
     <p>Most tools tell you they're safe. Agent Flow publishes the scorecard: what the orchestrator enforces, what's partial, what belongs to your organization, and what's still open.</p>
   </div>
 <!-- scorecard: grid -->
-  <p class="beyond-title">Beyond the rubric</p>
-<!-- scorecard: beyond-chips -->
   <p><a class="text-link" href="scorecard/">Read the scorecard <span aria-hidden="true">→</span></a></p>
-</section>
-
-<section class="home-open" aria-labelledby="open-title">
-  <div class="section-intro">
-    <p class="section-label">OPEN SOURCE</p>
-    <h2 id="open-title">Open source, all the way down.</h2>
-    <p>A verification layer you can't inspect is just another claim to trust. Every line that decides whether your agents' work passes is in the public repository.</p>
-  </div>
-  <div class="tile-grid">
-    <div class="tile"><h3>MIT-licensed</h3><p>Use it at work, change it, ship it.</p></div>
-    <div class="tile"><h3>Read the orchestrator</h3><p>Standard-library Python with zero runtime dependencies. The orchestrator, parsers, and guards are ordinary code, not a hidden service.</p></div>
-    <div class="tile"><h3>Runs on your machine</h3><p>Your agent CLIs, your logins, your repositories. No Agent Flow account, server, or telemetry.</p></div>
-    <div class="tile"><h3>Built in the open</h3><p>Public CI on Linux and macOS, public tests, public scorecard, gaps included.</p></div>
-  </div>
-  <div class="home-actions">
-    <a class="button button-secondary" href="https://github.com/MarkoArsov/agent-workflow">Read the code</a>
-    <a class="text-link" href="development/">How to contribute <span aria-hidden="true">→</span></a>
-  </div>
 </section>
 
 <section class="home-decisions" aria-labelledby="decisions-title">
@@ -136,7 +86,7 @@ description: Agents write the code. The orchestrator makes them prove it, checki
     <div class="decision-card"><h3>Research before planning</h3><p class="decision-problem">Agents guess, or ask questions the repository can answer.</p><p class="decision-result"><code>specify</code> reads instructions and working examples first, then asks only what is missing.</p></div>
     <div class="decision-card"><h3>Tests first, red on an assertion</h3><p class="decision-problem">A test written after the code can prove the code instead of the requirement.</p><p class="decision-result">The red stage must fail on assertions, not setup errors. Then the tests are frozen.</p></div>
     <div class="decision-card"><h3>A fresh session per stage</h3><p class="decision-problem">Shared chat history biases later judgment.</p><p class="decision-result">Every stage and retry starts from the plan and the repository, not the previous conversation.</p></div>
-    <div class="decision-card"><h3>Mechanical verification</h3><p class="decision-problem">A confident report can still be wrong.</p><p class="decision-result">An agent's response is a proposal, not a completion. The orchestrator runs the checks.</p></div>
+    <div class="decision-card"><h3>Write it once</h3><p class="decision-problem">Asking a model to redo a mechanical step spends tokens and can give a different answer each time.</p><p class="decision-result">If a step can be a script, it is one: deterministic, free to run, and the same every time. Models are kept for judgement.</p></div>
     <div class="decision-card"><h3>Stop only on safety</h3><p class="decision-problem">Treating every finding as a stop turns automation into babysitting.</p><p class="decision-result">Scope, secrets, frozen tests, failed checks, and delivery guards block. Review notes don't.</p></div>
     <div class="decision-card"><h3>Open and local</h3><p class="decision-problem">A closed verification layer is one more claim to trust.</p><p class="decision-result">The whole verification layer is public code that runs on your machine.</p></div>
   </div>

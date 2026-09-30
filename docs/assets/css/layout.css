@@ -3,7 +3,9 @@
 .site-header__inner, .page-shell, .home-shell, .site-footer__inner { width: min(calc(100% - 48px), var(--container)); margin: 0 auto; }
 .site-header__inner { display: flex; height: 100%; align-items: center; }
 .brand { display: inline-flex; flex: 0 0 260px; align-items: center; gap: 9px; color: var(--text); font-size: 1.125rem; font-weight: 600; letter-spacing: -.01em; line-height: 1; text-decoration: none; }
-.brand img { color: var(--text); }
+/* A mask filled with currentColor, so the mark follows the text colour on hover. */
+.brand-mark { display: block; flex: none; width: 20px; height: 20px; background: currentColor; -webkit-mask: url(../brand/mark.svg) center / contain no-repeat; mask: url(../brand/mark.svg) center / contain no-repeat; }
+.brand:hover, .brand:focus-visible { color: var(--accent-hover); }
 .header-tabs { display: flex; align-self: stretch; align-items: center; gap: var(--space-1); }
 .header-menu { position: relative; display: flex; height: 100%; align-items: center; }
 .header-tab { position: relative; display: inline-flex; min-height: 40px; align-items: center; padding: 0 0 0 10px; color: var(--text-muted); font-size: .875rem; font-weight: 500; line-height: 1; text-decoration: none; }

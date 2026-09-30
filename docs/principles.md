@@ -43,6 +43,7 @@ specify → implement-tests? → implement → review? → commit-and-push? → 
 | Review never sees the implementation's reasoning | A reviewer that reads the author's story tends to agree with it. | The review stage receives the requirements and the actual diff, never `implementation.md`. |
 | Allow any confirmed route | A hard model split can block a valid plan. | One provider and model may run every stage, or each stage may differ. Fallbacks are explicit, ordered, and never silent. |
 | Verify mechanically | A confident report may still be wrong. | The orchestrator runs the named checks itself and parses their output. |
+| Write it once | Asking a model to redo a mechanical step spends tokens and can give a different answer each time. | If a step can be a script, it is one. Verification, status, watching, and delivery are deterministic local scripts that cost no tokens; models are kept for judgement. |
 | Bind green evidence to the diff | Evidence goes stale when the code changes. | Green results carry a fingerprint of the files. Delivery re-runs the checks if anything changed since. |
 | Stop only on safety | Treating every finding as a stop turns automation into babysitting. | Scope, secret, frozen-test, verification, and delivery-guard failures stop the work. Review notes and advisory rules do not. |
 | Separate implementation from publishing | Correct code and permission to publish are different decisions. | A run can finish without committing, pushing, or opening a pull request. |
