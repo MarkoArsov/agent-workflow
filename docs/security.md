@@ -18,7 +18,7 @@ question: What does Agent Flow protect, and what must your environment protect?
 |---|---|
 | Declared writable paths | After every stage, any change outside the stage's paths, or to a read-only repository, fails the run and stays in place for inspection. |
 | Git state | A stage may not change HEAD, the branch, or the index. |
-| Frozen tests | Assertion-proven tests cannot be rewritten, added, or deleted by later stages. |
+| Frozen tests | Tests verified by implement-tests cannot be rewritten, added, or deleted by later stages. |
 | Your pre-existing changes | Recorded at start. A stage that touches them fails; delivery never commits them. |
 | Secret detector and blocking rules | Private keys and common token formats, plus your deterministic rules, run on every changed file and again on the whole diff before publication. |
 | Delivery guards | Explicit task branch only, task-owned paths only, no force pushes, no delivery after HEAD moved. |

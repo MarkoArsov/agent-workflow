@@ -74,7 +74,7 @@ class RunnerLifecycleTests(WorkspaceTest):
             interrupted = runner.run(self.project, self.plan)
         self.assertNotIn("red_test_files", interrupted)
         self.assertTrue(interrupted["stage_evidence"]["implement-tests"]["passed"])
-        with self.assertRaisesRegex(WorkflowError, "Assertion-proven"):
+        with self.assertRaisesRegex(WorkflowError, "frozen by implement-tests"):
             runner.run(self.project, self.plan, resume=True)
         self.assertEqual(len(self.calls()), 2)
 

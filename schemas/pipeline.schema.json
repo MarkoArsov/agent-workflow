@@ -229,6 +229,11 @@
         }
       }
     },
+    "approved_no_red_reason": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Why implement-tests cannot fail on assertions yet and where red is demonstrated instead. Its checks then run green; no check may declare red."
+    },
     "limits": {
       "type": "object"
     },

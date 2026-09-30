@@ -110,8 +110,14 @@ def validate(value, project):
             raise WorkflowError("Every outcome must reference existing checks")
         if not any("green" in checks[x].get("phases", ["green"]) for x in outcome["checks"]):
             raise WorkflowError("Every outcome needs a green check")
-    if "implement-tests" in stages and not any("red" in c.get("phases", []) for c in checks.values()):
-        raise WorkflowError("Test-authoring stage requires assertion-level red checks")
+    red = any("red" in c.get("phases", []) for c in checks.values())
+    no_red = value.get("approved_no_red_reason")
+    if no_red is not None and (not isinstance(no_red, str) or not no_red.strip()):
+        raise WorkflowError("approved_no_red_reason must explain where red is demonstrated instead")
+    if no_red and red:
+        raise WorkflowError("approved_no_red_reason conflicts with checks that declare a red phase")
+    if "implement-tests" in stages and not red and not no_red:
+        raise WorkflowError("Test-authoring stage requires assertion-level red checks, or an approved_no_red_reason")
     for name in stages:
         if name in custom and set(custom[name]["checks"]) - set(checks):
             raise WorkflowError(f"{name}: unknown completion check")

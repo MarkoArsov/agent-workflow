@@ -19,7 +19,7 @@ Load the selected package's references/pipeline-contract.md when authoring a ful
 
 4. Select each repository explicitly as read or write. Give writable path patterns, test path patterns, and a task branch where needed. An unchanged test repository can provide checks without getting a branch.
 
-5. Map every required outcome to named executable checks. Record argv, cwd, parser, test identities, timeouts, and assertion failures for red checks. Never substitute build/import failures for behavioral red evidence. Documentation work can use build/link checks.
+5. Map every required outcome to named executable checks. Record argv, cwd, parser, test identities, timeouts, and assertion failures for red checks. Never substitute build/import failures for behavioral red evidence. When the test slice cannot fail on assertions before product changes, declare no red checks and record approved_no_red_reason with where red is demonstrated instead. Documentation work can use build/link checks.
 
 6. Select only necessary stages. Test changes use implement-tests before implement; optional review is fresh. Selecting commit-and-push and draft-pr authorizes those named actions. Record the exact commit message and PR title/body file. Other external communication needs separate authorization.
 
