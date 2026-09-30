@@ -52,7 +52,9 @@ for an unspecified stage. A reasoning setting is optional.
 
 Checks can name a repository command by string instead of repeating its object.
 Generic checks need success_pattern and, for red evidence, failure_pattern.
-Expected red test identities must appear as failed assertions. Commands that modify
+Expected red test identities must appear as failed assertions. When implement-tests
+cannot fail on assertions before product changes, declare no red checks and set
+approved_no_red_reason to where red is demonstrated instead; its checks then run green. Commands that modify
 source invalidate their own evidence.
 
 Selecting commit-and-push requires delivery.commit_message and an explicit non-base

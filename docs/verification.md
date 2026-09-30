@@ -29,7 +29,16 @@ Those failures do not prove a behavior is missing.
 For unittest and pytest, each expected identity must itself appear as a failed test. For other parsers, the output must show an assertion failure.
 Generic checks need an explicit `failure_pattern` for red.
 
-After meaningful red evidence, the orchestrator records the hashes of every file under the plan's `test_paths`.
+### When the test slice cannot fail yet
+
+Some test slices pass against current behavior, such as moving existing tests or adding a denial that already holds, and the behavioral red only appears once product or configuration changes land.
+Record that in the plan as `approved_no_red_reason`, stating where red is demonstrated instead, and declare no check with a red phase; the two cannot be combined.
+`implement-tests` then runs the green checks, which must pass with no setup failure, and the task diff must change at least one file under `test_paths`.
+Files written before an input pause, an earlier attempt, or a plan rebind still count, because the comparison uses the task's starting snapshot.
+
+### Frozen tests
+
+After `implement-tests` is verified, the orchestrator records the hashes of every file under the plan's `test_paths`.
 Implementation and review cannot rewrite, add, or delete those tests to make them pass; a change stops the run.
 A wrong requirement or test needs a complete plan revision, `resume --rebind`, and renewed red proof.
 
@@ -79,11 +88,12 @@ Example: evidence/implement-0001.json, trimmed
   ],
   "fingerprint": "c0045111…",
   "passed": true,
+  "problems": [],
   "rules": []
 }
 ~~~
 
-`problems` lists every reason a check did not pass. `reason` records a timeout, inactivity, or cancellation. `rules` holds blocking and advisory findings. Output and commands are redacted before they are saved.
+In each check, `problems` lists every reason it did not pass; the top-level `problems` lists stage-level failures, such as a test stage that changed no test files. `reason` records a timeout, inactivity, or cancellation. `rules` holds blocking and advisory findings. Output and commands are redacted before they are saved.
 
 ## Current artifacts
 

@@ -209,7 +209,7 @@ Load the selected package's references/pipeline-contract.md when authoring a ful
 
 4. Select each repository explicitly as read or write. Give writable path patterns, test path patterns, and a task branch where needed. An unchanged test repository can provide checks without getting a branch.
 
-5. Map every required outcome to named executable checks. Record argv, cwd, parser, test identities, timeouts, and assertion failures for red checks. Never substitute build/import failures for behavioral red evidence. Documentation work can use build/link checks.
+5. Map every required outcome to named executable checks. Record argv, cwd, parser, test identities, timeouts, and assertion failures for red checks. Never substitute build/import failures for behavioral red evidence. When the test slice cannot fail on assertions before product changes, declare no red checks and record approved_no_red_reason with where red is demonstrated instead. Documentation work can use build/link checks.
 
 6. Select only necessary stages. Test changes use implement-tests before implement; optional review is fresh. Selecting commit-and-push and draft-pr authorizes those named actions. Record the exact commit message and PR title/body file. Other external communication needs separate authorization.
 
@@ -259,7 +259,9 @@ Author independent tests and obtain behavioral red evidence before product imple
 
 5. If a test cannot fail meaningfully before a new public interface exists, expose the gap in the plan and ask for the minimal interface decision. Do not claim a compiler error proves the feature is missing.
 
-6. Report test identities, command results, affected paths, and genuine missing information. The orchestrator executes the checks independently and freezes assertion-proven test files for implementation.
+   When the plan records approved_no_red_reason, the test slice passes against current behavior and red is demonstrated later. Change the declared test_paths and keep the named checks green. Never fabricate failure output.
+
+6. Report test identities, command results, affected paths, and genuine missing information. The orchestrator executes the checks independently and freezes the test files for implementation.
 
 7. Return the orchestrator's requested JSON status. In a direct invocation, explain the observed red evidence and the next implementation boundary.
 
