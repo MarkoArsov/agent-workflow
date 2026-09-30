@@ -43,9 +43,9 @@ description: Agents write the code. The orchestrator makes them prove it, checki
     <h2 id="problem-title">Green tests don't mean done.</h2>
   </div>
   <div class="stat-grid">
-    <div class="stat-tile"><p class="stat-figure">1 in 2</p><p class="stat-label">AI pull requests that pass the tests would still be rejected by the project's maintainers.</p><p class="stat-source"><a href="https://metr.org/notes/2026-03-10-many-swe-bench-passing-prs-would-not-be-merged-into-main/">METR, 2026</a></p></div>
+    <div class="stat-tile"><p class="stat-figure">50%</p><p class="stat-label">of AI pull requests that pass the tests would still be rejected by the project's maintainers.</p><p class="stat-source"><a href="https://metr.org/notes/2026-03-10-many-swe-bench-passing-prs-would-not-be-merged-into-main/">METR, 2026</a></p></div>
     <div class="stat-tile"><p class="stat-figure">46%</p><p class="stat-label">of fixes proposed by coding agents in real open-source projects were rejected.</p><p class="stat-source"><a href="https://arxiv.org/abs/2606.13468">AIDev, 2026</a></p></div>
-    <div class="stat-tile"><p class="stat-figure">3.7%</p><p class="stat-label">of engineering leaders say their process is ready for AI agents.</p><p class="stat-source"><a href="https://www.qodo.ai/blog/state-of-ai-code-quality-report-2026/">Qodo, 2026</a></p></div>
+    <div class="stat-tile"><p class="stat-figure">96%</p><p class="stat-label">of engineering leaders don't think their process is ready for AI agents.</p><p class="stat-source"><a href="https://www.qodo.ai/blog/state-of-ai-code-quality-report-2026/">Qodo, 2026</a></p></div>
   </div>
   <p class="home-closing-line">Writing code is no longer the hard part. Proving it's right is, so Agent Flow makes every stage prove it.</p>
   <p><a class="text-link" href="why/">Read the research <span aria-hidden="true">→</span></a></p>
