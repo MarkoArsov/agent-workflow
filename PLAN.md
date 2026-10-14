@@ -1,5 +1,18 @@
 # agent-workflow implementation plan
 
+## Approved extension: model routing (14 October 2026)
+
+Implement a portable standard-library evaluator and versioned model resources,
+independent workflow-local global/project settings, native provider discovery,
+and an update-models skill with explicit scope and exact-diff approval. Every
+specify evaluates task routes and model-specific effort offline, with no additional
+model call. Preserve explicit routes and approved plan snapshots. Balanced usage
+is the default; maximum effort is opt-in. Support every subset of the three hosts.
+Export the same component for independent downstream workflows with checksums;
+keep their private adapters and configuration outside this public repository.
+Verify isolated scope/transaction/discovery/evaluation/compatibility fixtures and
+the existing full test and strict documentation suites. No publishing is included.
+
 Status: Local implementation, verification, and handoff complete. Publication remains a separate action.
 License: MIT.
 Delivery: a new public repository, developed and committed locally first.
@@ -755,3 +768,14 @@ independent project pins, schema compatibility, discovery renames/additions/remo
 shared host directories, collision protection, rollback, and source-preserving uninstall.
 All automated checks use isolated homes. Installing on the actual machine is a separate,
 explicitly authorised operation after those checks pass. No publication is included.
+
+Model-routing extension evidence (14 October 2026):
+
+- 80 isolated automated tests passed, including all provider subsets, scope and
+  transactional recovery, effort selection, offline evaluation, export checks,
+  and preservation of explicit routes and saved snapshots.
+- Native read-only discovery succeeded for all three installed hosts; model
+  listing is not an inference/access test. No model-generation calls were made.
+- Strict MkDocs build, 2,189 internal link/asset checks, and skill validation passed.
+- Public-content scan found zero findings. Separate downstream installation and
+  private workflow evidence remain outside this package. No publication occurred.

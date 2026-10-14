@@ -46,6 +46,7 @@ Standalone entry points use **af-NAME**, with **af-setup** for project setup; Cl
 <a href="#sync-base" data-skills-chip data-skill-chip-name="sync-base">sync-base</a>
 <a href="#test-on-staging" data-skills-chip data-skill-chip-name="test-on-staging">test-on-staging</a>
 <a href="#understand" data-skills-chip data-skill-chip-name="understand">understand</a>
+<a href="#update-models" data-skills-chip data-skill-chip-name="update-models">update-models</a>
 <a href="#wizard" data-skills-chip data-skill-chip-name="wizard">wizard</a>
 <a href="#worktree-list" data-skills-chip data-skill-chip-name="worktree-list">worktree-list</a>
 <a href="#worktree-remove" data-skills-chip data-skill-chip-name="worktree-remove">worktree-remove</a>
@@ -106,7 +107,7 @@ Use this for a new project, a changed repository layout, or a deliberate update 
 1. Locate the bundled bin/agent-workflow launcher relative to this skill's package. Run its setup command for the intended project root. It reads facts and prints a proposal; it does not apply changes.
 2. Read existing project instructions. Explain detected repositories, roles, commands, branch/worktree conventions, delivery, and integrations, citing the detector's evidence. Distinguish findings from suggestions.
 3. Ask only for missing consequential choices. Repository roles do not prove branch policies. Confirm which repositories participate always, when changed, or never; an unchanged E2E repo may supply checks without getting a task branch.
-4. Confirm agents, exact model routes and approved fallbacks. Trusted execution is the offered default; explain that it uses provider permission-bypass flags. Restricted execution is available where the selected provider supports it. Save the choice once.
+4. Confirm agents and whether to inherit machine model defaults or pin exact project routes and fallbacks. Use models inspect to show inherited settings; offer update-models if unconfigured. Leaving pipeline.routes empty permits adaptive selection during specify; existing explicit routes remain pins. Trusted execution is the offered default; explain that it uses provider permission-bypass flags. Restricted execution is available where the selected provider supports it. Save the choice once.
 5. Put answers in a temporary JSON file with a profile object containing selected overrides and confirmed_defaults set to true only after the user has confirmed the proposed defaults. Resolve reported merge conflicts explicitly. Re-run setup with --answers and --output to produce the complete proposal.
 6. Show the operating summary and proposed file changes. Include profile location, plan location, rules/references, connector settings, and every host adapter or instruction edit. Wait for approval of those changes.
 7. Run setup --apply on that proposal with --approve and its exact digest. A stale proposal must be regenerated and shown again. Do not manufacture approval or apply a different proposal.
@@ -136,7 +137,7 @@ Load the selected package's references/pipeline-contract.md when authoring a ful
 
 6. Select only necessary stages. Test changes use implement-tests before implement; optional review is fresh. Selecting commit-and-push and draft-pr authorizes those named actions. Record the exact commit message and PR title/body file. Other external communication needs separate authorization.
 
-7. Use configured routes or record explicitly chosen models and fallbacks. Add only required connectors and references. Custom stages need inputs, outputs, verifiers, and before/after ordering.
+7. On every invocation, including the manual lane, run the offline model evaluator once using facts already gathered: read references/model-routing.md and run models evaluate --input <facts.json> --output <selection.json>. Use only selected AI stages. Preserve explicit choices; otherwise use the recommended model and effort. For a full plan, copy the snapshot into model_selection and its routes into routes. For manual work, show a compact recommendation without switching the active session. Missing optional effort metadata adds no question or gate. Resolve truly unavailable routes before execution. Add only required connectors and references; custom stages need inputs, outputs, verifiers, and ordering.
 
 8. Validate with validate-plan, then preflight. Show the complete scope, checks, permission mode, delivery actions, and unresolved choices. Obtain any genuinely missing product decisions before starting.
 
@@ -499,6 +500,21 @@ Propose evidence-based instruction pruning while preserving meaningful project s
 3. Prepare a diff/proposal explaining each removal or relocation with evidence. Do not delete instructions merely because they are long or rarely triggered.
 
 4. This skill is proposal-only unless the user explicitly authorizes applying the concrete changes.
+
+### `update-models` { .skill-entry data-skill="update-models Refresh available models and recommend task routes and effort; review changes to this workflow&#x27;s machine or project defaults." }
+
+Refresh available models and recommend task routes and effort; review changes to this workflow's machine or project defaults.
+
+Read the selected package's references/model-routing.md for the settings and task-facts format.
+
+1. Run `models inspect`. Confirm this workflow's machine defaults, the resolved project, or both as the target. Show the actual target paths. Confirm the allowed provider subset; an installed CLI is not proof of account access. Do not update another workflow or native application preferences.
+2. Run `models refresh --providers <confirmed,hosts>`. This only refreshes discovery evidence. For Claude, check the backend, applicable managed/local restrictions and actual account access with the user; pass `--confirm-model claude:<advertised-id>` only for confirmed access. Do not claim the catalogue proves entitlement. Preserve existing defaults when discovery fails.
+3. Review only relevant new or changed candidates against official model/effort documentation. Native IDs and supported efforts come from discovery. Store proposed assessments with source URLs, date, family, suitability band, stable preference rank and model-specific effort mappings. Newer is not automatically better. Unreviewed candidates stay unselected. No benchmark service or API key is required.
+4. Run `models evaluate` for routine defaults; use task-facts input to compare demanding work if useful. Honour project pins. Draft complete settings objects for the selected scopes, preserving existing fields and incorporating reviewed registry additions. Compare those additions with `models evaluate --settings <settings.json>` without applying them. Use the smallest supported effort suitable for the work. Maximum effort requires an explicit choice.
+5. Run `models propose --scope <global|project|both> --input <settings.json> --output <proposal.json>`. Present old → new routes, effort, ordered fallbacks, reasons, confidence, and which project pins mask global changes. Ask approval of this exact scope and diff. Do not infer settings approval from permission to refresh.
+6. After approval, run `models apply --input <proposal.json> --approve <digest>`. Report the reread effective values. If files changed, regenerate and show the proposal. An interrupted apply has `models recover` to restore its journaled previous values, preserving concurrent edits.
+
+Every specify uses the offline evaluator; do not create a recurring refresh job unless requested. Do not change approved task snapshots, stages, permissions, checks or retry limits. Interactive sessions must apply model changes through their host; a recommendation cannot switch the current session by itself.
 
 ## Worktrees & environments
 

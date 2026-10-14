@@ -246,6 +246,10 @@
       "items": {
         "type": "string"
       }
+    },
+    "model_selection": {
+      "type": "object",
+      "description": "Immutable versioned evaluator snapshot, bound to routes and original task facts; validated without current defaults."
     }
   },
   "additionalProperties": true

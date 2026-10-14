@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Model routing settings",
+  "description": "Independent workflow-global or project routing policy. Changes use an exact scoped proposal; task routes are saved separately.",
+  "type": "object",
+  "required": ["schema_version"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {"const": 1},
+    "providers": {"type": "array", "items": {"enum": ["codex", "claude", "cursor"]}, "description": "Hard restriction intersected with profile and other scopes."},
+    "defaults": {"type": "object", "additionalProperties": {"$ref": "#/$defs/routes"}},
+    "pins": {"type": "object", "additionalProperties": {"$ref": "#/$defs/routes"}},
+    "adaptive_stages": {"type": "array", "items": {"type": "string"}, "description": "Project-only release of legacy stage pins."},
+    "blocked": {"type": "array", "items": {"type": "string"}},
+    "registry": {"type": "array", "items": {"type": "object", "required": ["provider", "model", "family", "band", "rank", "stages", "confidence", "sources", "reviewed_at"]}}
+  },
+  "$defs": {
+    "routes": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["provider", "model"], "properties": {
+      "provider": {"enum": ["codex", "claude", "cursor"]},
+      "model": {"type": "string", "minLength": 1},
+      "reasoning": {"enum": ["none", "minimal", "low", "medium", "high", "xhigh", "max", "ultra"]}
+    }}}
+  }
+}

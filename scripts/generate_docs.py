@@ -12,7 +12,7 @@ SKILL_CATEGORIES = {
     "Plan & orient": ("specify", "draft-rfc", "issue-writer", "project-setup", "pipeline-workflow", "wizard", "understand"),
     "Build & test": ("implement-tests", "implement", "implement-pipeline", "e2e-test-engineering", "e2e-test-overview"),
     "Review & deliver": ("review", "review-guide", "peer-rfc-review", "peer-pr-review", "address-pr-comments", "request-review", "pr-preflight", "commit", "push", "commit-and-push", "draft-pr", "merge-to-base"),
-    "Project operations": ("add-rule", "project-customize", "list-pipeline", "prune-context", "diagnose-ci"),
+    "Project operations": ("update-models", "add-rule", "project-customize", "list-pipeline", "prune-context", "diagnose-ci"),
     "Worktrees & environments": ("checkout-branch", "worktree-start", "worktree-list", "worktree-remove", "sync-base", "environment-status", "environment-release", "test-on-staging"),
 }
 

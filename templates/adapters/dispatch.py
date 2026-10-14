@@ -67,7 +67,7 @@ for candidate in candidates:
         try:
             context = resolve(start)
         except WorkflowError:
-            if SKILL_NAME != "project-setup":
+            if SKILL_NAME not in {"project-setup", "update-models"}:
                 raise
             context = None
         print(resolve_skill(SKILL_NAME, context, candidate))

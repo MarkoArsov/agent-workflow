@@ -23,7 +23,7 @@ Load the selected package's references/pipeline-contract.md when authoring a ful
 
 6. Select only necessary stages. Test changes use implement-tests before implement; optional review is fresh. Selecting commit-and-push and draft-pr authorizes those named actions. Record the exact commit message and PR title/body file. Other external communication needs separate authorization.
 
-7. Use configured routes or record explicitly chosen models and fallbacks. Add only required connectors and references. Custom stages need inputs, outputs, verifiers, and before/after ordering.
+7. On every invocation, including the manual lane, run the offline model evaluator once using facts already gathered: read references/model-routing.md and run models evaluate --input <facts.json> --output <selection.json>. Use only selected AI stages. Preserve explicit choices; otherwise use the recommended model and effort. For a full plan, copy the snapshot into model_selection and its routes into routes. For manual work, show a compact recommendation without switching the active session. Missing optional effort metadata adds no question or gate. Resolve truly unavailable routes before execution. Add only required connectors and references; custom stages need inputs, outputs, verifiers, and ordering.
 
 8. Validate with validate-plan, then preflight. Show the complete scope, checks, permission mode, delivery actions, and unresolved choices. Obtain any genuinely missing product decisions before starting.
 

@@ -16,6 +16,8 @@ def parser():
     p.add_argument("--version", action="version", version=__version__)
     p.add_argument("--project", help="Configured project root; defaults to the current location")
     sub = p.add_subparsers(dest="command", required=True)
+    from .model_policy.commands import arguments as model_arguments
+    model_arguments(sub.add_parser("models", help="Refresh, review and evaluate workflow-local model routes"))
     setup = sub.add_parser("setup", help="Detect and preview configuration, then apply the approved proposal")
     setup.add_argument("path", nargs="?", default=".")
     setup.add_argument("--answers", type=Path)
@@ -77,6 +79,9 @@ def parser():
     return p
 
 def execute(args):
+    if args.command == "models":
+        from .model_routing import execute as models_execute
+        return models_execute(args)
     if args.command in {"update", "uninstall", "doctor"}:
         from . import install
         if args.global_install and args.target:
