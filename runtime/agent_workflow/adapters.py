@@ -17,6 +17,15 @@ def entry_name(name, package=None):
         raise WorkflowError("Discovery names must use lowercase letters, digits, and hyphens")
     return value
 
+def interface_metadata(name, package=None):
+    """Use an explicit label so hosts do not title-case the namespace acronym."""
+    marker = read_json((package or package_root()) / "workflow-package.json", {})
+    prefix = marker.get("discovery", {}).get("prefix", "aw")
+    words = entry_name(name, package)[len(prefix) + 1:].split("-")
+    title = " ".join(word.upper() if word in {"ci", "e2e", "pr", "rfc"} else word.capitalize()
+                     for word in words)
+    return f"interface:\n  display_name: {json.dumps(prefix.upper() + ' ' + title)}\n"
+
 def discovery_file(relative):
     parts = Path(relative).parts
     return any(parts[i:i + 2] in ((".agents", "skills"), (".claude", "skills"))
@@ -50,5 +59,6 @@ def project_files(root: Path, profile: dict) -> dict[str, str]:
             entry = location / public
             text = f"---\nname: {public}\ndescription: {json.dumps(info['description'])}\n---\n\nRun this skill folder's scripts/dispatch.py with the current project as its working directory. Read the returned effective skill file, then follow its procedure. Project overrides take precedence. Do not use defaults from another project.\n"
             files[(entry / "SKILL.md").as_posix()] = text
+            files[(entry / "agents/openai.yaml").as_posix()] = interface_metadata(name)
             files[(entry / "scripts/dispatch.py").as_posix()] = template.replace("SKILL_NAME = None", f"SKILL_NAME = {name!r}")
     return files

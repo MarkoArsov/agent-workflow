@@ -8,7 +8,7 @@ import tempfile
 from pathlib import Path
 from .detect import repositories
 from .extensions import catalog
-from .adapters import entry_name
+from .adapters import entry_name, interface_metadata
 from .util import WorkflowError, atomic_write, digest, file_hash, json_text, package_root, read_json, user_data, write_json
 
 PAYLOAD = ("workflow-package.json", "package-files.json", "LICENSE", "README.md", "pyproject.toml", "bin", "runtime",
@@ -78,6 +78,7 @@ def wrappers(source, project, agents):
             folder = location / public
             result[folder / "SKILL.md"] = f"---\nname: {public}\ndescription: {json.dumps(info['description'])}\n---\n\nRun this skill folder's scripts/dispatch.py with the current project as its working directory. Read the returned effective skill file, then follow its procedure. Project overrides take precedence. Do not use defaults from another project.\n"
             result[folder / "scripts/dispatch.py"] = template.replace("SKILL_NAME = None", f"SKILL_NAME = {name!r}")
+            result[folder / "agents/openai.yaml"] = interface_metadata(name, source)
     return result
 
 def install(source, *, project=None, agents=None, dry_run=False, link=False):
@@ -189,7 +190,7 @@ def install(source, *, project=None, agents=None, dry_run=False, link=False):
 
 def prune_adapter_dirs(path):
     parent = path.parent
-    while parent.name == "scripts" or parent.parent.name == "skills":
+    while parent.name in {"scripts", "agents"} or parent.parent.name == "skills":
         try:
             parent.rmdir()
         except OSError:

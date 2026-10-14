@@ -51,6 +51,8 @@ A project install provides `.agent-workflow/bin/agent-workflow`.
 
 Installation enables discovery. It does not write a project profile.
 Open your project in the agent and invoke **af-setup**.
+Skill labels use an uppercase **AF** prefix, such as **AF Setup** and **AF Specify**,
+through generated display metadata. Invocation names remain lowercase (`af-setup`).
 Continue with [setup](setup.md).
 
 ## Follow a development checkout

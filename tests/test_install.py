@@ -175,7 +175,7 @@ class InstallTests(WorkspaceTest):
         shared = self.home / ".agents/skills"
         shared.parent.mkdir(); shared.symlink_to(claude, target_is_directory=True)
         result = install.install(source, link=True)
-        self.assertEqual(len(result["files"]), 2 * len(install.catalog(package=source)) + 1)
+        self.assertEqual(len(result["files"]), 3 * len(install.catalog(package=source)) + 1)
         receipt = install.installation_root() / "receipt.json"
         before = receipt.read_bytes()
         original = (claude / "af-review/SKILL.md").read_text()
