@@ -6,7 +6,7 @@ footer_order: 4
 
 # Skill reference
 
-Standalone entry points use **aw-NAME**; Claude's native plugin uses **agent-workflow:NAME**. Project overrides take precedence in direct invocation and runner stages.
+Standalone entry points use **af-NAME**, with **af-setup** for project setup; Claude's native plugin uses **agent-workflow:NAME**. Project overrides take precedence in direct invocation and runner stages.
 
 <div class="skills-filter" data-skills-filter>
 <label for="skills-filter-input">Filter skills</label>

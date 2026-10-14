@@ -32,18 +32,29 @@ for parent in search:
         profile = json.loads(marker.read_text()); project = target; break
 if profile:
     version = profile["package"]["version"]
-    candidates += [project / ".agent-workflow/runtime/versions" / version, global_root / "versions" / version]
-else:
-    for root in [LOCAL_RUNTIME, *(p / ".agent-workflow/runtime" for p in search), global_root]:
+    candidates.append(project / ".agent-workflow/runtime/versions" / version)
+active = global_root / "active.json"
+active_data = json.loads(active.read_text()) if active.is_file() else {}
+linked = Path(active_data["path"]) if active_data.get("backend") == "linked" else None
+if not profile:
+    for root in [LOCAL_RUNTIME, *(p / ".agent-workflow/runtime" for p in search)]:
         if root and (root / "active.json").is_file():
             candidates.append(Path(json.loads((root / "active.json").read_text())["path"]))
+if linked:
+    candidates.append(linked)
+if profile:
+    candidates.append(global_root / "versions" / version)
+else:
+    if active.is_file():
+        candidates.append(Path(active_data["path"]))
 if os.environ.get("AGENT_WORKFLOW_PACKAGE"):
     candidates.append(Path(os.environ["AGENT_WORKFLOW_PACKAGE"]))
 for candidate in candidates:
     marker = candidate / "workflow-package.json"
-    if marker.is_file() and (not profile or json.loads(marker.read_text())["version"] == profile["package"]["version"]):
+    package = json.loads(marker.read_text()) if marker.is_file() else {}
+    compatible_link = candidate == linked and package.get("schema_version") == (profile["schema_version"] if profile else 1)
+    if package and (compatible_link or (candidate != linked and (not profile or package["version"] == profile["package"]["version"]))):
         sys.path.insert(0, str(candidate / "runtime"))
         from agent_workflow.cli import main
         raise SystemExit(main(args))
 raise SystemExit("No matching workflow package. Install the project's pinned version, or install globally before setup.")
-

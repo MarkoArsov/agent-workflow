@@ -24,6 +24,11 @@ Project updates advance that project's package pin.
 Global updates retain older versions so other projects can keep their pins.
 Overrides are preserved, with changed upstream skill hashes reported for review.
 
+For a linked development install, run `python3 install.py --global --sync` from
+the checkout. Runtime changes are already live; sync updates discovery and removes
+obsolete owned entry points. A normal installation without `--link` switches back
+to a versioned copy. See [linked installs](install.md#follow-a-development-checkout).
+
 ## Diagnose
 
 ~~~sh

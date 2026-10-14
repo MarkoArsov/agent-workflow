@@ -23,6 +23,9 @@ def category_for(name):
     return "Other"
 
 def rendered():
+    discovery = json.loads((ROOT / "workflow-package.json").read_text()).get("discovery", {})
+    prefix = discovery.get("prefix", "aw")
+    setup_alias = discovery.get("aliases", {}).get("project-setup", "project-setup")
     entries = []
     for path in sorted((ROOT / "skills").glob("*/SKILL.md")):
         if path.is_symlink():
@@ -41,7 +44,7 @@ def rendered():
     skills = [
         "---\ndescription: Browse project-owned skills and their checked responsibilities.\nfooter: docs\nfooter_order: 4\n---\n",
         "# Skill reference\n",
-        "Standalone entry points use **aw-NAME**; Claude's native plugin uses **agent-workflow:NAME**. Project overrides take precedence in direct invocation and runner stages.\n",
+        f"Standalone entry points use **{prefix}-NAME**, with **{prefix}-{setup_alias}** for project setup; Claude's native plugin uses **agent-workflow:NAME**. Project overrides take precedence in direct invocation and runner stages.\n",
         '<div class="skills-filter" data-skills-filter>\n<label for="skills-filter-input">Filter skills</label>\n<input id="skills-filter-input" type="search" placeholder="Try review, test, or worktree" autocomplete="off" data-skills-filter-input>\n<div class="skills-filter__index" aria-label="Skill index">\n',
     ]
     skills += [f'<a href="#{name}" data-skills-chip data-skill-chip-name="{name}">{name}</a>' for name, _, _ in entries]

@@ -739,3 +739,19 @@ a real-host smoke check.
 - [Cursor CLI permissions](https://cursor.com/docs/cli/reference/permissions)
 - [MkDocs build and preview](https://www.mkdocs.org/getting-started/)
 - [GitHub Pages Actions workflow](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages)
+
+## 16. Local development installation
+
+Additional approved scope: replace a previous machine-local workflow with this package,
+and keep the machine's global runtime linked to the checkout as it evolves. Use `af-*`
+discovery names and `af-setup` for now, with names configurable independently of stable
+internal skill IDs. Global sync reconciles additions, removals, descriptions, and renames;
+project-owned configuration remains under its reviewed setup flow. A machine-local
+scheduler may call sync automatically. Keep migration inventories, backups, service
+configuration, and any organisation-specific handoff outside this public repository.
+
+Acceptance covers live runtime edits, version changes, project override precedence,
+independent project pins, schema compatibility, discovery renames/additions/removals,
+shared host directories, collision protection, rollback, and source-preserving uninstall.
+All automated checks use isolated homes. Installing on the actual machine is a separate,
+explicitly authorised operation after those checks pass. No publication is included.

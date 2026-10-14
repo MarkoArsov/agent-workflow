@@ -102,7 +102,7 @@ def propose(root: Path, answers: dict | None = None) -> dict:
     validate(profile, root)
     files = generated(root, profile)
     # Native host discovery is installed only through an approved setup proposal.
-    from .adapters import project_files
+    from .adapters import discovery_file, project_files
     files.update(project_files(root, profile))
     generation_base = dict(files)
     changes = []
@@ -110,7 +110,7 @@ def propose(root: Path, answers: dict | None = None) -> dict:
     for relative, desired in files.items():
         destination = contained(root, relative, allow_root=False)
         old = destination.read_text() if destination.is_file() else None
-        if old is not None and relative not in baseline_files and "/skills/aw-" in relative and old != desired:
+        if old is not None and relative not in baseline_files and discovery_file(relative) and old != desired:
             conflicts.append({"path": "/files/" + relative, "reason": "Existing unowned discovery entry; move it or select a different namespace"})
         if relative == ".agent-workflow/project.json" and current is not MISSING and profile == current:
             desired = old
@@ -129,7 +129,7 @@ def propose(root: Path, answers: dict | None = None) -> dict:
             changes.append({"path": relative, "before": file_hash(destination), "content": desired,
                             "diff": "".join(difflib.unified_diff((old or "").splitlines(True), desired.splitlines(True), fromfile=relative, tofile=relative))})
     for relative, old_generated in baseline_files.items():
-        if relative in files or "/skills/aw-" not in relative:
+        if relative in files or not discovery_file(relative):
             continue
         destination = contained(root, relative, allow_root=False)
         if destination.is_file() and destination.read_text() == old_generated:

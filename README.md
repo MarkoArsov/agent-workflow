@@ -21,6 +21,11 @@ python3 install.py --global
 python3 install.py --project /path/to/project
 ~~~
 
+To use this checkout's live skills and runtime on a development machine, run
+`python3 install.py --global --link`. Run `python3 install.py --global --sync`
+after changes to refresh discovery names, or schedule it locally.
+See [linked installs](docs/install.md#follow-a-development-checkout).
+
 After the v0.1.0 release is published:
 
 ~~~sh
@@ -39,9 +44,9 @@ The remote commands require publication. Review the pinned bootstrap before exec
 
 ## Set up and run
 
-1. Open your project in an agent and invoke **aw-project-setup** (native Claude: **agent-workflow:project-setup**).
+1. Open your project in an agent and invoke **af-setup** (native Claude: **agent-workflow:project-setup**).
 2. Confirm repositories, commands, branch policies, models, permissions, and integrations. Review the complete proposal before it writes.
-3. Invoke **aw-specify** for a task, then **aw-implement-pipeline** for the approved full plan—or use **aw-implement** directly for the manual lane.
+3. Invoke **af-specify** for a task, then **af-implement-pipeline** for the approved full plan—or use **af-implement** directly for the manual lane.
 
 ~~~sh
 agent-workflow preflight ai-plans/task-name/pipeline.json

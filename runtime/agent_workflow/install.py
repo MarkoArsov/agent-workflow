@@ -8,6 +8,7 @@ import tempfile
 from pathlib import Path
 from .detect import repositories
 from .extensions import catalog
+from .adapters import entry_name
 from .util import WorkflowError, atomic_write, digest, file_hash, json_text, package_root, read_json, user_data, write_json
 
 PAYLOAD = ("workflow-package.json", "package-files.json", "LICENSE", "README.md", "pyproject.toml", "bin", "runtime",
@@ -64,25 +65,37 @@ def wrappers(source, project, agents):
         locations = [Path.home() / ".agents/skills"] if set(agents) & {"codex", "cursor"} else []
         if "claude" in agents:
             locations += [Path(os.environ.get("CLAUDE_CONFIG_DIR", str(Path.home() / ".claude"))) / "skills"]
+    # Hosts may share a skills directory through a symlink. Own each physical
+    # file once, so removing one discovery route cannot remove another's files.
+    locations = sorted({location.resolve() for location in locations})
+    skills = catalog(package=source)
+    names = [entry_name(name, source) for name in skills]
+    if len(names) != len(set(names)):
+        raise WorkflowError("Discovery aliases produce duplicate skill names")
     for location in locations:
-        for name, info in catalog(package=source).items():
-            folder = location / ("aw-" + name)
-            result[folder / "SKILL.md"] = f"---\nname: aw-{name}\ndescription: {json.dumps(info['description'])}\n---\n\nRun this skill folder's scripts/dispatch.py with the current project as its working directory. Read the returned effective skill file, then follow its procedure. Project overrides take precedence. Do not use defaults from another project.\n"
+        for name, info in skills.items():
+            public = entry_name(name, source)
+            folder = location / public
+            result[folder / "SKILL.md"] = f"---\nname: {public}\ndescription: {json.dumps(info['description'])}\n---\n\nRun this skill folder's scripts/dispatch.py with the current project as its working directory. Read the returned effective skill file, then follow its procedure. Project overrides take precedence. Do not use defaults from another project.\n"
             result[folder / "scripts/dispatch.py"] = template.replace("SKILL_NAME = None", f"SKILL_NAME = {name!r}")
     return result
 
-def install(source, *, project=None, agents=None, dry_run=False):
+def install(source, *, project=None, agents=None, dry_run=False, link=False):
     source = Path(source).expanduser().resolve()
     project = Path(project).expanduser().resolve() if project else None
     if project and not project.is_dir():
         raise WorkflowError("Create/select the project directory before installing")
+    if link and project:
+        raise WorkflowError("Linked development installs are global; projects can keep independent pinned installs")
     marker = validate_source(source)
     root = installation_root(project)
     version = marker["version"]
-    target = root / "versions" / version
+    target = source if link else root / "versions" / version
     receipt_path = root / "receipt.json"
     receipt_before = file_hash(receipt_path)
     receipt = read_json(receipt_path, {"files": {}, "versions": {}})
+    if link and source.is_relative_to(root):
+        raise WorkflowError("Link an independent source checkout outside the installation directory")
     profile_path = project / ".agent-workflow/project.json" if project else None
     profile = read_json(profile_path) if profile_path else None
     agents = agents or (profile.get("agents") if profile else None) or receipt.get("agents") or ["claude", "codex", "cursor"]
@@ -104,11 +117,12 @@ def install(source, *, project=None, agents=None, dry_run=False):
         if path.exists() and file_hash(path) != receipt["files"][str(path)]["sha256"]:
             conflicts.append(str(path))
     content_hash = payload_digest(source)
-    if target.exists() and payload_digest(target) != content_hash:
+    if not link and target.exists() and payload_digest(target) != content_hash:
         conflicts.append(f"Version {version} already has different content; use a new package version")
     if profile and profile.get("schema_version") != marker["schema_version"]:
         conflicts.append("Project profile needs a schema migration before this package can activate")
-    result = {"mode": "project" if project else "global", "version": version, "target": str(target),
+    backend = "linked" if link else "standalone"
+    result = {"mode": "project" if project else "global", "backend": backend, "version": version, "target": str(target),
               "files": [str(p) for p in desired], "conflicts": conflicts, "dry_run": dry_run}
     if dry_run:
         return result
@@ -125,7 +139,7 @@ def install(source, *, project=None, agents=None, dry_run=False):
         backups = {p: p.read_bytes() if p.is_file() else None for p in backup_paths}
         created_version = False
         try:
-            if not target.exists():
+            if not link and not target.exists():
                 (root / "versions").mkdir(exist_ok=True)
                 staging = Path(tempfile.mkdtemp(prefix=".stage-", dir=root / "versions"))
                 try:
@@ -140,17 +154,20 @@ def install(source, *, project=None, agents=None, dry_run=False):
                     if staging.exists():
                         shutil.rmtree(staging)
             for path, content in desired.items():
-                atomic_write(path, content, 0o755 if path == launcher else None)
+                if not link or file_hash(path) != digest(content):
+                    atomic_write(path, content, 0o755 if path == launcher else None)
             for path in obsolete:
                 path.unlink(missing_ok=True)
             if profile:
                 profile["package"]["version"] = version
                 write_json(profile_path, profile)
                 write_json(project / ".agent-workflow/package-lock.json", {"version": version, "schema_version": 1})
-            write_json(root / "active.json", {"version": version, "path": str(target), "backend": "standalone"})
+            write_json(root / "active.json", {"version": version, "path": str(target), "backend": backend})
             versions = dict(receipt.get("versions", {}))
-            versions[version] = {"path": str(target), "sha256": content_hash}
-            write_json(receipt_path, {"schema_version": 1, "backend": "standalone", "version": version,
+            if not link:
+                versions[version] = {"path": str(target), "sha256": content_hash}
+            write_json(receipt_path, {"schema_version": 1, "backend": backend, "version": version,
+                                      "source": str(source) if link else None, "source_sha256": content_hash,
                                       "mode": result["mode"], "project": str(project) if project else None, "agents": agents,
                                       "versions": versions,
                                       "files": {str(p): {"sha256": file_hash(p)} for p in desired}})
@@ -165,8 +182,34 @@ def install(source, *, project=None, agents=None, dry_run=False):
                 shutil.rmtree(target)
             raise
     result["override_updates"] = override_updates(project, target) if project else []
-    result["next"] = "Run aw-project-setup in your agent, or agent-workflow setup PATH."
+    for path in obsolete:
+        prune_adapter_dirs(path)
+    result["next"] = f"Run {entry_name('project-setup', source)} in your agent, or agent-workflow setup PATH."
     return result
+
+def prune_adapter_dirs(path):
+    parent = path.parent
+    while parent.name == "scripts" or parent.parent.name == "skills":
+        try:
+            parent.rmdir()
+        except OSError:
+            break
+        parent = parent.parent
+
+def sync_linked(*, dry_run=False):
+    """Reconcile discovery from the linked checkout, without touching projects."""
+    root = installation_root()
+    receipt = read_json(root / "receipt.json", {})
+    if receipt.get("backend") != "linked":
+        raise WorkflowError("No linked global install; run install.py --global --link first")
+    source = Path(receipt["source"])
+    validate_source(source)
+    active = read_json(root / "active.json", {})
+    if (receipt.get("source_sha256") == payload_digest(source)
+            and active.get("path") == str(source) and active.get("backend") == "linked"
+            and all(file_hash(Path(p)) == info["sha256"] for p, info in receipt["files"].items())):
+        return {"status": "unchanged", "source": str(source), "dry_run": dry_run}
+    return install(source, agents=receipt["agents"], link=True, dry_run=dry_run)
 
 def override_updates(project, package):
     if not project:
@@ -209,13 +252,7 @@ def uninstall(*, project=None, dry_run=False):
     with lock(root / "install.lock"):
         for path in remove:
             path.unlink()
-            parent = path.parent
-            while parent.name.startswith("aw-") or parent.name == "scripts":
-                try:
-                    parent.rmdir()
-                except OSError:
-                    break
-                parent = parent.parent
+            prune_adapter_dirs(path)
         for path in versions:
             shutil.rmtree(path)
         (root / "active.json").unlink(missing_ok=True)
@@ -251,8 +288,16 @@ def main(argv=None):
     parser.add_argument("--local-source", type=Path, default=package_root())
     parser.add_argument("--agents", nargs="+", choices=["claude", "codex", "cursor"])
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--link", action="store_true", help="Use this live checkout for the global runtime")
+    parser.add_argument("--sync", action="store_true", help="Refresh an existing linked global install")
     args = parser.parse_args(argv)
     try:
-        print(json_text(install(args.local_source, project=args.project, agents=args.agents, dry_run=args.dry_run)))
+        if args.sync:
+            if args.project or args.link or args.agents:
+                raise WorkflowError("Use --global --sync without --project, --link, or --agents")
+            result = sync_linked(dry_run=args.dry_run)
+        else:
+            result = install(args.local_source, project=args.project, agents=args.agents, dry_run=args.dry_run, link=args.link)
+        print(json_text(result))
     except (WorkflowError, OSError) as exc:
         parser.exit(2, f"Error: {exc}\n")

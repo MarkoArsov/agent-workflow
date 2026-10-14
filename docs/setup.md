@@ -6,7 +6,7 @@ footer_order: 2
 
 # Set up your project
 
-Open the intended repository or multi-repository parent and invoke **aw-project-setup**
+Open the intended repository or multi-repository parent and invoke **af-setup**
 (**agent-workflow:project-setup** in the native Claude plugin).
 
 The setup skill reads existing instructions, manifests, commands, Git conventions, and CI configuration.

@@ -24,14 +24,14 @@ class ResolutionTests(WorkspaceTest):
         worktree = self.root / "external task checkout"
         self.git(app, "worktree", "add", "-b", "feature/sample", str(worktree))
         self.assertEqual(resolve(worktree).root, moved)
-        result = subprocess.run([sys.executable, str(worktree / ".agents/skills/aw-review/scripts/dispatch.py")],
+        result = subprocess.run([sys.executable, str(worktree / ".agents/skills/af-review/scripts/dispatch.py")],
                                 cwd=worktree, env=self.env, capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(Path(result.stdout.strip()), PACKAGE / "skills/review/SKILL.md")
 
     def test_setup_refuses_unowned_adapter_and_removes_only_unchanged_disabled_host_entries(self):
         root = self.repo("app")
-        collision = root / ".agents/skills/aw-review/SKILL.md"
+        collision = root / ".agents/skills/af-review/SKILL.md"
         collision.parent.mkdir(parents=True); collision.write_text("unrelated user-owned skill")
         p = propose(root, {"confirmed_defaults": True})
         self.assertTrue(p["conflicts"])
@@ -40,9 +40,9 @@ class ResolutionTests(WorkspaceTest):
         self.assertEqual(collision.read_text(), "unrelated user-owned skill")
         collision.unlink()
         project = self.setup_project(root)
-        modified = root / ".claude/skills/aw-review/SKILL.md"
+        modified = root / ".claude/skills/af-review/SKILL.md"
         modified.write_text("custom adapter")
         p = propose(root, {"confirmed_defaults": True, "profile": {"agents": ["codex"]}})
         apply(p, p["approval"])
-        self.assertFalse((root / ".claude/skills/aw-specify/SKILL.md").exists())
+        self.assertFalse((root / ".claude/skills/af-specify/SKILL.md").exists())
         self.assertEqual(modified.read_text(), "custom adapter")

@@ -14,7 +14,7 @@ class ExtensionTests(WorkspaceTest):
         self.assertEqual(resolve_skill("release-notes", a), new)
         proposal = propose(a.root)
         apply(proposal, proposal["approval"])
-        self.assertTrue((a.root / ".agents/skills/aw-release-notes/SKILL.md").is_file())
+        self.assertTrue((a.root / ".agents/skills/af-release-notes/SKILL.md").is_file())
         self.assertIn("A project-specific instruction.", snapshot(a)["skills"]["project-setup"]["content"])
         self.assertNotIn("release-notes", snapshot(b)["skills"])
 
