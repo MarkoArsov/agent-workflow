@@ -35,7 +35,7 @@ def atomic_write(path: Path, content: str, mode: int | None = None):
     path.parent.mkdir(parents=True, exist_ok=True)
     fd, temporary = tempfile.mkstemp(prefix="." + path.name, dir=path.parent)
     try:
-        with os.fdopen(fd, "w") as output:
+        with os.fdopen(fd, "w", encoding="utf-8", newline="") as output:
             output.write(content)
             output.flush()
             os.fsync(output.fileno())
@@ -80,10 +80,17 @@ def common_dir(root: Path) -> Path | None:
     return (root / result.stdout.strip()).resolve()
 
 def user_data() -> Path:
-    return Path(os.environ.get("XDG_DATA_HOME", str(Path.home() / ".local/share"))) / "agent-workflow"
+    base = Path(os.environ.get("XDG_DATA_HOME", str(Path.home() / ".local/share")))
+    current, legacy = base / "agentflow", base / "agent-workflow"
+    # A pre-rename linked checkout retains ownership of its adapters and settings.
+    # Reuse its receipt instead of treating those existing files as foreign.
+    if not (current / "receipt.json").exists():
+        receipt = read_json(legacy / "receipt.json", {})
+        if receipt.get("backend") == "linked" and Path(receipt.get("source", "")).resolve() == package_root():
+            return legacy
+    return current
 
 def redact(text: str) -> str:
     text = re.sub(r"(?i)(bearer\s+)\S+", r"\1[redacted]", text)
     text = re.sub(r"(?i)((?:token|password|secret|api[_-]?key)\s*[=:]\s*)[^\s,;]+", r"\1[redacted]", text)
     return re.sub(r"(?:gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|sk-[A-Za-z0-9]{20,})", "[redacted]", text)
-

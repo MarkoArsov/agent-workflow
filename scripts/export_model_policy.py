@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 import shutil
 
-SOURCE = Path(__file__).resolve().parents[1] / 'runtime/agent_workflow/model_policy'
+SOURCE = Path(__file__).resolve().parents[1] / 'runtime/agentflow/model_policy'
 
 
 def export(target, check=False):

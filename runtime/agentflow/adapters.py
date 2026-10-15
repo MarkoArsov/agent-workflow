@@ -10,7 +10,7 @@ def entry_name(name, package=None):
     """Public skill names are presentation; canonical skill IDs remain stable."""
     marker = read_json((package or package_root()) / "workflow-package.json", {})
     discovery = marker.get("discovery", {})
-    prefix = discovery.get("prefix", "aw")
+    prefix = discovery.get("prefix", "af")
     alias = discovery.get("aliases", {}).get(name, name)
     value = identifier(f"{prefix}-{alias}")
     if any(c not in "abcdefghijklmnopqrstuvwxyz0123456789-" for c in value):
@@ -20,7 +20,7 @@ def entry_name(name, package=None):
 def interface_metadata(name, package=None):
     """Use an explicit label so hosts do not title-case the namespace acronym."""
     marker = read_json((package or package_root()) / "workflow-package.json", {})
-    prefix = marker.get("discovery", {}).get("prefix", "aw")
+    prefix = marker.get("discovery", {}).get("prefix", "af")
     words = entry_name(name, package)[len(prefix) + 1:].split("-")
     title = " ".join(word.upper() if word in {"ci", "e2e", "pr", "rfc"} else word.capitalize()
                      for word in words)
@@ -41,7 +41,7 @@ def project_files(root: Path, profile: dict) -> dict[str, str]:
     # bundled adapters in projects would leave stale names/scripts after a sync.
     linked = (receipt.get("backend") == "linked"
               and Path(receipt.get("source", "")).resolve() == package_root()
-              and not (root / ".agent-workflow/runtime/active.json").exists())
+              and not (root / ".agentflow/runtime/active.json").exists())
     bundled = catalog() if linked else {}
     locations = []
     for repo in profile["repositories"]:

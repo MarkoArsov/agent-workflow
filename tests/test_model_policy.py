@@ -8,8 +8,8 @@ import sys
 import time
 from unittest.mock import patch
 from tests.helpers import WorkspaceTest, PACKAGE
-from agent_workflow.model_policy import core, storage, discovery
-from agent_workflow.model_policy.storage import Store, write, read
+from agentflow.model_policy import core, storage, discovery
+from agentflow.model_policy.storage import Store, write, read
 
 
 def entry(provider, model, band='strong', family=None, **extra):
@@ -30,7 +30,7 @@ def catalogue(entries):
 class ModelPolicyTests(WorkspaceTest):
     def setUp(self):
         super().setUp()
-        self.policy = read(PACKAGE/'runtime/agent_workflow/model_policy/policy.json')
+        self.policy = read(PACKAGE/'runtime/agentflow/model_policy/policy.json')
         self.entries = [entry(p,p+'-routine',efforts={'balanced':'medium','demanding':'high'} if p != 'cursor' else {}) for p in sorted(core.PROVIDERS)]
         self.catalogue = catalogue(self.entries)
         self.store = Store(self.home/'data/models',self.root/'project/models.json',workflow='fixture')
@@ -122,6 +122,16 @@ class ModelPolicyTests(WorkspaceTest):
         self.store.apply(proposal,proposal['approval'])
         self.assertEqual(self.store.effective()['providers'],['codex']);self.assertFalse(other.global_file.exists())
         with self.assertRaises(ValueError):self.store.apply(proposal,proposal['approval'])
+
+    def test_settings_lock_rejects_overlap_and_releases_after_failure(self):
+        with self.assertRaisesRegex(RuntimeError, "interrupted"):
+            with self.store.lock():
+                with self.assertRaisesRegex(ValueError, "in progress"):
+                    with self.store.lock():
+                        self.fail("Concurrent settings writer entered")
+                raise RuntimeError("interrupted")
+        with self.store.lock():
+            self.assertTrue((self.store.data / "write.lock").exists())
 
     def test_partial_failure_rolls_back_and_keeps_backup(self):
         proposal=self.store.propose({'global':{'schema_version':1},'project':{'schema_version':1}},'both')

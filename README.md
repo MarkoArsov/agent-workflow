@@ -1,84 +1,79 @@
-# agent-workflow
+<p align="center">
+  <img src="docs/assets/brand/mark.svg" width="72" height="72" alt="Agent Flow logo">
+</p>
 
-A customizable development workflow for **Claude Code, Codex, and Cursor**.
+<h1 align="center">Agent Flow</h1>
 
-Install once, set up a repository or a folder of repositories, and keep each project's skills, rules, connectors, and stages under your control. The runner starts fresh agent sessions and verifies their work with executable checks.
+<p align="center">
+  <strong>Agents write the code. The orchestrator makes them prove it.</strong><br>
+  An open-source workflow for Claude Code, Codex, and Cursor that checks every stage.
+</p>
 
-**Plan → tests → implement → review → deliver**, with a small manual lane when a full pipeline is unnecessary.
+<p align="center">
+  <a href="https://agentic.markoarsov.com/"><strong>Website and docs</strong></a> ·
+  <a href="https://agentic.markoarsov.com/first-task/">Your first task</a> ·
+  <a href="https://agentic.markoarsov.com/scorecard/">Checkpoint scorecard</a> ·
+  <a href="LICENSE">MIT license</a>
+</p>
 
-[Documentation](https://MarkoArsov.github.io/agent-workflow/) · [Local docs](docs/index.md) · [Coverage](docs/coverage.md) · [MIT license](LICENSE)
+---
+
+## What it does
+
+You confirm one plan. Agent Flow runs it in stages, and each stage has to show its work:
+
+| Stage | What happens | What the orchestrator keeps |
+|---|---|---|
+| **Specify** | Research first, then one complete plan where every outcome maps to a named check. | Plan files and a validated `pipeline.json` |
+| **Tests** *(optional)* | Written before the code. They must fail on an assertion, then they're frozen. | Red proof and test-file hashes |
+| **Implement** | Build, run the named checks, fix. The orchestrator then runs the checks itself. | Parsed results tied to the current diff |
+| **Review** *(optional)* | A fresh session that sees the requirements and diff, not the author's reasoning. | Findings, and checks re-run after fixes |
+| **Deliver** *(optional)* | Commit, push, and draft PR. Never to a base branch, never a force push. | A delivery record per repository |
+
+Small change? Run `specify`, then `implement`, in one session.
 
 ## Install
 
-Requires Python 3.11+, Git, and an authenticated agent CLI. macOS/Linux; WSL for Windows.
-GitHub delivery also requires the GitHub CLI. No runtime Python dependencies.
+You need Python 3.11+, Git, and Claude Code, Codex, or Cursor.
 
-From this checkout:
+**Mac or Linux:** open Terminal and run
 
-~~~sh
-python3 install.py --global
-# Or install into a single repository or multi-repository parent:
-python3 install.py --project /path/to/project
-~~~
+```sh
+curl -fsSL https://agentic.markoarsov.com/install.sh | sh
+```
 
-To use this checkout's live skills and runtime on a development machine, run
-`python3 install.py --global --link`. Run `python3 install.py --global --sync`
-after changes to refresh discovery names, or schedule it locally.
-See [linked installs](docs/install.md#follow-a-development-checkout).
+**Windows:** open PowerShell and run
 
-After the v0.1.0 release is published:
+```powershell
+irm https://agentic.markoarsov.com/install.ps1 | iex
+```
 
-~~~sh
-curl -fsSL https://raw.githubusercontent.com/MarkoArsov/agent-workflow/v0.1.0/install.sh | sh -s -- --global
-curl -fsSL https://raw.githubusercontent.com/MarkoArsov/agent-workflow/v0.1.0/install.sh | sh -s -- --project .
-~~~
+Then open a new terminal window and check it with `agentflow --version`. The installer finds your agents and prints the command to start setup. [Full install guide](https://agentic.markoarsov.com/install/)
 
-Claude's native plugin uses the same payload:
+## Quick start
 
-~~~sh
-claude plugin marketplace add MarkoArsov/agent-workflow
-claude plugin install agent-workflow@agent-workflow
-~~~
+1. From your project folder, run `claude "/af-setup"` (or ask Codex or Cursor to use the **`af-setup`** skill). Approve the setup it proposes.
+2. Run **`af-specify`** with what you want built, and confirm the plan.
+3. Run **`af-implement`**.
 
-The remote commands require publication. Review the pinned bootstrap before executing it.
+That's it. For bigger changes, `af-implement-pipeline` runs the full staged pipeline instead. See [your first task](https://agentic.markoarsov.com/first-task/).
 
-## Set up and run
+## Why trust it
 
-1. Open your project in an agent and invoke **af-setup** (native Claude: **agent-workflow:project-setup**).
-2. Confirm repositories, commands, branch policies, models, permissions, and integrations. Review the complete proposal before it writes.
-3. Invoke **af-specify** for a task, then **af-implement-pipeline** for the approved full plan—or use **af-implement** directly for the manual lane.
+- **Evidence, not claims.** The orchestrator runs every check itself and records what it saw.
+- **Stops only for what matters.** Scope, secrets, frozen tests, failed checks, and delivery guards block. Review notes don't.
+- **Honest about limits.** A public [36-point scorecard](https://agentic.markoarsov.com/scorecard/) shows what's covered and what isn't.
+- **Yours to change.** Override skills, add rules, stages, and connectors per project, without forking.
+- **Open and local.** MIT license, standard-library Python, no account, no server, no telemetry.
 
-~~~sh
-agent-workflow preflight ai-plans/task-name/pipeline.json
-agent-workflow run ai-plans/task-name/pipeline.json --detach
-agent-workflow status task-name
-~~~
+## Contributing
 
-A project install uses `.agent-workflow/bin/agent-workflow`; global installs use `~/.local/bin`.
+```sh
+python3 -m unittest discover -s tests -v
+```
 
-Trusted unattended execution is the offered default, including Codex's
-`--dangerously-bypass-approvals-and-sandbox`. Setup can select restricted controls instead.
-Task scope and evidence guards remain in force. Comments, messages, and tracker changes need their own authorization.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for docs builds and checks, and [Contribute and develop](https://agentic.markoarsov.com/development/) for the full guide.
 
-## Make it yours
-
-~~~sh
-agent-workflow skill copy review
-agent-workflow skill new release-notes --description "Draft release notes from verified changes."
-agent-workflow refresh
-~~~
-
-Edit project-owned copies, review the discovery proposal, and apply it.
-Add [rules](docs/rules.md), [custom stages](docs/customize.md), or [connectors](docs/connectors.md).
-Updates preserve these extensions.
-
-## What the runner verifies
-
-- Named acceptance checks, behavioral red evidence, and green evidence for the current diff.
-- Writable paths and repository participation, including unchanged test companions.
-- Fresh stage/fallback sessions, exact-session input answers, bounded recovery, and cancellation.
-- Guarded feature commits/pushes, draft PRs, and resumable partial delivery.
-- Effective project skill overrides and declared custom-stage completion checks.
-
-[Run the tests and build the docs](CONTRIBUTING.md). Provider doubles are labeled;
-[real-host checks and limitations](docs/coverage.md) remain explicit.
+For a live development checkout, use `python3 install.py --global --link` and
+`python3 install.py --global --sync` after adding or renaming skills. See the
+[linked installation guide](docs/install.md#follow-a-development-checkout).

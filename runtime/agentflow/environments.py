@@ -2,12 +2,11 @@
 from __future__ import annotations
 import os
 import re
-import selectors
 import subprocess
 import time
 from contextlib import contextmanager
 from pathlib import Path
-from .process import stop
+from .process import Reader, spawn, stop
 from .profile import validate_command
 from .state import lock
 from .util import WorkflowError, contained, identifier, read_json, user_data, write_json, redact
@@ -60,47 +59,38 @@ def lease(project, name, checkouts, cancel=None):
                     raise WorkflowError("Environment services must use a participating repository")
                 command = service["command"]
                 cwd = contained(Path(checkouts[service["repository"]]), command.get("cwd", "."))
-                process = subprocess.Popen(command["argv"], cwd=cwd, env=command_environment(command, exported),
-                                           stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                                           start_new_session=True)
+                process = spawn(command["argv"], cwd=cwd, env=command_environment(command, exported),
+                                stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
                 services.append(process)
-                selector = selectors.DefaultSelector()
-                selector.register(process.stdout, selectors.EVENT_READ)
+                reader = Reader(process.stdout)
                 deadline = time.monotonic() + service.get("startup_timeout_seconds", 30)
                 buffer = b""; observed = []
                 ready = None
                 try:
                     while time.monotonic() < deadline and not cancelled():
-                        for key, _ in selector.select(0.1):
-                            chunk = os.read(key.fileobj.fileno(), 65536)
-                            if not chunk:
-                                raise WorkflowError(f"Environment service {service['id']} exited before readiness")
+                        for chunk in reader.read(0.1):
                             buffer += chunk
                             while b"\n" in buffer:
                                 line, buffer = buffer.split(b"\n", 1)
-                                text = line.decode(errors="replace")
+                                text = line.decode(errors="replace").removesuffix("\r")  # Windows programs end lines with \r\n
                                 observed.append(text)
                                 ready = re.search(service["ready_pattern"], text)
                                 if ready:
                                     break
+                            if ready:
+                                break
                         if ready:
                             break
+                        if not reader.open:
+                            raise WorkflowError(f"Environment service {service['id']} exited before readiness")
                     if not ready:
                         raise WorkflowError(f"Environment service {service['id']} did not become ready within its bound")
                     for key, template in service.get("exports", {}).items():
                         exported[key] = template.format(**ready.groupdict())
                     record["services"].append({"id": service["id"], "pid": process.pid, "ready": True})
-                    # Drain stdout after readiness so a busy service cannot fill its pipe.
-                    import threading
-                    def drain(stream):
-                        try:
-                            for line in iter(stream.readline, b""):
-                                pass
-                        except (OSError, ValueError):
-                            pass
-                    threading.Thread(target=drain, args=(process.stdout,), daemon=True).start()
+                    reader.discard()
                 finally:
-                    selector.close()
+                    reader.close()
                     (root / (service["id"] + ".log")).write_text(redact("\n".join(observed)))
             record["status"] = "active"; write_json(root / "status.json", record)
             yield exported, cancelled

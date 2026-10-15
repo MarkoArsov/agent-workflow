@@ -1,4 +1,13 @@
 (() => {
+  const banner = document.querySelector('[data-rename-banner]');
+  if (banner) {
+    const key = 'agentflow-rename-dismissed';
+    try { if (localStorage.getItem(key)) banner.hidden = true; } catch (_) {}
+    banner.querySelector('[data-rename-dismiss]')?.addEventListener('click', () => {
+      banner.hidden = true;
+      try { localStorage.setItem(key, '1'); } catch (_) {}
+    });
+  }
   const header = document.querySelector('[data-site-header]');
   if (header) {
     const sentinel = document.createElement('div');
@@ -6,8 +15,6 @@
     header.before(sentinel);
     new IntersectionObserver(([entry]) => header.classList.toggle('is-scrolled', !entry.isIntersecting)).observe(sentinel);
   }
-  const keyHint = document.querySelector('[data-key-hint]');
-  if (keyHint && !navigator.platform.includes('Mac')) keyHint.textContent = 'Ctrl K';
 
   const menus = [...document.querySelectorAll('[data-menu]')];
   const closeMenus = (except = null) => menus.forEach((menu) => {
@@ -81,7 +88,9 @@
         window.setTimeout(() => { button.textContent = 'Copy'; button.classList.remove('is-copied'); }, 1500);
       } catch (_) { button.textContent = 'Copy failed'; }
     });
-    block.append(button);
+    const wrapper = document.createElement('div');
+    wrapper.className = 'code-block';
+    block.before(wrapper); wrapper.append(block, button);
   });
 
   document.querySelectorAll('.prose table').forEach((table) => {

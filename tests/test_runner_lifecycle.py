@@ -4,8 +4,8 @@ import os
 import time
 from unittest.mock import patch
 from tests.helpers import WorkspaceTest
-from agent_workflow import runner, state
-from agent_workflow.util import WorkflowError, read_json, write_json
+from agentflow import runner, state
+from agentflow.util import WorkflowError, read_json, write_json
 
 class RunnerLifecycleTests(WorkspaceTest):
     def fixture(self, steps):
@@ -74,7 +74,7 @@ class RunnerLifecycleTests(WorkspaceTest):
             interrupted = runner.run(self.project, self.plan)
         self.assertNotIn("red_test_files", interrupted)
         self.assertTrue(interrupted["stage_evidence"]["implement-tests"]["passed"])
-        with self.assertRaisesRegex(WorkflowError, "Assertion-proven"):
+        with self.assertRaisesRegex(WorkflowError, "frozen by implement-tests"):
             runner.run(self.project, self.plan, resume=True)
         self.assertEqual(len(self.calls()), 2)
 

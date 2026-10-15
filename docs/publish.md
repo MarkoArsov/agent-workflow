@@ -1,4 +1,6 @@
 ---
+title: Publish workflow changes
+question: How do I publish workflow changes or a release?
 description: Publish workflow changes through a pull request, or prepare a reviewed package release.
 ---
 
@@ -21,6 +23,11 @@ not publish anything; publication requires invoking it or explicitly requesting 
 
 ## Publish a release
 
+!!! summary "In one minute"
+    - Publication is a separate maintainer action after local verification.
+    - Push the reviewed branch and tag, then deploy this site with GitHub Pages.
+    - Verify installation from the published pinned revision in an isolated environment.
+
 Publication is a separate maintainer action after local verification.
 
 1. Review the complete diff, local commits, tests, site, and public-content scan.
@@ -30,7 +37,7 @@ Publication is a separate maintainer action after local verification.
 5. Run the Pages workflow and check its deployment URL.
 6. Verify installation from the published pinned revision in an isolated environment.
 
-The default site is [MarkoArsov.github.io/agent-workflow](https://MarkoArsov.github.io/agent-workflow/).
+The site is served at [agentic.markoarsov.com](https://agentic.markoarsov.com/), a custom domain configured in the repository's Pages settings.
 The v0.1.0 installer expects a matching v0.1.0 tag.
 
 ## Custom domain later

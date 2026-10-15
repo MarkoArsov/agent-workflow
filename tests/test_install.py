@@ -4,13 +4,31 @@ import os
 import shutil
 import subprocess
 import sys
+from pathlib import Path
 from unittest.mock import patch
 from tests.helpers import PACKAGE, WorkspaceTest
-from agent_workflow import install
-from agent_workflow.extensions import copy_skill, new_skill
-from agent_workflow.util import WorkflowError, read_json, write_json
+from agentflow import install
+from agentflow.extensions import copy_skill, new_skill
+from agentflow.util import WorkflowError, read_json, write_json
 
 class InstallTests(WorkspaceTest):
+    def test_pre_rename_link_keeps_receipt_settings_and_discovery(self):
+        caller = self.repo("project")
+        install.install(PACKAGE, link=True)
+        current = self.home / "data/agentflow"
+        legacy = current.with_name("agent-workflow")
+        write_json(current / "models/settings.json", {"schema_version": 1, "providers": ["codex"]})
+        current.rename(legacy)
+        receipt = read_json(legacy / "receipt.json")
+        write_json(legacy / "receipt.json", receipt | {"source_sha256": "before-rename"})
+        self.assertEqual(install.installation_root(), legacy)
+        install.sync_linked()
+        self.assertFalse(current.exists())
+        self.assertEqual(read_json(legacy / "models/settings.json")["providers"], ["codex"])
+        self.assertEqual(self.invoke(self.home / ".local/bin/agentflow", caller, "--version").strip(), "0.1.0")
+        resolved = self.invoke(self.home / ".agents/skills/af-publish-workflow/scripts/dispatch.py", caller).strip()
+        self.assertEqual(resolved, str(PACKAGE / "skills/publish-workflow/SKILL.md"))
+
     def test_publish_workflow_resolves_without_project_setup_or_mutating_caller(self):
         caller = self.repo("unconfigured application")
         before = self.git(caller, "rev-parse", "HEAD")
@@ -19,13 +37,13 @@ class InstallTests(WorkspaceTest):
                 install.install(PACKAGE, link=linked)
                 wrapper = self.home / ".agents/skills/af-publish-workflow/scripts/dispatch.py"
                 resolved = self.invoke(wrapper, caller).strip()
-                expected = PACKAGE if linked else self.home / "data/agent-workflow/versions/0.1.0"
+                expected = PACKAGE if linked else self.home / "data/agentflow/versions/0.1.0"
                 self.assertEqual(resolved, str(expected / "skills/publish-workflow/SKILL.md"))
                 native = self.invoke(expected / "skills/publish-workflow/scripts/resolve.py", caller).strip()
                 self.assertEqual(native, resolved)
                 self.assertEqual(self.git(caller, "rev-parse", "HEAD"), before)
                 self.assertEqual(self.git(caller, "status", "--porcelain"), "")
-                self.assertFalse((caller / ".agent-workflow").exists())
+                self.assertFalse((caller / ".agentflow").exists())
                 # The global exception must not bypass setup for ordinary project skills.
                 ordinary = subprocess.run(
                     [sys.executable, str(self.home / ".agents/skills/af-review/scripts/dispatch.py")],
@@ -34,7 +52,17 @@ class InstallTests(WorkspaceTest):
                 install.uninstall()
 
     def clean_env(self):
-        return {k: v for k, v in self.env.items() if k != "AGENT_WORKFLOW_PACKAGE"}
+        return {k: v for k, v in self.env.items() if k != "AGENTFLOW_PACKAGE"}
+
+    def bootstrap(self, *args, cwd):
+        """Run the platform's one-line installer from this checkout."""
+        if os.name == "nt":
+            command = ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(PACKAGE / "install.ps1")]
+            env = {**self.clean_env(), "AGENTFLOW_NO_MODIFY_PATH": "1"}
+        else:
+            command, env = ["sh", str(PACKAGE / "install.sh")], self.clean_env()
+        return subprocess.run([*command, "--local-source", str(PACKAGE), *map(str, args)],
+                              cwd=cwd, env=env, text=True, capture_output=True, check=True)
 
     def source_version(self, version):
         source = self.root / ("source-" + version)
@@ -43,7 +71,7 @@ class InstallTests(WorkspaceTest):
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(path, target)
         write_json(source / "workflow-package.json", read_json(PACKAGE / "workflow-package.json") | {"version": version})
-        (source / "runtime/agent_workflow/__init__.py").write_text('__version__ = "' + version + '"\n')
+        (source / "runtime/agentflow/__init__.py").write_text('__version__ = "' + version + '"\n')
         return source
 
     def invoke(self, path, cwd, *args):
@@ -55,11 +83,11 @@ class InstallTests(WorkspaceTest):
         foreign.parent.mkdir(parents=True); foreign.write_text("user content")
         result = install.install(PACKAGE)
         self.assertEqual(result["version"], "0.1.0")
-        shim = self.home / ".local/bin/agent-workflow"
+        shim = self.home / ".local/bin/agentflow"
         self.assertEqual(self.invoke(shim, root, "--version").strip(), "0.1.0")
         wrapper = self.home / ".agents/skills/af-setup/scripts/dispatch.py"
         resolved = self.invoke(wrapper, root).strip()
-        self.assertIn("/versions/0.1.0/skills/project-setup/SKILL.md", resolved)
+        self.assertIn("/versions/0.1.0/skills/setup/SKILL.md", Path(resolved).as_posix())
         install.install(PACKAGE)
         modified = self.home / ".agents/skills/af-review/SKILL.md"
         modified.write_text("user-modified adapter")
@@ -73,12 +101,12 @@ class InstallTests(WorkspaceTest):
         root = self.repo("project")
         install.install(PACKAGE, project=root)
         wrapper = root / ".agents/skills/af-setup/scripts/dispatch.py"
-        self.assertIn(str(root / ".agent-workflow/runtime"), self.invoke(wrapper, root))
+        self.assertIn(str(root / ".agentflow/runtime"), self.invoke(wrapper, root))
         project = self.setup_project(root)
-        self.assertIn(str(root / ".agent-workflow/runtime"), self.invoke(wrapper, root))
+        self.assertIn(str(root / ".agentflow/runtime"), self.invoke(wrapper, root))
         install.install(PACKAGE)
         global_wrapper = self.home / ".agents/skills/af-review/scripts/dispatch.py"
-        self.assertIn(str(root / ".agent-workflow/runtime"), self.invoke(global_wrapper, root))
+        self.assertIn(str(root / ".agentflow/runtime"), self.invoke(global_wrapper, root))
         custom = copy_skill(project, "review")
         with custom.open("a") as output:
             output.write("\nPROJECT CUSTOMIZATION\n")
@@ -101,7 +129,7 @@ class InstallTests(WorkspaceTest):
         self.assertEqual(read_json(project.config / "project.json")["package"]["version"], "0.1.1")
         self.assertEqual(old, custom.read_bytes())
         self.assertEqual(result["override_updates"][0]["skill"], "review")
-        self.assertEqual(self.invoke(project.config / "bin/agent-workflow", root, "--version").strip(), "0.1.1")
+        self.assertEqual(self.invoke(project.config / "bin/agentflow", root, "--version").strip(), "0.1.1")
         self.assertTrue((project.config / "runtime/versions/0.1.0").exists())
 
     def test_non_git_parent_and_relocated_native_payload(self):
@@ -110,7 +138,7 @@ class InstallTests(WorkspaceTest):
         install.install(PACKAGE, project=parent)
         for child in (app, checks):
             output = self.invoke(child / ".claude/skills/af-setup/scripts/dispatch.py", child)
-            self.assertIn(str(parent / ".agent-workflow/runtime"), output)
+            self.assertIn(str(parent / ".agentflow/runtime"), output)
         project = self.setup_project(parent)
         relocated = self.source_version("0.1.0")
         install.uninstall(project=parent)
@@ -121,18 +149,18 @@ class InstallTests(WorkspaceTest):
         root = self.repo("project")
         install.install(PACKAGE, project=root)
         source = self.source_version("0.1.1")
-        receipt = root / ".agent-workflow/runtime/receipt.json"
+        receipt = root / ".agentflow/runtime/receipt.json"
         old = receipt.read_bytes()
         real_write = install.atomic_write
         def fail(path, *args, **kwargs):
-            if path.name == "agent-workflow":
+            if path.name == "agentflow":
                 raise OSError("simulated write failure")
             return real_write(path, *args, **kwargs)
-        with patch("agent_workflow.install.atomic_write", side_effect=fail):
+        with patch("agentflow.install.atomic_write", side_effect=fail):
             with self.assertRaisesRegex(OSError, "simulated"):
                 install.install(source, project=root)
         self.assertEqual(receipt.read_bytes(), old)
-        self.assertFalse((root / ".agent-workflow/runtime/versions/0.1.1").exists())
+        self.assertFalse((root / ".agentflow/runtime/versions/0.1.1").exists())
         wrapper = root / ".agents/skills/af-review/SKILL.md"
         wrapper.write_text("Unowned user edit")
         with self.assertRaisesRegex(WorkflowError, "conflicts"):
@@ -141,20 +169,19 @@ class InstallTests(WorkspaceTest):
 
     def test_local_shell_bootstrap_only_uses_isolated_home(self):
         root = self.repo("project")
-        result = subprocess.run(["sh", str(PACKAGE / "install.sh"), "--local-source", str(PACKAGE), "--project", str(root)],
-                                cwd=root, env=self.clean_env(), text=True, capture_output=True, check=True)
+        result = self.bootstrap("--project", root, "--json", cwd=root)
         self.assertEqual(json.loads(result.stdout)["mode"], "project")
-        self.assertFalse((self.home / ".local/bin/agent-workflow").exists())
+        self.assertFalse((self.home / ".local/bin/agentflow").exists())
 
     def test_linked_checkout_live_code_and_skills_follow_updates_without_copying(self):
         root = self.repo("project")
         source = self.source_version("0.1.0")
         install.install(source, link=True)
         project = self.setup_project(root)
-        shim = self.home / ".local/bin/agent-workflow"
+        shim = self.home / ".local/bin/agentflow"
         wrapper = self.home / ".agents/skills/af-review/scripts/dispatch.py"
         self.assertEqual(self.invoke(wrapper, root).strip(), str(source / "skills/review/SKILL.md"))
-        (source / "runtime/agent_workflow/__init__.py").write_text('__version__ = "0.1.1"\n')
+        (source / "runtime/agentflow/__init__.py").write_text('__version__ = "0.1.1"\n')
         marker = read_json(source / "workflow-package.json")
         write_json(source / "workflow-package.json", marker | {"version": "0.1.1"})
         self.assertEqual(self.invoke(shim, root, "--version").strip(), "0.1.1")
@@ -164,7 +191,7 @@ class InstallTests(WorkspaceTest):
         self.assertEqual(install.sync_linked()["status"], "unchanged")
         self.assertFalse((install.installation_root() / "versions").exists())
         install.uninstall()
-        self.assertTrue((source / "runtime/agent_workflow/cli.py").is_file())
+        self.assertTrue((source / "runtime/agentflow/cli.py").is_file())
         self.assertTrue(custom.is_file())
 
     def test_link_sync_renames_adds_removes_and_preserves_unowned_entries(self):
@@ -197,7 +224,7 @@ class InstallTests(WorkspaceTest):
         shared = self.home / ".agents/skills"
         shared.parent.mkdir(); shared.symlink_to(claude, target_is_directory=True)
         result = install.install(source, link=True)
-        self.assertEqual(len(result["files"]), 3 * len(install.catalog(package=source)) + 1)
+        self.assertEqual(len(result["files"]), 3 * len(install.catalog(package=source)) + (2 if os.name == "nt" else 1))
         receipt = install.installation_root() / "receipt.json"
         before = receipt.read_bytes()
         original = (claude / "af-review/SKILL.md").read_text()
@@ -214,7 +241,7 @@ class InstallTests(WorkspaceTest):
             if path.parent.name == "renamed-review":
                 raise OSError("simulated rename failure")
             return real_write(path, *args, **kwargs)
-        with patch("agent_workflow.install.atomic_write", side_effect=fail):
+        with patch("agentflow.install.atomic_write", side_effect=fail):
             with self.assertRaisesRegex(OSError, "simulated"):
                 install.sync_linked()
         self.assertEqual(receipt.read_bytes(), before)
@@ -227,11 +254,11 @@ class InstallTests(WorkspaceTest):
         install.install(source, link=True)
         install.install(PACKAGE, project=root)
         setup_wrapper = self.home / ".agents/skills/af-setup/scripts/dispatch.py"
-        self.assertIn("runtime/versions/0.1.0", self.invoke(setup_wrapper, root))
-        self.assertEqual(self.invoke(self.home / ".local/bin/agent-workflow", root, "--version").strip(), "0.1.0")
+        self.assertIn("runtime/versions/0.1.0", self.invoke(setup_wrapper, root).replace("\\", "/"))
+        self.assertEqual(self.invoke(self.home / ".local/bin/agentflow", root, "--version").strip(), "0.1.0")
         self.setup_project(root)
         wrapper = self.home / ".agents/skills/af-review/scripts/dispatch.py"
-        self.assertIn("runtime/versions/0.1.0", self.invoke(wrapper, root))
+        self.assertIn("runtime/versions/0.1.0", self.invoke(wrapper, root).replace("\\", "/"))
         install.uninstall(project=root)
         self.assertIn(str(source), self.invoke(wrapper, root))
         marker = read_json(source / "workflow-package.json")
@@ -239,7 +266,7 @@ class InstallTests(WorkspaceTest):
         with self.assertRaises(subprocess.CalledProcessError):
             self.invoke(wrapper, root)
         with self.assertRaises(subprocess.CalledProcessError):
-            self.invoke(self.home / ".local/bin/agent-workflow", root, "--version")
+            self.invoke(self.home / ".local/bin/agentflow", root, "--version")
 
     def test_linked_setup_uses_global_discovery_and_keeps_project_extensions(self):
         root = self.repo("project")
@@ -254,3 +281,19 @@ class InstallTests(WorkspaceTest):
         local = root / ".agents/skills/af-local-task/scripts/dispatch.py"
         self.assertEqual(str(local_skill), self.invoke(local, root).strip())
         self.assertFalse((root / ".agents/skills/af-review/SKILL.md").exists())
+
+
+    def test_plain_installer_detects_agents_and_explains_next_steps(self):
+        found = {"codex": "/usr/bin/codex"}
+        with patch("agentflow.install.shutil.which", side_effect=lambda name: found.get(name)):
+            self.assertEqual(install.detect_agents(), ["codex"])
+        with patch("agentflow.install.shutil.which", return_value=None):
+            self.assertEqual(install.detect_agents(), ["claude", "codex", "cursor"])
+        result = self.bootstrap("--agents", "codex", cwd=self.root)
+        self.assertIn("installed (global)", result.stdout)
+        self.assertIn("af-* for Codex", result.stdout)
+        self.assertIn('codex "Use the af-setup skill"', result.stdout)
+        self.assertNotIn("claude \"/af-setup\"", result.stdout)
+        self.assertIn("to your PATH", result.stdout)
+        self.assertTrue((self.home / ".local/bin/agentflow").exists())
+        self.assertFalse((self.home / "claude/skills").exists())

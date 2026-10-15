@@ -1,6 +1,6 @@
 from tests.helpers import WorkspaceTest, PACKAGE
-from agent_workflow.extensions import copy_skill, new_skill, resolve_skill, snapshot
-from agent_workflow.setup import propose, apply
+from agentflow.extensions import copy_skill, new_skill, resolve_skill, snapshot
+from agentflow.setup import propose, apply
 
 class ExtensionTests(WorkspaceTest):
     def test_override_and_new_skill_are_project_local_and_discoverable(self):

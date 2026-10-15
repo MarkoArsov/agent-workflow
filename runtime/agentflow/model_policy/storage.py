@@ -3,12 +3,30 @@ from __future__ import annotations
 from contextlib import contextmanager
 from copy import deepcopy
 from datetime import datetime, timezone
-import fcntl
 import json
 import os
 from pathlib import Path
 import tempfile
 from .core import fingerprint, resolve_settings, validate_settings, validate_catalogue, evaluate
+
+if os.name == "nt":
+    import msvcrt
+
+    def acquire(stream):
+        stream.seek(1 << 30)
+        msvcrt.locking(stream.fileno(), msvcrt.LK_NBLCK, 1)
+
+    def release(stream):
+        stream.seek(1 << 30)
+        msvcrt.locking(stream.fileno(), msvcrt.LK_UNLCK, 1)
+else:
+    import fcntl
+
+    def acquire(stream):
+        fcntl.flock(stream, fcntl.LOCK_EX | fcntl.LOCK_NB)
+
+    def release(stream):
+        fcntl.flock(stream, fcntl.LOCK_UN)
 
 EMPTY = {"schema_version": 1}
 
@@ -19,14 +37,14 @@ def read(path, default=None):
         return deepcopy(default)
     if path.stat().st_size > 2_000_000:
         raise ValueError("Model configuration exceeds size limit")
-    return json.loads(path.read_text())
+    return json.loads(path.read_text(encoding="utf-8"))
 
 
 def write(path, value):
     path = Path(path); path.parent.mkdir(parents=True, exist_ok=True)
     fd, name = tempfile.mkstemp(prefix="." + path.name, dir=path.parent)
     try:
-        with os.fdopen(fd, "w") as stream:
+        with os.fdopen(fd, "w", encoding="utf-8", newline="") as stream:
             json.dump(value, stream, indent=2, sort_keys=True); stream.write("\n")
             stream.flush(); os.fsync(stream.fileno())
         os.replace(name, path)
@@ -49,8 +67,14 @@ class Store:
     def lock(self):
         self.data.mkdir(parents=True, exist_ok=True)
         with (self.data / "write.lock").open("a") as stream:
-            fcntl.flock(stream, fcntl.LOCK_EX)
-            yield
+            try:
+                acquire(stream)
+            except OSError as exc:
+                raise ValueError("Another model-settings update is in progress") from exc
+            try:
+                yield
+            finally:
+                release(stream)
 
     def layers(self):
         if (self.data / "pending.json").exists():

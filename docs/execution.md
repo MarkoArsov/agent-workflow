@@ -1,8 +1,16 @@
 ---
+title: Commands and permissions
 description: Configure commands, permissions, and provider routes for checked work.
+question: How are commands, permissions, and model routes configured?
 ---
 
 # Commands and permissions
+
+!!! summary "In one minute"
+    - Commands are argument arrays with a repository-relative working directory and a timeout; no shell is inserted.
+    - Trusted mode uses provider permission-bypass flags. Restricted mode uses each provider's own controls.
+    - Trusted mode is not operating-system containment.
+    - Routes name a provider and model per stage, with an ordered list of fallbacks.
 
 Commands use argument arrays, a repository-relative working directory, and a bounded timeout.
 No shell is inserted automatically.
@@ -26,7 +34,7 @@ Keep credentials in the host or named `env_refs`, never literal environment valu
 | Claude | --dangerously-skip-permissions | dontAsk with an explicit allowed_tools list |
 | Cursor | --force, --sandbox disabled, --trust | --sandbox enabled, --trust |
 
-The runner checks installed flags before execution. Unsupported controls stop preflight.
+The orchestrator checks installed flags before execution. Unsupported controls stop preflight.
 Restricted Claude requires `execution.provider_settings.claude.allowed_tools`.
 Use only the tools the task actually needs.
 
@@ -53,3 +61,5 @@ Setup records your chosen models. Preflight checks command compatibility; model/
 Cursor effort belongs in its supported model expression.
 
 [Model and cost choices](models.md) · [Evidence formats](verification.md)
+
+<!-- checkpoints: EXE-1, EXE-4, ORG-3 -->

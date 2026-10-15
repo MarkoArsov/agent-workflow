@@ -1,10 +1,18 @@
 ---
-description: See automated coverage, real-host checks, and known limitations.
+title: How it's tested
+description: Automated coverage, real-host checks, and known limitations of Agent Flow itself.
+question: How do we know Agent Flow itself works?
 footer: reference
-footer_order: 3
+footer_order: 4
 ---
 
-# Coverage and host checks
+# How it's tested
+
+!!! summary "In one minute"
+    - The automated suite runs the real orchestrator against temporary repositories, local bare remotes, and labeled provider doubles, in an isolated home.
+    - It covers setup, customization, red and green evidence, frozen tests, scope guards, retries, fallbacks, exact-session answers, recovery, installation, delivery, and environments.
+    - CI runs it on Linux and macOS with Python 3.11 and 3.14.
+    - A provider double is not a live model. Account-authenticated runs are checked separately with the real-host smoke procedure below.
 
 The automated suite uses temporary repositories, bare local remotes, isolated homes/configuration, and labeled provider/connector doubles.
 It never installs into a contributor's real agent settings or publishes to a real account.
@@ -36,5 +44,11 @@ For each enabled host:
 6. Ask for a deliberate input pause; answer and verify the same session resumes.
 7. Inspect actual evidence, usage fields, permission settings, and cleanup.
 
-Account-authenticated generation, hosted GitHub publication, GitHub Pages deployment, and native Windows are not claimed by isolated tests.
+Account-authenticated generation, hosted GitHub publication, and GitHub Pages deployment are not claimed by isolated tests. Native Windows runs the same test suite and the PowerShell installer in CI.
 See the local handoff for the specific checks performed for this release.
+
+<!-- checkpoints: ORG-5, VER-2 -->
+
+## See also
+
+[Contribute and develop](development.md) · [Checkpoint scorecard](scorecard.md) · [Open source](open-source.md)

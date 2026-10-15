@@ -4,6 +4,7 @@ import argparse
 import json
 import os
 import shutil
+import sys
 import tempfile
 from pathlib import Path
 from .detect import repositories
@@ -34,12 +35,12 @@ def payload_digest(source):
 
 def validate_source(source):
     marker = read_json(source / "workflow-package.json")
-    if not marker or marker.get("name") != "agent-workflow" or marker.get("schema_version") != 1:
-        raise WorkflowError("Not a compatible agent-workflow package")
+    if not marker or marker.get("name") != "agentflow" or marker.get("schema_version") != 1:
+        raise WorkflowError("Not a compatible agentflow package")
     version = marker.get("version", "")
     from .util import identifier
     identifier(version)
-    for required in ("bin/agent-workflow", "runtime/agent_workflow/cli.py", "skills/project-setup/SKILL.md"):
+    for required in ("bin/agentflow", "runtime/agentflow/cli.py", "skills/project-setup/SKILL.md"):
         if not (source / required).is_file():
             raise WorkflowError(f"Package is missing {required}")
     catalog(package=source)
@@ -50,8 +51,18 @@ def validate_source(source):
             raise WorkflowError("Package checksum manifest does not match the payload")
     return marker
 
+AGENT_BINARIES = {"claude": ("claude",), "codex": ("codex",), "cursor": ("agent", "cursor-agent")}
+AGENT_NAMES = {"claude": "Claude Code", "codex": "Codex", "cursor": "Cursor"}
+START_COMMANDS = {"claude": 'claude "/af-setup"', "codex": 'codex "Use the af-setup skill"',
+                  "cursor": 'agent "Use the af-setup skill"'}
+
+def detect_agents():
+    """Install for the agent CLIs on PATH; with none found, install for all so a later CLI works."""
+    found = [name for name, binaries in AGENT_BINARIES.items() if any(shutil.which(b) for b in binaries)]
+    return found or list(AGENT_BINARIES)
+
 def installation_root(project=None):
-    return Path(project).expanduser().resolve() / ".agent-workflow/runtime" if project else user_data()
+    return Path(project).expanduser().resolve() / ".agentflow/runtime" if project else user_data()
 
 def wrappers(source, project, agents):
     template = (source / "templates/adapters/dispatch.py").read_text()
@@ -97,15 +108,18 @@ def install(source, *, project=None, agents=None, dry_run=False, link=False):
     receipt = read_json(receipt_path, {"files": {}, "versions": {}})
     if link and source.is_relative_to(root):
         raise WorkflowError("Link an independent source checkout outside the installation directory")
-    profile_path = project / ".agent-workflow/project.json" if project else None
+    profile_path = project / ".agentflow/project.json" if project else None
     profile = read_json(profile_path) if profile_path else None
-    agents = agents or (profile.get("agents") if profile else None) or receipt.get("agents") or ["claude", "codex", "cursor"]
+    agents = agents or (profile.get("agents") if profile else None) or receipt.get("agents") or list(AGENT_BINARIES)
     desired = wrappers(source, project, agents)
-    launcher = project / ".agent-workflow/bin/agent-workflow" if project else Path.home() / ".local/bin/agent-workflow"
+    launcher = project / ".agentflow/bin/agentflow" if project else Path.home() / ".local/bin/agentflow"
     code = (source / "templates/adapters/launch.py").read_text()
     if project:
         code = code.replace("LOCAL_RUNTIME = None", "LOCAL_RUNTIME = Path(__file__).resolve().parents[1] / 'runtime'")
     desired[launcher] = code
+    if os.name == "nt":
+        # Windows runs commands by extension; this shim makes `agentflow` work in cmd and PowerShell.
+        desired[launcher.with_suffix(".cmd")] = f'@"{sys.executable}" "%~dp0agentflow" %*\r\n'
     if project:
         desired[root / ".gitignore"] = "*\n"
     conflicts = []
@@ -136,7 +150,7 @@ def install(source, *, project=None, agents=None, dry_run=False, link=False):
             raise WorkflowError("Installation changed during preparation; retry the reviewed update")
         backup_paths = set(desired) | set(obsolete) | {root / "active.json", receipt_path}
         if profile_path and profile:
-            backup_paths |= {profile_path, project / ".agent-workflow/package-lock.json"}
+            backup_paths |= {profile_path, project / ".agentflow/package-lock.json"}
         backups = {p: p.read_bytes() if p.is_file() else None for p in backup_paths}
         created_version = False
         try:
@@ -162,7 +176,7 @@ def install(source, *, project=None, agents=None, dry_run=False, link=False):
             if profile:
                 profile["package"]["version"] = version
                 write_json(profile_path, profile)
-                write_json(project / ".agent-workflow/package-lock.json", {"version": version, "schema_version": 1})
+                write_json(project / ".agentflow/package-lock.json", {"version": version, "schema_version": 1})
             write_json(root / "active.json", {"version": version, "path": str(target), "backend": backend})
             versions = dict(receipt.get("versions", {}))
             if not link:
@@ -185,7 +199,7 @@ def install(source, *, project=None, agents=None, dry_run=False, link=False):
     result["override_updates"] = override_updates(project, target) if project else []
     for path in obsolete:
         prune_adapter_dirs(path)
-    result["next"] = f"Run {entry_name('project-setup', source)} in your agent, or agent-workflow setup PATH."
+    result["next"] = f"Run {entry_name('setup', source)} in your agent, or agentflow setup PATH."
     return result
 
 def prune_adapter_dirs(path):
@@ -215,7 +229,7 @@ def sync_linked(*, dry_run=False):
 def override_updates(project, package):
     if not project:
         return []
-    lock = read_json(project / ".agent-workflow/overrides.lock.json", {})
+    lock = read_json(project / ".agentflow/overrides.lock.json", {})
     updates = []
     for name, base in lock.items():
         current = package / "skills" / name / "SKILL.md"
@@ -272,7 +286,7 @@ def doctor(project=None):
             from .util import run
             listed = json.loads(run(["claude", "plugin", "list", "--json"], Path(project) if project else Path.cwd(), timeout=10).stdout)
             native = [{k: item.get(k) for k in ("id", "version", "scope", "enabled", "installPath")}
-                      for item in listed if item.get("id") == "agent-workflow@agent-workflow"]
+                      for item in listed if item.get("id") == "agentflow@agentflow"]
         except (WorkflowError, ValueError, TypeError) as exc:
             native_error = str(exc)
     return {"root": str(root), "active": read_json(root / "active.json"), "backend": receipt.get("backend"),
@@ -281,16 +295,37 @@ def doctor(project=None):
             "duplicate_claude_backends": bool(native and receipt.get("backend") and "claude" in receipt.get("agents", [])),
             "project_extensions": "Preserved outside the installed payload"}
 
+def summary(result, agents):
+    """Plain next steps for people; --json keeps the machine-readable result."""
+    if result["dry_run"]:
+        return json_text(result)
+    launcher = next((p for p in result["files"] if Path(p).name == "agentflow"), "agentflow")
+    lines = [f"Agent Flow {result['version']} installed ({result['mode']}).",
+             f"  Command: {launcher}",
+             f"  Skills:  af-* for {', '.join(AGENT_NAMES[a] for a in agents)}", ""]
+    bin_dir = str(Path(launcher).parent)
+    if result["mode"] == "global" and bin_dir not in os.environ.get("PATH", "").split(os.pathsep):
+        lines += [f"Add {bin_dir} to your PATH to use the agentflow command:"]
+        if os.name == "nt":
+            lines += [f"  [Environment]::SetEnvironmentVariable('Path', '{bin_dir};' + [Environment]::GetEnvironmentVariable('Path', 'User'), 'User')", ""]
+        else:
+            lines += [f"  echo 'export PATH=\"{bin_dir}:$PATH\"' >> ~/.zshrc   # or ~/.bashrc", ""]
+    lines += ["Next, from your project folder, run:"]
+    lines += [f"  {START_COMMANDS[a]}" for a in agents]
+    lines += ["", "Docs: https://agentic.markoarsov.com/first-task/"]
+    return "\n".join(lines) + "\n"
+
 def main(argv=None):
-    parser = argparse.ArgumentParser(description="Install agent-workflow without pip.")
-    location = parser.add_mutually_exclusive_group(required=True)
-    location.add_argument("--global", dest="global_install", action="store_true")
-    location.add_argument("--project", type=Path)
+    parser = argparse.ArgumentParser(description="Install Agent Flow without pip. Installs globally unless --project is given.")
+    location = parser.add_mutually_exclusive_group()
+    location.add_argument("--global", dest="global_install", action="store_true", help="Install for your user account (default)")
+    location.add_argument("--project", type=Path, help="Install into one project folder instead")
     parser.add_argument("--local-source", type=Path, default=package_root())
-    parser.add_argument("--agents", nargs="+", choices=["claude", "codex", "cursor"])
+    parser.add_argument("--agents", nargs="+", choices=["claude", "codex", "cursor"], help="Default: the agent CLIs found on PATH")
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--link", action="store_true", help="Use this live checkout for the global runtime")
     parser.add_argument("--sync", action="store_true", help="Refresh an existing linked global install")
+    parser.add_argument("--json", action="store_true", help="Print the machine-readable result")
     args = parser.parse_args(argv)
     try:
         if args.sync:
@@ -298,7 +333,11 @@ def main(argv=None):
                 raise WorkflowError("Use --global --sync without --project, --link, or --agents")
             result = sync_linked(dry_run=args.dry_run)
         else:
-            result = install(args.local_source, project=args.project, agents=args.agents, dry_run=args.dry_run, link=args.link)
-        print(json_text(result))
+            receipt = read_json(installation_root(args.project) / "receipt.json", {})
+            profile = read_json(Path(args.project).resolve() / ".agentflow/project.json", {}) if args.project else {}
+            agents = args.agents or profile.get("agents") or receipt.get("agents") or detect_agents()
+            result = install(args.local_source, project=args.project, agents=agents, dry_run=args.dry_run, link=args.link)
+        receipt = read_json(installation_root(args.project) / "receipt.json", {})
+        print(json_text(result) if args.json or args.sync else summary(result, receipt.get("agents") or agents), end="")
     except (WorkflowError, OSError) as exc:
         parser.exit(2, f"Error: {exc}\n")

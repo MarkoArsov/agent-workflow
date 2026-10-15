@@ -6,6 +6,13 @@ import subprocess
 import sys
 from pathlib import Path
 
+if sys.platform == "win32" and not sys.flags.utf8_mode:
+    # Project files are UTF-8; Windows Python otherwise reads text in the ANSI code page.
+    try:
+        raise SystemExit(subprocess.call([sys.executable, "-X", "utf8", *sys.orig_argv[1:]]))
+    except KeyboardInterrupt:
+        raise SystemExit(130)
+
 LOCAL_RUNTIME = None
 start = Path.cwd().resolve()
 args = sys.argv[1:]
@@ -13,7 +20,12 @@ if "--project" in args:
     index = args.index("--project")
     if index + 1 < len(args):
         start = Path(args[index + 1]).expanduser().resolve()
-global_root = Path(os.environ.get("XDG_DATA_HOME", str(Path.home() / ".local/share"))) / "agent-workflow"
+global_root = Path(os.environ.get("XDG_DATA_HOME", str(Path.home() / ".local/share"))) / "agentflow"
+legacy_root = global_root.with_name("agent-workflow")
+if not (global_root / "active.json").exists() and (legacy_root / "active.json").is_file():
+    legacy_active = json.loads((legacy_root / "active.json").read_text())
+    if legacy_active.get("backend") == "linked":
+        global_root = legacy_root
 profile = None
 project = None
 candidates = []
@@ -25,19 +37,19 @@ try:
 except (OSError, subprocess.CalledProcessError):
     pass
 for parent in search:
-    ref = parent / ".agent-workflow/project-ref.json"
+    ref = parent / ".agentflow/project-ref.json"
     target = (parent / json.loads(ref.read_text())["root"]).resolve() if ref.is_file() else parent
-    marker = target / ".agent-workflow/project.json"
+    marker = target / ".agentflow/project.json"
     if marker.is_file():
         profile = json.loads(marker.read_text()); project = target; break
 if profile:
     version = profile["package"]["version"]
-    candidates.append(project / ".agent-workflow/runtime/versions" / version)
+    candidates.append(project / ".agentflow/runtime/versions" / version)
 active = global_root / "active.json"
 active_data = json.loads(active.read_text()) if active.is_file() else {}
 linked = Path(active_data["path"]) if active_data.get("backend") == "linked" else None
 if not profile:
-    for root in [LOCAL_RUNTIME, *(p / ".agent-workflow/runtime" for p in search)]:
+    for root in [LOCAL_RUNTIME, *(p / ".agentflow/runtime" for p in search)]:
         if root and (root / "active.json").is_file():
             candidates.append(Path(json.loads((root / "active.json").read_text())["path"]))
 if linked:
@@ -47,14 +59,14 @@ if profile:
 else:
     if active.is_file():
         candidates.append(Path(active_data["path"]))
-if os.environ.get("AGENT_WORKFLOW_PACKAGE"):
-    candidates.append(Path(os.environ["AGENT_WORKFLOW_PACKAGE"]))
+if os.environ.get("AGENTFLOW_PACKAGE"):
+    candidates.append(Path(os.environ["AGENTFLOW_PACKAGE"]))
 for candidate in candidates:
     marker = candidate / "workflow-package.json"
     package = json.loads(marker.read_text()) if marker.is_file() else {}
     compatible_link = candidate == linked and package.get("schema_version") == (profile["schema_version"] if profile else 1)
     if package and (compatible_link or (candidate != linked and (not profile or package["version"] == profile["package"]["version"]))):
         sys.path.insert(0, str(candidate / "runtime"))
-        from agent_workflow.cli import main
+        from agentflow.cli import main
         raise SystemExit(main(args))
 raise SystemExit("No matching workflow package. Install the project's pinned version, or install globally before setup.")

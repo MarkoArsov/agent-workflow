@@ -1,0 +1,11 @@
+%% Workflow at a glance. Rendered by hand as workflow.html (no runtime diagram library).
+flowchart LR
+    A[Task or issue] --> B[specify]
+    B --> C{You confirm the plan}
+    C -->|Revise| B
+    C -->|Approve| D[implement-tests?]
+    D --> E[implement]
+    E --> F[review?]
+    F --> G[commit-and-push?]
+    G --> H[draft-pr?]
+    C -->|Small change| M[implement in the same session]

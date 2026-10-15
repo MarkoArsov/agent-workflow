@@ -1,8 +1,16 @@
 ---
+title: Test environments
 description: Define owned test services with readiness checks and safe cleanup.
+question: How do checks get a disposable service to run against?
 ---
 
 # Disposable test environments
+
+!!! summary "In one minute"
+    - A named environment starts services the orchestrator owns, waits for observed readiness, and exports connection details to checks.
+    - Leases stop a second owner from using the same resource at the same time.
+    - Services are cleaned up on success and failure; release never kills a saved PID.
+    - Existing shared infrastructure needs its own ownership and cleanup procedure.
 
 A named environment starts owned services, waits for observed readiness, exports connection details to checks, and cleans up even on failure.
 
@@ -36,9 +44,9 @@ Both service and check repositories must participate in the plan.
 Read-only companion repositories stay unchanged.
 
 ~~~sh
-agent-workflow verify ai-plans/task-name/pipeline.json --phase green
-agent-workflow environment status local-app
-agent-workflow environment release local-app
+agentflow verify ai-plans/task-name/pipeline.json --phase green
+agentflow environment status local-app
+agentflow environment release local-app
 ~~~
 
 Release asks the owning process to stop its services. It does not kill a saved PID.
@@ -49,3 +57,5 @@ A second owner is rejected while the lease is held.
 Keep logs and runtime output in ignored directories; verification rejects source-changing commands.
 
 These leases manage processes the workflow starts. Existing external infrastructure needs its own documented ownership and cleanup procedure.
+
+<!-- checkpoints: VER-4, CTX-3 -->

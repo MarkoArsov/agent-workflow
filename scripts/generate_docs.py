@@ -9,12 +9,41 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 SKILL_CATEGORIES = {
-    "Plan & orient": ("specify", "draft-rfc", "issue-writer", "project-setup", "pipeline-workflow", "wizard", "understand"),
-    "Build & test": ("implement-tests", "implement", "implement-pipeline", "e2e-test-engineering", "e2e-test-overview"),
-    "Review & deliver": ("review", "review-guide", "peer-rfc-review", "peer-pr-review", "address-pr-comments", "request-review", "pr-preflight", "commit", "push", "commit-and-push", "draft-pr", "publish-workflow", "merge-to-base"),
-    "Project operations": ("update-models", "add-rule", "project-customize", "list-pipeline", "prune-context", "diagnose-ci"),
-    "Worktrees & environments": ("checkout-branch", "worktree-start", "worktree-list", "worktree-remove", "sync-base", "environment-status", "environment-release", "test-on-staging"),
+    "Core workflow": ("setup", "specify", "implement-pipeline", "list-pipeline", "pipeline-workflow", "project-setup", "issue-writer", "draft-rfc"),
+    "Implementation and verification": ("implement-tests", "implement", "review", "understand", "review-guide"),
+    "Git and delivery": ("checkout-branch", "sync-base", "commit", "push", "commit-and-push", "draft-pr", "publish-workflow", "merge-to-base"),
+    "Worktrees and environments": ("worktree-start", "worktree-list", "worktree-remove", "environment-status", "environment-release"),
+    "Pull requests and design review": ("address-pr-comments", "diagnose-ci", "peer-pr-review", "peer-rfc-review", "request-review", "pr-preflight"),
+    "End-to-end testing": ("e2e-test-overview", "e2e-test-engineering", "test-on-staging"),
+    "Workflow maintenance": ("update-models", "add-rule", "prune-context", "project-customize", "wizard"),
 }
+
+# Intent → skills (validated to exist), optional CLI follow-up text, and an optional joiner.
+FAST_LOOKUP = (
+    ("Start a task", ("specify",), ""),
+    ("Run a small follow-up or an isolated bugfix", ("specify", "implement"), ""),
+    ("Revise an approved plan", ("specify",), "again, then `resume --rebind`"),
+    ("Run the full pipeline", ("implement-pipeline",), ""),
+    ("See what is configured and running", ("list-pipeline",), "or `status`"),
+    ("Respond to a paused task", ("implement-pipeline",), "or `answer TASK --file`"),
+    ("Recheck after a fix", ("implement",), "or `verify PLAN --phase green`"),
+    ("Publish task changes", ("commit-and-push",), ""),
+    ("Publish workflow-package changes", ("publish-workflow",), ""),
+    ("Refresh model and effort defaults", ("update-models",), ""),
+    ("Open a draft pull request", ("draft-pr",), ""),
+    ("Check a pull request before sending it", ("pr-preflight",), ""),
+    ("Handle pull request feedback", ("address-pr-comments",), ""),
+    ("Diagnose a failed CI run", ("diagnose-ci",), ""),
+    ("Understand a change before reviewing it", ("understand",), ""),
+    ("Guide a reviewer through a change", ("review-guide",), ""),
+    ("Review someone else's pull request", ("peer-pr-review",), ""),
+    ("Write an issue", ("issue-writer",), ""),
+    ("Capture a recurring rule", ("add-rule",), ""),
+    ("Trim instructions", ("prune-context",), ""),
+    ("Set up a project", ("setup",), "(short for `project-setup`)"),
+    ("Change the project workflow", ("project-setup", "project-customize"), "", " or "),
+    ("Understand or change the workflow itself", ("pipeline-workflow",), ""),
+)
 
 def category_for(name):
     for category, names in SKILL_CATEGORIES.items():
@@ -23,14 +52,13 @@ def category_for(name):
     return "Other"
 
 def rendered():
-    discovery = json.loads((ROOT / "workflow-package.json").read_text()).get("discovery", {})
-    prefix = discovery.get("prefix", "aw")
-    setup_alias = discovery.get("aliases", {}).get("project-setup", "project-setup")
+    discovery = json.loads((ROOT / "workflow-package.json").read_text(encoding="utf-8")).get("discovery", {})
+    prefix = discovery.get("prefix", "af")
     entries = []
     for path in sorted((ROOT / "skills").glob("*/SKILL.md")):
         if path.is_symlink():
             raise ValueError("Documentation sources must not be symlinks")
-        text = path.read_text()
+        text = path.read_text(encoding="utf-8")
         header, body = text.split("---", 2)[1:]
         name = re.search(r"^name:\s*(.+)$", header, re.M)[1]
         description = re.search(r"^description:\s*(.+)$", header, re.M)[1]
@@ -41,10 +69,22 @@ def rendered():
     grouped["Other"] = []
     for entry in entries:
         grouped[category_for(entry[0])].append(entry)
+    names = {name for name, _, _ in entries}
+    missing = sorted({skill for _, used, *_ in FAST_LOOKUP for skill in used} - names)
+    missing += sorted(set(sum(SKILL_CATEGORIES.values(), ())) - names)
+    if missing:
+        raise ValueError("Documentation references unknown skills: " + ", ".join(missing))
+    lookup = ["| I want to… | Use |", "|---|---|"]
+    for intent, used, extra, *joiner in FAST_LOOKUP:
+        links = (joiner[0] if joiner else ", then ").join(f"[`{x}`](#{x})" for x in used)
+        lookup.append(f"| {intent} | {links}{' ' + extra if extra else ''} |")
     skills = [
-        "---\ndescription: Browse project-owned skills and their checked responsibilities.\nfooter: docs\nfooter_order: 4\n---\n",
+        "---\ntitle: Skills\ndescription: Find the right skill for the job, then browse every bundled skill.\nquestion: Which skill should I use?\nfooter: docs\nfooter_order: 5\n---\n",
         "# Skill reference\n",
-        f"Standalone entry points use **{prefix}-NAME**, with **{prefix}-{setup_alias}** for project setup; Claude's native plugin uses **agent-workflow:NAME**. Project overrides take precedence in direct invocation and runner stages.\n",
+        f"!!! summary \"In one minute\"\n    - New project? Run `setup` first. Then `specify`, and `implement` for a small change or `implement-pipeline` for the full run.\n    - The other {len(entries) - 4} skills are for focused work, review, delivery, recovery, and maintenance.\n    - Standalone installs invoke **{prefix}-NAME**; the native Claude plugin uses **agentflow:NAME**.\n    - Project overrides take precedence in direct invocation and in runner stages.\n",
+        "## Fast lookup\n",
+        "\n".join(lookup) + "\n",
+        "## All skills\n",
         '<div class="skills-filter" data-skills-filter>\n<label for="skills-filter-input">Filter skills</label>\n<input id="skills-filter-input" type="search" placeholder="Try review, test, or worktree" autocomplete="off" data-skills-filter-input>\n<div class="skills-filter__index" aria-label="Skill index">\n',
     ]
     skills += [f'<a href="#{name}" data-skills-chip data-skill-chip-name="{name}">{name}</a>' for name, _, _ in entries]
@@ -57,12 +97,12 @@ def rendered():
             searchable = html.escape(f"{name} {description}", quote=True)
             skills += [f'### `{name}` {{ .skill-entry data-skill="{searchable}" }}\n', description + "\n", body + "\n"]
     schemas = [
-        "---\ndescription: Public configuration schemas for Stagecoach projects and task plans.\nfooter: reference\nfooter_order: 2\n---\n",
+        "---\ndescription: Public configuration schemas for Agent Flow projects and task plans.\nfooter: reference\nfooter_order: 2\n---\n",
         "# Schema reference\n",
         "These schemas describe public configuration. Runtime validation also checks repository membership, dependencies, and executable evidence.\n",
     ]
     for path in sorted((ROOT / "schemas").glob("*.schema.json")):
-        value = json.loads(path.read_text())
+        value = json.loads(path.read_text(encoding="utf-8"))
         schemas += [f"## {value['title']}\n", value.get("description", "") + "\n",
                     "| Field | Required | Format |\n|---|---|---|"]
         for name, prop in value.get("properties", {}).items():
@@ -72,16 +112,22 @@ def rendered():
     return {"skills.md": "\n".join(skills), "schemas.md": "\n".join(schemas)}
 
 def generate(check=False):
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("workflow_docs_content", Path(__file__).with_name("docs_content.py"))
+    content = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(content)
+    content.validate()
     directory = ROOT / "docs/generated"
     if not check:
         directory.mkdir(parents=True, exist_ok=True)
     stale = []
     for name, content in rendered().items():
         path = directory / name
-        if not path.exists() or path.read_text() != content:
+        # Explicit UTF-8 and LF: Windows defaults to the ANSI code page and CRLF.
+        if not path.exists() or path.read_text(encoding="utf-8") != content:
             stale.append(name)
             if not check:
-                path.write_text(content)
+                path.write_text(content, encoding="utf-8", newline="")
     if check and stale:
         raise SystemExit("Stale generated references: " + ", ".join(stale))
     return stale

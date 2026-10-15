@@ -4,7 +4,7 @@ description: Publish unpublished workflow-package commits and local edits togeth
 ---
 
 <!-- resolver:start -->
-Run this skill folder's scripts/resolve.py from the active project once. If it returns a different effective skill, follow that file instead. Otherwise continue below. Use the selected package's bin/agent-workflow for commands.
+Run this skill folder's scripts/resolve.py from the active project once. If it returns a different effective skill, follow that file instead. Otherwise continue below. Use the selected package's bin/agentflow for commands.
 <!-- resolver:end -->
 
 # publish workflow
@@ -19,7 +19,7 @@ without staging, committing, switching branches, pushing, or creating/updating a
 
 1. Use the selected package root returned by the resolver, not the calling application's Git
    repository. Verify that `git rev-parse --show-toplevel` equals that package root and that it
-   contains `workflow-package.json`, `runtime/agent_workflow`, and `skills`. Read its `AGENTS.md`.
+   contains `workflow-package.json`, `runtime/agentflow`, and `skills`. Read its `AGENTS.md`.
    A copied installation is not the source checkout: if it has no repository of its own, ask for
    the workflow source checkout. Never initialize Git in an installed payload or publish a parent
    repository. An explicitly supplied checkout must satisfy the same checks.

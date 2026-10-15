@@ -4,12 +4,12 @@ description: Create an approved draft pull request for verified, pushed task bra
 ---
 
 <!-- resolver:start -->
-Run this skill folder's scripts/resolve.py from the active project once. If it returns a different effective skill, follow that file instead. Otherwise continue below. Use the selected package's bin/agent-workflow for commands.
+Run this skill folder's scripts/resolve.py from the active project once. If it returns a different effective skill, follow that file instead. Otherwise continue below. Use the selected package's bin/agentflow for commands.
 <!-- resolver:end -->
 
 # draft pr
 
-1. Read current plan, actual commits, base branch, repository conventions, and observed check results. The runner handles creation when draft-pr is selected.
+1. Read current plan, actual commits, base branch, repository conventions, and observed check results. The orchestrator handles creation when draft-pr is selected.
 
 2. Write a concise title and body describing the problem and final behavior, with relevant validation and limitations. Use the project's PR template when present.
 

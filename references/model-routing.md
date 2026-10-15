@@ -1,9 +1,9 @@
 # Model routing contract
 
-`bin/agent-workflow models` owns this workflow's settings. It never writes native
+`bin/agentflow models` owns this workflow's settings. It never writes native
 agent preferences. `models inspect` resolves paths and shows effective settings.
 Machine state lives under the existing user data root's `models/`; project policy
-lives in `.agent-workflow/models.json`. Catalogues remain machine-local.
+lives in `.agentflow/models.json`. Catalogues remain machine-local.
 
 ## Refresh and reviewed settings
 
@@ -104,7 +104,7 @@ selection on approved plans. Aliases remain mutable; inspect actual execution re
 
 ## Independent distribution
 
-The standard-library component is `runtime/agent_workflow/model_policy` and imports
+The standard-library component is `runtime/agentflow/model_policy` and imports
 no runner code. `scripts/export_model_policy.py <target>/model_policy` exports a
 standalone snapshot with checksums; `--check` detects drift. Locally edited exports
 must be reviewed before replacement. Each export includes a portable contract check:

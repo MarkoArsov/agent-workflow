@@ -4,9 +4,9 @@ import subprocess
 import sys
 from pathlib import Path
 from tests.helpers import PACKAGE, WorkspaceTest
-from agent_workflow.project import resolve
-from agent_workflow.setup import propose, apply
-from agent_workflow.util import WorkflowError
+from agentflow.project import resolve
+from agentflow.setup import propose, apply
+from agentflow.util import WorkflowError
 
 class ResolutionTests(WorkspaceTest):
     def test_spaces_symlink_moved_parent_and_committed_worktree_reference(self):

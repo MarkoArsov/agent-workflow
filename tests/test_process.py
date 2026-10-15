@@ -4,7 +4,7 @@ import signal
 import sys
 import time
 from tests.helpers import WorkspaceTest
-from agent_workflow.process import execute
+from agentflow.process import execute
 
 class ProcessTests(WorkspaceTest):
     def test_cancel_cleans_descendants_after_leader_exit_including_term_resistant_child(self):
@@ -33,8 +33,15 @@ class ProcessTests(WorkspaceTest):
                     time.sleep(0.15)
                     self.assertEqual(heartbeat.read_text(), before, "Owned child survived process cleanup")
                 finally:
-                    for group in groups:
+                    for group in groups if hasattr(os, "killpg") else ():
                         try:
                             os.killpg(group, signal.SIGKILL)
                         except (ProcessLookupError, PermissionError):
                             pass
+
+    def test_windows_line_endings_do_not_leak_into_lines(self):
+        seen = []
+        result = execute([sys.executable, "-c", "import sys; sys.stdout.buffer.write(b'custom done\\r\\nlast\\r\\n')"],
+                         self.root, timeout=20, on_line=seen.append)
+        self.assertEqual(seen, ["custom done", "last"])
+        self.assertEqual(result["output"], "custom done\nlast")

@@ -1,15 +1,23 @@
 ---
+title: Project layout
 description: Understand the project-owned files, repositories, and task checkouts.
+question: Which files does a project own, and how do repositories join a task?
 ---
 
 # Project layout
+
+!!! summary "In one minute"
+    - A project is one repository or a parent folder of registered repositories.
+    - Project-owned files live in `.agentflow/` and `PROJECT_WORKFLOW.md`; plans live in `ai-plans/`.
+    - Each task chooses which repositories participate, read or write. Only writable ones get branches and delivery.
+    - Runtime evidence stays in an ignored local directory.
 
 A project is one Git repository or a parent folder containing registered repositories.
 
 ~~~text
 project/
   PROJECT_WORKFLOW.md
-  .agent-workflow/
+  .agentflow/
     project.json
     package-lock.json
     skills/              # your overrides and new skills
@@ -34,7 +42,7 @@ project/
 | Repository | Its base branch, remote, commands, and role. |
 | Task checkout | Selected writable code for one task. |
 
-The package never discovers unrelated sibling repositories by a hard-coded name.
+Agent Flow never discovers unrelated sibling repositories by a hard-coded name.
 Child references, registered Git common directories, and explicit membership determine the project.
 Nested folders, spaces, symlinks, and Git worktrees resolve to the same profile.
 
@@ -44,9 +52,11 @@ A profile's **task_policy** is always, when-changed, or never.
 A plan selects each participating repository as read or write.
 Only writable participants receive task branches/worktrees or delivery actions.
 
-Never means never writable through the runner; it may still be explicitly selected as a read-only check provider.
+Never means never writable through the orchestrator; it may still be explicitly selected as a read-only check provider.
 Only declared writable path patterns may change.
 
 For a single repository, plans default to tracked `ai-plans/<task>/`.
 For several repositories, they live at the configured shared project root.
 Runtime evidence stays ignored.
+
+<!-- checkpoints: CTX-1, EXE-5 -->

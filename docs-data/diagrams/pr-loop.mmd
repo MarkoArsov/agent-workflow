@@ -1,0 +1,10 @@
+%% Pull-request feedback loop. Rendered by hand as pr-loop.html.
+flowchart LR
+    A[Draft PR] --> B[Comments and bot feedback]
+    B --> C[Selected fixes]
+    C --> D[Named checks]
+    D --> E[commit-and-push]
+    E --> F[CI]
+    F -->|Failure| G[diagnose-ci]
+    G --> C
+    F -->|Pass| H[Named human approves and merges]

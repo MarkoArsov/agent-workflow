@@ -1,59 +1,150 @@
 ---
-description: Install Stagecoach globally or inside a project.
+title: Install
+description: Install Agent Flow with one command, then set up your project.
 footer: docs
 footer_order: 1
+question: How do I install Agent Flow?
 ---
 
 # Install
 
-You need Python 3.11+, Git, and at least one authenticated agent CLI: Claude Code, Codex, or Cursor.
-GitHub delivery also uses `gh`. The runtime has no Python package dependencies.
+!!! summary "In one minute"
+    - **Mac:** paste one command into Terminal. **Windows:** paste one command into PowerShell.
+    - Then open your project folder and start setup with `claude "/af-setup"` (or the Codex or Cursor equivalent).
+    - You need Python 3.11 or newer, Git, and Claude Code, Codex, or Cursor.
 
-The CLI and package are still named `agent-workflow` while the rename is in progress.
+## Before you start
 
-macOS and Linux use the same installer. Use WSL on Windows; native Windows is not yet supported.
+You need three things. If you already have them, skip ahead.
 
-## Choose a scope
+| You need | Check it's installed | Get it |
+|---|---|---|
+| Python 3.11 or newer | Mac: `python3 --version`<br>Windows: `py --version` | [python.org](https://www.python.org/downloads/) |
+| Git | `git --version` | [git-scm.com](https://git-scm.com/downloads) |
+| An agent | `claude --version`, `codex --version`, or `agent --version` | Claude Code, Codex, or Cursor's CLI |
 
-| Scope | Use it when |
+On Windows, when you install Python, keep **Add python.exe to PATH** checked.
+
+## Install on Mac
+
+**1.** Open **Terminal**: press Command-Space, type *Terminal*, and press Enter.
+
+**2.** Paste this command and press Enter:
+
+~~~sh
+curl -fsSL https://agentic.markoarsov.com/install.sh | sh
+~~~
+
+**3.** If the output says *Add … to your PATH*, run the line it shows, then open a new Terminal window.
+
+Linux works the same way: run the command in your terminal.
+
+## Install on Windows
+
+**1.** Open **PowerShell**: press the Windows key, type *PowerShell*, and press Enter.
+
+**2.** Paste this command and press Enter:
+
+~~~powershell
+irm https://agentic.markoarsov.com/install.ps1 | iex
+~~~
+
+**3.** Close PowerShell and open a new window, so it finds the `agentflow` command.
+
+## Check that it worked
+
+In a new terminal window, run:
+
+~~~sh
+agentflow --version
+~~~
+
+It prints a version number, such as `0.1.0`.
+The installer also added the `af-*` skills to each agent it found on your computer.
+
+## Start using it
+
+Go to your project folder, then start your agent with the setup skill:
+
+~~~sh
+cd path/to/your-project
+claude "/af-setup"
+~~~
+
+| Agent | Run from your project folder |
 |---|---|
-| Global | You want one installation available across projects. |
-| Project | You want a self-contained runtime inside one repository or a parent folder containing several. |
+| Claude Code | `claude "/af-setup"` |
+| Codex | `codex "Use the af-setup skill"` |
+| Cursor | `agent "Use the af-setup skill"` |
 
-After the first release is published:
+Setup reads your repository, asks a few questions, and shows every file it would write. Nothing is written until you approve. See [set up your project](setup.md).
+
+Then describe your first change with `af-specify`, confirm the plan, and run `af-implement`. [Your first task](first-task.md) walks through it.
+
+If your agent is already open, type `/af-setup` in Claude Code, or ask Codex or Cursor to use the `af-setup` skill. Its full name, `af-project-setup`, also works.
+
+## If something goes wrong
+
+| Message | What to do |
+|---|---|
+| *Python 3.11 or newer is required* | Install Python from [python.org](https://www.python.org/downloads/), open a new terminal, and run the install command again. |
+| *Git is required* | Install Git from [git-scm.com](https://git-scm.com/downloads), open a new terminal, and run the install command again. |
+| `agentflow: command not found` (Mac) | Run the *export PATH* line the installer printed, then open a new Terminal window. |
+| *agentflow is not recognized* (Windows) | Open a new PowerShell window. The installer added the command to your PATH, but windows that were already open don't see it. |
+| *running scripts is disabled* (Windows) | Use the exact install command above. It runs without changing your script policy. |
+
+## Other ways to install
+
+<details class="more" markdown>
+<summary>Into one project instead of your user account</summary>
 
 ~~~sh
-curl -fsSL https://raw.githubusercontent.com/MarkoArsov/agent-workflow/v0.1.0/install.sh | sh -s -- --global
+curl -fsSL https://agentic.markoarsov.com/install.sh | sh -s -- --project .
 ~~~
+~~~powershell
+& ([scriptblock]::Create((irm https://agentic.markoarsov.com/install.ps1))) --project .
+~~~
+The project gets its own copy at `.agentflow/bin/agentflow`, ignored by Git.
 
-Or install into an existing project folder:
+</details>
+<details class="more" markdown>
+<summary>Choose agents, or pin a version</summary>
 
 ~~~sh
-curl -fsSL https://raw.githubusercontent.com/MarkoArsov/agent-workflow/v0.1.0/install.sh | sh -s -- --project .
+curl -fsSL https://agentic.markoarsov.com/install.sh | sh -s -- --agents claude codex
+curl -fsSL https://agentic.markoarsov.com/install.sh | AGENTFLOW_REF=v0.1.0 sh
 ~~~
+On Windows, pass options the same way as the project install above, and pin with `$env:AGENTFLOW_REF = "v0.1.0"` before running the installer.
 
-These URLs require the matching published tag. Review the pinned script before running it if that is your normal installation policy.
-The installer checks archive paths and staged payload integrity; it does not provide an independent publisher signature.
-
-## From a checkout
-
-This works before publication and without downloading a release:
+</details>
+<details class="more" markdown>
+<summary>From a clone, without the script</summary>
 
 ~~~sh
-python3 install.py --global
-# Or:
-python3 install.py --project /path/to/project
+git clone https://github.com/MarkoArsov/agent-workflow.git
+python3 agent-workflow/install.py   # on Windows: py agent-workflow\install.py
 ~~~
+Add `--project /path/to/project` to install into one project, or `--json` for machine-readable output.
 
-Use `--agents codex claude` to install only selected host entries.
-Global commands live in `~/.local/bin`; add that directory to PATH if necessary.
-A project install provides `.agent-workflow/bin/agent-workflow`.
+</details>
+<details class="more" markdown>
+<summary>Claude Code plugin</summary>
 
-Installation enables discovery. It does not write a project profile.
-Open your project in the agent and invoke **af-setup**.
-Skill labels use an uppercase **AF** prefix, such as **AF Setup** and **AF Specify**,
-through generated display metadata. Invocation names remain lowercase (`af-setup`).
-Continue with [setup](setup.md).
+~~~sh
+claude plugin marketplace add MarkoArsov/agent-workflow
+claude plugin install agentflow@agentflow
+~~~
+The plugin contains the same skills and runtime; its skills are named `agentflow:project-setup` and so on.
+Use either the plugin or the installer for Claude Code, not both, to avoid duplicate skills.
+
+</details>
+
+## Before you run it
+
+The scripts are short and readable: [install.sh](https://github.com/MarkoArsov/agent-workflow/blob/main/install.sh) and [install.ps1](https://github.com/MarkoArsov/agent-workflow/blob/main/install.ps1). They reject unsafe archive paths and verify the staged payload before switching versions; they do not verify a publisher signature.
+Agent Flow was previously named Scorebook. The GitHub repository still uses its original name, agent-workflow.
+
+To update or remove it later, see [update and remove](lifecycle.md).
 
 ## Follow a development checkout
 
@@ -73,9 +164,9 @@ absolute Python and installer paths with `--global --sync`, `RunAtLoad`, and a
 `StartInterval` of 30 seconds. Keep that machine-specific service outside this repo.
 
 Public skill names come from `workflow-package.json`: `discovery.prefix` currently
-uses `af`, and `discovery.aliases.project-setup` uses `setup`. Change these values and
-sync to replace the old owned entry points. The package's internal identity and storage
-paths remain stable across display-name changes. If you move the checkout itself,
+uses `af`; `discovery.aliases` can rename individual entry points. Change these values and
+sync to replace the old owned entry points. Display-name changes do not move storage. Pre-rename linked installations retain their
+existing receipt and settings directory while discovery and the launcher adopt the new name. If you move the checkout itself,
 rerun the link command from its new location and update your local scheduler's path.
 
 A project with its own installed runtime keeps that pinned runtime. Other projects use
@@ -87,18 +178,3 @@ through the project's reviewed setup/refresh flow; global sync never rewrites pr
 Modified discovery files cause a conflict instead of being overwritten. Uninstall removes
 owned discovery entries and leaves the source checkout intact. Remove any local scheduler
 when you uninstall. Restart the host if its skill selector retains older names.
-
-## Claude's native plugin
-
-After publication, add the marketplace and install the plugin:
-
-~~~sh
-claude plugin marketplace add MarkoArsov/agent-workflow
-claude plugin install agent-workflow@agent-workflow
-~~~
-
-Use **agent-workflow:project-setup**. The plugin contains the same skills and runtime.
-You can inspect a checkout with `claude --plugin-dir .` before publication.
-
-Choose one Claude discovery backend to avoid duplicate entry points.
-A plugin scoped to one repository does not automatically configure sibling repositories; shared project setup creates the explicit references and adapters they need.

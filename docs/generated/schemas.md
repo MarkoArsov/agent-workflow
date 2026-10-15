@@ -1,5 +1,5 @@
 ---
-description: Public configuration schemas for Stagecoach projects and task plans.
+description: Public configuration schemas for Agent Flow projects and task plans.
 footer: reference
 footer_order: 2
 ---
@@ -50,6 +50,7 @@ An approved plan with explicit repository access, executable outcomes, ordered s
 | checks | yes | array |
 | outcomes | yes | array |
 | routes | no | object |
+| approved_no_red_reason | no | string |
 | limits | no | object |
 | delivery | no | object |
 | references | no | array |

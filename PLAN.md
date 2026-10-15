@@ -1,4 +1,4 @@
-# agent-workflow implementation plan
+# agentflow implementation plan
 
 ## Approved extension: publish workflow
 
@@ -87,7 +87,7 @@ or trigger deployment during this local task.
 ## 3. Repository layout
 
 ```text
-agent-workflow/
+agentflow/
   PLAN.md
   README.md
   LICENSE
@@ -96,11 +96,11 @@ agent-workflow/
   pyproject.toml
   install.sh
   install.py
-  bin/agent-workflow
+  bin/agentflow
   skills/<skill>/SKILL.md
   skills/<skill>/references/...
   references/...
-  runtime/agent_workflow/
+  runtime/agentflow/
     cli.py
     project.py
     setup.py
@@ -161,7 +161,7 @@ Project-owned layout:
 ```text
 <project>/
   PROJECT_WORKFLOW.md
-  .agent-workflow/
+  .agentflow/
     project.json
     package-lock.json
     skills/<name>/SKILL.md
@@ -289,12 +289,12 @@ routes. An empty route map is allowed before configuration, but cannot start a r
   ],
   "planning": {
     "directory": "ai-plans",
-    "evidence_directory": ".agent-workflow/local/evidence"
+    "evidence_directory": ".agentflow/local/evidence"
   },
   "git": {
     "branch_template": "feature/{task}",
     "commit_style": "imperative",
-    "worktree_directory": ".agent-workflow/local/worktrees"
+    "worktree_directory": ".agentflow/local/worktrees"
   },
   "delivery": {
     "pull_requests": "draft",
@@ -314,11 +314,11 @@ routes. An empty route map is allowed before configuration, but cannot start a r
     "routes": {}
   },
   "extensions": {
-    "skills": ".agent-workflow/skills",
-    "rules": ".agent-workflow/rules",
-    "references": ".agent-workflow/references",
-    "connectors": ".agent-workflow/connectors",
-    "stages": ".agent-workflow/stages.json"
+    "skills": ".agentflow/skills",
+    "rules": ".agentflow/rules",
+    "references": ".agentflow/references",
+    "connectors": ".agentflow/connectors",
+    "stages": ".agentflow/stages.json"
   }
 }
 ```
@@ -386,7 +386,7 @@ an unrelated general-purpose DAG service.
 Updates never replace project-owned skills, rules, references, or connector content.
 Report upstream changes to overridden skills and offer a reviewable refresh/merge.
 Do not silently apply upstream changes to an override. Keep a single effective source
-for each skill and show its origin in `agent-workflow inspect`.
+for each skill and show its origin in `agentflow inspect`.
 
 At run start, record the package version and hashes of the effective profile, skill
 bodies, rules, references, and stage definitions. Keep that snapshot for the run.
@@ -533,8 +533,8 @@ After the repository is published, the README will provide one command per mode.
 The following are planned interfaces, not commands to execute during this local task:
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/<owner>/agent-workflow/<ref>/install.sh | sh -s -- --global
-curl -fsSL https://raw.githubusercontent.com/<owner>/agent-workflow/<ref>/install.sh | sh -s -- --project /path/to/project
+curl -fsSL https://raw.githubusercontent.com/<owner>/agentflow/<ref>/install.sh | sh -s -- --global
+curl -fsSL https://raw.githubusercontent.com/<owner>/agentflow/<ref>/install.sh | sh -s -- --project /path/to/project
 ```
 
 The project path can be a single Git repository or a parent folder. A pinned tag or
@@ -543,9 +543,9 @@ executable code; package checksums are not represented as independent signatures
 
 ### Installation locations
 
-- Global: versioned payload under `~/.local/share/agent-workflow/`, a user CLI shim,
+- Global: versioned payload under `~/.local/share/agentflow/`, a user CLI shim,
   and installer-owned host discovery entries. Respect supported XDG/config overrides.
-- Project: payload under `<project>/.agent-workflow/runtime/`, with a local launcher
+- Project: payload under `<project>/.agentflow/runtime/`, with a local launcher
   and project/child-repository discovery entries. It works without a global install.
 - Both modes record ownership, package version, active paths, and installation backend.
   Installation enables setup; it does not infer and write a project operating profile.
@@ -555,7 +555,7 @@ pins the version. Resolve a matching local/global version or the invoked plugin'
 bundled version; report a missing required version rather than silently mixing versions.
 Uninstalling the project package permits fallback to a compatible global package.
 
-Global and project discovery wrappers use the same resolver. Use namespaced `aw-*`
+Global and project discovery wrappers use the same resolver. Use namespaced `af-*`
 standalone entry points to avoid overwriting unrelated skills. Claude plugin invocation
 uses its plugin namespace. Do not rely on host duplicate-name behavior for precedence.
 For Codex and Cursor, prefer shared documented `.agents/skills` discovery; Claude
@@ -570,7 +570,7 @@ New project skills are registered by the common refresh command for each selecte
 
 ### Update and uninstall
 
-Provide `agent-workflow update`, `uninstall`, `inspect`, and `doctor` with explicit
+Provide `agentflow update`, `uninstall`, `inspect`, and `doctor` with explicit
 global/project targets and dry-run output. Dispatch native plugin lifecycle operations
 through its supported CLI; do not hand-edit plugin caches.
 
@@ -745,7 +745,7 @@ Provide exact commands, filled with the agreed owner and repository name, for:
 
 1. Verifying personal Git identity and the personal SSH host alias.
 2. Creating the public remote repository with the selected license already local.
-3. Adding `git@github-personal:<owner>/agent-workflow.git`.
+3. Adding `git@github-personal:<owner>/agentflow.git`.
 4. Pushing the approved local branch and any chosen release tag.
 5. Enabling GitHub Pages with GitHub Actions.
 6. Confirming the site URL and bootstrap install commands from the published revision.

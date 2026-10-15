@@ -7,7 +7,7 @@ from .util import user_data
 def store(project=None):
     return Store(user_data() / "models", project.config / "models.json" if project else None,
                  project.profile["agents"] if project else ("codex", "claude", "cursor"),
-                 project.profile["pipeline"]["routes"] if project else {}, "agent-workflow")
+                 project.profile["pipeline"]["routes"] if project else {}, "agentflow")
 
 
 def execute(args):

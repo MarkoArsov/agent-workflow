@@ -4,12 +4,12 @@ description: Remove explicitly selected clean task worktrees without deleting us
 ---
 
 <!-- resolver:start -->
-Run this skill folder's scripts/resolve.py from the active project once. If it returns a different effective skill, follow that file instead. Otherwise continue below. Use the selected package's bin/agent-workflow for commands.
+Run this skill folder's scripts/resolve.py from the active project once. If it returns a different effective skill, follow that file instead. Otherwise continue below. Use the selected package's bin/agentflow for commands.
 <!-- resolver:end -->
 
 # worktree remove
 
-1. List registered worktrees and resolve the user's exact target. Inspect status, untracked files, branch, and any active runner lock.
+1. List registered worktrees and resolve the user's exact target. Inspect status, untracked files, branch, and any active orchestrator lock.
 
 2. Do not remove a parked base checkout or a worktree used by a running task. Preserve plans and evidence unless their removal is separately requested.
 

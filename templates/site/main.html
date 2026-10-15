@@ -11,19 +11,25 @@
     <meta property="og:site_name" content="{{ config.site_name }}">
     <meta property="og:title" content="{% if page and page.title %}{{ page.title }} · {% endif %}{{ config.site_name }}">
     <meta property="og:description" content="{{ description }}">
-    <meta property="og:image" content="{{ config.site_url }}assets/brand/og.png">
+    <meta property="og:image" content="{{ config.site_url }}assets/brand/og.png?v={{ config.extra.asset_version }}">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="{% if page and page.title %}{{ page.title }} · {% endif %}{{ config.site_name }}">
     <meta name="twitter:description" content="{{ description }}">
-    <meta name="twitter:image" content="{{ config.site_url }}assets/brand/og.png">
-    <link rel="icon" href="{{ 'assets/brand/favicon.svg' | url }}" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="{{ 'assets/brand/apple-touch-icon.png' | url }}">
+    <meta name="twitter:image" content="{{ config.site_url }}assets/brand/og.png?v={{ config.extra.asset_version }}">
+    <link rel="icon" href="{{ 'assets/brand/favicon.svg' | url }}?v={{ config.extra.asset_version }}" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="{{ 'assets/brand/apple-touch-icon.png' | url }}?v={{ config.extra.asset_version }}">
     <link rel="preload" href="{{ 'assets/fonts/IBMPlexSans-Regular-Latin1.woff2' | url }}" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="{{ 'assets/fonts/IBMPlexMono-Regular-Latin1.woff2' | url }}" as="font" type="font/woff2" crossorigin>
     {% for path in config.extra_css %}<link rel="stylesheet" href="{{ path | url }}?v={{ config.extra.asset_version }}">{% endfor %}
   </head>
   <body data-page-url="{{ page.url if page else '' }}"{% if page and page.file.src_uri == 'index.md' %} data-page-home="true"{% endif %}>
     <a class="skip-link" href="#main-content">Skip to content</a>
+    <div class="rename-banner" data-rename-banner>
+      <div class="rename-banner__inner">
+        <p>Scorebook is now <strong>Agent Flow</strong></p>
+        <button type="button" aria-label="Dismiss rename notice" data-rename-dismiss><svg aria-hidden="true" viewBox="0 0 12 12"><path d="M3 3l6 6M9 3l-6 6"/></svg></button>
+      </div>
+    </div>
     {% include "partials/header.html" %}
     {% include "partials/drawer.html" %}
     {% block body %}

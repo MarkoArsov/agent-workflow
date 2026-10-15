@@ -5,8 +5,8 @@ import shutil
 import sys
 from pathlib import Path
 from tests.helpers import PACKAGE, WorkspaceTest
-from agent_workflow import runner, manifest, state
-from agent_workflow.util import WorkflowError, write_json
+from agentflow import runner, manifest, state
+from agentflow.util import WorkflowError, write_json
 
 class RunnerTests(WorkspaceTest):
     def fixture(self, steps, *, stages=None):
@@ -22,6 +22,9 @@ class RunnerTests(WorkspaceTest):
         self.env["WORKFLOW_TEST_SCENARIO"] = str(self.scenario)
         binaries = self.root / "bin"; binaries.mkdir()
         for name in ("codex", "claude", "agent"):
+            if os.name == "nt":
+                (binaries / (name + ".cmd")).write_text(f'@"{sys.executable}" "{PACKAGE / "tests/fixtures/provider_double.py"}" %*\r\n')
+                continue
             shutil.copy(PACKAGE / "tests/fixtures/provider_double.py", binaries / name)
             (binaries / name).chmod(0o755)
         os.environ["PATH"] = str(binaries) + os.pathsep + self.env["PATH"]
@@ -92,7 +95,7 @@ class RunnerTests(WorkspaceTest):
     def test_implementation_cannot_rewrite_assertion_proven_tests(self):
         self.fixture([{"writes": {"test_app.py": "import unittest\nfrom app import VALUE\nclass Behavior(unittest.TestCase):\n def test_behavior(self): self.assertEqual(VALUE, 2)\n"}},
                       {"writes": {"test_app.py": "import unittest\nclass Behavior(unittest.TestCase):\n def test_behavior(self): self.assertTrue(True)\n"}}])
-        with self.assertRaisesRegex(WorkflowError, "Assertion-proven"):
+        with self.assertRaisesRegex(WorkflowError, "frozen by implement-tests"):
             runner.run(self.project, self.plan)
 
     def test_profile_change_requires_explicit_rebind(self):
@@ -105,13 +108,50 @@ class RunnerTests(WorkspaceTest):
         result = runner.run(self.project, self.plan, resume=True, rebind=True)
         self.assertEqual(result["status"], "complete")
         self.assertEqual(len(result["revisions"]), 1)
-        self.assertIn(".agent-workflow/project.json", result["initial_dirty"]["app"])
+        self.assertIn(".agentflow/project.json", result["initial_dirty"]["app"])
 
     def test_implementation_cannot_add_tests_outside_the_frozen_red_set(self):
         self.fixture([{"writes": {"test_app.py": "import unittest\nfrom app import VALUE\nclass Behavior(unittest.TestCase):\n def test_behavior(self): self.assertEqual(VALUE, 2)\n"}},
                       {"writes": {"app.py": "VALUE = 2\n", "test_extra.py": "# Unverified new test\n"}}])
-        with self.assertRaisesRegex(WorkflowError, "Assertion-proven"):
+        with self.assertRaisesRegex(WorkflowError, "frozen by implement-tests"):
             runner.run(self.project, self.plan)
+
+    def green_only(self, steps):
+        root = self.fixture(steps)
+        self.plan["checks"][0]["phases"] = ["green"]
+        self.plan["approved_no_red_reason"] = "Relocated tests pass today; implement demonstrates red."
+        return root
+
+    def test_green_only_test_stage_counts_tests_written_before_an_input_pause(self):
+        passing = "import unittest\nfrom app import VALUE\nclass Behavior(unittest.TestCase):\n def test_behavior(self): self.assertEqual(VALUE, 1)\n def test_moved(self): self.assertTrue(VALUE)\n"
+        self.green_only([{"session": "asking-session", "writes": {"test_app.py": passing},
+                          "report": {"status": "needs_input", "question": "Keep retrying the local stack?"}}, {}, {}, {}])
+        self.assertEqual(runner.run(self.project, self.plan)["status"], "needs_input")
+        result = runner.run(self.project, self.plan, resume=True, answer="Yes.")
+        self.assertEqual(result["status"], "complete")
+        evidence = result["stage_evidence"]["implement-tests"]
+        self.assertEqual((evidence["problems"], evidence["checks"][0]["phase"]), ([], "green"))
+        self.assertIn("test_app.py", result["red_test_files"]["app"])
+
+    def test_green_only_test_stage_must_change_test_paths(self):
+        self.green_only([{}])
+        result = runner.run(self.project, self.plan)
+        self.assertEqual(result["status"], "failed")
+        self.assertIn("implement-tests changed no declared test_paths", result["stage_evidence"]["implement-tests"]["problems"])
+
+    def test_manifest_requires_red_or_an_explicit_no_red_reason(self):
+        self.fixture([{}])
+        self.plan["checks"][0]["phases"] = ["green"]
+        with self.assertRaisesRegex(WorkflowError, "approved_no_red_reason"):
+            manifest.validate(self.plan, self.project)
+        self.plan["approved_no_red_reason"] = " "
+        with self.assertRaisesRegex(WorkflowError, "must explain"):
+            manifest.validate(self.plan, self.project)
+        self.plan["approved_no_red_reason"] = "Red is demonstrated in implement."
+        manifest.validate(self.plan, self.project)
+        self.plan["checks"][0]["phases"] = ["red", "green"]
+        with self.assertRaisesRegex(WorkflowError, "conflicts"):
+            manifest.validate(self.plan, self.project)
 
     def test_inactivity_and_stalled_inner_tool_are_bounded(self):
         for behavior, expected in (({"sleep": 3}, "inactive"), ({"tool_stall": True}, "tool-stalled")):
