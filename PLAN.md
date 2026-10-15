@@ -393,6 +393,10 @@ The runner must be complete and usable, not a script that only prints prompts.
 
 - `specify` writes the complete approved plan: prompt, product requirements,
   implementation approach, deferred scope, and a validated pipeline manifest.
+- Every `specify` invocation is planning-only, including small follow-ups and revisions.
+  Present the plan (or scope delta), request implementation approval, and stop before
+  product, test, configuration, or generated-code changes. Prior approval of another
+  scope does not authorize the extension.
 - The manual lane needs a concise plan and in-session checks without detached stages.
 - Test changes in the full lane use independent test authoring and assertion-level
   red evidence. Compile errors, missing imports, and broken setup are not red proof.
