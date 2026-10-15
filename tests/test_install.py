@@ -11,6 +11,28 @@ from agent_workflow.extensions import copy_skill, new_skill
 from agent_workflow.util import WorkflowError, read_json, write_json
 
 class InstallTests(WorkspaceTest):
+    def test_publish_workflow_resolves_without_project_setup_or_mutating_caller(self):
+        caller = self.repo("unconfigured application")
+        before = self.git(caller, "rev-parse", "HEAD")
+        for linked in (False, True):
+            with self.subTest(linked=linked):
+                install.install(PACKAGE, link=linked)
+                wrapper = self.home / ".agents/skills/af-publish-workflow/scripts/dispatch.py"
+                resolved = self.invoke(wrapper, caller).strip()
+                expected = PACKAGE if linked else self.home / "data/agent-workflow/versions/0.1.0"
+                self.assertEqual(resolved, str(expected / "skills/publish-workflow/SKILL.md"))
+                native = self.invoke(expected / "skills/publish-workflow/scripts/resolve.py", caller).strip()
+                self.assertEqual(native, resolved)
+                self.assertEqual(self.git(caller, "rev-parse", "HEAD"), before)
+                self.assertEqual(self.git(caller, "status", "--porcelain"), "")
+                self.assertFalse((caller / ".agent-workflow").exists())
+                # The global exception must not bypass setup for ordinary project skills.
+                ordinary = subprocess.run(
+                    [sys.executable, str(self.home / ".agents/skills/af-review/scripts/dispatch.py")],
+                    cwd=caller, env=self.clean_env(), capture_output=True, text=True)
+                self.assertNotEqual(ordinary.returncode, 0)
+                install.uninstall()
+
     def clean_env(self):
         return {k: v for k, v in self.env.items() if k != "AGENT_WORKFLOW_PACKAGE"}
 

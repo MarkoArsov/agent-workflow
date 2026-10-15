@@ -1,8 +1,25 @@
 ---
-description: Prepare and publish a reviewed release of the package.
+description: Publish workflow changes through a pull request, or prepare a reviewed package release.
 ---
 
-# Publish a release
+# Publish workflow changes
+
+Run **af-publish-workflow** to collect this workflow checkout's local edits and all commits
+missing from the remote default branch into a draft GitHub pull request. A clean working tree
+with unpublished commits is supported. The skill resolves the workflow source checkout even
+when invoked from an application project; copied installations need an explicit source checkout.
+
+An optional short summary guides the PR title. Use **af-publish-workflow --dry-run** to inspect
+the included work, checks, and proposed PR without committing or publishing. A dry run may fetch
+remote metadata and run checks. The normal invocation verifies the full change, commits reviewed
+edits on a feature branch, pushes normally, and creates or updates the matching PR. Already-pushed
+feature commits remain part of that PR until merged. Other local branches are not collected.
+
+This requires Git, authenticated GitHub CLI access, and the checkout's development dependencies.
+The command name follows the installed discovery prefix if it is changed. Adding the skill does
+not publish anything; publication requires invoking it or explicitly requesting that action.
+
+## Publish a release
 
 Publication is a separate maintainer action after local verification.
 

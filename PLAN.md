@@ -1,5 +1,17 @@
 # agent-workflow implementation plan
 
+## Approved extension: publish workflow
+
+Add a maintainer skill that publishes the workflow source checkout's unpublished commits and
+reviewed local edits through a feature-branch draft PR. Resolve the source, remote, and default
+branch without machine-specific assumptions. Support a dry run, existing-PR reuse, and resuming
+partial publication without force-pushing or losing edits. Make the skill discoverable without
+project setup and include it in the generated documentation. Creating the skill does not publish
+the current changes. Validate isolated discovery/install behavior and the required package checks.
+
+Completed: skill and linked discovery installed; 81 isolated tests pass, strict documentation
+build passes, and 2,204 internal links/assets validate. No remote publication was performed.
+
 ## Approved extension: model routing (14 October 2026)
 
 Implement a portable standard-library evaluator and versioned model resources,
