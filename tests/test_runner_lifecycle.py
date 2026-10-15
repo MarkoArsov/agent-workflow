@@ -2,12 +2,43 @@ from __future__ import annotations
 import json
 import os
 import time
+from pathlib import Path
 from unittest.mock import patch
 from tests.helpers import WorkspaceTest
 from agentflow import runner, state
-from agentflow.util import WorkflowError, read_json, write_json
+from agentflow.util import WorkflowError, digest, json_text, read_json, write_json
 
 class RunnerLifecycleTests(WorkspaceTest):
+    def test_binding_is_identical_with_windows_legacy_and_utf8_defaults(self):
+        self.fixture([{}])
+        text = "Plan caf\u00e9 \u2014 preserve the approved scope.\n"
+        plan_file = Path(self.plan["_directory"]) / self.plan["plan_files"][0]
+        plan_file.write_bytes(text.encode("utf-8"))
+        skill = self.project.config / "skills/implement/SKILL.md"
+        skill.parent.mkdir(parents=True)
+        skill.write_bytes(("---\nname: implement\ndescription: Implement the approved change.\n---\n" + text).encode("utf-8"))
+        (skill.parent / "notes.txt").write_bytes(text.encode("utf-8"))
+        reference = self.project.root / self.project.profile["extensions"]["references"] / "scope.md"
+        reference.parent.mkdir(parents=True, exist_ok=True)
+        reference.write_bytes(text.encode("utf-8"))
+        original = Path.read_text
+        def with_default(encoding):
+            def read(path, *args, **kwargs):
+                if not args and kwargs.get("encoding") is None:
+                    kwargs["encoding"] = encoding
+                return original(path, *args, **kwargs)
+            return read
+        with patch.object(Path, "read_text", with_default("utf-8")):
+            expected = runner.binding(self.project, self.plan)
+        saved = self.root / "saved-binding.json"
+        write_json(saved, expected)
+        with patch.object(Path, "read_text", with_default("cp1252")):
+            actual = runner.binding(self.project, self.plan)
+            restored = read_json(saved)
+        self.assertEqual(digest(json_text(actual)), digest(json_text(expected)))
+        self.assertEqual(restored, expected)
+        self.assertEqual(actual["plans"][self.plan["plan_files"][0]], text)
+
     def fixture(self, steps):
         from tests.test_runner import RunnerTests
         return RunnerTests.fixture(self, steps, stages=["implement"])

@@ -19,12 +19,12 @@ def binding(project, manifest):
     directory = Path(manifest["_directory"])
     for name in manifest["plan_files"]:
         path = contained(directory, name)
-        if not path.is_file() or not path.read_text().strip():
+        if not path.is_file() or not path.read_text(encoding="utf-8").strip():
             raise WorkflowError(f"Complete the approved plan file: {name}")
-        plans[name] = path.read_text()
+        plans[name] = path.read_text(encoding="utf-8")
     result = snapshot(project)
     result["package_version"] = __version__
-    result["package_references"] = {p.name: p.read_text() for p in (package_root() / "references").glob("*.md")}
+    result["package_references"] = {p.name: p.read_text(encoding="utf-8") for p in (package_root() / "references").glob("*.md")}
     result["manifest"] = {k: v for k, v in manifest.items() if not k.startswith("_")}
     result["plans"] = plans
     return result
@@ -142,7 +142,7 @@ def prompt_for(bound, manifest, stage, checkouts, before, feedback=None, custom=
             path = contained(Path(checkouts[item["repository"]]), item["path"])
             if not path.is_file():
                 raise WorkflowError(f"Missing stage input: {item}")
-            parts.append(f"INPUT {item['repository']}/{item['path']}\n{path.read_text()}")
+            parts.append(f"INPUT {item['repository']}/{item['path']}\n{path.read_text(encoding="utf-8")}")
     if stage == "review":
         for row in manifest["repositories"]:
             root = Path(checkouts[row["id"]])

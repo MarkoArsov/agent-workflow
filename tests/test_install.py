@@ -227,12 +227,13 @@ class InstallTests(WorkspaceTest):
         self.assertEqual(len(result["files"]), 3 * len(install.catalog(package=source)) + (2 if os.name == "nt" else 1))
         receipt = install.installation_root() / "receipt.json"
         before = receipt.read_bytes()
-        original = (claude / "af-review/SKILL.md").read_text()
+        original = (claude / "af-review/SKILL.md").read_bytes()
         (claude / "af-review/SKILL.md").write_text("keep modified adapter")
         with self.assertRaisesRegex(WorkflowError, "conflicts"):
             install.sync_linked()
         self.assertEqual(receipt.read_bytes(), before)
-        (claude / "af-review/SKILL.md").write_text(original)
+        # Restore the exact installer-owned bytes, without Windows newline translation.
+        (claude / "af-review/SKILL.md").write_bytes(original)
         marker = read_json(source / "workflow-package.json")
         marker["discovery"]["prefix"] = "renamed"
         write_json(source / "workflow-package.json", marker)
@@ -245,7 +246,7 @@ class InstallTests(WorkspaceTest):
             with self.assertRaisesRegex(OSError, "simulated"):
                 install.sync_linked()
         self.assertEqual(receipt.read_bytes(), before)
-        self.assertEqual((claude / "af-review/SKILL.md").read_text(), original)
+        self.assertEqual((claude / "af-review/SKILL.md").read_bytes(), original)
         self.assertFalse((claude / "renamed-setup/SKILL.md").exists())
 
     def test_project_pin_precedes_link_and_incompatible_link_is_rejected(self):

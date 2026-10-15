@@ -18,7 +18,7 @@ def read_json(path: Path, default=None):
     if not path.exists():
         return default
     try:
-        return json.loads(path.read_text())
+        return json.loads(path.read_text(encoding="utf-8"))
     except (ValueError, OSError) as exc:
         raise WorkflowError(f"Cannot read {path}: {exc}") from exc
 
