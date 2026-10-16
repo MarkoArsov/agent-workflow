@@ -142,7 +142,7 @@ def prompt_for(bound, manifest, stage, checkouts, before, feedback=None, custom=
             path = contained(Path(checkouts[item["repository"]]), item["path"])
             if not path.is_file():
                 raise WorkflowError(f"Missing stage input: {item}")
-            parts.append(f"INPUT {item['repository']}/{item['path']}\n{path.read_text(encoding="utf-8")}")
+            parts.append(f"INPUT {item['repository']}/{item['path']}\n{path.read_text(encoding='utf-8')}")
     if stage == "review":
         for row in manifest["repositories"]:
             root = Path(checkouts[row["id"]])
