@@ -11,11 +11,11 @@ ROOT = Path(__file__).resolve().parents[1]
 SKILL_CATEGORIES = {
     "Core workflow": ("setup", "specify", "implement-pipeline", "list-pipeline", "pipeline-workflow", "project-setup", "issue-writer", "draft-rfc"),
     "Implementation and verification": ("implement-tests", "implement", "review", "understand", "review-guide"),
-    "Git and delivery": ("checkout-branch", "sync-base", "commit", "push", "commit-and-push", "draft-pr", "merge-to-base"),
+    "Git and delivery": ("checkout-branch", "sync-base", "commit", "push", "commit-and-push", "draft-pr", "publish-workflow", "merge-to-base"),
     "Worktrees and environments": ("worktree-start", "worktree-list", "worktree-remove", "environment-status", "environment-release"),
     "Pull requests and design review": ("address-pr-comments", "diagnose-ci", "peer-pr-review", "peer-rfc-review", "request-review", "pr-preflight"),
     "End-to-end testing": ("e2e-test-overview", "e2e-test-engineering", "test-on-staging"),
-    "Workflow maintenance": ("add-rule", "prune-context", "project-customize", "wizard"),
+    "Workflow maintenance": ("update-models", "add-rule", "prune-context", "project-customize", "wizard"),
 }
 
 # Intent → skills (validated to exist), optional CLI follow-up text, and an optional joiner.
@@ -27,7 +27,9 @@ FAST_LOOKUP = (
     ("See what is configured and running", ("list-pipeline",), "or `status`"),
     ("Respond to a paused task", ("implement-pipeline",), "or `answer TASK --file`"),
     ("Recheck after a fix", ("implement",), "or `verify PLAN --phase green`"),
-    ("Publish changes", ("commit-and-push",), ""),
+    ("Publish task changes", ("commit-and-push",), ""),
+    ("Publish workflow-package changes", ("publish-workflow",), ""),
+    ("Refresh model and effort defaults", ("update-models",), ""),
     ("Open a draft pull request", ("draft-pr",), ""),
     ("Check a pull request before sending it", ("pr-preflight",), ""),
     ("Handle pull request feedback", ("address-pr-comments",), ""),
@@ -50,6 +52,8 @@ def category_for(name):
     return "Other"
 
 def rendered():
+    discovery = json.loads((ROOT / "workflow-package.json").read_text(encoding="utf-8")).get("discovery", {})
+    prefix = discovery.get("prefix", "af")
     entries = []
     for path in sorted((ROOT / "skills").glob("*/SKILL.md")):
         if path.is_symlink():
@@ -77,7 +81,7 @@ def rendered():
     skills = [
         "---\ntitle: Skills\ndescription: Find the right skill for the job, then browse every bundled skill.\nquestion: Which skill should I use?\nfooter: docs\nfooter_order: 5\n---\n",
         "# Skill reference\n",
-        f"!!! summary \"In one minute\"\n    - New project? Run `setup` first. Then `specify`, and `implement` for a small change or `implement-pipeline` for the full run.\n    - The other {len(entries) - 4} skills are for focused work, review, delivery, recovery, and maintenance.\n    - Standalone installs invoke **af-NAME**; the native Claude plugin uses **agentflow:NAME**.\n    - Project overrides take precedence in direct invocation and in runner stages.\n",
+        f"!!! summary \"In one minute\"\n    - New project? Run `setup` first. Then `specify`, and `implement` for a small change or `implement-pipeline` for the full run.\n    - The other {len(entries) - 4} skills are for focused work, review, delivery, recovery, and maintenance.\n    - Standalone installs invoke **{prefix}-NAME**; the native Claude plugin uses **agentflow:NAME**.\n    - Project overrides take precedence in direct invocation and in runner stages.\n",
         "## Fast lookup\n",
         "\n".join(lookup) + "\n",
         "## All skills\n",

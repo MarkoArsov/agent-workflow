@@ -7,7 +7,7 @@ from pathlib import Path
 from .util import WorkflowError, contained, digest, identifier, package_root, read_json, write_json
 
 def metadata(path: Path) -> dict:
-    text = path.read_text()
+    text = path.read_text(encoding="utf-8")
     if not text.startswith("---\n") or "\n---" not in text[4:]:
         raise WorkflowError(f"Skill needs YAML frontmatter: {path}")
     header = text.split("---", 2)[1]
@@ -51,9 +51,9 @@ def copy_skill(project, name: str, package=None) -> Path:
     resolver = destination / "scripts/resolve.py"
     resolver.unlink(missing_ok=True)
     path = destination / "SKILL.md"
-    text = path.read_text()
+    text = path.read_text(encoding="utf-8")
     text = re.sub(r"<!-- resolver:start -->.*?<!-- resolver:end -->\n*", "", text, flags=re.S)
-    path.write_text(text)
+    path.write_text(text, encoding="utf-8", newline="")
     lock = read_json(project.config / "overrides.lock.json", {})
     lock[name] = {"version": project.profile["package"]["version"], "sha256": digest((source / "SKILL.md").read_bytes())}
     write_json(project.config / "overrides.lock.json", lock)
@@ -67,18 +67,18 @@ def new_skill(project, name: str, description: str) -> Path:
     if path.exists():
         raise WorkflowError("Skill already exists")
     path.parent.mkdir(parents=True)
-    path.write_text(f"---\nname: {name}\ndescription: {json.dumps(description)}\n---\n\n# {name.replace('-', ' ').title()}\n\nDescribe the intended outcome and project-specific procedure here.\n")
+    path.write_text(f"---\nname: {name}\ndescription: {json.dumps(description)}\n---\n\n# {name.replace('-', ' ').title()}\n\nDescribe the intended outcome and project-specific procedure here.\n", encoding="utf-8", newline="")
     return path
 
 def snapshot(project, package=None) -> dict:
     result = {"profile": project.profile, "skills": {}}
     for name, info in catalog(project, package).items():
         folder = Path(info["path"]).parent
-        assets = {str(p.relative_to(folder)): {"sha256": digest(p.read_bytes()), "content": p.read_text(errors="replace")}
+        assets = {str(p.relative_to(folder)): {"sha256": digest(p.read_bytes()), "content": p.read_text(encoding="utf-8", errors="replace")}
                   for p in sorted(folder.rglob("*")) if p.is_file() and not p.is_symlink() and p.name != "SKILL.md" and "__pycache__" not in p.parts}
-        result["skills"][name] = {"origin": info["origin"], "content": Path(info["path"]).read_text(), "assets": assets}
+        result["skills"][name] = {"origin": info["origin"], "content": Path(info["path"]).read_text(encoding="utf-8"), "assets": assets}
     for key in ("rules", "references", "connectors"):
         directory = contained(project.root, project.profile["extensions"][key])
-        result[key] = {str(p.relative_to(directory)): p.read_text() for p in sorted(directory.rglob("*")) if p.is_file() and not p.is_symlink()}
+        result[key] = {str(p.relative_to(directory)): p.read_text(encoding="utf-8") for p in sorted(directory.rglob("*")) if p.is_file() and not p.is_symlink()}
     result["stages"] = read_json(contained(project.root, project.profile["extensions"]["stages"]), [])
     return result

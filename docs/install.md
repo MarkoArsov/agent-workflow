@@ -145,3 +145,36 @@ The scripts are short and readable: [install.sh](https://github.com/MarkoArsov/a
 Agent Flow was previously named Scorebook. The GitHub repository still uses its original name, agent-workflow.
 
 To update or remove it later, see [update and remove](lifecycle.md).
+
+## Follow a development checkout
+
+For a machine that should use every local edit immediately, link the global runtime:
+
+~~~sh
+python3 install.py --global --link
+python3 install.py --global --sync
+~~~
+
+The first command registers this checkout without copying the runtime. Skills, scripts,
+and references load from it on the next invocation, including uncommitted changes.
+The second command reconciles discovery entries when skills are added, removed, renamed,
+or their descriptions change. It does nothing when the installation is current.
+Run it after edits, or schedule it locally. On macOS, a user LaunchAgent can run the
+absolute Python and installer paths with `--global --sync`, `RunAtLoad`, and a
+`StartInterval` of 30 seconds. Keep that machine-specific service outside this repo.
+
+Public skill names come from `workflow-package.json`: `discovery.prefix` currently
+uses `af`; `discovery.aliases` can rename individual entry points. Change these values and
+sync to replace the old owned entry points. Display-name changes do not move storage. Pre-rename linked installations retain their
+existing receipt and settings directory while discovery and the launcher adopt the new name. If you move the checkout itself,
+rerun the link command from its new location and update your local scheduler's path.
+
+A project with its own installed runtime keeps that pinned runtime. Other projects use
+the linked runtime when its profile schema is compatible, even when its version changes.
+Project overrides still take precedence. Setup uses global discovery for bundled skills
+when this linked checkout covers the project's hosts, so future renames cannot leave stale
+local copies. Custom project skills and existing project discovery files are refreshed
+through the project's reviewed setup/refresh flow; global sync never rewrites projects.
+Modified discovery files cause a conflict instead of being overwritten. Uninstall removes
+owned discovery entries and leaves the source checkout intact. Remove any local scheduler
+when you uninstall. Restart the host if its skill selector retains older names.

@@ -22,6 +22,20 @@ Host or command transport with capabilities and per-provider headless availabili
 | providers | yes | object |
 | env_refs | no | array |
 
+## Model routing settings
+
+Independent workflow-global or project routing policy. Changes use an exact scoped proposal; task routes are saved separately.
+
+| Field | Required | Format |
+|---|---|---|
+| schema_version | yes | constant |
+| providers | no | array |
+| defaults | no | object |
+| pins | no | object |
+| adaptive_stages | no | array |
+| blocked | no | array |
+| registry | no | array |
+
 ## Pipeline task
 
 An approved plan with explicit repository access, executable outcomes, ordered stages, and provider routes.
@@ -41,6 +55,7 @@ An approved plan with explicit repository access, executable outcomes, ordered s
 | delivery | no | object |
 | references | no | array |
 | connectors | no | array |
+| model_selection | no | object |
 
 ## Project profile
 

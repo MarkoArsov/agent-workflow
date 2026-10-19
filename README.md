@@ -73,3 +73,7 @@ python3 -m unittest discover -s tests -v
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for docs builds and checks, and [Contribute and develop](https://agentic.markoarsov.com/development/) for the full guide.
+
+For a live development checkout, use `python3 install.py --global --link` and
+`python3 install.py --global --sync` after adding or renaming skills. See the
+[linked installation guide](docs/install.md#follow-a-development-checkout).

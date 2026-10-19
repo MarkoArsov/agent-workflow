@@ -41,6 +41,11 @@ def custom_stages(project):
 def validate(value, project):
     if not isinstance(value, dict) or value.get("schema_version") != 1:
         raise WorkflowError("Expected pipeline schema_version 1")
+    if "model_selection" in value:
+        from .model_policy.core import validate_snapshot
+        validate_snapshot(value["model_selection"], value.get("routes", {}))
+        if value["model_selection"].get("unresolved"):
+            raise WorkflowError("Resolve model selection before executing this plan")
     identifier(value.get("task", ""))
     stages = value.get("stages", [])
     if not isinstance(stages, list) or len(stages) != len(set(stages)) or "implement" not in stages:

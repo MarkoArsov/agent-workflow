@@ -1,5 +1,30 @@
 # agentflow implementation plan
 
+## Approved extension: publish workflow
+
+Add a maintainer skill that publishes the workflow source checkout's unpublished commits and
+reviewed local edits through a feature-branch draft PR. Resolve the source, remote, and default
+branch without machine-specific assumptions. Support a dry run, existing-PR reuse, and resuming
+partial publication without force-pushing or losing edits. Make the skill discoverable without
+project setup and include it in the generated documentation. Creating the skill does not publish
+the current changes. Validate isolated discovery/install behavior and the required package checks.
+
+Completed: skill and linked discovery installed; 81 isolated tests pass, strict documentation
+build passes, and 2,204 internal links/assets validate. No remote publication was performed.
+
+## Approved extension: model routing (14 October 2026)
+
+Implement a portable standard-library evaluator and versioned model resources,
+independent workflow-local global/project settings, native provider discovery,
+and an update-models skill with explicit scope and exact-diff approval. Every
+specify evaluates task routes and model-specific effort offline, with no additional
+model call. Preserve explicit routes and approved plan snapshots. Balanced usage
+is the default; maximum effort is opt-in. Support every subset of the three hosts.
+Export the same component for independent downstream workflows with checksums;
+keep their private adapters and configuration outside this public repository.
+Verify isolated scope/transaction/discovery/evaluation/compatibility fixtures and
+the existing full test and strict documentation suites. No publishing is included.
+
 Status: Local implementation, verification, and handoff complete. Publication remains a separate action.
 License: MIT.
 Delivery: a new public repository, developed and committed locally first.
@@ -380,6 +405,10 @@ The runner must be complete and usable, not a script that only prints prompts.
 
 - `specify` writes the complete approved plan: prompt, product requirements,
   implementation approach, deferred scope, and a validated pipeline manifest.
+- Every `specify` invocation is planning-only, including small follow-ups and revisions.
+  Present the plan (or scope delta), request implementation approval, and stop before
+  product, test, configuration, or generated-code changes. Prior approval of another
+  scope does not authorize the extension.
 - The manual lane needs a concise plan and in-session checks without detached stages.
 - Test changes in the full lane use independent test authoring and assertion-level
   red evidence. Compile errors, missing imports, and broken setup are not red proof.
@@ -739,3 +768,30 @@ a real-host smoke check.
 - [Cursor CLI permissions](https://cursor.com/docs/cli/reference/permissions)
 - [MkDocs build and preview](https://www.mkdocs.org/getting-started/)
 - [GitHub Pages Actions workflow](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages)
+
+## 16. Local development installation
+
+Additional approved scope: replace a previous machine-local workflow with this package,
+and keep the machine's global runtime linked to the checkout as it evolves. Use `af-*`
+discovery names and `af-setup` for now, with names configurable independently of stable
+internal skill IDs. Global sync reconciles additions, removals, descriptions, and renames;
+project-owned configuration remains under its reviewed setup flow. A machine-local
+scheduler may call sync automatically. Keep migration inventories, backups, service
+configuration, and any organisation-specific handoff outside this public repository.
+
+Acceptance covers live runtime edits, version changes, project override precedence,
+independent project pins, schema compatibility, discovery renames/additions/removals,
+shared host directories, collision protection, rollback, and source-preserving uninstall.
+All automated checks use isolated homes. Installing on the actual machine is a separate,
+explicitly authorised operation after those checks pass. No publication is included.
+
+Model-routing extension evidence (14 October 2026):
+
+- 80 isolated automated tests passed, including all provider subsets, scope and
+  transactional recovery, effort selection, offline evaluation, export checks,
+  and preservation of explicit routes and saved snapshots.
+- Native read-only discovery succeeded for all three installed hosts; model
+  listing is not an inference/access test. No model-generation calls were made.
+- Strict MkDocs build, 2,189 internal link/asset checks, and skill validation passed.
+- Public-content scan found zero findings. Separate downstream installation and
+  private workflow evidence remain outside this package. No publication occurred.
