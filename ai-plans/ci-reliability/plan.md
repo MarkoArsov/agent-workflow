@@ -1,6 +1,6 @@
 # Reliable GitHub Actions verification
 
-Status: proposed; implementation requires approval.
+Status: approved and implemented; local verification passed. Hosted verification is recorded with the PR.
 Lane: in-session implementation with behavioral regression tests and final review.
 
 ## Request
@@ -63,3 +63,21 @@ This plan authorizes local changes and commits only. Pushing, opening another PR
 Defer Pages redesign, hosted runner replacement, broad action/version upgrades, removing OS coverage, release/bootstrap redesign, blanket retry policies, and history rewriting. No evidence currently justifies them. Remote download smoke tests may be proposed separately if needed; do not silently remove claims from the support matrix.
 
 Approval requested: Approve this plan and start implementation?
+
+
+## Approved delivery update
+
+The user approved the plan and explicitly invoked implement, commit-and-push, and draft-pr.
+This additionally authorizes pushing the task branch and opening a draft PR after verification.
+No merge, ready-for-review action, tracker update, deployment, or branch-protection edit is included.
+
+## Implementation evidence
+
+- Behavioral red proof: the attribution fixture failed on the rejected public trailer; the deduplication fixture observed 104 Git calls against a limit of six; the denylist fixture showed unredacted diagnostic terms.
+- The Windows workflow harness and workflow-trigger checks failed before the workflow changes. Their green checks execute the embedded Python harness with fake native shells and verify child-home isolation, both install shells, command verification, failure propagation, and cleanup. Actual native Windows execution remains a hosted CI check.
+- A separate red/green fixture confirms that credential-like filenames, email-like filenames, and private denylist terms are redacted in CLI diagnostics.
+- Branch-protection lookup reported no classic branch protection and no applicable rules; existing core, docs, and windows-install job identifiers are retained. Added one audit job.
+- Full repository history scan now uses two batched Git calls and checks unchanged path/blob pairs once. Local current-tree/history and built-site scans report zero findings; no private denylist was supplied.
+- Strict documentation build and 4,782 internal link/asset checks passed. No product runtime or installer implementation was changed.
+
+- Final local verification: all 103 tests passed; generated-document check, strict documentation build, 4,782 link/asset checks, working-tree/history and built-site public-content scans, YAML parsing, and diff whitespace checks passed.
