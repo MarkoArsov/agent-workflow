@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>plovi settings</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="../../tokens.css">
+<link rel="stylesheet" href="../../components.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.grp{display:flex;flex-direction:column;gap:10px}
+.grp h2{margin:0}
+.radio-row{display:flex;gap:12px;align-items:flex-start;padding:14px 16px;border-bottom:1px solid var(--border);cursor:pointer}
+.radio-row:last-child{border-bottom:0}
+.radio-row b{display:block;font-size:13px;font-weight:500}
+.radio-row span{font-size:12px;line-height:17px;color:var(--ink-muted)}
+.diff{margin:0;padding:12px 14px;border:1px solid var(--border);border-radius:var(--radius-lg);background:var(--surface-sunken);font:400 12px/20px var(--font-mono);white-space:pre;overflow-x:auto}
+.diff .del{color:var(--danger)}.diff .add{color:var(--success)}.diff .ctx{color:var(--ink-subtle)}
+</style>
+</helmet>
+<div data-theme="{{theme}}" class="pl-shell" style="height: 900px; position: relative">
+<dc-import name="Sidebar" active="settings" theme="{{theme}}" hint-size="232px,900px"></dc-import>
+<main class="pl-panel">
+<div class="pl-panel__head"><div class="pl-crumbs"><span>agent-workflow</span><span style="color: var(--ink-subtle)">›</span><b>Settings</b></div></div>
+<div style="flex: 1; min-height: 0; overflow-y: auto; padding: 40px 24px 120px">
+<div style="max-width: 640px; margin: 0 auto; display: flex; flex-direction: column; gap: 32px">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<h1 class="title" style="margin: 0">Settings</h1>
+<p style="margin: 0; color: var(--ink-muted)">Saved to plovi.toml in this repository. Every change is reviewed before it is written.</p>
+</div>
+
+<section class="grp">
+<h2 class="heading">Picking up work</h2>
+<div class="pl-group">
+<div class="pl-setting"><div class="pl-setting__text"><b>Pick up new issues</b><span>Start work on issues with the label below.</span></div><input type="checkbox" class="pl-switch" checked aria-label="Pick up new issues"></div>
+<div class="pl-setting"><div class="pl-setting__text"><b>Label</b><span>Only issues with this label are picked up.</span></div><input class="pl-input" value="plovi" aria-label="Label" style="width: 140px"></div>
+<div class="pl-setting"><div class="pl-setting__text"><b>Check every</b><span>How often plovi looks for new issues and PR updates.</span></div><span style="display: flex; gap: 8px; align-items: center"><input class="pl-input pl-input--num" value="5" aria-label="Minutes between checks"><span style="color: var(--ink-muted)">min</span></span></div>
+</div>
+</section>
+
+<section class="grp">
+<h2 class="heading">Limits</h2>
+<div class="pl-group">
+<div class="pl-setting"><div class="pl-setting__text"><b>Running tasks</b><span>Agents working at the same time.</span></div><span style="display: flex; align-items: center; border: 1px solid var(--border-control); border-radius: var(--radius-md); height: 30px; box-sizing: border-box"><button class="pl-btn pl-btn--ghost pl-btn--icon" aria-label="Fewer" onClick="{{dec}}" style="height: 28px">−</button><span class="pl-num" style="min-width: 28px; text-align: center">{{running}}</span><button class="pl-btn pl-btn--ghost pl-btn--icon" aria-label="More" onClick="{{inc}}" style="height: 28px">+</button></span></div>
+<div class="pl-setting"><div class="pl-setting__text"><b>Waiting for review</b><span>When this many PRs wait for people, no new work starts.</span></div><input class="pl-input pl-input--num" value="3" aria-label="Waiting for review"></div>
+<div class="pl-setting"><div class="pl-setting__text"><b>Attempts per stage</b><span>After this many failures a task stops and asks you.</span></div><input class="pl-input pl-input--num" value="3" aria-label="Attempts per stage"></div>
+</div>
+</section>
+
+<section class="grp">
+<h2 class="heading">Autonomy</h2>
+<div class="pl-group" role="radiogroup" aria-label="Autonomy">
+<sc-for list="{{modes}}" as="m" hint-placeholder-count="3">
+<label class="radio-row"><input class="pl-radio" type="radio" name="autonomy" checked="{{m.on}}" onChange="{{m.pick}}" style="margin-top: 2px"><span style="display: block"><b>{{m.title}}</b><span>{{m.desc}}</span></span></label>
+</sc-for>
+</div>
+</section>
+
+<section class="grp">
+<h2 class="heading">Agents</h2>
+<div class="pl-group">
+<sc-for list="{{stages}}" as="s" hint-placeholder-count="5">
+<div class="pl-setting"><div class="pl-setting__text"><b>{{s.name}}</b><span>{{s.desc}}</span></div><select class="pl-select" aria-label="{{s.name}} agent" style="width: 220px"><option>{{s.value}}</option><option>Claude Code · Opus</option><option>Claude Code · Sonnet</option><option>Codex</option><option>Cursor</option></select></div>
+</sc-for>
+</div>
+</section>
+</div>
+</div>
+
+<sc-if value="{{dirty}}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; left: 0; right: 0; bottom: 20px; display: flex; justify-content: center; padding: 0 24px; z-index: 2">
+<div class="pl-savebar" style="width: 100%; max-width: 640px"><span><b class="pl-num">{{changeCount}}</b> unsaved {{changeWord}}</span><button class="pl-btn pl-btn--ghost pl-btn--sm" onClick="{{discard}}">Discard</button><button class="pl-btn pl-btn--primary pl-btn--sm" onClick="{{review}}">Review and save</button></div>
+</div>
+</sc-if>
+<sc-if value="{{saved}}" hint-placeholder-val="{{ false }}">
+<div class="pl-toast" role="status" style="position: absolute; left: 16px; bottom: 16px; z-index: 2"><svg class="pl-si pl-si--done" viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="6.5" fill="currentColor"/><path d="M4.3 7.2 6.1 9 9.7 5.2" style="stroke: var(--surface)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Saved. Applies from the next check.</div>
+</sc-if>
+</main>
+
+<sc-if value="{{reviewing}}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; inset: 0; z-index: 5; background: var(--overlay); display: flex; align-items: flex-start; justify-content: center; padding: 140px 16px 0">
+<div role="dialog" aria-label="Review changes" style="width: 100%; max-width: 520px; box-sizing: border-box; padding: 20px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--radius-xl); box-shadow: var(--shadow-pop); display: flex; flex-direction: column; gap: 14px">
+<h2 class="heading" style="margin: 0">Review changes to plovi.toml</h2>
+<div class="diff"><sc-for list="{{diff}}" as="d" hint-placeholder-count="3"><div class="{{d.cls}}">{{d.line}}</div></sc-for></div>
+<p style="margin: 0; color: var(--ink-muted)">{{impact}}</p>
+<div style="display: flex; justify-content: flex-end; gap: 8px"><button class="pl-btn" onClick="{{back}}">Back</button><button class="pl-btn pl-btn--primary" onClick="{{save}}">Save</button></div>
+</div>
+</div>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+constructor(props) { super(props); this.state = { base: { running: 4, mode: 'ready' }, running: 4, mode: 'auto', reviewing: false, saved: false }; }
+renderVals() {
+const st = this.state;
+const M = [
+{ id: 'assisted', title: 'Assisted', desc: 'Agents open draft PRs. You mark them ready and merge.' },
+{ id: 'ready', title: 'Mark ready', desc: 'plovi marks PRs ready when checks pass. You merge.' },
+{ id: 'auto', title: 'Auto-merge low-risk PRs', desc: 'GitHub merges PRs that only touch docs or tests, after checks pass and you approve. Everything else waits for you.' } ];
+const modes = M.map((m) => ({ ...m, on: st.mode === m.id, pick: () => this.setState({ mode: m.id, saved: false }) }));
+const diff = [];
+if (st.running !== st.base.running) { diff.push({ cls: 'del', line: '- running_tasks = ' + st.base.running }); diff.push({ cls: 'add', line: '+ running_tasks = ' + st.running }); }
+if (st.mode !== st.base.mode) {
+diff.push({ cls: 'del', line: '- autonomy = "' + st.base.mode + '"' }); diff.push({ cls: 'add', line: '+ autonomy = "' + st.mode + '"' });
+if (st.mode === 'auto') diff.push({ cls: 'add', line: '+ auto_merge_paths = ["docs/**", "tests/**"]' }); }
+const changeCount = (st.running !== st.base.running ? 1 : 0) + (st.mode !== st.base.mode ? 1 : 0);
+return { theme: this.props.theme ?? 'dark', modes, running: st.running, diff, dirty: changeCount > 0 && !st.reviewing, changeCount, changeWord: changeCount === 1 ? 'change' : 'changes',
+reviewing: st.reviewing, saved: st.saved && changeCount === 0,
+impact: st.mode === 'auto' ? 'PRs that only touch docs or tests will merge on their own once checks pass and you approve.' : 'Applies from the next check. Running tasks are not interrupted.',
+inc: () => this.setState({ running: Math.min(st.running + 1, 12), saved: false }),
+dec: () => this.setState({ running: Math.max(st.running - 1, 1), saved: false }),
+discard: () => this.setState({ running: st.base.running, mode: st.base.mode }),
+review: () => this.setState({ reviewing: true }),
+back: () => this.setState({ reviewing: false }),
+save: () => this.setState({ base: { running: st.running, mode: st.mode }, reviewing: false, saved: true }),
+stages: [
+{ name: 'Specify and plan', desc: 'Reads the issue, asks questions, writes the plan.', value: 'Claude Code · Opus' },
+{ name: 'Implement', desc: 'Writes the code in the task worktree.', value: 'Claude Code · Sonnet' },
+{ name: 'Verify', desc: 'A second agent checks the work against the plan.', value: 'Codex' },
+{ name: 'Review fixes', desc: 'Handles failing checks and review comments.', value: 'Claude Code · Sonnet' } ] };
+}
+}
+</script>
+</body>
+</html>

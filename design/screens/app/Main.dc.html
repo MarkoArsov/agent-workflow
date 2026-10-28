@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>plovi board</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="../../tokens.css">
+<link rel="stylesheet" href="../../components.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a:not([class]){color:var(--accent);text-decoration:none}a:not([class]):hover{color:var(--ink)}
+.dot{width:7px;height:7px;border-radius:9999px;flex:none;margin-top:7px;background:var(--ink-subtle)}
+.dot-you{background:var(--ink-muted)}.dot-run{background:var(--accent)}.dot-bad{background:var(--danger)}.dot-ok{background:var(--success)}.dot-ask{background:var(--attention)}
+.peek-label{font-size:12px;font-weight:500;color:var(--ink-subtle)}
+.opt{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-md);cursor:pointer}
+.opt:has(input:checked){border-color:var(--accent)}
+.opt b{display:block;font-weight:500}
+.opt span{color:var(--ink-muted);font-size:12px;line-height:17px}
+.sub{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:10px;padding:8px 0;border-top:1px solid var(--border);font-size:13px}
+</style>
+</helmet>
+<div data-theme="{{theme}}" class="pl-shell" style="position: relative; height: 900px">
+<dc-import name="Sidebar" active="board" theme="{{theme}}" on-ask="{{openAsk}}" hint-size="232px,900px"></dc-import>
+<main class="pl-panel">
+<div class="pl-panel__head">
+<div class="pl-crumbs"><span>agent-workflow</span><span style="color: var(--ink-subtle)">›</span><b>Board</b></div>
+<span style="margin-left: auto; display: flex; gap: 4px">
+<button class="pl-btn pl-btn--ghost pl-btn--sm" aria-pressed="{{onlyYou}}" onClick="{{toggleYou}}" style="{{youStyle}}"><span style="width: 6px; height: 6px; border-radius: 9999px; background: var(--attention)"></span>Needs you <span class="pl-num" style="color: var(--ink-subtle)">{{needCount}}</span></button>
+<button class="pl-btn pl-btn--ghost pl-btn--sm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg>Filter</button>
+</span>
+</div>
+<div style="flex: 1; min-height: 0; overflow: auto; padding: 16px">
+<div style="display: flex; gap: 16px; align-items: flex-start; width: max-content; padding-bottom: 16px">
+
+<section class="pl-col" aria-label="Ready">
+<div class="pl-col__head" title="Approved, not started. Waiting for a slot or a dependency."><svg class="pl-si pl-si--ready" viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="5.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="1.6 1.85"/></svg>Ready<span class="pl-col__count">{{counts.ready}}</span></div>
+<sc-for list="{{cols.ready}}" as="c" hint-placeholder-count="2">
+<button class="pl-card" aria-current="{{c.cur}}" onClick="{{c.pick}}"><span class="pl-card__top"><span class="pl-card__id">{{c.id}}</span><span class="pl-avatar" title="{{c.agent}}">{{c.ag}}</span></span><span class="pl-card__title">{{c.title}}</span><sc-if value="{{c.hasFlag}}" hint-placeholder-val="{{ false }}"><span class="pl-card__foot"><span class="pl-flag pl-flag--{{c.flagKind}}">{{c.flag}}</span></span></sc-if></button>
+</sc-for>
+</section>
+
+<section class="pl-col" aria-label="Planning">
+<div class="pl-col__head" title="Specifying, or waiting on your answer or plan approval."><svg class="pl-si pl-si--planning" viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="5.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M7 7V3.5A3.5 3.5 0 0 1 10.5 7Z" fill="currentColor"/></svg>Planning<span class="pl-col__count">{{counts.planning}}</span></div>
+<sc-for list="{{cols.planning}}" as="c" hint-placeholder-count="3">
+<button class="pl-card" aria-current="{{c.cur}}" onClick="{{c.pick}}"><span class="pl-card__top"><span class="pl-card__id">{{c.id}}</span><span class="pl-avatar" title="{{c.agent}}">{{c.ag}}</span></span><span class="pl-card__title">{{c.title}}</span><sc-if value="{{c.hasFlag}}" hint-placeholder-val="{{ false }}"><span class="pl-card__foot"><span class="pl-flag pl-flag--{{c.flagKind}}">{{c.flag}}</span></span></sc-if></button>
+</sc-for>
+</section>
+
+<section class="pl-col" aria-label="Building">
+<div class="pl-col__head" title="Plan approved, an agent is working. No PR yet."><svg class="pl-si pl-si--building" viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="5.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M7 7V3.5A3.5 3.5 0 0 1 7 10.5Z" fill="currentColor"/></svg>Building<span class="pl-col__count">{{counts.building}}</span></div>
+<sc-for list="{{cols.building}}" as="c" hint-placeholder-count="3">
+<button class="pl-card" aria-current="{{c.cur}}" onClick="{{c.pick}}"><span class="pl-card__top"><span class="pl-card__id">{{c.id}}</span><span class="pl-avatar" title="{{c.agent}}">{{c.ag}}</span></span><span class="pl-card__title">{{c.title}}</span><sc-if value="{{c.hasFlag}}" hint-placeholder-val="{{ false }}"><span class="pl-card__foot"><span class="pl-flag pl-flag--{{c.flagKind}}">{{c.flag}}</span></span></sc-if></button>
+</sc-for>
+</section>
+
+<section class="pl-col" aria-label="Shepherding">
+<div class="pl-col__head" title="PR open. Checks or review comments being handled."><svg class="pl-si pl-si--shepherding" viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="5.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M7 7V3.5A3.5 3.5 0 1 1 3.5 7Z" fill="currentColor"/></svg>Shepherding<span class="pl-col__count">{{counts.shepherding}}</span></div>
+<sc-for list="{{cols.shepherding}}" as="c" hint-placeholder-count="2">
+<button class="pl-card" aria-current="{{c.cur}}" onClick="{{c.pick}}"><span class="pl-card__top"><span class="pl-card__id">{{c.id}}</span><span class="pl-avatar" title="{{c.agent}}">{{c.ag}}</span></span><span class="pl-card__title">{{c.title}}</span><sc-if value="{{c.hasFlag}}" hint-placeholder-val="{{ false }}"><span class="pl-card__foot"><span class="pl-flag pl-flag--{{c.flagKind}}">{{c.flag}}</span></span></sc-if></button>
+</sc-for>
+</section>
+
+<section class="pl-col" aria-label="In review">
+<div class="pl-col__head" title="Checks green, comments handled. Waiting for a person."><svg class="pl-si pl-si--review" viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="5.5" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="7" cy="7" r="3" fill="currentColor"/></svg>In review<span class="pl-col__count">{{counts.review}}</span></div>
+<sc-for list="{{cols.review}}" as="c" hint-placeholder-count="1">
+<button class="pl-card" aria-current="{{c.cur}}" onClick="{{c.pick}}"><span class="pl-card__top"><span class="pl-card__id">{{c.id}}</span><span class="pl-avatar" title="{{c.agent}}">{{c.ag}}</span></span><span class="pl-card__title">{{c.title}}</span><sc-if value="{{c.hasFlag}}" hint-placeholder-val="{{ false }}"><span class="pl-card__foot"><span class="pl-flag pl-flag--{{c.flagKind}}">{{c.flag}}</span></span></sc-if></button>
+</sc-for>
+</section>
+
+<section class="pl-col" aria-label="Done">
+<div class="pl-col__head" title="Merged. Cancelled tasks are hidden."><svg class="pl-si pl-si--done" viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="6.5" fill="currentColor"/><path d="M4.3 7.2 6.1 9 9.7 5.2" style="stroke: var(--surface)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Done<span class="pl-col__count">{{counts.done}}</span></div>
+<sc-for list="{{cols.done}}" as="c" hint-placeholder-count="2">
+<button class="pl-card" aria-current="{{c.cur}}" onClick="{{c.pick}}"><span class="pl-card__top"><span class="pl-card__id">{{c.id}}</span><span class="pl-avatar" title="{{c.agent}}">{{c.ag}}</span></span><span class="pl-card__title">{{c.title}}</span><sc-if value="{{c.hasFlag}}" hint-placeholder-val="{{ false }}"><span class="pl-card__foot"><span class="pl-flag pl-flag--{{c.flagKind}}">{{c.flag}}</span></span></sc-if></button>
+</sc-for>
+</section>
+
+</div>
+</div>
+
+<sc-if value="{{hasTask}}" hint-placeholder-val="{{ true }}">
+<aside class="pl-peek" aria-label="Task details">
+<div class="pl-peek__bar">
+<sc-if value="{{t.ik.ready}}" hint-placeholder-val="{{ false }}"><svg class="pl-si pl-si--ready" viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="5.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="1.6 1.85"/></svg></sc-if>
+<sc-if value="{{t.ik.planning}}" hint-placeholder-val="{{ false }}"><svg class="pl-si pl-si--planning" viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="5.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M7 7V3.5A3.5 3.5 0 0 1 10.5 7Z" fill="currentColor"/></svg></sc-if>
+<sc-if value="{{t.ik.building}}" hint-placeholder-val="{{ true }}"><svg class="pl-si pl-si--building" viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="5.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M7 7V3.5A3.5 3.5 0 0 1 7 10.5Z" fill="currentColor"/></svg></sc-if>
+<sc-if value="{{t.ik.shepherding}}" hint-placeholder-val="{{ false }}"><svg class="pl-si pl-si--shepherding" viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="5.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M7 7V3.5A3.5 3.5 0 1 1 3.5 7Z" fill="currentColor"/></svg></sc-if>
+<sc-if value="{{t.ik.review}}" hint-placeholder-val="{{ false }}"><svg class="pl-si pl-si--review" viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="5.5" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="7" cy="7" r="3" fill="currentColor"/></svg></sc-if>
+<sc-if value="{{t.ik.done}}" hint-placeholder-val="{{ false }}"><svg class="pl-si pl-si--done" viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="6.5" fill="currentColor"/><path d="M4.3 7.2 6.1 9 9.7 5.2" style="stroke: var(--surface)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></sc-if>
+<sc-if value="{{t.ik.failed}}" hint-placeholder-val="{{ false }}"><svg class="pl-si pl-si--failed" viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="6.5" fill="currentColor"/><path d="M4.9 4.9l4.2 4.2M9.1 4.9 4.9 9.1" style="stroke: var(--surface)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></sc-if>
+<span class="pl-num" style="margin-left: 4px">{{t.id}}</span><span>in</span><span style="color: var(--ink-muted)">{{t.colName}}</span>
+<span style="margin-left: auto; display: flex; gap: 2px; align-items: center">
+<sc-if value="{{t.canTakeOver}}" hint-placeholder-val="{{ true }}"><button class="pl-btn pl-btn--ghost pl-btn--sm" onClick="{{takeOver}}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 17 6-5-6-5M12 19h8"/></svg>Take over</button></sc-if>
+<button class="pl-btn pl-btn--ghost pl-btn--icon" aria-label="More actions" title="Pause, retry, cancel, raw log"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button>
+<button class="pl-btn pl-btn--ghost pl-btn--icon" aria-label="Close" onClick="{{close}}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+</span>
+</div>
+<div class="pl-peek__body">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<h2 class="title" style="margin: 0">{{t.title}}</h2>
+<p style="margin: 0; color: var(--ink-muted)">{{t.summary}}</p>
+</div>
+
+<sc-if value="{{t.isWithYou}}" hint-placeholder-val="{{ false }}">
+<div class="pl-ask-card" style="border-color: var(--attention)">
+<div class="peek-label" style="color: var(--attention)">With you</div>
+<p style="margin: 0">You're working on this in Claude Code. plovi paused the task and won't touch its folder until you hand it back.</p>
+<div class="pl-code"><pre style="padding: 8px 12px"><span class="p">$ </span>plovi take-over {{t.num}} --open</pre></div>
+<p style="margin: 0; color: var(--ink-muted); font-size: 12px">When you hand it back, tests, lint and the plan check run again before anything is pushed.</p>
+<div style="display: flex; gap: 8px"><button class="pl-btn pl-btn--primary" onClick="{{handBack}}">Hand back</button><button class="pl-btn pl-btn--ghost">Discard my changes</button></div>
+</div>
+</sc-if>
+
+<sc-if value="{{t.isQuestion}}" hint-placeholder-val="{{ false }}">
+<div class="pl-ask-card">
+<div class="peek-label">Question for you</div>
+<p style="margin: 0">{{t.question}}</p>
+<div role="radiogroup" aria-label="Answer" style="display: flex; flex-direction: column; gap: 6px">
+<sc-for list="{{t.options}}" as="o" hint-placeholder-count="2">
+<label class="opt"><input class="pl-radio" type="radio" name="answer" checked="{{o.on}}" style="margin-top: 2px"><span style="display: block; color: var(--ink); font-size: 13px"><b>{{o.title}}</b><span>{{o.desc}}</span></span></label>
+</sc-for>
+</div>
+<div><button class="pl-btn pl-btn--primary" onClick="{{resolve}}">Send answer</button></div>
+</div>
+</sc-if>
+
+<sc-if value="{{t.isPlan}}" hint-placeholder-val="{{ false }}">
+<div class="pl-ask-card">
+<div class="peek-label">Plan to approve · {{t.planSize}}</div>
+<ol style="margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px">
+<sc-for list="{{t.steps}}" as="s" hint-placeholder-count="4"><li>{{s}}</li></sc-for>
+</ol>
+<div style="display: flex; gap: 8px"><button class="pl-btn pl-btn--primary" onClick="{{resolve}}">Approve plan</button><button class="pl-btn">Request changes</button></div>
+</div>
+</sc-if>
+
+<sc-if value="{{t.isBreakdown}}" hint-placeholder-val="{{ false }}">
+<div class="pl-ask-card">
+<div class="peek-label">Breakdown to approve · 3 tasks, up to 2 at once</div>
+<div>
+<sc-for list="{{t.subtasks}}" as="s" hint-placeholder-count="3">
+<div class="sub"><span class="pl-num" style="color: var(--ink-subtle)">{{s.id}}</span><span>{{s.title}}</span><span style="color: var(--ink-subtle); font-size: 12px">{{s.after}}</span></div>
+</sc-for>
+</div>
+<div style="display: flex; gap: 8px"><button class="pl-btn pl-btn--primary" onClick="{{resolve}}">Approve breakdown</button><button class="pl-btn">Request changes</button></div>
+</div>
+</sc-if>
+
+<sc-if value="{{t.isReview}}" hint-placeholder-val="{{ false }}">
+<div class="pl-ask-card">
+<div class="peek-label">Ready for review</div>
+<p style="margin: 0">PR #87 passed every check. 3 files, <span class="pl-num">+88 −12</span>, all inside the worktree module.</p>
+<div style="display: flex; gap: 8px"><a class="pl-btn pl-btn--primary" href="https://github.com">Review on GitHub</a></div>
+</div>
+</sc-if>
+
+<sc-if value="{{t.isFailed}}" hint-placeholder-val="{{ false }}">
+<div class="pl-ask-card">
+<div class="peek-label" style="color: var(--danger)">Failed at Verify after 3 attempts</div>
+<p style="margin: 0">test_compaction_keeps_midnight expected 24 entries and got 23. Each attempt changed the test data instead of the date range query.</p>
+<div style="display: flex; gap: 8px"><button class="pl-btn pl-btn--primary" onClick="{{takeOver}}">Take over</button><button class="pl-btn" onClick="{{resolve}}">Retry with a note</button></div>
+</div>
+</sc-if>
+
+<dl class="pl-props">
+<dt>Stage</dt><dd>{{t.stage}}</dd>
+<dt>Agent</dt><dd><span class="pl-avatar">{{t.ag}}</span>{{t.agent}}</dd>
+<dt>Pull request</dt><dd style="{{t.prStyle}}">{{t.prText}}</dd>
+<dt>Branch</dt><dd class="pl-num" style="font-size: 12px; color: var(--ink-muted)">{{t.branch}}</dd>
+<dt>Progress</dt><dd style="display: block; padding-top: 10px"><div class="pl-stepper"><sc-for list="{{t.progress}}" as="p" hint-placeholder-count="6"><i data-s="{{p}}"></i></sc-for></div></dd>
+</dl>
+
+<section style="display: flex; flex-direction: column; gap: 4px">
+<div class="peek-label">Activity</div>
+<ol class="pl-activity">
+<sc-for list="{{t.activity}}" as="a" hint-placeholder-count="3">
+<li><span class="dot dot-{{a.k}}"></span><span>{{a.text}}</span><time>{{a.time}}</time></li>
+</sc-for>
+</ol>
+</section>
+</div>
+</aside>
+</sc-if>
+
+<sc-if value="{{hasToast}}" hint-placeholder-val="{{ false }}">
+<div class="pl-toast" role="status" style="position: absolute; left: 16px; bottom: 16px; z-index: 3"><svg class="pl-si pl-si--done" viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="6.5" fill="currentColor"/><path d="M4.3 7.2 6.1 9 9.7 5.2" style="stroke: var(--surface)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>{{toast}}<button class="pl-btn pl-btn--ghost pl-btn--sm" onClick="{{dismiss}}">Dismiss</button></div>
+</sc-if>
+</main>
+
+<sc-if value="{{askOpen}}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; inset: 0; z-index: 5; background: var(--overlay); display: flex; justify-content: center; align-items: flex-start; padding: 120px 16px 0">
+<button aria-label="Close" onClick="{{closeAsk}}" style="position: absolute; inset: 0; border: 0; background: transparent; cursor: default"></button>
+<div class="pl-cmdk" role="dialog" aria-label="Ask plovi" style="position: relative">
+<div class="pl-cmdk__input"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true" style="width: 16px; height: 16px"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input aria-label="Ask plovi" value="why is #153 failing?"><span class="pl-kbd">esc</span></div>
+<div class="pl-cmdk__group" style="border-bottom: 1px solid var(--border)">
+<div class="pl-cmdk__label">Answer</div>
+<p style="margin: 0; padding: 2px 8px 10px; line-height: 21px">#153 failed Verify three times. The date range query treats the end of the day as inclusive, so the last entry of each day is dropped. Each attempt changed the test data instead of the query.</p>
+</div>
+<div class="pl-cmdk__group">
+<div class="pl-cmdk__label">Actions</div>
+<button class="pl-cmdk__item" aria-selected="true" onClick="{{askTakeOver}}" style="width: 100%; border: 0; background: var(--surface-hover); font: inherit; cursor: pointer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 17 6-5-6-5M12 19h8"/></svg>Take over #153<span class="pl-kbd">↵</span></button>
+<button class="pl-cmdk__item" onClick="{{askRetry}}" style="width: 100%; border: 0; background: transparent; font: inherit; cursor: pointer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>Retry #153 with this answer as a note</button>
+<button class="pl-cmdk__item" onClick="{{askOpenTask}}" style="width: 100%; border: 0; background: transparent; font: inherit; cursor: pointer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>Open #153<span class="pl-subtle">Compact old ledger entries</span></button>
+</div>
+<div class="pl-cmdk__foot"><span>↑↓ move</span><span>↵ run</span><span>esc close</span></div>
+</div>
+</div>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark"},"scenario":{"editor":"enum","options":["board","takeover","ask","closed"],"default":"board"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+constructor(props) {
+super(props);
+const sc = props.scenario ?? 'board';
+this.state = {
+open: sc === 'board' ? '#146' : sc === 'takeover' ? '#153' : null,
+withYou: sc === 'takeover' ? '#153' : null,
+askOpen: sc === 'ask',
+done: {}, onlyYou: false, toast: null };
+}
+renderVals() {
+const st = this.state;
+const theme = this.props.theme ?? 'dark';
+const CC = { ag: 'CC', agent: 'Claude Code' }, CX = { ag: 'CX', agent: 'Codex' }, CU = { ag: 'CU', agent: 'Cursor' };
+let tasks = [
+{ id: '#158', col: 'ready', type: 'queued', title: 'Add Codex harness adapter', ...CX, summary: 'Starts after #151 merges.' },
+{ id: '#160', col: 'ready', type: 'queued', title: 'Document the policy file', ...CC, summary: 'Starts when a slot frees.' },
+{ id: '#170', col: 'planning', type: 'breakdown', title: 'Rebrand to plovi', ...CC, summary: 'Too big for one pull request, so plovi split it into smaller tasks.',
+subtasks: [ { id: '#171', title: 'Rename config and state paths', after: 'after #151' }, { id: '#172', title: 'Rename af-* skills to plovi-*', after: 'after #171' }, { id: '#173', title: 'Rewrite README and docs copy', after: 'after #172' } ] },
+{ id: '#142', col: 'planning', type: 'question', title: 'Move run logs to the ledger', ...CC, summary: 'Store every run in the ledger instead of loose log files.',
+question: 'There are 1,240 existing log files. Migrate them into the ledger, or start fresh?',
+options: [ { title: 'Migrate them', desc: 'One-time import, about 20 minutes. Old paths redirect.', on: true }, { title: 'Start fresh', desc: 'Old files stay read-only in .plovi/logs.', on: false } ] },
+{ id: '#149', col: 'planning', type: 'plan', title: 'Add the scorecard command', ...CC, summary: 'A weekly summary of merged work, your time per PR, and cost.', planSize: '4 steps, 6 files',
+steps: [ 'Count merged and reverted PRs from the ledger', 'Count your answers, approvals and take-overs per PR', 'Add plovi scorecard with a --week flag', 'Post the summary to the Inbox every Monday' ] },
+{ id: '#146', col: 'building', type: 'running', title: 'Add retry to the GitHub sync', ...CC, summary: 'Retry failed GitHub API calls with backoff so one bad response never stops a sync.' },
+{ id: '#151', col: 'building', type: 'running', title: 'Rename the CLI to plovi', ...CC, summary: 'New plovi command. af keeps working as an alias until 1.0.' },
+{ id: '#153', col: 'building', type: 'failed', title: 'Compact old ledger entries', ...CX, summary: 'Merge each day of ledger entries older than 30 days into one record.' },
+{ id: '#138', col: 'shepherding', type: 'shepherd', title: 'Reconcile on restart', ...CC, pr: '#84', note: 'PR #84 · fixing checks', summary: 'Pick up where it left off after the machine restarts.' },
+{ id: '#140', col: 'shepherding', type: 'shepherd', title: 'Board API endpoint', ...CU, pr: '#85', note: 'PR #85 · 2 comments', summary: 'Serve board data to the app from the ledger.' },
+{ id: '#133', col: 'review', type: 'review', title: 'Clean up finished worktrees', ...CC, pr: '#87', summary: 'Remove worktrees a day after their PR merges.' },
+{ id: '#129', col: 'done', type: 'done', title: 'Run history in the ledger', ...CC, pr: '#80', summary: 'Every stage run is recorded with its outcome.' },
+{ id: '#131', col: 'done', type: 'done', title: 'Parse palette commands', ...CU, pr: '#81', summary: 'The palette understands questions and setting changes.' } ];
+
+tasks = tasks.flatMap((t) => {
+if (!st.done[t.id]) return [t];
+if (t.type === 'question') return [{ ...t, type: 'specifying' }];
+if (t.type === 'plan') return [{ ...t, col: 'ready', type: 'queued' }];
+if (t.type === 'breakdown') return t.subtasks.map((s) => ({ id: s.id, col: 'ready', type: 'queued', title: s.title, ...CC, summary: 'Part of #170 Rebrand to plovi. Starts ' + s.after + '.' }));
+if (t.type === 'failed') return [{ ...t, type: 'retry' }];
+return [t];
+});
+if (st.withYou) tasks = tasks.map((t) => t.id === st.withYou ? { ...t, type: 'withyou' } : t);
+if (st.handed) tasks = tasks.map((t) => t.id === st.handed ? { ...t, type: 'handback' } : t);
+
+const flagOf = (t) => ({
+question: ['Question for you', 'attention'], plan: ['Plan to approve', 'attention'], breakdown: ['Breakdown to approve', 'attention'],
+review: ['Ready for review', 'attention'], failed: ['Failed at Verify', 'danger'], withyou: ['With you', 'attention'],
+shepherd: [t.note, 'plain'], retry: ['Retrying · attempt 4', 'plain'], handback: ['Verifying your changes', 'plain'] }[t.type]);
+const needs = (t) => ['question', 'plan', 'breakdown', 'review', 'failed', 'withyou'].includes(t.type);
+
+const names = { ready: 'Ready', planning: 'Planning', building: 'Building', shepherding: 'Shepherding', review: 'In review', done: 'Done' };
+const cols = {}, counts = {};
+Object.keys(names).forEach((k) => { cols[k] = []; counts[k] = 0; });
+let sel = null;
+tasks.forEach((t) => {
+const f = flagOf(t);
+counts[t.col] += 1;
+if (st.onlyYou && !needs(t)) return;
+const cur = st.open === t.id;
+cols[t.col].push({ ...t, cur: cur ? 'true' : 'false', hasFlag: !!f, flag: f ? f[0] : '', flagKind: f ? f[1] : 'plain', pick: () => this.setState({ open: t.id }) });
+if (cur) sel = t;
+});
+
+let t = null;
+if (sel) {
+const ty = sel.type, col = sel.col;
+const num = sel.id.slice(1);
+const slug = sel.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').split('-').slice(0, 3).join('-');
+const prog = { ready: [], planning: ['done', 'wait'], building: ['done', 'done', 'now'], shepherding: ['done', 'done', 'done', 'done', 'now'], review: ['done', 'done', 'done', 'done', 'done', 'wait'], done: ['done', 'done', 'done', 'done', 'done', 'done'] }[col].slice();
+if (ty === 'specifying') prog[1] = 'now';
+if (ty === 'handback') { prog[2] = 'done'; prog[3] = 'now'; }
+if (ty === 'failed') { prog[2] = 'done'; prog[3] = 'fail'; }
+if (ty === 'withyou') { prog[2] = 'done'; prog[3] = 'wait'; }
+while (prog.length < 6) prog.push('');
+const stage = { queued: 'Not started · waiting for a slot', question: 'Specify · waiting on your answer', plan: 'Plan · waiting for your approval', breakdown: 'Plan · waiting for your approval', specifying: 'Plan · writing the plan', handback: 'Verify · checking your changes', running: 'Implement · attempt 2 of 3', failed: 'Verify · 3 of 3 attempts used', retry: 'Implement · attempt 4', withyou: 'Paused · with you', shepherd: sel.note, review: 'Review · waiting for you', done: 'Merged' }[ty];
+const act = {
+queued: [ { k: 'you', text: 'You labelled the issue plovi', time: 'Mon' }, { k: 'ok', text: 'Plan approved', time: 'Mon' } ],
+question: [ { k: 'you', text: 'You labelled the issue plovi', time: '11:40' }, { k: 'run', text: 'Claude Code read the issue and the code', time: '11:52' }, { k: 'ask', text: 'Asked you one question', time: '12:05' } ],
+plan: [ { k: 'you', text: 'You answered the open question', time: '13:30' }, { k: 'run', text: 'Claude Code wrote the plan', time: '13:58' }, { k: 'ask', text: 'Waiting for your approval', time: '13:58' } ],
+breakdown: [ { k: 'you', text: 'You labelled the epic plovi', time: '10:10' }, { k: 'run', text: 'Split into 3 tasks that touch different files', time: '10:31' }, { k: 'ask', text: 'Waiting for your approval', time: '10:31' } ],
+running: [ { k: 'you', text: 'You approved the plan', time: '14:02' }, { k: 'run', text: 'Claude Code started implementing', time: '14:21' }, { k: 'bad', text: 'Verify failed: 2 tests in sync_retry_test', time: '14:29' }, { k: 'run', text: 'Attempt 2 started with the failing tests attached', time: '14:30' } ],
+failed: [ { k: 'run', text: 'Codex started implementing', time: '09:05' }, { k: 'bad', text: 'Verify failed, attempt 1', time: '09:40' }, { k: 'bad', text: 'Verify failed, attempt 2', time: '10:22' }, { k: 'bad', text: 'Verify failed, attempt 3. Stopped and asked you', time: '11:01' } ],
+retry: [ { k: 'bad', text: 'Verify failed 3 times', time: '11:01' }, { k: 'you', text: 'You retried with a note', time: 'now' } ],
+specifying: [ { k: 'ask', text: 'Asked you one question', time: '12:05' }, { k: 'you', text: 'You answered: migrate them', time: 'now' }, { k: 'run', text: 'Claude Code is writing the plan', time: 'now' } ],
+handback: [ { k: 'you', text: 'You took over in Claude Code', time: '15:04' }, { k: 'you', text: 'You handed it back', time: 'now' }, { k: 'run', text: 'Running tests, lint and the plan check', time: 'now' } ],
+withyou: [ { k: 'bad', text: 'Verify failed 3 times', time: '11:01' }, { k: 'you', text: 'You took over in Claude Code', time: 'now' } ],
+shepherd: [ { k: 'run', text: 'Opened ' + (sel.pr ? 'PR ' + sel.pr : 'the PR'), time: '12:14' }, { k: 'bad', text: 'Lint failed on CI', time: '12:20' }, { k: 'run', text: 'Fixing the lint errors', time: '12:21' } ],
+review: [ { k: 'run', text: 'Opened PR #87', time: '13:02' }, { k: 'ok', text: 'All checks passed', time: '13:15' }, { k: 'ask', text: 'Waiting for your review', time: '13:15' } ],
+done: [ { k: 'ok', text: 'All checks passed', time: 'Tue' }, { k: 'you', text: 'You merged ' + (sel.pr ? 'PR ' + sel.pr : 'the PR'), time: 'Tue' } ] }[ty];
+const ikKey = ty === 'failed' ? 'failed' : col;
+const ik = { ready: false, planning: false, building: false, shepherding: false, review: false, done: false, failed: false };
+ik[ikKey] = true;
+t = { ...sel, num, colName: names[col], ik, stage, activity: act, progress: prog, branch: 'plovi/' + num + '-' + slug,
+prText: sel.pr ? 'PR ' + sel.pr : 'Not opened yet', prStyle: sel.pr ? 'color: var(--accent)' : 'color: var(--ink-subtle)',
+isQuestion: ty === 'question', isPlan: ty === 'plan', isBreakdown: ty === 'breakdown', isReview: ty === 'review', isFailed: ty === 'failed', isWithYou: ty === 'withyou',
+canTakeOver: ['running', 'failed', 'shepherd', 'retry'].includes(ty) };
+}
+const toastFor = { question: 'Answer sent. Planning continues.', plan: 'Plan approved. #149 moves to Ready.', breakdown: 'Breakdown approved. 3 tasks added to Ready.', failed: 'Retrying #153 with your note.' };
+const needCount = tasks.filter(needs).length;
+return { theme, cols, counts, t, hasTask: !!t, needCount, onlyYou: st.onlyYou ? 'true' : 'false',
+youStyle: st.onlyYou ? 'background: var(--surface-hover); color: var(--ink)' : '',
+toast: st.toast, hasToast: !!st.toast, askOpen: st.askOpen,
+toggleYou: () => this.setState({ onlyYou: !st.onlyYou }),
+close: () => this.setState({ open: null }),
+dismiss: () => this.setState({ toast: null }),
+resolve: () => { if (!sel) return; const ty = sel.type; const done = { ...st.done, [sel.id]: true }; this.setState({ done, toast: toastFor[ty] || null, open: ty === 'breakdown' ? null : sel.id }); },
+takeOver: () => { if (sel) this.setState({ withYou: sel.id, toast: null }); },
+handBack: () => this.setState({ withYou: null, handed: st.withYou, toast: 'Handed back. Verifying your changes.' }),
+openAsk: () => this.setState({ askOpen: true }),
+closeAsk: () => this.setState({ askOpen: false }),
+askTakeOver: () => this.setState({ askOpen: false, open: '#153', withYou: '#153' }),
+askRetry: () => this.setState({ askOpen: false, done: { ...st.done, '#153': true }, toast: toastFor.failed }),
+askOpenTask: () => this.setState({ askOpen: false, open: '#153' }) };
+}
+}
+</script>
+</body>
+</html>

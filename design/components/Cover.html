@@ -1,0 +1,35 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><link rel="stylesheet" href="../tokens.css"><link rel="stylesheet" href="../components.css"><title>Cover</title>
+<style>
+html,body{margin:0;height:288px;background:var(--bg);overflow:hidden}
+.c{position:relative;width:960px;height:288px}
+svg{position:absolute;inset:0}
+.sea{fill:var(--accent)}.slab{fill:var(--primary)}.cut{fill:var(--bg)}.amber{fill:var(--attention)}.hull{fill:var(--ink-muted)}
+.rule{fill:none;stroke:var(--border-strong);stroke-width:1}
+.t{position:absolute;left:48px;bottom:40px;max-width:440px;display:flex;flex-direction:column;gap:12px}
+.n{font:600 120px/.92 var(--font-sans);letter-spacing:-0.045em;color:var(--ink)}
+.g{font:400 14px/20px var(--font-sans);color:var(--ink-muted)}
+</style></head>
+<body>
+<div class="c">
+<svg viewBox="0 0 960 288" width="960" height="288" aria-hidden="true">
+<!--
+blocks: accent sail quarter-disc r=216 (space-16*3.375 ≈ 216), primary slab 160×288 (space-16*2.5), attention disc r=16 (space-4), ink-muted hull bar 296×8 (radius-full ends).
+arrangement: one tall primary slab bleeding off the right edge with a ground quarter-disc cut from its foot; the sea sail rises from the bottom edge beside it; amber dot sits on the slab like a masthead light.
+pattern: literal motif (sail, water) → three hairline quarter-arcs in border-strong, concentric with the sail, pitch space-6; chosen because the brand is a sailboat moving under its own power.
+scales: space-4, space-6, space-16; radius-full; border hairline 1px.
+-->
+<path class="rule" d="M520 288 A256 256 0 0 1 776 32"/>
+<path class="rule" d="M496 288 A280 280 0 0 1 776 8"/>
+<path class="rule" d="M544 288 A232 232 0 0 1 776 56"/>
+<path class="sea" d="M560 288 V72 A216 216 0 0 1 776 288 Z"/>
+<rect class="slab" x="800" y="0" width="160" height="288"/>
+<circle class="cut" cx="800" cy="288" r="96"/>
+<circle class="amber" cx="912" cy="48" r="16"/>
+<rect class="hull" x="504" y="272" width="296" height="8" rx="4"/>
+</svg>
+<div class="t"><div class="n">plovi</div><div class="g">Hand off the work. Keep the decisions.</div></div>
+</div>
+</body>
+</html>

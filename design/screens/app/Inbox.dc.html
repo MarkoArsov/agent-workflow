@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>plovi inbox</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="../../tokens.css">
+<link rel="stylesheet" href="../../components.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a:not([class]){color:var(--accent);text-decoration:none}a:not([class]):hover{color:var(--ink)}
+.peek-label{font-size:12px;font-weight:500;color:var(--ink-subtle)}
+.opt{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-md);cursor:pointer}
+.opt:has(input:checked){border-color:var(--accent)}
+.opt b{display:block;font-weight:500}
+.opt span{color:var(--ink-muted);font-size:12px;line-height:17px}
+.sub{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:10px;padding:8px 0;border-top:1px solid var(--border);font-size:13px}
+</style>
+</helmet>
+<div data-theme="{{theme}}" class="pl-shell" style="height: 900px">
+<dc-import name="Sidebar" active="inbox" theme="{{theme}}" hint-size="232px,900px"></dc-import>
+<main class="pl-panel">
+<div class="pl-panel__head">
+<div class="pl-crumbs"><b>Inbox</b></div>
+<span style="margin-left: auto; font-size: 12px; color: var(--ink-subtle)">{{openCount}} waiting · oldest first</span>
+</div>
+<div style="flex: 1; min-height: 0; display: flex; flex-wrap: wrap">
+<div style="flex: 1 1 300px; max-width: 380px; min-width: 0; border-right: 1px solid var(--border); padding: 8px; display: flex; flex-direction: column; gap: 2px; overflow-y: auto">
+<sc-for list="{{items}}" as="it" hint-placeholder-count="4">
+<button class="pl-row" aria-current="{{it.cur}}" onClick="{{it.pick}}">
+<span class="pl-row__unread" style="{{it.dotStyle}}"></span>
+<sc-if value="{{it.isReview}}" hint-placeholder-val="{{ false }}"><svg class="pl-si pl-si--review" viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="5.5" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="7" cy="7" r="3" fill="currentColor"/></svg></sc-if>
+<sc-if value="{{it.isPlanning}}" hint-placeholder-val="{{ true }}"><svg class="pl-si pl-si--planning" viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="5.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M7 7V3.5A3.5 3.5 0 0 1 10.5 7Z" fill="currentColor"/></svg></sc-if>
+<span class="pl-row__text"><span class="pl-row__title">{{it.title}}</span><span class="pl-row__meta">{{it.kind}} · {{it.id}}</span></span>
+<span class="pl-row__time">{{it.age}}</span>
+</button>
+</sc-for>
+<sc-if value="{{hasDecided}}" hint-placeholder-val="{{ false }}">
+<div style="padding: 16px 12px 6px; font-size: 12px; color: var(--ink-subtle)">Decided just now</div>
+<sc-for list="{{decided}}" as="d" hint-placeholder-count="1">
+<div style="display: flex; gap: 10px; align-items: center; padding: 6px 12px; font-size: 13px; color: var(--ink-subtle)"><svg class="pl-si pl-si--done" viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="6.5" fill="currentColor"/><path d="M4.3 7.2 6.1 9 9.7 5.2" style="stroke: var(--surface)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span style="flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{d.title}}</span></div>
+</sc-for>
+</sc-if>
+</div>
+
+<section style="flex: 999 1 420px; min-width: 0; overflow-y: auto">
+<sc-if value="{{hasSel}}" hint-placeholder-val="{{ true }}">
+<div style="max-width: 640px; padding: 32px 40px; display: flex; flex-direction: column; gap: 24px">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<div style="font-size: 12px; color: var(--ink-subtle)"><span class="pl-num">{{s.id}}</span> · {{s.kind}} · {{s.age}} ago</div>
+<h1 class="title" style="margin: 0">{{s.title}}</h1>
+<p style="margin: 0; color: var(--ink-muted)">{{s.summary}}</p>
+</div>
+
+<sc-if value="{{s.isQuestion}}" hint-placeholder-val="{{ false }}">
+<div class="pl-ask-card">
+<p style="margin: 0">There are 1,240 existing log files. Migrate them into the ledger, or start fresh?</p>
+<div role="radiogroup" aria-label="Answer" style="display: flex; flex-direction: column; gap: 6px">
+<label class="opt"><input class="pl-radio" type="radio" name="answer" checked style="margin-top: 2px"><span style="display: block; color: var(--ink); font-size: 13px"><b>Migrate them</b><span>One-time import, about 20 minutes. Old paths redirect.</span></span></label>
+<label class="opt"><input class="pl-radio" type="radio" name="answer" style="margin-top: 2px"><span style="display: block; color: var(--ink); font-size: 13px"><b>Start fresh</b><span>Old files stay read-only in .plovi/logs.</span></span></label>
+</div>
+<input class="pl-input" aria-label="Add a note" placeholder="Add a note for the agent (optional)" style="width: 100%">
+<div><button class="pl-btn pl-btn--primary" onClick="{{resolve}}">Send answer</button></div>
+</div>
+</sc-if>
+
+<sc-if value="{{s.isPlan}}" hint-placeholder-val="{{ false }}">
+<div class="pl-ask-card">
+<div class="peek-label">4 steps · 6 files · about 40 minutes of agent time</div>
+<ol style="margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px">
+<li>Count merged and reverted PRs from the ledger</li>
+<li>Count your answers, approvals and take-overs per PR</li>
+<li>Add <span class="pl-num">plovi scorecard</span> with a <span class="pl-num">--week</span> flag</li>
+<li>Post the summary to the Inbox every Monday</li>
+</ol>
+<div style="display: flex; gap: 8px"><button class="pl-btn pl-btn--primary" onClick="{{resolve}}">Approve plan</button><button class="pl-btn">Request changes</button></div>
+</div>
+</sc-if>
+
+<sc-if value="{{s.isBreakdown}}" hint-placeholder-val="{{ true }}">
+<div class="pl-ask-card">
+<div class="peek-label">3 tasks · up to 2 at once · no two touch the same files at the same time</div>
+<div>
+<div class="sub"><span class="pl-num" style="color: var(--ink-subtle)">#171</span><span>Rename config and state paths</span><span style="color: var(--ink-subtle); font-size: 12px">after #151</span></div>
+<div class="sub"><span class="pl-num" style="color: var(--ink-subtle)">#172</span><span>Rename af-* skills to plovi-*</span><span style="color: var(--ink-subtle); font-size: 12px">after #171</span></div>
+<div class="sub"><span class="pl-num" style="color: var(--ink-subtle)">#173</span><span>Rewrite README and docs copy</span><span style="color: var(--ink-subtle); font-size: 12px">after #172</span></div>
+</div>
+<div style="display: flex; gap: 8px"><button class="pl-btn pl-btn--primary" onClick="{{resolve}}">Approve breakdown</button><button class="pl-btn">Request changes</button></div>
+</div>
+</sc-if>
+
+<sc-if value="{{s.isReview}}" hint-placeholder-val="{{ false }}">
+<div class="pl-ask-card">
+<dl class="pl-props" style="row-gap: 2px">
+<dt>Pull request</dt><dd><a href="https://github.com">PR #87</a></dd>
+<dt>Checks</dt><dd><svg class="pl-si pl-si--done" viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="6.5" fill="currentColor"/><path d="M4.3 7.2 6.1 9 9.7 5.2" style="stroke: var(--surface)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>All 6 passed</dd>
+<dt>Changes</dt><dd>3 files · <span class="pl-num">+88 −12</span></dd>
+<dt>Risk</dt><dd>Low · worktree module only</dd>
+</dl>
+<div style="display: flex; gap: 8px"><a class="pl-btn pl-btn--primary" href="https://github.com" onClick="{{resolve}}">Review on GitHub</a></div>
+</div>
+</sc-if>
+
+<a href="Main.dc.html" style="font-size: 13px">Open on the board</a>
+</div>
+</sc-if>
+<sc-if value="{{empty}}" hint-placeholder-val="{{ false }}">
+<div style="height: 100%; min-height: 520px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; text-align: center; padding: 24px">
+<h2 class="heading" style="margin: 0">Nothing needs you</h2>
+<p style="margin: 0; max-width: 340px; color: var(--ink-muted)">3 tasks are running and 2 PRs are waiting on checks. New questions, plans and reviews show up here.</p>
+</div>
+</sc-if>
+</section>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+constructor(props) { super(props); this.state = { sel: '#170', done: [], seen: { '#170': true } }; }
+renderVals() {
+const st = this.state;
+const all = [
+{ id: '#170', type: 'breakdown', kind: 'Breakdown to approve', age: '3h', title: 'Rebrand to plovi', summary: 'Too big for one pull request, so plovi split it into 3 tasks. Approve to add them to Ready.' },
+{ id: '#142', type: 'question', kind: 'Question', age: '2h', title: 'Move run logs to the ledger', summary: 'The plan needs one decision before it can be written.' },
+{ id: '#133', type: 'review', kind: 'Ready for review', age: '1h', title: 'Clean up finished worktrees', summary: 'Checks are green and review comments are handled. Waiting for you to review and merge.' },
+{ id: '#149', type: 'plan', kind: 'Plan to approve', age: '25m', title: 'Add the scorecard command', summary: 'A weekly summary of merged work, your time per PR, and cost per accepted change.' } ];
+const open = all.filter((i) => !st.done.includes(i.id));
+let s = open.find((i) => i.id === st.sel) || null;
+const items = open.map((i) => ({ ...i, cur: s && s.id === i.id ? 'true' : 'false', isReview: i.type === 'review', isPlanning: i.type !== 'review',
+dotStyle: st.seen[i.id] ? 'visibility: hidden' : '', pick: () => this.setState({ sel: i.id, seen: { ...st.seen, [i.id]: true } }) }));
+if (s) s = { ...s, isQuestion: s.type === 'question', isPlan: s.type === 'plan', isBreakdown: s.type === 'breakdown', isReview: s.type === 'review' };
+const decided = all.filter((i) => st.done.includes(i.id));
+return { theme: this.props.theme ?? 'dark', items, s, hasSel: !!s, empty: open.length === 0, openCount: open.length, decided, hasDecided: decided.length > 0,
+resolve: () => { if (!s) return; const rest = open.filter((i) => i.id !== s.id); const next = rest[0] ? rest[0].id : null; this.setState({ done: [...st.done, s.id], sel: next, seen: next ? { ...st.seen, [next]: true } : st.seen }); } };
+}
+}
+</script>
+</body>
+</html>
