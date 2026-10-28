@@ -14,3 +14,4 @@ Commit logical changes locally. Publishing and remote changes require an explici
 Read PROJECT_WORKFLOW.md for this project's workflow defaults and custom skills.
 Do not apply workflow defaults from an unrelated ancestor project.
 <!-- agentflow:end -->
+Design: anything people see (app, docs site, brand) follows design/README.md and design/DESIGN.md; use only tokens from design/tokens.json.

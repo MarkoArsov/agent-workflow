@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>plovi states</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="../../tokens.css">
+<link rel="stylesheet" href="../../components.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.tile{display:flex;flex-direction:column;min-width:0;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-xl);overflow:hidden}
+.tile-head{display:flex;align-items:center;height:44px;padding:0 16px;border-bottom:1px solid var(--border);font-size:13px;color:var(--ink-muted)}
+.cap{font-size:12px;color:var(--ink-subtle);padding:0 4px}
+.sk{border-radius:var(--radius-sm);background:var(--surface-hover)}
+</style>
+</helmet>
+<div data-theme="{{theme}}" style="min-height: 900px; box-sizing: border-box; padding: 32px; background: var(--bg); color: var(--ink); font-family: var(--font-sans); display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 400px), 1fr)); gap: 24px; align-content: start">
+
+<div style="display: flex; flex-direction: column; gap: 10px">
+<div class="cap">New project, no tasks yet</div>
+<div class="tile" style="height: 380px">
+<div class="tile-head">Board</div>
+<div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 24px; text-align: center">
+<h2 class="heading" style="margin: 0">No tasks yet</h2>
+<p style="margin: 0; max-width: 300px; color: var(--ink-muted)">Label an issue <span class="pl-num">plovi</span> on GitHub and it shows up here within a few minutes.</p>
+<div class="pl-code" style="margin-top: 6px"><pre style="padding: 8px 12px"><span class="p">$ </span>gh issue edit 12 --add-label plovi</pre></div>
+</div>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 10px">
+<div class="cap">Loading</div>
+<div class="tile" style="height: 380px" aria-busy="true">
+<div class="tile-head">Board</div>
+<div style="display: flex; gap: 16px; padding: 16px">
+<div style="flex: 1; display: flex; flex-direction: column; gap: 8px"><div class="sk" style="height: 12px; width: 50%; margin: 8px 0"></div><div class="sk" style="height: 72px; border-radius: var(--radius-lg)"></div><div class="sk" style="height: 72px; border-radius: var(--radius-lg); opacity: .6"></div></div>
+<div style="flex: 1; display: flex; flex-direction: column; gap: 8px"><div class="sk" style="height: 12px; width: 60%; margin: 8px 0"></div><div class="sk" style="height: 72px; border-radius: var(--radius-lg)"></div></div>
+<div style="flex: 1; display: flex; flex-direction: column; gap: 8px"><div class="sk" style="height: 12px; width: 40%; margin: 8px 0"></div><div class="sk" style="height: 72px; border-radius: var(--radius-lg)"></div><div class="sk" style="height: 72px; border-radius: var(--radius-lg); opacity: .6"></div></div>
+</div>
+<p style="margin: auto 16px 16px; font-size: 12px; color: var(--ink-subtle)">Shapes only, no shimmer. Nothing is shown for the first 300 ms.</p>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 10px">
+<div class="cap">Something needs fixing</div>
+<div class="tile" style="height: 380px">
+<div class="tile-head">Board</div>
+<div style="display: flex; flex-direction: column; gap: 10px; padding: 16px">
+<div role="alert" style="display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: var(--radius-lg); background: var(--danger-soft)">
+<svg class="pl-si pl-si--failed" viewBox="0 0 14 14" aria-hidden="true" style="margin-top: 3px"><circle cx="7" cy="7" r="6.5" fill="currentColor"/><path d="M4.9 4.9l4.2 4.2M9.1 4.9 4.9 9.1" style="stroke: var(--surface)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+<div style="flex: 1; min-width: 0"><b style="font-weight: 500">Can't reach GitHub.</b> <span style="color: var(--ink-muted)">Your sign-in expired. Run <span class="pl-num">gh auth refresh</span>, then retry. Agents keep working locally.</span></div>
+<button class="pl-btn pl-btn--sm">Retry</button>
+</div>
+<div role="status" style="display: flex; gap: 10px; align-items: center; padding: 10px 12px; border-radius: var(--radius-lg); border: 1px solid var(--border)">
+<svg class="pl-si pl-si--paused" viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="5.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M5.6 5v4M8.4 5v4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+<div style="flex: 1; min-width: 0"><b style="font-weight: 500">Project paused.</b> <span style="color: var(--ink-muted)">No new work starts.</span></div>
+<button class="pl-btn pl-btn--sm pl-btn--primary">Resume</button>
+</div>
+</div>
+<div style="margin-top: auto; padding: 16px"><div class="pl-toast" role="status"><svg class="pl-si pl-si--done" viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="6.5" fill="currentColor"/><path d="M4.3 7.2 6.1 9 9.7 5.2" style="stroke: var(--surface)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Plan approved. #149 moves to Ready.<button class="pl-btn pl-btn--ghost pl-btn--sm">Undo</button></div></div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+renderVals() { return { theme: this.props.theme ?? 'dark' }; }
+}
+</script>
+</body>
+</html>

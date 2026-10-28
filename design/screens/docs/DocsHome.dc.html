@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>plovi docs home</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="../../tokens.css">
+<link rel="stylesheet" href="../../components.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.nav a{color:var(--ink-muted);text-decoration:none;font-size:14px}.nav a:hover{color:var(--ink)}
+.wrap{max-width:1120px;margin:0 auto;padding-left:max(16px,3vw);padding-right:max(16px,3vw)}
+.mini{display:flex;flex-direction:column;gap:8px;width:220px;flex:none}
+</style>
+</helmet>
+<div data-theme="{{theme}}" style="min-height: 1500px; background: var(--bg); color: var(--ink); font-family: var(--font-sans)">
+<header class="nav wrap" style="display: flex; flex-wrap: wrap; align-items: center; gap: 28px; height: 64px">
+<sc-if value="{{isDark}}" hint-placeholder-val="{{ true }}"><img src="../../brand/plovi-lockup-light.svg" alt="plovi" style="height: 22px; width: auto"></sc-if>
+<sc-if value="{{isLight}}" hint-placeholder-val="{{ false }}"><img src="../../brand/plovi-lockup-dark.svg" alt="plovi" style="height: 22px; width: auto"></sc-if>
+<a href="DocsGuide.dc.html">Docs</a><a href="DocsCli.dc.html">CLI</a><a href="DocsGuide.dc.html">Changelog</a>
+<span style="margin-left: auto; display: flex; gap: 20px; align-items: center"><a href="https://github.com">GitHub</a><a class="pl-btn pl-btn--primary pl-btn--sm" href="DocsGuide.dc.html" style="color: var(--on-primary)">Get started</a></span>
+</header>
+
+<section class="wrap" style="padding-top: 96px; padding-bottom: 64px; display: flex; flex-direction: column; gap: 24px">
+<h1 class="display-xl" style="margin: 0; max-width: 720px; text-wrap: balance">Hand off the work. Keep the decisions.</h1>
+<p style="margin: 0; max-width: 560px; font-size: 18px; line-height: 28px; color: var(--ink-muted)">plovi turns GitHub issues into reviewed pull requests. Agents work in their own worktrees, and stop whenever a person needs to decide.</p>
+<div style="display: flex; flex-wrap: wrap; gap: 10px"><a class="pl-btn pl-btn--primary pl-btn--lg" href="DocsGuide.dc.html" style="color: var(--on-primary)">Get started</a><a class="pl-btn pl-btn--lg" href="DocsCli.dc.html">Read the docs</a></div>
+</section>
+
+<section class="wrap" style="padding-bottom: 112px">
+<div style="border-radius: var(--radius-xl); box-shadow: inset 0 0 0 1px var(--border-strong), var(--shadow-pop); background: var(--bg); overflow: hidden; display: flex; height: 440px">
+<div style="width: 200px; flex: none; padding: 12px 10px; display: flex; flex-direction: column; gap: 4px; font-size: 13px">
+<div style="display: flex; gap: 8px; align-items: center; padding: 6px 8px; font-weight: 600"><sc-if value="{{isDark}}" hint-placeholder-val="{{ true }}"><img src="../../brand/plovi-mark-light.svg" alt="" style="width: 16px; height: 16px"></sc-if><sc-if value="{{isLight}}" hint-placeholder-val="{{ false }}"><img src="../../brand/plovi-mark-dark.svg" alt="" style="width: 16px; height: 16px"></sc-if>agent-workflow</div>
+<div style="padding: 6px 8px; color: var(--ink-muted); display: flex">Inbox<span class="pl-num" style="margin-left: auto; color: var(--attention); font-size: 11px">4</span></div>
+<div style="padding: 6px 8px; border-radius: var(--radius-md); background: var(--surface-hover)">Board</div>
+<div style="padding: 6px 8px; color: var(--ink-muted)">Settings</div>
+</div>
+<div style="flex: 1; min-width: 0; margin: 8px 8px 8px 0; border-radius: var(--radius-lg); background: var(--surface); box-shadow: inset 0 0 0 1px var(--border); overflow: hidden; display: flex; flex-direction: column">
+<div style="height: 40px; display: flex; align-items: center; padding: 0 16px; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--ink-muted)">agent-workflow <span style="margin: 0 6px; color: var(--ink-subtle)">›</span><b style="color: var(--ink); font-weight: 500">Board</b></div>
+<div style="display: flex; gap: 14px; padding: 14px 16px; overflow: hidden">
+<div class="mini"><div class="pl-col__head"><svg class="pl-si pl-si--planning" viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="5.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M7 7V3.5A3.5 3.5 0 0 1 10.5 7Z" fill="currentColor"/></svg>Planning<span class="pl-col__count">2</span></div>
+<div class="pl-card" style="cursor: default"><span class="pl-card__top"><span class="pl-card__id">#142</span><span class="pl-avatar">CC</span></span><span class="pl-card__title">Move run logs to the ledger</span><span class="pl-card__foot"><span class="pl-flag pl-flag--attention">Question for you</span></span></div>
+<div class="pl-card" style="cursor: default"><span class="pl-card__top"><span class="pl-card__id">#149</span><span class="pl-avatar">CC</span></span><span class="pl-card__title">Add the scorecard command</span></div></div>
+<div class="mini"><div class="pl-col__head"><svg class="pl-si pl-si--building" viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="5.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M7 7V3.5A3.5 3.5 0 0 1 7 10.5Z" fill="currentColor"/></svg>Building<span class="pl-col__count">3</span></div>
+<div class="pl-card" style="cursor: default"><span class="pl-card__top"><span class="pl-card__id">#146</span><span class="pl-avatar">CC</span></span><span class="pl-card__title">Add retry to the GitHub sync</span></div>
+<div class="pl-card" style="cursor: default"><span class="pl-card__top"><span class="pl-card__id">#151</span><span class="pl-avatar">CC</span></span><span class="pl-card__title">Rename the CLI to plovi</span></div></div>
+<div class="mini"><div class="pl-col__head"><svg class="pl-si pl-si--shepherding" viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="5.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M7 7V3.5A3.5 3.5 0 1 1 3.5 7Z" fill="currentColor"/></svg>Shepherding<span class="pl-col__count">2</span></div>
+<div class="pl-card" style="cursor: default"><span class="pl-card__top"><span class="pl-card__id">#138</span><span class="pl-avatar">CC</span></span><span class="pl-card__title">Reconcile on restart</span><span class="pl-card__foot"><span class="pl-flag pl-flag--plain pl-num">PR #84</span></span></div></div>
+<div class="mini"><div class="pl-col__head"><svg class="pl-si pl-si--review" viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="5.5" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="7" cy="7" r="3" fill="currentColor"/></svg>In review<span class="pl-col__count">1</span></div>
+<div class="pl-card" style="cursor: default"><span class="pl-card__top"><span class="pl-card__id">#133</span><span class="pl-avatar">CC</span></span><span class="pl-card__title">Clean up finished worktrees</span><span class="pl-card__foot"><span class="pl-flag pl-flag--attention">Ready for review</span></span></div></div>
+</div>
+</div>
+</div>
+</section>
+
+<section class="wrap" style="padding-bottom: 112px; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 40px">
+<div style="display: flex; flex-direction: column; gap: 8px"><h2 class="heading" style="margin: 0">It asks before it guesses</h2><p style="margin: 0; font-size: 15px; line-height: 24px; color: var(--ink-muted)">Questions, plans and reviews land in one inbox, each written so you can decide without opening anything else.</p></div>
+<div style="display: flex; flex-direction: column; gap: 8px"><h2 class="heading" style="margin: 0">Take over any time</h2><p style="margin: 0; font-size: 15px; line-height: 24px; color: var(--ink-muted)">Pause a task and open a briefed agent session in its folder. Hand it back and every check runs again.</p></div>
+<div style="display: flex; flex-direction: column; gap: 8px"><h2 class="heading" style="margin: 0">One review for every change</h2><p style="margin: 0; font-size: 15px; line-height: 24px; color: var(--ink-muted)">Limits, autonomy and agents live in plovi.toml. Changes from the app, the CLI or ⌘K show a diff first.</p></div>
+</section>
+
+<section class="wrap" style="padding-bottom: 112px; display: flex; flex-wrap: wrap; gap: 32px; align-items: center">
+<div style="flex: 1 1 300px; display: flex; flex-direction: column; gap: 8px"><h2 class="title" style="margin: 0; font-size: 24px; line-height: 32px">Start in two commands</h2><p style="margin: 0; color: var(--ink-muted); font-size: 15px; line-height: 24px">Runs on your machine with the agents you already use.</p></div>
+<div class="pl-code" style="flex: 1 1 420px; min-width: 0"><div class="pl-code__bar"><span>terminal</span><button class="pl-btn pl-btn--ghost pl-btn--sm">Copy</button></div><pre><span class="p">$ </span>plovi init
+<span class="p">$ </span>gh issue edit 146 --add-label plovi</pre></div>
+</section>
+
+<footer class="wrap" style="display: flex; flex-wrap: wrap; gap: 20px; align-items: center; padding-top: 24px; padding-bottom: 40px; border-top: 1px solid var(--border); font-size: 13px; color: var(--ink-subtle)">
+<span>plovi</span><a href="https://github.com" style="margin-left: auto; color: var(--ink-subtle); text-decoration: none">GitHub</a><a href="DocsGuide.dc.html" style="color: var(--ink-subtle); text-decoration: none">Docs</a>
+</footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark"},"$preview":{"width":1440,"height":1500}}'>
+class Component extends DCLogic {
+renderVals() { const theme = this.props.theme ?? 'dark'; return { theme, isDark: theme === 'dark', isLight: theme === 'light' }; }
+}
+</script>
+</body>
+</html>
