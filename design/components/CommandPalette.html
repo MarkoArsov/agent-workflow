@@ -1,0 +1,11 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><link rel="stylesheet" href="../tokens.css"><link rel="stylesheet" href="../components.css"><title>CommandPalette</title></head>
+<body>
+<div class="pl-demo" style="justify-content:center;padding:20px;background:var(--bg)"><div class="pl-cmdk" role="dialog" aria-label="Ask plovi">
+<div class="pl-cmdk__input"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width: 16px; height: 16px"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input aria-label="Ask plovi" value="why is #153 failing"></div>
+<div class="pl-cmdk__group" style="border-bottom:1px solid var(--border)"><div class="pl-cmdk__label">Answer</div><p style="margin:0;padding:4px 8px 8px;font-size:13px;line-height:20px">#153 failed Verify three times. day_bounds() treats the end of the day as inclusive, so the last entry is dropped.</p></div>
+<div class="pl-cmdk__group"><div class="pl-cmdk__label">Actions</div><div class="pl-cmdk__item" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 17 6-5-6-5M12 19h8"/></svg>Take over #153<span class="pl-kbd">↵</span></div><div class="pl-cmdk__item"><svg class="pl-si pl-si--building" viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="5.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M7 7V3.5A3.5 3.5 0 0 1 7 10.5Z" fill="currentColor"/></svg>Retry #153 with this note</div></div>
+<div class="pl-cmdk__foot"><span>↑↓ to move</span><span>↵ to run</span><span>esc to close</span></div></div></div>
+</body>
+</html>

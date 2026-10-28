@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sidebar</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="../../tokens.css">
+<link rel="stylesheet" href="../../components.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<nav class="pl-side" aria-label="Main" style="height: 100%; min-height: 900px; background: var(--bg); color: var(--ink); font-family: var(--font-sans)">
+<button class="pl-switcher" aria-label="Switch project">
+<sc-if value="{{isDark}}" hint-placeholder-val="{{ true }}"><img src="../../brand/plovi-mark-light.svg" alt=""></sc-if>
+<sc-if value="{{isLight}}" hint-placeholder-val="{{ false }}"><img src="../../brand/plovi-mark-dark.svg" alt=""></sc-if>
+agent-workflow
+<span style="margin-left: auto; display: flex; color: var(--ink-subtle)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width: 14px; height: 14px"><path d="m7 10 5 5 5-5"/></svg></span>
+</button>
+<button class="pl-search" onClick="{{ask}}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Ask or search<span class="pl-kbd">⌘K</span></button>
+<a class="pl-nav__item" href="Inbox.dc.html" aria-current="{{cur.inbox}}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>Inbox<span class="pl-nav__count pl-nav__count--attention">4</span></a>
+<a class="pl-nav__item" href="Main.dc.html" aria-current="{{cur.board}}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16M15 4v16"/></svg>Board</a>
+<a class="pl-nav__item" href="Settings.dc.html" aria-current="{{cur.settings}}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg>Settings</a>
+<div class="pl-side__foot"><span class="pl-dot"></span>Running · <span class="pl-num">3/4</span><button class="pl-btn pl-btn--ghost pl-btn--icon" aria-label="Pause this project" title="Pause this project" style="margin-left: auto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M9 6v12M15 6v12"/></svg></button></div>
+</nav>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"active":{"editor":"enum","options":["inbox","board","settings"],"default":"board"},"theme":{"editor":"enum","options":["dark","light"],"default":"dark"},"onAsk":{"editor":null},"$preview":{"width":232,"height":900}}'>
+class Component extends DCLogic {
+renderVals() {
+const a = this.props.active ?? 'board';
+const t = this.props.theme ?? 'dark';
+const cur = {};
+['inbox', 'board', 'settings'].forEach((k) => { cur[k] = k === a ? 'page' : undefined; });
+return { cur, isDark: t === 'dark', isLight: t === 'light', ask: () => { if (this.props.onAsk) this.props.onAsk(); } };
+}
+}
+</script>
+</body>
+</html>

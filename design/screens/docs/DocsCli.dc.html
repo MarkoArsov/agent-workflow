@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>plovi CLI reference</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="../../tokens.css">
+<link rel="stylesheet" href="../../components.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.dnav a{display:block;padding:5px 10px;border-radius:var(--radius-md);color:var(--ink-muted);text-decoration:none;font-size:14px}
+.dnav a:hover{color:var(--ink)}
+.dnav a[aria-current="page"]{background:var(--surface-hover);color:var(--ink);font-weight:500}
+.dnav h4{margin:0;padding:0 10px 6px;font-size:12px;font-weight:500;color:var(--ink-subtle)}
+.cmd{display:grid;grid-template-columns:minmax(0,260px) minmax(0,1fr);gap:24px;padding:12px 0;border-top:1px solid var(--border);font-size:14px;line-height:22px}
+.cmd code{font:400 13px/22px var(--font-mono);color:var(--ink)}
+.cmd span{color:var(--ink-muted)}
+.opt{display:grid;grid-template-columns:120px minmax(0,1fr);gap:16px;padding:10px 0;border-top:1px solid var(--border);font-size:14px;line-height:22px}
+.opt code{font:400 13px/22px var(--font-mono)}
+</style>
+</helmet>
+<div data-theme="{{theme}}" style="min-height: 1200px; background: var(--surface); color: var(--ink); font-family: var(--font-sans)">
+<header style="display: flex; align-items: center; gap: 20px; height: 60px; padding: 0 max(16px, 2vw); border-bottom: 1px solid var(--border)">
+<a href="DocsHome.dc.html" aria-label="plovi home" style="display: flex"><sc-if value="{{isDark}}" hint-placeholder-val="{{ true }}"><img src="../../brand/plovi-lockup-light.svg" alt="plovi" style="height: 20px; width: auto"></sc-if><sc-if value="{{isLight}}" hint-placeholder-val="{{ false }}"><img src="../../brand/plovi-lockup-dark.svg" alt="plovi" style="height: 20px; width: auto"></sc-if></a>
+<button class="pl-search" style="margin: 0 0 0 auto; width: 240px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Search docs<span class="pl-kbd">/</span></button>
+<a href="https://github.com" style="font-size: 14px; color: var(--ink-muted); text-decoration: none">GitHub</a>
+</header>
+<div style="display: flex; flex-wrap: wrap; gap: 48px; padding: 0 max(16px, 2vw); max-width: 1280px; margin: 0 auto">
+<nav class="dnav" aria-label="Docs" style="flex: 1 1 200px; max-width: 220px; padding: 32px 0; display: flex; flex-direction: column; gap: 24px">
+<div><h4>Get started</h4><a href="DocsGuide.dc.html">Install</a><a href="DocsGuide.dc.html">Your first task</a><a href="DocsGuide.dc.html">How it works</a></div>
+<div><h4>Using plovi</h4><a href="DocsGuide.dc.html">Board</a><a href="DocsGuide.dc.html">Inbox</a><a href="DocsGuide.dc.html">Take over a task</a><a href="DocsGuide.dc.html">Settings</a></div>
+<div><h4>Reference</h4><a href="DocsCli.dc.html" aria-current="page">CLI</a><a href="DocsGuide.dc.html">plovi.toml</a><a href="DocsGuide.dc.html">Scorecard</a><a href="DocsGuide.dc.html">Changelog</a></div>
+</nav>
+<article style="flex: 999 1 480px; min-width: 0; max-width: 760px; padding: 48px 0 96px; display: flex; flex-direction: column; gap: 18px">
+<div style="font-size: 13px; color: var(--ink-subtle)">Reference</div>
+<h1 class="display" style="margin: 0">CLI</h1>
+<p style="margin: 0; font-size: 18px; line-height: 29px; color: var(--ink-muted)">Everything the app does, the CLI does too. Agents use the same commands, so every change passes the same review.</p>
+<div style="margin-top: 12px">
+<sc-for list="{{cmds}}" as="c" hint-placeholder-count="10">
+<div class="cmd"><code>{{c.cmd}}</code><span>{{c.what}}</span></div>
+</sc-for>
+</div>
+<h2 class="title" id="take-over" style="margin: 40px 0 0"><span class="pl-num" style="font-size: 18px">plovi take-over &lt;task&gt;</span></h2>
+<p style="margin: 0; font-size: 16px; line-height: 27px">Pauses the task, keeps its slot, and opens an agent session in the task's folder with a brief: the plan, the changes so far, the failed runs and review notes. plovi won't touch the folder until you run <span class="pl-num" style="font-size: 14px">plovi hand-back</span>.</p>
+<div style="margin-top: 8px">
+<div class="opt"><code>--agent</code><span style="color: var(--ink-muted)">claude, codex or cursor. Defaults to the agent that was working on the task.</span></div>
+<div class="opt"><code>--model</code><span style="color: var(--ink-muted)">Model for the session. Defaults to the stage's model in plovi.toml.</span></div>
+<div class="opt"><code>--open</code><span style="color: var(--ink-muted)">Start the session in this terminal instead of printing the command.</span></div>
+</div>
+<div class="pl-code"><div class="pl-code__bar"><span>terminal</span><button class="pl-btn pl-btn--ghost pl-btn--sm">Copy</button></div><pre><span class="p">$ </span>plovi take-over 153 --open
+<span class="c">Paused #153. Brief written to wt/153/.plovi/brief.md</span></pre></div>
+</article>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark"},"$preview":{"width":1440,"height":1200}}'>
+class Component extends DCLogic {
+renderVals() {
+const theme = this.props.theme ?? 'dark';
+return { theme, isDark: theme === 'dark', isLight: theme === 'light', cmds: [
+{ cmd: 'plovi init', what: 'Set up the current repository: policy file, label and worktree folder.' },
+{ cmd: 'plovi status [task]', what: 'Where every task is, or one task in detail.' },
+{ cmd: 'plovi inbox', what: 'Decisions waiting for you, oldest first.' },
+{ cmd: 'plovi answer <task> <text>', what: 'Answer a question from the inbox.' },
+{ cmd: 'plovi approve <task>', what: 'Approve a plan or a breakdown.' },
+{ cmd: 'plovi take-over <task>', what: 'Pause a task and open a briefed session in its folder.' },
+{ cmd: 'plovi hand-back <task>', what: 'Return a task. Every check runs again before anything is pushed.' },
+{ cmd: 'plovi pause | resume', what: 'Stop or restart new work. Running stages finish first.' },
+{ cmd: 'plovi set <key> <value>', what: 'Propose a change to plovi.toml. Shows the diff and waits for approval.' },
+{ cmd: 'plovi app', what: 'Open the app in your browser.' } ] };
+}
+}
+</script>
+</body>
+</html>

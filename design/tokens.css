@@ -1,0 +1,97 @@
+/* plovi — generated from tokens.json */
+:root, [data-theme="dark"] {
+  --bg: #0e0f11;
+  --surface: #141518;
+  --surface-raised: #1a1b1f;
+  --surface-sunken: #0b0c0e;
+  --surface-hover: #1f2024;
+  --border: #222327;
+  --border-strong: #2c2e33;
+  --border-control: #686b73;
+  --ink: #ececee;
+  --ink-muted: #9b9da4;
+  --ink-subtle: #85878f;
+  --primary: #f2f2f3;
+  --primary-hover: #ffffff;
+  --on-primary: #0e0f11;
+  --accent: #5ab4d6;
+  --accent-soft: #5ab4d61f;
+  --on-accent: #06202a;
+  --focus-ring: var(--accent);
+  --attention: #e5ac45;
+  --danger: #ef7a5c;
+  --danger-soft: #ef7a5c1a;
+  --success: #6dc48d;
+  --overlay: #00000099;
+  --shadow-card: 0 1px 0 rgba(0,0,0,0.25);
+  --shadow-peek: -16px 0 48px rgba(0,0,0,0.45);
+  --shadow-pop: 0 16px 48px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.06);
+  color-scheme: dark;
+}
+[data-theme="light"] {
+  --bg: #f4f4f5;
+  --surface: #ffffff;
+  --surface-raised: #ffffff;
+  --surface-sunken: #f6f6f7;
+  --surface-hover: #f0f0f2;
+  --border: #e7e7ea;
+  --border-strong: #d9d9de;
+  --border-control: #8d8d96;
+  --ink: #17171a;
+  --ink-muted: #54545c;
+  --ink-subtle: #6a6a73;
+  --primary: #17171a;
+  --primary-hover: #2c2c31;
+  --on-primary: #fafafa;
+  --accent: #0b6a8a;
+  --accent-soft: #0b6a8a14;
+  --on-accent: #ffffff;
+  --focus-ring: var(--accent);
+  --attention: #8a5700;
+  --danger: #b4361c;
+  --danger-soft: #b4361c12;
+  --success: #1d7a40;
+  --overlay: #17171a40;
+  --shadow-card: 0 1px 2px rgba(23,23,26,0.06);
+  --shadow-peek: -16px 0 48px rgba(23,23,26,0.10);
+  --shadow-pop: 0 16px 48px rgba(23,23,26,0.14), 0 0 0 1px rgba(23,23,26,0.06);
+  color-scheme: light;
+}
+:root {
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-full: 9999px;
+  --control-sm: 26px;
+  --control-md: 30px;
+  --control-lg: 38px;
+  --sidebar-width: 232px;
+  --header-height: 44px;
+  --column-width: 280px;
+  --peek-width: 520px;
+  --docs-measure: 680px;
+  --font-sans: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+.display-xl { font-family: var(--font-sans); font-size: 56px; line-height: 60px; font-weight: 600; letter-spacing: -0.035em; }
+.display { font-family: var(--font-sans); font-size: 36px; line-height: 42px; font-weight: 600; letter-spacing: -0.03em; }
+.title { font-family: var(--font-sans); font-size: 20px; line-height: 28px; font-weight: 600; letter-spacing: -0.015em; }
+.heading { font-family: var(--font-sans); font-size: 15px; line-height: 22px; font-weight: 600; letter-spacing: -0.005em; }
+.body-lg { font-family: var(--font-sans); font-size: 16px; line-height: 26px; font-weight: 400; }
+.body { font-family: var(--font-sans); font-size: 13px; line-height: 20px; font-weight: 400; }
+.body-strong { font-family: var(--font-sans); font-size: 13px; line-height: 20px; font-weight: 500; }
+.small { font-family: var(--font-sans); font-size: 12px; line-height: 16px; font-weight: 400; }
+.label { font-family: var(--font-sans); font-size: 11px; line-height: 14px; font-weight: 500; letter-spacing: 0.04em; }
+.mono { font-family: var(--font-mono); font-size: 13px; line-height: 20px; font-weight: 400; }
+.mono-sm { font-family: var(--font-mono); font-size: 12px; line-height: 16px; font-weight: 400; }
+@font-face { font-family: "Geist"; src: url("fonts/Geist-Variable.woff2") format("woff2"); font-weight: 100 900; font-style: normal; font-display: swap; }
+@font-face { font-family: "Geist Mono"; src: url("fonts/GeistMono-Variable.woff2") format("woff2"); font-weight: 100 900; font-style: normal; font-display: swap; }
