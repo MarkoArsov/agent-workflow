@@ -1,6 +1,6 @@
 # Rename to plovi
 
-Status: proposed; implementation is not approved.
+Status: approved by explicit af-implement invocation; implementation and verification completed locally.
 Source and unchanged acceptance criteria: [prompt.md](prompt.md).
 
 ## Execution and delivery
@@ -265,3 +265,58 @@ requirements/check coverage, scope review, public-content scan, and diff hygiene
 No implementation tests or migration have been run during specification.
 
 Approve this plan and start implementation?
+
+
+## Implementation evidence (28 October 2026)
+
+- The user explicitly invoked implement for this plan. Work stayed in the current
+  checkout on `codex/rename-plovi`, with local delivery only.
+- The original six rename tests failed on assertions before product changes;
+  migration tests demonstrated missing first-run behavior, missing notice, and
+  absent migration support. Expanded regressions cover recovery, stale metadata,
+  concurrent runs, folder conflicts, custom paths/bytes/modes, preview/apply,
+  references/worktrees, receipts/uninstall, legacy pins, and setup ownership.
+- A follow-up regression first asserted that unchanged setup-owned aliases were
+  incorrectly reported as installation conflicts; the installer now recognizes
+  their exact baseline-owned bytes without allowing user-edited adapters.
+- Final review added assertion red/green regressions for moving child references
+  before setup writes, retaining Git ignore rules for moved local state, and
+  recognizing legacy receipt ownership during read-only installation previews.
+  Preview hashes preserve exact binary/CRLF bytes; migration touches only known
+  metadata, and retains custom ignore patterns.
+- Version 0.1.1 is necessary because installation rejects different content for an
+  existing immutable 0.1.0 payload. Existing older pins still select their original
+  runtime; configuration migration occurs when upgrading to the plovi runtime.
+  This is the plan's permitted compatibility-driven version adjustment.
+- All 131 isolated tests passed with local socket access. An initial restricted
+  run could not start disposable HTTP servers; it also exposed a version-specific
+  CI fixture expectation, which was updated for the renamed release. No assertions
+  were weakened, and the Windows harness still checks failure propagation.
+- Strict documentation build passed in the existing documentation environment;
+  generated references and native wrapper freshness passed; 4,786 internal
+  links/assets passed. Desktop and 390px iframe views and the regenerated social
+  card were visually inspected. Appearance remains unchanged apart from words.
+- Native Claude manifest/marketplace strict validation, isolated add/install/list/
+  details/update/uninstall all passed. Details lists all 40 plovi-prefixed skills
+  and 40 af-prefixed compatibility aliases, alongside canonical internal skills.
+- Native Codex app-server skills/list in a disposable home discovered all 80
+  prefixed skills and aliases, with no parse errors or model calls. Cursor's
+  command interface passed; generated shared discovery and dispatcher behavior
+  are covered by tests. Its CLI exposes no standalone skill-list command.
+- An additional disposable-home check used the actual pre-rename 0.1.0 payload:
+  global reinstall preserved the legacy project pin and model settings; project
+  upgrade selected 0.1.1, migrated configuration, and kept the launcher alias usable.
+- Deterministic release/checksum tests passed, including both commands, generated
+  native wrappers, and the PowerShell installer. Real Windows/Linux execution,
+  hosted CI, remote bootstrap availability, and release publication remain separate
+  checks; local shell doubles are not reported as native Windows evidence.
+- Public working-tree/history and built-site scans passed without a private
+  denylist. The old-name audit permits only reviewed exact compatibility,
+  migration-specification, changelog, and regression-test lines.
+- The existing ignored legacy setup baseline in this source checkout was left
+  untouched as the plan requires. This is a local upgrade boundary: before using
+  the new runtime in this checkout, its owner must reconcile that legacy local
+  metadata with the tracked renamed profile. The product deliberately stops when
+  both configuration directories exist, and does not merge them automatically.
+- No real user agent configuration or installation was changed. No model generation,
+  push, PR creation, issue update, release, or deployment occurred.

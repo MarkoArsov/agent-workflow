@@ -4,8 +4,8 @@ import json
 import tarfile
 from pathlib import Path
 from tests.helpers import PACKAGE, WorkspaceTest
-from agentflow.install import validate_source
-from agentflow.util import WorkflowError
+from plovi.install import validate_source
+from plovi.util import WorkflowError
 
 class ReleaseTests(WorkspaceTest):
     def test_payload_is_deterministic_allowlisted_and_checksums_detect_edits(self):
@@ -19,7 +19,7 @@ class ReleaseTests(WorkspaceTest):
             self.assertFalse(any("/tests/" in n or "/.git/" in n or "/local/" in n or "/docs/" in n for n in names))
             source.extractall(self.root / "extracted", filter="data")
         payload = next((self.root / "extracted").iterdir())
-        self.assertEqual(validate_source(payload)["version"], "0.1.0")
+        self.assertEqual(validate_source(payload)["version"], "0.1.1")
         with (payload / "skills/review/SKILL.md").open("a") as output:
             output.write("tampered")
         with self.assertRaisesRegex(WorkflowError, "checksum"):

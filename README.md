@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="docs/assets/brand/mark.svg" width="72" height="72" alt="Agent Flow logo">
+  <img src="docs/assets/brand/mark.svg" width="72" height="72" alt="plovi logo">
 </p>
 
-<h1 align="center">Agent Flow</h1>
+<h1 align="center">plovi</h1>
 
 <p align="center">
   <strong>Agents write the code. The orchestrator makes them prove it.</strong><br>
@@ -20,7 +20,7 @@
 
 ## What it does
 
-You confirm one plan. Agent Flow runs it in stages, and each stage has to show its work:
+You confirm one plan. plovi runs it in stages, and each stage has to show its work:
 
 | Stage | What happens | What the orchestrator keeps |
 |---|---|---|
@@ -48,15 +48,15 @@ curl -fsSL https://agentic.markoarsov.com/install.sh | sh
 irm https://agentic.markoarsov.com/install.ps1 | iex
 ```
 
-Then open a new terminal window and check it with `agentflow --version`. The installer finds your agents and prints the command to start setup. [Full install guide](https://agentic.markoarsov.com/install/)
+Then open a new terminal window and check it with `plovi --version`. The installer finds your agents and prints the command to start setup. [Full install guide](https://agentic.markoarsov.com/install/)
 
 ## Quick start
 
-1. From your project folder, run `claude "/af-setup"` (or ask Codex or Cursor to use the **`af-setup`** skill). Approve the setup it proposes.
-2. Run **`af-specify`** with what you want built, and confirm the plan.
-3. Run **`af-implement`**.
+1. From your project folder, run `claude "/plovi-setup"` (or ask Codex or Cursor to use the **`plovi-setup`** skill). Approve the setup it proposes.
+2. Run **`plovi-specify`** with what you want built, and confirm the plan.
+3. Run **`plovi-implement`**.
 
-That's it. For bigger changes, `af-implement-pipeline` runs the full staged pipeline instead. See [your first task](https://agentic.markoarsov.com/first-task/).
+That's it. For bigger changes, `plovi-implement-pipeline` runs the full staged pipeline instead. See [your first task](https://agentic.markoarsov.com/first-task/).
 
 ## Why trust it
 
@@ -77,3 +77,13 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for docs builds and checks, and [Contribu
 For a live development checkout, use `python3 install.py --global --link` and
 `python3 install.py --global --sync` after adding or renaming skills. See the
 [linked installation guide](docs/install.md#follow-a-development-checkout).
+
+### What changes for your workflow
+
+Reinstall to use `plovi` and `/plovi-<skill>`. The `agentflow` command and
+`/af-<skill>` aliases keep working until 1.0 and print a short deprecation note.
+Finish or cancel running tasks before upgrading. On the first normal run of the
+new runtime, each project's `.agentflow/` directory moves to `.plovi/`, with one
+notice. If both directories exist, plovi stops and preserves both for you to
+resolve. Setup and installation previews report the move without performing it.
+See [upgrade details](https://agentic.markoarsov.com/install/#upgrade-to-plovi).

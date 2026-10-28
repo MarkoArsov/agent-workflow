@@ -3,19 +3,19 @@ title: Set up your project
 description: Configure repositories, agents, checks, and delivery choices for a project.
 footer: docs
 footer_order: 2
-question: How do I configure Agent Flow for my repositories?
+question: How do I configure plovi for my repositories?
 ---
 
 # Set up your project
 
 !!! summary "In one minute"
-    - Invoke `af-setup` (short for `af-project-setup`) in your agent. It reads your repositories and reports what it found, with sources.
+    - Invoke `plovi-setup` (short for `plovi-project-setup`) in your agent. It reads your repositories and reports what it found, with sources.
     - You confirm repositories, commands, branch policy, routes, permissions, and integrations.
     - Nothing is written until you approve the complete proposal by its digest.
     - Re-running setup keeps your manual edits, and leaves files byte-identical when nothing changed.
 
-Open the intended repository or multi-repository parent and invoke **af-setup**, or its full name **af-project-setup**
-(**agentflow:setup** in the native Claude plugin). From a terminal, `claude "/af-setup"` starts Claude Code with it.
+Open the intended repository or multi-repository parent and invoke **plovi-setup**, or its full name **plovi-project-setup**
+(**plovi:setup** in the native Claude plugin). From a terminal, `claude "/plovi-setup"` starts Claude Code with it.
 
 The setup skill reads existing instructions, manifests, commands, Git conventions, and CI configuration.
 It reports findings with their sources, asks about unresolved choices, and presents a complete proposal.
@@ -40,14 +40,14 @@ Trusted execution is the offered default. It uses provider permission-bypass fla
 For a CLI preview:
 
 ~~~sh
-agentflow setup . --output /tmp/workflow-proposal.json
+plovi setup . --output /tmp/workflow-proposal.json
 ~~~
 
 The skill gathers answers, regenerates the proposal, and shows its file changes.
 Applying requires that proposal's exact approval digest:
 
 ~~~sh
-agentflow setup --apply /tmp/workflow-proposal.json --approve APPROVED_DIGEST
+plovi setup --apply /tmp/workflow-proposal.json --approve APPROVED_DIGEST
 ~~~
 
 An unresolved or stale proposal is rejected. Do not reuse an approval after changing its contents.

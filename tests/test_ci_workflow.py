@@ -64,25 +64,25 @@ class CIWorkflowTests(WorkspaceTest):
             calls.append(argv)
             self.assertNotIn('GH_TOKEN', env)
             self.assertNotIn('GITHUB_TOKEN', env)
-            self.assertEqual(env['AGENTFLOW_NO_MODIFY_PATH'], '1')
+            self.assertEqual(env['PLOVI_NO_MODIFY_PATH'], '1')
             self.assertEqual(env['HOME'], env['USERPROFILE'])
             self.assertTrue(Path(env['HOME']).is_relative_to(self.root))
             command = argv[-1]
             if 'install.ps1' in command:
                 self.assertIn('--local-source', command)
                 self.assertNotIn('Invoke-Expression', command)
-                self.assertNotIn('AGENTFLOW_REF', env)
-                discovery = Path(env['HOME']) / '.agents/skills/af-setup/SKILL.md'
+                self.assertNotIn('PLOVI_REF', env)
+                discovery = Path(env['HOME']) / '.agents/skills/plovi-setup/SKILL.md'
                 discovery.parent.mkdir(parents=True, exist_ok=True)
                 discovery.write_text('fixture discovery')
-            return subprocess.CompletedProcess(argv, 0, '0.1.0\n', '')
+            return subprocess.CompletedProcess(argv, 0, '0.1.1\n', '')
         with patch.dict(os.environ, {'RUNNER_TEMP': str(self.root), 'GH_TOKEN': 'test-only'}, clear=False), \
              patch('subprocess.run', side_effect=run):
             before = dict(os.environ)
             exec(compile(code, '<Windows smoke>', 'exec'), {'__name__': '__main__'})
             self.assertEqual(dict(os.environ), before)
         self.assertEqual([c[0] for c in calls], ['powershell', 'pwsh', 'pwsh'])
-        self.assertFalse(any(p.name.startswith('agentflow-install-') for p in self.root.iterdir()))
+        self.assertFalse(any(p.name.startswith('plovi-install-') for p in self.root.iterdir()))
 
     def test_windows_native_failure_is_not_hidden_by_logging(self):
         code = self.smoke_code()

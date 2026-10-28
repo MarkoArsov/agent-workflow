@@ -8,8 +8,8 @@ import sys
 import time
 from unittest.mock import patch
 from tests.helpers import WorkspaceTest, PACKAGE
-from agentflow.model_policy import core, storage, discovery
-from agentflow.model_policy.storage import Store, write, read
+from plovi.model_policy import core, storage, discovery
+from plovi.model_policy.storage import Store, write, read
 
 
 def entry(provider, model, band='strong', family=None, **extra):
@@ -30,7 +30,7 @@ def catalogue(entries):
 class ModelPolicyTests(WorkspaceTest):
     def setUp(self):
         super().setUp()
-        self.policy = read(PACKAGE/'runtime/agentflow/model_policy/policy.json')
+        self.policy = read(PACKAGE/'runtime/plovi/model_policy/policy.json')
         self.entries = [entry(p,p+'-routine',efforts={'balanced':'medium','demanding':'high'} if p != 'cursor' else {}) for p in sorted(core.PROVIDERS)]
         self.catalogue = catalogue(self.entries)
         self.store = Store(self.home/'data/models',self.root/'project/models.json',workflow='fixture')

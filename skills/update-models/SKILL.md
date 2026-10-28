@@ -4,7 +4,7 @@ description: Refresh available models and recommend task routes and effort; revi
 ---
 
 <!-- resolver:start -->
-Run this skill folder's scripts/resolve.py from the active project once. If it returns a different effective skill, follow that file instead. Otherwise continue below. Use the selected package's bin/agentflow for commands. Without a configured project, use this package's global command.
+Run this skill folder's scripts/resolve.py from the active project once. If it returns a different effective skill, follow that file instead. Otherwise continue below. Use the selected package's bin/plovi for commands. Without a configured project, use this package's global command.
 <!-- resolver:end -->
 
 # Update models

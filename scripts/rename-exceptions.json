@@ -1,0 +1,567 @@
+[
+  {
+    "path": ".gitignore",
+    "sha256": "99f10a6041efdadd988c4228ccffd790efab913424eafd062745d8739dc09b6f",
+    "reason": "legacy-local-state"
+  },
+  {
+    "path": ".gitignore",
+    "sha256": "f36a0281e03202adf40f7de5882816fcf250b9460ee44f5f26d784ebe9ebc432",
+    "reason": "legacy-local-state"
+  },
+  {
+    "path": "CHANGELOG.md",
+    "sha256": "378d644ba8aacaf8686ee3250b14bb8f9619eae612ff3463a4fdf0be186956eb",
+    "reason": "changelog"
+  },
+  {
+    "path": "CHANGELOG.md",
+    "sha256": "3cf8951446f85293970e6c127d92004c762116bb4d5f25817cb1f1d087d08e05",
+    "reason": "changelog"
+  },
+  {
+    "path": "CHANGELOG.md",
+    "sha256": "e7ef54f55ac4481e1145c0bd65a4f0be23ea7c52ec975e02d0c59e4ace25a558",
+    "reason": "changelog"
+  },
+  {
+    "path": "README.md",
+    "sha256": "033b8c90babf2b62e47914f4753398886439ca53bd2a83277b3d7f230f8bea56",
+    "reason": "alias-and-migration-documentation"
+  },
+  {
+    "path": "README.md",
+    "sha256": "25d6f55f66f956bb975878d336131671196dc70aa2cd802c48d5500fa3608f52",
+    "reason": "alias-and-migration-documentation"
+  },
+  {
+    "path": "ai-plans/rename-plovi/plan.md",
+    "sha256": "074ed1a1e29ef85e204794b0c01af4de98e2959ad3025ee460136a66f87114bf",
+    "reason": "approved-migration-specification"
+  },
+  {
+    "path": "ai-plans/rename-plovi/plan.md",
+    "sha256": "0e9ab4e91069eb3248e8d7a53952c26e4ddd75e9518bd603685160bdc316dbb7",
+    "reason": "approved-migration-specification"
+  },
+  {
+    "path": "ai-plans/rename-plovi/plan.md",
+    "sha256": "6831760ffc38d14f75e4124d86feb6e9d40f34cbb94bf059cb0861e98f410b05",
+    "reason": "approved-migration-specification"
+  },
+  {
+    "path": "ai-plans/rename-plovi/plan.md",
+    "sha256": "7432800f9c9b99eb9f51d925b0db2b414d43b780884aa6f181d4d0bf23f91fc3",
+    "reason": "approved-migration-specification"
+  },
+  {
+    "path": "ai-plans/rename-plovi/plan.md",
+    "sha256": "7a1d6111a56b77815072647b5dd19df136732f30032cbd3f01a949c4737b211f",
+    "reason": "approved-migration-specification"
+  },
+  {
+    "path": "ai-plans/rename-plovi/plan.md",
+    "sha256": "8d1d49289be8c3437057007e84694d2723dcc5f805ffa3e3173916d8fd65f5d0",
+    "reason": "approved-migration-specification"
+  },
+  {
+    "path": "ai-plans/rename-plovi/plan.md",
+    "sha256": "b6dca7b5e3edef7d1aa03bc188a53abe66f7cc08672487d4b017ddb6428d833d",
+    "reason": "approved-migration-specification"
+  },
+  {
+    "path": "ai-plans/rename-plovi/plan.md",
+    "sha256": "c062358c5f26906f03b443e03fe3fad26daa3c1c3ff3d0e03ac6f6857247cbe3",
+    "reason": "approved-migration-specification"
+  },
+  {
+    "path": "ai-plans/rename-plovi/plan.md",
+    "sha256": "d9ae33c237a57ad36eeda7d1762f0c77501c134bdc97d414cc7ca7381cb72d96",
+    "reason": "approved-migration-specification"
+  },
+  {
+    "path": "ai-plans/rename-plovi/plan.md",
+    "sha256": "fe72d9c92939a43721f4b8a6938b4ed3f3debdf41cea20e0b1483cb1bd939641",
+    "reason": "approved-migration-specification"
+  },
+  {
+    "path": "ai-plans/rename-plovi/prompt.md",
+    "sha256": "01ee7421ae75a8677b85012f4ada4930d1581396774772bf583cc6a28ce66576",
+    "reason": "original-migration-request"
+  },
+  {
+    "path": "ai-plans/rename-plovi/prompt.md",
+    "sha256": "05d088686fc64f43ea79f0e0baeb5947210076f22a75a573c76969c528072661",
+    "reason": "original-migration-request"
+  },
+  {
+    "path": "ai-plans/rename-plovi/prompt.md",
+    "sha256": "14cdf47667687622a25564d28cb81f65f9cafe7413101be5df99ab5601cfe791",
+    "reason": "original-migration-request"
+  },
+  {
+    "path": "ai-plans/rename-plovi/prompt.md",
+    "sha256": "164982294dd716afb4e1297f47374f5fe3c88e132b27c0319e89176076496261",
+    "reason": "original-migration-request"
+  },
+  {
+    "path": "ai-plans/rename-plovi/prompt.md",
+    "sha256": "1b639c59dcf2425891d9f2adb2c759c5dfd0c60388faedd172a7892217495411",
+    "reason": "original-migration-request"
+  },
+  {
+    "path": "ai-plans/rename-plovi/prompt.md",
+    "sha256": "2aaa5b325d0d0b7ca0ea9fefb876721091ec74849bf35864a941a8b7e1b23d52",
+    "reason": "original-migration-request"
+  },
+  {
+    "path": "ai-plans/rename-plovi/prompt.md",
+    "sha256": "477b40036aa70fb23946310083965ee43530b807335a403ee2878f0c395c51e5",
+    "reason": "original-migration-request"
+  },
+  {
+    "path": "ai-plans/rename-plovi/prompt.md",
+    "sha256": "75593f54faddbe199339872cb5b86f70327985bda33813970c5500eb123cd333",
+    "reason": "original-migration-request"
+  },
+  {
+    "path": "ai-plans/rename-plovi/prompt.md",
+    "sha256": "e7b2679a487ca362cc979dd912be699e60aca236862931bf629c16555ea668b0",
+    "reason": "original-migration-request"
+  },
+  {
+    "path": "ai-plans/rename-plovi/prompt.md",
+    "sha256": "f10e934803797c4b30c313eb1a108dc87ebfbae626c8dbc7198522ed423c5b64",
+    "reason": "original-migration-request"
+  },
+  {
+    "path": "bin/agentflow",
+    "sha256": "15f58942033c9a8a7f56d5d0bb12fa1f9d6ee835811c234d4f957fced907cb52",
+    "reason": "launcher-alias"
+  },
+  {
+    "path": "docs/install.md",
+    "sha256": "5a3a6b2cdf6d8a60af32f9d9af5b50f38e5a0754262175c7e96982068bf3d58e",
+    "reason": "alias-and-migration-documentation"
+  },
+  {
+    "path": "docs/install.md",
+    "sha256": "5e5e04704ae3c54a09595c32aa1966b45e990087c2773b0ebdd6b61f62705edd",
+    "reason": "alias-and-migration-documentation"
+  },
+  {
+    "path": "install.ps1",
+    "sha256": "89b190058e563d6f9cb25d86693e4a6192f27d40a931c5c7da1360832d67f2c1",
+    "reason": "legacy-environment-alias"
+  },
+  {
+    "path": "install.ps1",
+    "sha256": "b58c6b45c140686fcc3c92ecfe2aadff2ae43c906dcfcd14a2e20b4f6b5d909c",
+    "reason": "legacy-environment-alias"
+  },
+  {
+    "path": "install.sh",
+    "sha256": "6b6cda5d138b1bc787b4fb14f28cfe66955e4f850effdf7e5db0564bfbaaef7d",
+    "reason": "legacy-environment-alias"
+  },
+  {
+    "path": "runtime/plovi/install.py",
+    "sha256": "23e041d7ca12ef71da85f719cc84cc5b127abb410354c912ca920d8ef083583b",
+    "reason": "launcher-alias-and-migration"
+  },
+  {
+    "path": "runtime/plovi/install.py",
+    "sha256": "6092bc1893b99c2a38b871194747fbe07b96cfd25f3f1927adc5b4ddf044c02a",
+    "reason": "launcher-alias-and-migration"
+  },
+  {
+    "path": "runtime/plovi/install.py",
+    "sha256": "b8438d172dd63896e1ab9846d73de73b1678f70a7597288d874dd9b6aeeeb747",
+    "reason": "launcher-alias-and-migration"
+  },
+  {
+    "path": "runtime/plovi/install.py",
+    "sha256": "c0a02f7e3dfac7d4b2f38adb6b47c8e4cd960b8316210cdc1eeac54c4970515a",
+    "reason": "launcher-alias-and-migration"
+  },
+  {
+    "path": "runtime/plovi/migration.py",
+    "sha256": "49bdb3fb946a71aeac0f8894d97d6667c4555f71c8b9f1c2e4fd19d7becb59b9",
+    "reason": "project-migration"
+  },
+  {
+    "path": "runtime/plovi/migration.py",
+    "sha256": "96edb615a4116f9f321bc7d30a9f86563a31582c0228ebedb68e5b208c5ee3b3",
+    "reason": "project-migration"
+  },
+  {
+    "path": "runtime/plovi/migration.py",
+    "sha256": "b8832077c19a33147c6ae4859aa1b8957d6481c129d0b58cea529d4994d87bd2",
+    "reason": "project-migration"
+  },
+  {
+    "path": "runtime/plovi/migration.py",
+    "sha256": "c415d56e604ef11cfa8e48487c29e308398679e67bb8a635d8d8d126c692588a",
+    "reason": "project-migration"
+  },
+  {
+    "path": "runtime/plovi/migration.py",
+    "sha256": "d0cb52703b20e3e50e1fdca3234ee4ea983e4fcf55044c687b04606b5b296475",
+    "reason": "project-migration"
+  },
+  {
+    "path": "runtime/plovi/migration.py",
+    "sha256": "dd352fb25757e1cb5b9ac331912e38c59624aadad93308b5c71a9ecc8811d534",
+    "reason": "project-migration"
+  },
+  {
+    "path": "runtime/plovi/setup.py",
+    "sha256": "4860145f4179c0d83e4b94883b210ddfd7def34bd2411557d1720dd10b06dff8",
+    "reason": "managed-marker-and-setup-migration"
+  },
+  {
+    "path": "runtime/plovi/setup.py",
+    "sha256": "5902584087554a01d717ad504ab1d4ecce1ebeffeb3aa4a7671e02e8d2eeef49",
+    "reason": "managed-marker-and-setup-migration"
+  },
+  {
+    "path": "runtime/plovi/setup.py",
+    "sha256": "bfdd388053615ad7fd0bca186f81ea24d04da906c6d7ea39cb7da190931641ee",
+    "reason": "managed-marker-and-setup-migration"
+  },
+  {
+    "path": "runtime/plovi/setup.py",
+    "sha256": "fbb946aca7ab139f4c59f7bb736e5739500dd8266ba6a51d57ce7e8c68f6ae49",
+    "reason": "managed-marker-and-setup-migration"
+  },
+  {
+    "path": "runtime/plovi/util.py",
+    "sha256": "5c29f4281a6316798e52e8462728d2c3491a6b071b2da7cf4e1dc181c6db4735",
+    "reason": "legacy-installation-state"
+  },
+  {
+    "path": "site/install.ps1",
+    "sha256": "89b190058e563d6f9cb25d86693e4a6192f27d40a931c5c7da1360832d67f2c1",
+    "reason": "distributed-legacy-environment-alias"
+  },
+  {
+    "path": "site/install.ps1",
+    "sha256": "b58c6b45c140686fcc3c92ecfe2aadff2ae43c906dcfcd14a2e20b4f6b5d909c",
+    "reason": "distributed-legacy-environment-alias"
+  },
+  {
+    "path": "site/install.sh",
+    "sha256": "6b6cda5d138b1bc787b4fb14f28cfe66955e4f850effdf7e5db0564bfbaaef7d",
+    "reason": "distributed-legacy-environment-alias"
+  },
+  {
+    "path": "site/install/index.html",
+    "sha256": "02c13132c55b22fb6a897e73f5c26d89eaae87cfdfa1108e47589486dbf3db2d",
+    "reason": "generated-alias-and-migration-documentation"
+  },
+  {
+    "path": "site/install/index.html",
+    "sha256": "5981f504e12e7ea9bfb54aec61e7758b8fb825142a28c818d2d780f44160b0ff",
+    "reason": "generated-alias-and-migration-documentation"
+  },
+  {
+    "path": "site/search/search_index.json",
+    "sha256": "42e7447b210a4619da440520a5be4a96bbc5bfa568db3a163b3baee2ed5578fd",
+    "reason": "generated-search-for-migration-documentation"
+  },
+  {
+    "path": "templates/adapters/bootstrap.py",
+    "sha256": "232daccbef83cc8fd05c4a52141394541acac458946b94c4a467f683bcc29489",
+    "reason": "legacy-payload-selection"
+  },
+  {
+    "path": "templates/adapters/bootstrap.py",
+    "sha256": "25790241d5d2a612f915f3327c32a8ed18c2aefaf73e3dc55bd60a1f34e76024",
+    "reason": "legacy-payload-selection"
+  },
+  {
+    "path": "templates/adapters/bootstrap.py",
+    "sha256": "6d25f87e8c1870aa7c91cffd805ce1851ad8b4a181976a7df4b019980c61cb2d",
+    "reason": "legacy-payload-selection"
+  },
+  {
+    "path": "templates/adapters/bootstrap.py",
+    "sha256": "b322cfd01ddf3f62aac6dd358e755c94ab3cfb474819cbc884c757201f8d982d",
+    "reason": "legacy-payload-selection"
+  },
+  {
+    "path": "templates/adapters/bootstrap.py",
+    "sha256": "ddc91a4a7201480f90ee8a75ee0e51355a01c106d13b835ea9f1620e50dcabed",
+    "reason": "legacy-payload-selection"
+  },
+  {
+    "path": "templates/adapters/bootstrap.py",
+    "sha256": "ea327c858df3b13711968a7d30548ee8da2d39e25c9c0c8e79d89f3b33c8b234",
+    "reason": "legacy-payload-selection"
+  },
+  {
+    "path": "templates/adapters/bootstrap.py",
+    "sha256": "f623fbead8002faa0aec343e81edfbc8e42535ff4a7d7fb4613c409e70c21c1d",
+    "reason": "legacy-payload-selection"
+  },
+  {
+    "path": "templates/adapters/launch.py",
+    "sha256": "c4e6aea10ceb838ee3c759cef028b49e01dc80e4331fe077aeccc58ea3ecfe56",
+    "reason": "launcher-alias"
+  },
+  {
+    "path": "templates/adapters/launch.py",
+    "sha256": "f804a1f914cd04ea66be421f5e90ed1f6f9e8744f68d0aec25b3fb40a811a238",
+    "reason": "launcher-alias"
+  },
+  {
+    "path": "tests/test_migration.py",
+    "sha256": "1004c0286029de78495dd89b3f84506113c0a81dab520c6d1303610f81e76373",
+    "reason": "migration-regression-tests"
+  },
+  {
+    "path": "tests/test_migration.py",
+    "sha256": "1103235001452328a827706bce591788d821714f50db7e70b656aaad27d400b4",
+    "reason": "migration-regression-tests"
+  },
+  {
+    "path": "tests/test_migration.py",
+    "sha256": "14ea5d7d2344f2cab2944515088ac89b144df907876105b09d979243e40c806c",
+    "reason": "migration-regression-tests"
+  },
+  {
+    "path": "tests/test_migration.py",
+    "sha256": "175e7817588b174b7d91569938134458c5a0ceea5e8d749a973ca63204a4abaa",
+    "reason": "migration-regression-tests"
+  },
+  {
+    "path": "tests/test_migration.py",
+    "sha256": "26fb8165e0789de88b89cc3b3d9ef6a42ff9689789f1afadb46b8de841454c7c",
+    "reason": "migration-regression-tests"
+  },
+  {
+    "path": "tests/test_migration.py",
+    "sha256": "2a1f4c981568190f4d3533fa53fa8ca3fec44c1a2e39a8a7b478942a30bd8309",
+    "reason": "migration-regression-tests"
+  },
+  {
+    "path": "tests/test_migration.py",
+    "sha256": "2b1ed73eb873383dcd41c49d2cd0d0566d105a09121d624b3886bb938cd9d057",
+    "reason": "migration-regression-tests"
+  },
+  {
+    "path": "tests/test_migration.py",
+    "sha256": "30ed7178d60505f1cd0ef327d0ddd8ceaca3b0f7de3b9d217b3923e4af460c14",
+    "reason": "migration-regression-tests"
+  },
+  {
+    "path": "tests/test_migration.py",
+    "sha256": "351cc801f1396c7ac901971c3ced35acd203e045b031ad1faeb1cd976cdb62eb",
+    "reason": "migration-regression-tests"
+  },
+  {
+    "path": "tests/test_migration.py",
+    "sha256": "387ae0c3f3d1e58e21e5546ac270d50ce6fa0dcccebe20bb26fbb302b5fa56f8",
+    "reason": "migration-regression-tests"
+  },
+  {
+    "path": "tests/test_migration.py",
+    "sha256": "3a5fd17785935b310a4e2cf2e20210290aac060680f78a85a25712f6b2ccc9c7",
+    "reason": "migration-regression-tests"
+  },
+  {
+    "path": "tests/test_migration.py",
+    "sha256": "486c5b5a2e2943c7aa88e47356188febc363e6af5291e2615ecef1236df1e611",
+    "reason": "migration-regression-tests"
+  },
+  {
+    "path": "tests/test_migration.py",
+    "sha256": "4da590cebd0e4a547084dc4319b0c5ab2c34eb0cfbfd3b374bcf188cd4ff20ca",
+    "reason": "migration-regression-tests"
+  },
+  {
+    "path": "tests/test_migration.py",
+    "sha256": "53c4031576f8c7e494d819a88ff80ae1f7b572c58e11dd60e75346d6a9210002",
+    "reason": "migration-regression-tests"
+  },
+  {
+    "path": "tests/test_migration.py",
+    "sha256": "558725d69e7facd3fad50092d918684715dfde25077ed005f562bc01afcc321c",
+    "reason": "migration-regression-tests"
+  },
+  {
+    "path": "tests/test_migration.py",
+    "sha256": "5bc509a41ec08bb5efa03117fb891760fff16bca93e61d37fab323243cd1223e",
+    "reason": "migration-regression-tests"
+  },
+  {
+    "path": "tests/test_migration.py",
+    "sha256": "6f487a729de1c4231d5c5932f7ab35cb1b60c04123a1446f4c20bc0d88452132",
+    "reason": "migration-regression-tests"
+  },
+  {
+    "path": "tests/test_migration.py",
+    "sha256": "750e77b0830417aa69f397b4b187f1e884d1e05c28002c70db2ab1dd8adf3250",
+    "reason": "migration-regression-tests"
+  },
+  {
+    "path": "tests/test_migration.py",
+    "sha256": "7b3a5d39f2ed4f2b6b2accd3bff874939d1eed3afe83eaa9088d255abd80a864",
+    "reason": "migration-regression-tests"
+  },
+  {
+    "path": "tests/test_migration.py",
+    "sha256": "8f50e567eb22503b7f05cd01f04ab17ac8b83a1661bb92d3f93b3fd3e8e77c75",
+    "reason": "migration-regression-tests"
+  },
+  {
+    "path": "tests/test_migration.py",
+    "sha256": "90f35e9cbeea66c6ef53669fd7e8e489022dcb1ef8c4cf8bcba16a10ccf7704f",
+    "reason": "migration-regression-tests"
+  },
+  {
+    "path": "tests/test_migration.py",
+    "sha256": "948e3808605df683313f07eebe43d86a1a820e984e73a6d58d4c112e41c498a8",
+    "reason": "migration-regression-tests"
+  },
+  {
+    "path": "tests/test_migration.py",
+    "sha256": "991a74483036d33ca75bd3d9be0cf738d029e9d6e6a24e0e69f7d4457a990744",
+    "reason": "migration-regression-tests"
+  },
+  {
+    "path": "tests/test_migration.py",
+    "sha256": "99c8c52b44645615384916b2db5bc852fad2e602e5729fc5197ba719791583a7",
+    "reason": "migration-regression-tests"
+  },
+  {
+    "path": "tests/test_migration.py",
+    "sha256": "9bc8273859ad0b0f60c69b53c1688fd9d2328558a8b4dfc7c7e97f349d450ef8",
+    "reason": "migration-regression-tests"
+  },
+  {
+    "path": "tests/test_migration.py",
+    "sha256": "a90000c8c8fa0c912455fafb98f5bb94616f7d503ef1e8815f9481fed929b4cf",
+    "reason": "migration-regression-tests"
+  },
+  {
+    "path": "tests/test_migration.py",
+    "sha256": "aa14dfb4347104d4df12ea99f7ce3e775596b9c6b8f5914333b197bbc7c8002e",
+    "reason": "migration-regression-tests"
+  },
+  {
+    "path": "tests/test_migration.py",
+    "sha256": "b1db8e9e1c6d2c6d37622017cf8de0c95a5b5af415b5b4744a66feb3eac26d85",
+    "reason": "migration-regression-tests"
+  },
+  {
+    "path": "tests/test_migration.py",
+    "sha256": "b3abc22bfff9da1fbdb9ced4d62566a69f1d350a23462505b06b45ed9545bc29",
+    "reason": "migration-regression-tests"
+  },
+  {
+    "path": "tests/test_migration.py",
+    "sha256": "b90847f80a8fc9678cb9fb32d51988e31af3cd9f4a9e2067a2aa98afa92a83cb",
+    "reason": "migration-regression-tests"
+  },
+  {
+    "path": "tests/test_migration.py",
+    "sha256": "bbdeeca6e3e1b32a1c85d63c798626f01f35afbbf3ec36a8d019a293f6b79a9b",
+    "reason": "migration-regression-tests"
+  },
+  {
+    "path": "tests/test_migration.py",
+    "sha256": "bc03ec913788e5a67ce62e77ee07ac103102d0e3590b29580a35435187df9139",
+    "reason": "migration-regression-tests"
+  },
+  {
+    "path": "tests/test_migration.py",
+    "sha256": "cc75a11c248fb21fe33e0513a7e6ba8621395f61f77241071ee34ec36802e0db",
+    "reason": "migration-regression-tests"
+  },
+  {
+    "path": "tests/test_migration.py",
+    "sha256": "d007e8c84173257043f46e040920b8ea2a94949f1384872bc117ce7589bf86e7",
+    "reason": "migration-regression-tests"
+  },
+  {
+    "path": "tests/test_migration.py",
+    "sha256": "d6edc863cebb553233fea9ace2e7f68269bd6b26fb8cc303c105b7d1254c4dfa",
+    "reason": "migration-regression-tests"
+  },
+  {
+    "path": "tests/test_migration.py",
+    "sha256": "d7a47477a52247deb4b6b28212fe4620012195a9ab5a7777642e406b55d1900b",
+    "reason": "migration-regression-tests"
+  },
+  {
+    "path": "tests/test_migration.py",
+    "sha256": "d9b2f7e1f2269626b4d0467455ce765adb2ab29f38f3ac39d45cf2bfb01a7277",
+    "reason": "migration-regression-tests"
+  },
+  {
+    "path": "tests/test_migration.py",
+    "sha256": "df6196a3c53a35038746aaa8f899fe6d6fbac2dfcdfe15de35a7686ee1aa8be4",
+    "reason": "migration-regression-tests"
+  },
+  {
+    "path": "tests/test_migration.py",
+    "sha256": "e5dfe03710527c419b853b8767d86477c74c101e1b18f0811b459a3b1d1071e7",
+    "reason": "migration-regression-tests"
+  },
+  {
+    "path": "tests/test_migration.py",
+    "sha256": "e9488b78e6d0ded974739b8bad67248eab10970dd44dc5cf4e19db10c12d83e4",
+    "reason": "migration-regression-tests"
+  },
+  {
+    "path": "tests/test_migration.py",
+    "sha256": "e95c6f201025965d4052e246154a09440e506559928c08c6200e26671f8cb4a1",
+    "reason": "migration-regression-tests"
+  },
+  {
+    "path": "tests/test_migration.py",
+    "sha256": "fe1359bc24ff35cdfd89915f6cb7396e9c37a3580f9401941ea3d73f8b1520d2",
+    "reason": "migration-regression-tests"
+  },
+  {
+    "path": "tests/test_rename.py",
+    "sha256": "172c18eff01b99fd7938e477af94001a8866166b06cf6179b474a80083f6852f",
+    "reason": "alias-and-migration-regression-tests"
+  },
+  {
+    "path": "tests/test_rename.py",
+    "sha256": "1b1a63666e133d41f516c8988ff4e6ac7faf78d18e61fc73bd7a7a4e8282765b",
+    "reason": "alias-and-migration-regression-tests"
+  },
+  {
+    "path": "tests/test_rename.py",
+    "sha256": "4880481e18ebb784e713dcbe9313ee35345763a24974c13ce680ec980d294a75",
+    "reason": "alias-and-migration-regression-tests"
+  },
+  {
+    "path": "tests/test_rename.py",
+    "sha256": "8e088c5b2f972ed20e630e41cb9b3802c37942a10137cc6eaacab4e7c8f98348",
+    "reason": "alias-and-migration-regression-tests"
+  },
+  {
+    "path": "tests/test_rename.py",
+    "sha256": "b3abc22bfff9da1fbdb9ced4d62566a69f1d350a23462505b06b45ed9545bc29",
+    "reason": "alias-and-migration-regression-tests"
+  },
+  {
+    "path": "tests/test_rename.py",
+    "sha256": "ceff90a768fd24f523292b8d2731194105cc1c6688c637c2dab8d7470434b158",
+    "reason": "alias-and-migration-regression-tests"
+  },
+  {
+    "path": "tests/test_rename.py",
+    "sha256": "d59f713ae29b59bd0dd46edfd2ddf34129f5f3e15a6950fc80149099f3121ed6",
+    "reason": "alias-and-migration-regression-tests"
+  },
+  {
+    "path": "tests/test_rename.py",
+    "sha256": "f93ff145ce7841c6f65cd1acd991ff52cf22189cb85c3de534f3ddfcac95e2d8",
+    "reason": "alias-and-migration-regression-tests"
+  }
+]

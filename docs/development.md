@@ -1,13 +1,13 @@
 ---
 title: Contribute and develop
-description: Contribute to Agent Flow, run its checks, and change a public contract safely.
-question: How do I contribute to Agent Flow?
+description: Contribute to plovi, run its checks, and change a public contract safely.
+question: How do I contribute to plovi?
 ---
 
 # Contribute and develop
 
 !!! summary "In one minute"
-    - Agent Flow is MIT-licensed and developed in the open. Contributions are welcome.
+    - plovi is MIT-licensed and developed in the open. Contributions are welcome.
     - Runtime code is Python 3.11+ with the standard library only, and no new dependencies without a concrete need.
     - A good change comes with tests for its behavior and failure modes, and keeps schemas, validation, skills, and docs aligned.
     - Run the same checks CI runs before you open a pull request.

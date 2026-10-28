@@ -53,7 +53,7 @@ def category_for(name):
 
 def rendered():
     discovery = json.loads((ROOT / "workflow-package.json").read_text(encoding="utf-8")).get("discovery", {})
-    prefix = discovery.get("prefix", "af")
+    prefix = discovery.get("prefix", "plovi")
     entries = []
     for path in sorted((ROOT / "skills").glob("*/SKILL.md")):
         if path.is_symlink():
@@ -81,7 +81,7 @@ def rendered():
     skills = [
         "---\ntitle: Skills\ndescription: Find the right skill for the job, then browse every bundled skill.\nquestion: Which skill should I use?\nfooter: docs\nfooter_order: 5\n---\n",
         "# Skill reference\n",
-        f"!!! summary \"In one minute\"\n    - New project? Run `setup` first. Then `specify`, and `implement` for a small change or `implement-pipeline` for the full run.\n    - The other {len(entries) - 4} skills are for focused work, review, delivery, recovery, and maintenance.\n    - Standalone installs invoke **{prefix}-NAME**; the native Claude plugin uses **agentflow:NAME**.\n    - Project overrides take precedence in direct invocation and in runner stages.\n",
+        f"!!! summary \"In one minute\"\n    - New project? Run `setup` first. Then `specify`, and `implement` for a small change or `implement-pipeline` for the full run.\n    - The other {len(entries) - 4} skills are for focused work, review, delivery, recovery, and maintenance.\n    - Standalone installs invoke **{prefix}-NAME**; the native Claude plugin uses **plovi:plovi-NAME**.\n    - Project overrides take precedence in direct invocation and in runner stages.\n",
         "## Fast lookup\n",
         "\n".join(lookup) + "\n",
         "## All skills\n",
@@ -97,7 +97,7 @@ def rendered():
             searchable = html.escape(f"{name} {description}", quote=True)
             skills += [f'### `{name}` {{ .skill-entry data-skill="{searchable}" }}\n', description + "\n", body + "\n"]
     schemas = [
-        "---\ndescription: Public configuration schemas for Agent Flow projects and task plans.\nfooter: reference\nfooter_order: 2\n---\n",
+        "---\ndescription: Public configuration schemas for plovi projects and task plans.\nfooter: reference\nfooter_order: 2\n---\n",
         "# Schema reference\n",
         "These schemas describe public configuration. Runtime validation also checks repository membership, dependencies, and executable evidence.\n",
     ]

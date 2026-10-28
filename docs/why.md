@@ -10,7 +10,7 @@ question: How do we know agent work is correct?
     - Passing tests is not a merge signal. In a recent maintainer study, roughly half of test-passing AI pull requests would not have been merged.
     - Writing code stopped being the hard part. Proving a change is right is the bottleneck.
     - The state of practice fits in <!-- scorecard: total --> checkpoints across eight phases, from intake to organization-level controls.
-    - Agent Flow is built against those checkpoints and publishes its own [scorecard](scorecard.md), gaps included.
+    - plovi is built against those checkpoints and publishes its own [scorecard](scorecard.md), gaps included.
 
 ## Passing tests is not a merge signal
 
@@ -34,19 +34,19 @@ In Qodo's 2026 State of AI Code Quality survey of 500 U.S. developers and 300 en
 ([Qodo, "The 2026 State of AI Code Quality Report"](https://www.qodo.ai/blog/state-of-ai-code-quality-report-2026/))
 
 All three point the same way: **the scarce work is no longer generating a diff. It is knowing, with evidence, that the diff is right.**
-That is the problem Agent Flow is built around.
+That is the problem plovi is built around.
 
 ## The 36 checkpoints
 
 A checkpoint is a place in the lifecycle where a claim about the work must be backed by something observable.
-The list below is the rubric Agent Flow is scored against, grouped into eight phases.
-Each item links to its row on the [scorecard](scorecard.md), where you can see how Agent Flow addresses it and what remains.
+The list below is the rubric plovi is scored against, grouped into eight phases.
+Each item links to its row on the [scorecard](scorecard.md), where you can see how plovi addresses it and what remains.
 
 <!-- scorecard: checklist -->
 
 ## What changed in the last 12 months
 
-| Shift | Agent Flow's response |
+| Shift | plovi's response |
 |---|---|
 | Verification became the named bottleneck, not code generation. | Evidence gates at every stage. The orchestrator executes the checks itself. |
 | Asynchronous runs overtook interactive sessions. If you weren't watching, the run must come back with proof. | Runs come back with evidence on disk, not a chat transcript. |
@@ -55,17 +55,17 @@ Each item links to its row on the [scorecard](scorecard.md), where you can see h
 | Coordination replaced parallelism as the interesting problem. | One orchestrator per project, and a short queue by design. See [review and everyday use](everyday.md). |
 | Agents entered the review seat. | An independent review stage that never sees the implementation's reasoning. People still approve and merge. |
 
-## Open questions, and where Agent Flow stands
+## Open questions, and where plovi stands
 
-Some questions have no consensus yet. Agent Flow takes a position on each, and you can change most of them per project.
+Some questions have no consensus yet. plovi takes a position on each, and you can change most of them per project.
 
-| Question | Agent Flow's position |
+| Question | plovi's position |
 |---|---|
 | How heavy should the spec process be? | Two lanes. A small change gets a concise plan and runs in one session. A broad change gets four plan files and a validated contract. See [lanes](lanes.md). |
 | Should unattended agents skip permission prompts by default? | Trusted execution is the offered default, backed by outcome checks after every stage. Restricted execution is available. Neither is called a sandbox. |
 | Does parallelism help, or just relocate the queue? | One orchestrator per project. Worktrees isolate checkouts; they are not a throughput target. |
 | Do agent-written tests count as verification? | Only after they fail on an assertion before the code exists. Then they are frozen. |
-| What does "good" look like in numbers? | Evidence is recorded per task. Agent Flow invents no targets. |
+| What does "good" look like in numbers? | Evidence is recorded per task. plovi invents no targets. |
 | Does autonomous end-to-end testing generalize? | Disposable environments with observed readiness for local runs, and `test-on-staging` for deployed behavior. Screenshots are not required. |
 
 ## Method and sources

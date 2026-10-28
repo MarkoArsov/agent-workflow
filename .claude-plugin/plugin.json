@@ -1,13 +1,15 @@
 {
-  "name": "agentflow",
-  "version": "0.1.0",
+  "name": "plovi",
+  "version": "0.1.1",
   "description": "A customizable development workflow with verified fresh-session stages.",
   "author": {
-    "name": "Agent Flow contributors"
+    "name": "plovi contributors"
   },
   "homepage": "https://agentic.markoarsov.com/",
   "repository": "https://github.com/MarkoArsov/agent-workflow",
   "license": "MIT",
-  "skills": "./skills/"
+  "skills": [
+    "./skills/",
+    "./templates/plugin-skills/"
+  ]
 }
-

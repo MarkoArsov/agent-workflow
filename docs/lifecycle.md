@@ -1,6 +1,6 @@
 ---
 title: Update and remove
-description: Update, diagnose, or remove an existing Agent Flow installation.
+description: Update, diagnose, or remove an existing plovi installation.
 question: How do I update, diagnose, or remove an installation?
 ---
 
@@ -28,8 +28,8 @@ On Windows, run `irm https://agentic.markoarsov.com/install.ps1 | iex` again.
 To update from a reviewed checkout instead:
 
 ~~~sh
-agentflow update --global --local-source /path/to/release --dry-run
-agentflow update --global --local-source /path/to/release
+plovi update --global --local-source /path/to/release --dry-run
+plovi update --global --local-source /path/to/release
 ~~~
 
 For a project install, replace `--global` with `--target /path/to/project`.
@@ -48,8 +48,8 @@ to a versioned copy. See [linked installs](install.md#follow-a-development-check
 ## Diagnose
 
 ~~~sh
-agentflow doctor --global
-agentflow doctor --target /path/to/project
+plovi doctor --global
+plovi doctor --target /path/to/project
 ~~~
 
 The report identifies installation ownership and modified owned files.
@@ -58,8 +58,8 @@ If a pinned version is missing, install that version or deliberately update the 
 ## Remove
 
 ~~~sh
-agentflow uninstall --global --dry-run
-agentflow uninstall --global
+plovi uninstall --global --dry-run
+plovi uninstall --global
 ~~~
 
 Only unchanged receipt-owned files are removed.

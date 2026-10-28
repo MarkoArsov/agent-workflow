@@ -1,4 +1,4 @@
-site_name: Agent Flow
+site_name: plovi
 site_description: A project-owned workflow for coding agents, checked at every stage.
 site_url: https://agentic.markoarsov.com/
 repo_url: https://github.com/MarkoArsov/agent-workflow
@@ -20,8 +20,8 @@ extra_javascript:
   - assets/js/site.js
   - assets/js/search.js
 extra:
-  brand: agent flow
-  asset_version: agentflow-4
+  brand: plovi
+  asset_version: plovi-4
 markdown_extensions:
   - admonition
   - attr_list

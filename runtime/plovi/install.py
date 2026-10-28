@@ -1,0 +1,381 @@
+"""Versioned payloads and receipt-owned adapters; project extensions are never inputs."""
+from __future__ import annotations
+import argparse
+import json
+import os
+import shutil
+import sys
+import tempfile
+from pathlib import Path
+from .detect import repositories
+from .extensions import catalog
+from .adapters import entry_name, entry_names, validate_names, skill_files, adapter_source
+from .util import WorkflowError, atomic_write, digest, file_hash, json_text, package_root, read_json, user_data, write_json
+
+PAYLOAD = ("workflow-package.json", "package-files.json", "LICENSE", "README.md", "pyproject.toml", "bin", "runtime",
+           "skills", "references", "schemas", "templates", ".claude-plugin", "install.py", "install.sh", "install.ps1")
+IGNORE = {"__pycache__", ".DS_Store", ".git", ".venv", "node_modules"}
+
+def files_in(source):
+    for name in PAYLOAD:
+        path = source / name
+        if not path.exists():
+            continue
+        items = [path] if path.is_file() else sorted(path.rglob("*"))
+        for item in items:
+            if any(p in IGNORE for p in item.relative_to(source).parts):
+                continue
+            if item.is_symlink():
+                raise WorkflowError("Distribution payloads must not contain symlinks")
+            if item.is_file():
+                yield item
+
+def payload_digest(source):
+    return digest(json_text({str(p.relative_to(source)): file_hash(p) for p in files_in(source)}))
+
+def validate_source(source):
+    marker = read_json(source / "workflow-package.json")
+    if not marker or marker.get("name") != "plovi" or marker.get("schema_version") != 1:
+        raise WorkflowError("Not a compatible plovi package")
+    version = marker.get("version", "")
+    from .util import identifier
+    identifier(version)
+    for required in ("bin/plovi", "runtime/plovi/cli.py", "skills/project-setup/SKILL.md"):
+        if not (source / required).is_file():
+            raise WorkflowError(f"Package is missing {required}")
+    catalog(package=source)
+    checksums = read_json(source / "package-files.json")
+    if checksums is not None:
+        observed = {str(p.relative_to(source)): file_hash(p) for p in files_in(source) if p.name != "package-files.json"}
+        if checksums != observed:
+            raise WorkflowError("Package checksum manifest does not match the payload")
+    return marker
+
+AGENT_BINARIES = {"claude": ("claude",), "codex": ("codex",), "cursor": ("agent", "cursor-agent")}
+AGENT_NAMES = {"claude": "Claude Code", "codex": "Codex", "cursor": "Cursor"}
+START_COMMANDS = {"claude": 'claude "/plovi-setup"', "codex": 'codex "Use the plovi-setup skill"',
+                  "cursor": 'agent "Use the plovi-setup skill"'}
+
+def detect_agents():
+    """Install for the agent CLIs on PATH; with none found, install for all so a later CLI works."""
+    found = [name for name, binaries in AGENT_BINARIES.items() if any(shutil.which(b) for b in binaries)]
+    return found or list(AGENT_BINARIES)
+
+def installation_root(project=None):
+    return Path(project).expanduser().resolve() / ".plovi/runtime" if project else user_data()
+
+def wrappers(source, project, agents):
+    result = {}
+    if project:
+        roots = repositories(project)
+        locations = [(p / ".agents/skills") for p in (roots or [project])] if set(agents) & {"codex", "cursor"} else []
+        if "claude" in agents:
+            locations += [(p / ".claude/skills") for p in (roots or [project])]
+    else:
+        locations = [Path.home() / ".agents/skills"] if set(agents) & {"codex", "cursor"} else []
+        if "claude" in agents:
+            locations += [Path(os.environ.get("CLAUDE_CONFIG_DIR", str(Path.home() / ".claude"))) / "skills"]
+    # Hosts may share a skills directory through a symlink. Own each physical
+    # file once, so removing one discovery route cannot remove another's files.
+    locations = sorted({location.resolve() for location in locations})
+    skills = catalog(package=source)
+    validate_names(skills, source)
+    for location in locations:
+        for name, info in skills.items():
+            for public in entry_names(name, source):
+                for relative, content in skill_files(name, info, public, source).items():
+                    result[location / public / relative] = content
+    return result
+
+def install(source, *, project=None, agents=None, dry_run=False, link=False):
+    source = Path(source).expanduser().resolve()
+    project = Path(project).expanduser().resolve() if project else None
+    if project and not project.is_dir():
+        raise WorkflowError("Create/select the project directory before installing")
+    if link and project:
+        raise WorkflowError("Linked development installs are global; projects can keep independent pinned installs")
+    marker = validate_source(source)
+    legacy_config = None
+    predicted = {}
+    if project:
+        from .migration import configuration, migrate, LEGACY, CURRENT, _changes
+        config = configuration(project)
+        if dry_run and config.name == LEGACY:
+            legacy_config = config
+            predicted = _changes(project, config)
+        elif not dry_run:
+            migrate(project)
+    def observed_path(path):
+        if legacy_config and path.is_relative_to(project / CURRENT):
+            return legacy_config / path.relative_to(project / CURRENT)
+        return path
+    def observed_text(path):
+        original = observed_path(path)
+        key = original.relative_to(project).as_posix() if project and original.is_relative_to(project) else None
+        if key in predicted:
+            import base64
+            return base64.b64decode(predicted[key]["after"]).decode()
+        return original.read_text() if original.is_file() else None
+    def observed_json(path, default=None):
+        text = observed_text(path)
+        return json.loads(text) if text is not None else default
+    def observed_hash(path):
+        original = observed_path(path)
+        key = original.relative_to(project).as_posix() if project and original.is_relative_to(project) else None
+        if key in predicted:
+            import base64
+            return digest(base64.b64decode(predicted[key]["after"]))
+        return file_hash(original)
+    root = installation_root(project)
+    version = marker["version"]
+    target = source if link else root / "versions" / version
+    receipt_path = root / "receipt.json"
+    receipt_before = file_hash(receipt_path)
+    receipt = observed_json(receipt_path, {"files": {}, "versions": {}})
+    if link and source.is_relative_to(root):
+        raise WorkflowError("Link an independent source checkout outside the installation directory")
+    profile_path = project / ".plovi/project.json" if project else None
+    profile = observed_json(profile_path) if profile_path else None
+    agents = agents or (profile.get("agents") if profile else None) or receipt.get("agents") or list(AGENT_BINARIES)
+    desired = wrappers(source, project, agents)
+    launcher = project / ".plovi/bin/plovi" if project else Path.home() / ".local/bin/plovi"
+    code = adapter_source("launch.py", source)
+    if project:
+        code = code.replace("LOCAL_RUNTIME = None", "LOCAL_RUNTIME = Path(__file__).resolve().parents[1] / 'runtime'")
+    legacy_launcher = launcher.with_name("agentflow")
+    desired[launcher] = code
+    desired[legacy_launcher] = code
+    if os.name == "nt":
+        # Windows runs commands by extension; this shim makes `plovi` work in cmd and PowerShell.
+        desired[launcher.with_suffix(".cmd")] = f'@"{sys.executable}" "%~dp0plovi" %*\r\n'
+        desired[legacy_launcher.with_suffix(".cmd")] = f'@"{sys.executable}" "%~dp0agentflow" %*\r\n'
+    if project:
+        desired[root / ".gitignore"] = "*\n"
+    conflicts = []
+    baseline = observed_json(project / ".plovi/local/setup-baseline.json", {}).get("files", {}) if project else {}
+    for path, content in desired.items():
+        previous = receipt["files"].get(str(path))
+        if previous is None and project and path.is_relative_to(project):
+            generated = baseline.get(path.relative_to(project).as_posix())
+            if generated is not None:
+                previous = {"sha256": digest(generated)}
+        actual = observed_hash(path)
+        if actual is not None and actual != digest(content) and (not previous or actual != previous["sha256"]):
+            conflicts.append(str(path))
+    obsolete = [Path(p) for p in receipt["files"] if Path(p) not in desired]
+    for path in obsolete:
+        actual = observed_hash(path)
+        if actual is not None and actual != receipt["files"][str(path)]["sha256"]:
+            conflicts.append(str(path))
+    content_hash = payload_digest(source)
+    if not link and observed_path(target).exists() and payload_digest(observed_path(target)) != content_hash:
+        conflicts.append(f"Version {version} already has different content; use a new package version")
+    if profile and profile.get("schema_version") != marker["schema_version"]:
+        conflicts.append("Project profile needs a schema migration before this package can activate")
+    backend = "linked" if link else "standalone"
+    result = {"mode": "project" if project else "global", "backend": backend, "version": version, "target": str(target),
+              "files": [str(p) for p in desired], "conflicts": conflicts, "dry_run": dry_run}
+    if project and (project / ".agentflow").exists():
+        result["migration"] = "Move .agentflow/ to .plovi/ on apply"
+    if dry_run:
+        return result
+    if conflicts:
+        raise WorkflowError("Installation conflicts; preserve/resolve these files first:\n" + "\n".join(conflicts))
+    root.mkdir(parents=True, exist_ok=True)
+    from .state import lock
+    with lock(root / "install.lock"):
+        if file_hash(receipt_path) != receipt_before:
+            raise WorkflowError("Installation changed during preparation; retry the reviewed update")
+        backup_paths = set(desired) | set(obsolete) | {root / "active.json", receipt_path}
+        if profile_path and profile:
+            backup_paths |= {profile_path, project / ".plovi/package-lock.json"}
+        backups = {p: p.read_bytes() if p.is_file() else None for p in backup_paths}
+        created_version = False
+        try:
+            if not link and not target.exists():
+                (root / "versions").mkdir(exist_ok=True)
+                staging = Path(tempfile.mkdtemp(prefix=".stage-", dir=root / "versions"))
+                try:
+                    for path in files_in(source):
+                        destination = staging / path.relative_to(source)
+                        destination.parent.mkdir(parents=True, exist_ok=True)
+                        shutil.copy2(path, destination)
+                    if payload_digest(staging) != content_hash:
+                        raise WorkflowError("Staged package integrity mismatch")
+                    os.replace(staging, target); created_version = True
+                finally:
+                    if staging.exists():
+                        shutil.rmtree(staging)
+            for path, content in desired.items():
+                if not link or file_hash(path) != digest(content):
+                    atomic_write(path, content, 0o755 if path in {launcher, legacy_launcher} else None)
+            for path in obsolete:
+                path.unlink(missing_ok=True)
+            if profile:
+                profile["package"]["version"] = version
+                write_json(profile_path, profile)
+                write_json(project / ".plovi/package-lock.json", {"version": version, "schema_version": 1})
+            write_json(root / "active.json", {"version": version, "path": str(target), "backend": backend})
+            versions = dict(receipt.get("versions", {}))
+            if not link:
+                versions[version] = {"path": str(target), "sha256": content_hash}
+            write_json(receipt_path, {"schema_version": 1, "backend": backend, "version": version,
+                                      "source": str(source) if link else None, "source_sha256": content_hash,
+                                      "mode": result["mode"], "project": str(project) if project else None, "agents": agents,
+                                      "versions": versions,
+                                      "files": {str(p): {"sha256": file_hash(p)} for p in desired}})
+        except BaseException:
+            for path, content in backups.items():
+                if content is None:
+                    path.unlink(missing_ok=True)
+                else:
+                    path.parent.mkdir(parents=True, exist_ok=True)
+                    path.write_bytes(content)
+            if created_version:
+                shutil.rmtree(target)
+            raise
+    result["override_updates"] = override_updates(project, target) if project else []
+    for path in obsolete:
+        prune_adapter_dirs(path)
+    result["next"] = f"Run {entry_name('setup', source)} in your agent, or plovi setup PATH."
+    return result
+
+def prune_adapter_dirs(path):
+    parent = path.parent
+    while parent.name in {"scripts", "agents"} or parent.parent.name == "skills":
+        try:
+            parent.rmdir()
+        except OSError:
+            break
+        parent = parent.parent
+
+def sync_linked(*, dry_run=False):
+    """Reconcile discovery from the linked checkout, without touching projects."""
+    root = installation_root()
+    receipt = read_json(root / "receipt.json", {})
+    if receipt.get("backend") != "linked":
+        raise WorkflowError("No linked global install; run install.py --global --link first")
+    source = Path(receipt["source"])
+    validate_source(source)
+    active = read_json(root / "active.json", {})
+    if (receipt.get("source_sha256") == payload_digest(source)
+            and active.get("path") == str(source) and active.get("backend") == "linked"
+            and all(file_hash(Path(p)) == info["sha256"] for p, info in receipt["files"].items())):
+        return {"status": "unchanged", "source": str(source), "dry_run": dry_run}
+    return install(source, agents=receipt["agents"], link=True, dry_run=dry_run)
+
+def override_updates(project, package):
+    if not project:
+        return []
+    lock = read_json(project / ".plovi/overrides.lock.json", {})
+    updates = []
+    for name, base in lock.items():
+        current = package / "skills" / name / "SKILL.md"
+        if current.is_file() and file_hash(current) != base["sha256"]:
+            updates.append({"skill": name, "base_version": base["version"], "upstream_sha256": file_hash(current),
+                            "action": "Review upstream changes; project override is preserved"})
+    return updates
+
+def uninstall(*, project=None, dry_run=False):
+    project = Path(project).expanduser().resolve() if project else None
+    root = installation_root(project)
+    receipt = read_json(root / "receipt.json")
+    if not receipt:
+        raise WorkflowError("No standalone installation receipt; use native plugin uninstall for plugin-owned installs")
+    remove, preserve = [], []
+    for name, owned in receipt["files"].items():
+        path = Path(name)
+        if not path.exists():
+            continue
+        (remove if file_hash(path) == owned["sha256"] else preserve).append(path)
+    versions = []
+    for version, data in receipt["versions"].items():
+        path = Path(data["path"])
+        if path.exists():
+            if path.resolve().parent != (root / "versions").resolve():
+                raise WorkflowError("Receipt version leaves its installation root")
+            if payload_digest(path) == data["sha256"]:
+                versions.append(path)
+            else:
+                preserve.append(path)
+    result = {"remove": [str(p) for p in remove + versions], "preserve_modified": [str(p) for p in preserve], "dry_run": dry_run}
+    if dry_run:
+        return result
+    from .state import lock
+    with lock(root / "install.lock"):
+        for path in remove:
+            path.unlink()
+            prune_adapter_dirs(path)
+        for path in versions:
+            shutil.rmtree(path)
+        (root / "active.json").unlink(missing_ok=True)
+        if preserve:
+            write_json(root / "uninstall-preserved.json", result)
+        (root / "receipt.json").unlink(missing_ok=True)
+    return result
+
+def doctor(project=None):
+    root = installation_root(project)
+    receipt = read_json(root / "receipt.json", {})
+    native = []
+    native_error = None
+    if shutil.which("claude"):
+        try:
+            from .util import run
+            listed = json.loads(run(["claude", "plugin", "list", "--json"], Path(project) if project else Path.cwd(), timeout=10).stdout)
+            native = [{k: item.get(k) for k in ("id", "version", "scope", "enabled", "installPath")}
+                      for item in listed if item.get("id") == "plovi@plovi"]
+        except (WorkflowError, ValueError, TypeError) as exc:
+            native_error = str(exc)
+    return {"root": str(root), "active": read_json(root / "active.json"), "backend": receipt.get("backend"),
+            "modified_owned_files": [p for p, info in receipt.get("files", {}).items() if file_hash(Path(p)) != info["sha256"]],
+            "native_plugins": native, "native_inspection_error": native_error,
+            "duplicate_claude_backends": bool(native and receipt.get("backend") and "claude" in receipt.get("agents", [])),
+            "project_extensions": "Preserved outside the installed payload"}
+
+def summary(result, agents):
+    """Plain next steps for people; --json keeps the machine-readable result."""
+    if result["dry_run"]:
+        return json_text(result)
+    launcher = next((p for p in result["files"] if Path(p).name == "plovi"), "plovi")
+    lines = [f"plovi {result['version']} installed ({result['mode']}).",
+             f"  Command: {launcher}",
+             f"  Skills:  plovi-* for {', '.join(AGENT_NAMES[a] for a in agents)}", ""]
+    bin_dir = str(Path(launcher).parent)
+    if result["mode"] == "global" and bin_dir not in os.environ.get("PATH", "").split(os.pathsep):
+        lines += [f"Add {bin_dir} to your PATH to use the plovi command:"]
+        if os.name == "nt":
+            lines += [f"  [Environment]::SetEnvironmentVariable('Path', '{bin_dir};' + [Environment]::GetEnvironmentVariable('Path', 'User'), 'User')", ""]
+        else:
+            lines += [f"  echo 'export PATH=\"{bin_dir}:$PATH\"' >> ~/.zshrc   # or ~/.bashrc", ""]
+    lines += ["Next, from your project folder, run:"]
+    lines += [f"  {START_COMMANDS[a]}" for a in agents]
+    lines += ["", "Docs: https://agentic.markoarsov.com/first-task/"]
+    return "\n".join(lines) + "\n"
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description="Install plovi without pip. Installs globally unless --project is given.")
+    location = parser.add_mutually_exclusive_group()
+    location.add_argument("--global", dest="global_install", action="store_true", help="Install for your user account (default)")
+    location.add_argument("--project", type=Path, help="Install into one project folder instead")
+    parser.add_argument("--local-source", type=Path, default=package_root())
+    parser.add_argument("--agents", nargs="+", choices=["claude", "codex", "cursor"], help="Default: the agent CLIs found on PATH")
+    parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--link", action="store_true", help="Use this live checkout for the global runtime")
+    parser.add_argument("--sync", action="store_true", help="Refresh an existing linked global install")
+    parser.add_argument("--json", action="store_true", help="Print the machine-readable result")
+    args = parser.parse_args(argv)
+    try:
+        if args.sync:
+            if args.project or args.link or args.agents:
+                raise WorkflowError("Use --global --sync without --project, --link, or --agents")
+            result = sync_linked(dry_run=args.dry_run)
+        else:
+            receipt = read_json(installation_root(args.project) / "receipt.json", {})
+            profile = read_json(Path(args.project).resolve() / ".plovi/project.json", {}) if args.project else {}
+            agents = args.agents or profile.get("agents") or receipt.get("agents") or detect_agents()
+            result = install(args.local_source, project=args.project, agents=agents, dry_run=args.dry_run, link=args.link)
+        receipt = read_json(installation_root(args.project) / "receipt.json", {})
+        print(json_text(result) if args.json or args.sync else summary(result, receipt.get("agents") or agents), end="")
+    except (WorkflowError, OSError) as exc:
+        parser.exit(2, f"Error: {exc}\n")

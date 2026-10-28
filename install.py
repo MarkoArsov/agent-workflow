@@ -7,7 +7,7 @@ if sys.platform == "win32" and not sys.flags.utf8_mode:
     import subprocess
     raise SystemExit(subprocess.call([sys.executable, "-X", "utf8", *sys.orig_argv[1:]]))
 sys.path.insert(0, str(Path(__file__).resolve().parent / "runtime"))
-from agentflow.install import main
+from plovi.install import main
 if __name__ == "__main__":
     main()
 

@@ -7,7 +7,13 @@ __pycache__/
 *.egg-info/
 .DS_Store
 
-<!-- agentflow:start -->
+<!-- plovi:start -->
+.plovi/local/
+.plovi/runtime/
+<!-- plovi:end -->
+
+# Legacy local evidence stays private until explicitly migrated.
 .agentflow/local/
 .agentflow/runtime/
-<!-- agentflow:end -->
+.plovi-migration.lock
+.plovi-migration.json

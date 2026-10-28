@@ -1,6 +1,6 @@
 # Local release handoff
 
-Version 0.1.0 is implemented locally under the MIT license. Publication is a separate action.
+Version 0.1.1 is implemented locally under the MIT license. Publication is a separate action.
 
 ## Delivered
 
@@ -70,8 +70,8 @@ Create the repository without a generated README or license, then publish the ex
 gh repo create MarkoArsov/agent-workflow --public --description "Customizable coding-agent workflows with verified execution."
 git remote add origin git@github-personal:MarkoArsov/agent-workflow.git
 git push -u origin main
-git tag -a v0.1.0 -m "Release v0.1.0"
-git push origin v0.1.0
+git tag -a v0.1.1 -m "Release v0.1.1"
+git push origin v0.1.1
 ~~~
 
 In repository **Settings → Pages → Build and deployment**, select **GitHub Actions**.
@@ -88,7 +88,7 @@ Build an optional downloadable payload:
 
 ~~~sh
 python3 scripts/build_release.py
-gh release create v0.1.0 .dist/agentflow-0.1.0.tar.gz .dist/agentflow-0.1.0.tar.gz.sha256 --repo MarkoArsov/agent-workflow --verify-tag --title "v0.1.0" --notes "Initial public release. See README and documentation for installation and support."
+gh release create v0.1.1 .dist/plovi-0.1.1.tar.gz .dist/plovi-0.1.1.tar.gz.sha256 --repo MarkoArsov/agent-workflow --verify-tag --title "v0.1.1" --notes "Initial public release. See README and documentation for installation and support."
 ~~~
 
 Finally, check the pinned bootstrap from a disposable home/project using both global and project install modes, then run the [real-host smoke procedure](docs/coverage.md#real-host-smoke-procedure) with an available model for each intended host.

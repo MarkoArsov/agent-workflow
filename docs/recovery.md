@@ -44,7 +44,7 @@ See [stop or flag](principles.md#stop-or-flag).
 
 ## If something failed
 
-Start with `agentflow status TASK`. The `error` field names the failure; the evidence directory holds each attempt's output and each stage's check results.
+Start with `plovi status TASK`. The `error` field names the failure; the evidence directory holds each attempt's output and each stage's check results.
 Read the failing command or provider result before retrying.
 
 | What happened | Best next step |
@@ -66,10 +66,10 @@ The orchestrator retries temporary problems and resumes saved progress. It does 
 ## Answer, resume, rebind, cancel
 
 ~~~sh
-agentflow answer csv-export --file answer.txt
-agentflow resume csv-export
-agentflow resume csv-export --rebind
-agentflow cancel csv-export
+plovi answer csv-export --file answer.txt
+plovi resume csv-export
+plovi resume csv-export --rebind
+plovi cancel csv-export
 ~~~
 
 - **Answer** resumes the exact provider session that asked. Retries and fallbacks always start fresh sessions.

@@ -7,7 +7,7 @@ question: Why is it cheap, and why isn't it locked to one model?
 # Cost and models
 
 !!! summary "In one minute"
-    - Most of Agent Flow is Python and shell. Verification, status, watching, and delivery make no model calls.
+    - Most of plovi is Python and shell. Verification, status, watching, and delivery make no model calls.
     - The cheapest complete path is two sessions: `specify`, then `implement`.
     - Routes are chosen per stage: Claude Code, Codex, or Cursor, with the model you pick and explicit fallbacks.
     - Usage and cost are recorded only when the provider reports them. Unknown is never shown as zero.
@@ -15,7 +15,7 @@ question: Why is it cheap, and why isn't it locked to one model?
 ## Why a complex workflow can still be cheap
 
 A long chat that rediscovers the repository, re-reads huge logs, and retries until something looks green is expensive.
-Agent Flow writes the repeatable procedure down once as skills and scripts, then spends model tokens only on judgement.
+plovi writes the repeatable procedure down once as skills and scripts, then spends model tokens only on judgement.
 
 | What looks expensive | Why it usually isn't |
 |---|---|
@@ -47,7 +47,7 @@ The plan is the contract: repositories, paths, checks, and evidence. The model i
 - Use one route for every stage, or a different one per stage.
 - Give each stage an ordered list of fallbacks, or none. Authentication, quota, and unavailable-model failures move to the next route you approved.
 - An answer to a paused question always resumes the session that asked. It is never rerouted.
-- Agent Flow ships no model catalog. Setup records the models you choose.
+- plovi ships no model catalog. Setup records the models you choose.
 
 <!-- diagram: routes -->
 
@@ -92,7 +92,7 @@ A missing cost is `null`, meaning unknown, never zero. Provider doubles used in 
 
 ## Refresh models and choose effort
 
-Use **AF Update Models** (`af-update-models`) to refresh native model catalogues,
+Use **AF Update Models** (`plovi-update-models`) to refresh native model catalogues,
 confirm the providers and scope, and approve the proposed changes to machine or
 project defaults. Other workflows keep separate settings. Refreshing the catalogue
 does not change defaults, native app preferences or existing plans.

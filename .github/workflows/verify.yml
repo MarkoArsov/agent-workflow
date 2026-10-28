@@ -92,7 +92,7 @@ jobs:
 
           runner_temp = Path(os.environ['RUNNER_TEMP'])
           with (runner_temp / 'windows-install.log').open('w', encoding='utf-8') as log:
-              with tempfile.TemporaryDirectory(prefix='agentflow-install-', dir=runner_temp) as folder:
+              with tempfile.TemporaryDirectory(prefix='plovi-install-', dir=runner_temp) as folder:
                   home = Path(folder)
                   env = {key: os.environ[key] for key in (
                       'PATH', 'SYSTEMROOT', 'SYSTEMDRIVE', 'WINDIR', 'COMSPEC', 'PATHEXT', 'TEMP', 'TMP'
@@ -104,7 +104,7 @@ jobs:
                       'XDG_CACHE_HOME': str(home / 'cache'), 'CODEX_HOME': str(home / 'codex'),
                       'CLAUDE_CONFIG_DIR': str(home / 'claude'),
                       'GIT_CONFIG_NOSYSTEM': '1', 'GIT_CONFIG_GLOBAL': os.devnull,
-                      'AGENTFLOW_NO_MODIFY_PATH': '1', 'PYTHONUTF8': '1',
+                      'PLOVI_NO_MODIFY_PATH': '1', 'PYTHONUTF8': '1',
                   })
                   def run(shell, command):
                       result = subprocess.run(
@@ -119,12 +119,12 @@ jobs:
 
                   command = '& ./install.ps1 --local-source . --global --agents codex cursor --json'
                   run('powershell', command)
-                  discovery = home / '.agents/skills/af-setup/SKILL.md'
+                  discovery = home / '.agents/skills/plovi-setup/SKILL.md'
                   baseline = discovery.read_bytes()
                   run('pwsh', command)
                   if discovery.read_bytes() != baseline:
                       raise RuntimeError('Reinstall changed the setup discovery entry')
-                  version = run('pwsh', "& (Join-Path $env:USERPROFILE '.local/bin/agentflow.cmd') --version; exit $LASTEXITCODE")
+                  version = run('pwsh', "& (Join-Path $env:USERPROFILE '.local/bin/plovi.cmd') --version; exit $LASTEXITCODE")
                   expected = json.loads(Path('workflow-package.json').read_text())['version']
                   if version != expected:
                       raise RuntimeError('Installed command returned an unexpected version')

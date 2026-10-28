@@ -5,8 +5,8 @@ import time
 from pathlib import Path
 from unittest.mock import patch
 from tests.helpers import WorkspaceTest
-from agentflow import runner, state
-from agentflow.util import WorkflowError, digest, json_text, read_json, write_json
+from plovi import runner, state
+from plovi.util import WorkflowError, digest, json_text, read_json, write_json
 
 class RunnerLifecycleTests(WorkspaceTest):
     def test_binding_is_identical_with_windows_legacy_and_utf8_defaults(self):

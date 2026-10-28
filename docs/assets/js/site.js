@@ -1,7 +1,7 @@
 (() => {
   const banner = document.querySelector('[data-rename-banner]');
   if (banner) {
-    const key = 'agentflow-rename-dismissed';
+    const key = 'plovi-rename-dismissed';
     try { if (localStorage.getItem(key)) banner.hidden = true; } catch (_) {}
     banner.querySelector('[data-rename-dismiss]')?.addEventListener('click', () => {
       banner.hidden = true;

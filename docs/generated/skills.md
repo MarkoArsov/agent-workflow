@@ -11,7 +11,7 @@ footer_order: 5
 !!! summary "In one minute"
     - New project? Run `setup` first. Then `specify`, and `implement` for a small change or `implement-pipeline` for the full run.
     - The other 36 skills are for focused work, review, delivery, recovery, and maintenance.
-    - Standalone installs invoke **af-NAME**; the native Claude plugin uses **agentflow:NAME**.
+    - Standalone installs invoke **plovi-NAME**; the native Claude plugin uses **plovi:plovi-NAME**.
     - Project overrides take precedence in direct invocation and in runner stages.
 
 ## Fast lookup
@@ -174,7 +174,7 @@ Detect repositories and conventions, confirm missing choices, and configure a cu
 
 Use this for a new project, a changed repository layout, or a deliberate update to workflow preferences. The project can be a single repository or a non-Git folder containing several repositories.
 
-1. Locate the bundled bin/agentflow launcher relative to this skill's package. Run its setup command for the intended project root. It reads facts and prints a proposal; it does not apply changes.
+1. Locate the bundled bin/plovi launcher relative to this skill's package. Run its setup command for the intended project root. It reads facts and prints a proposal; it does not apply changes.
 2. Read existing project instructions. Explain detected repositories, roles, commands, branch/worktree conventions, delivery, and integrations, citing the detector's evidence. Distinguish findings from suggestions.
 3. Ask only for missing consequential choices. Repository roles do not prove branch policies. Confirm which repositories participate always, when changed, or never; an unchanged E2E repo may supply checks without getting a task branch.
 4. Confirm agents and whether to inherit machine model defaults or pin exact project routes and fallbacks. Use models inspect to show inherited settings; offer update-models if unconfigured. Leaving pipeline.routes empty permits adaptive selection during specify; existing explicit routes remain pins. Trusted execution is the offered default; explain that it uses provider permission-bypass flags. Restricted execution is available where the selected provider supports it. Save the choice once.
@@ -189,13 +189,13 @@ Keep credentials in the host's authentication system or referenced environment v
 
 Do not create task branches, install dependencies, run detected repository commands, start a pipeline, or post tracker updates as part of setup. Those actions have their own workflows.
 
-### `setup` { .skill-entry data-skill="setup Set up Agent Flow for this project. Short name for project-setup." }
+### `setup` { .skill-entry data-skill="setup Set up plovi for this project. Short name for project-setup." }
 
-Set up Agent Flow for this project. Short name for project-setup.
+Set up plovi for this project. Short name for project-setup.
 
 This is the short name for **project-setup**.
 
-1. Find the project-setup skill. In a project that already has a profile, run the selected package's bin/agentflow skill resolve project-setup; it returns the project's override when one exists. Otherwise use project-setup/SKILL.md beside this skill's folder.
+1. Find the project-setup skill. In a project that already has a profile, run the selected package's bin/plovi skill resolve project-setup; it returns the project's override when one exists. Otherwise use project-setup/SKILL.md beside this skill's folder.
 2. Read that file and follow its procedure exactly, including its approval steps.
 3. Do not skip or shorten any step because this entry point has a shorter name.
 
@@ -409,7 +409,7 @@ without staging, committing, switching branches, pushing, or creating/updating a
 
 1. Use the selected package root returned by the resolver, not the calling application's Git
    repository. Verify that `git rev-parse --show-toplevel` equals that package root and that it
-   contains `workflow-package.json`, `runtime/agentflow`, and `skills`. Read its `AGENTS.md`.
+   contains `workflow-package.json`, `runtime/plovi`, and `skills`. Read its `AGENTS.md`.
    A copied installation is not the source checkout: if it has no repository of its own, ask for
    the workflow source checkout. Never initialize Git in an installed payload or publish a parent
    repository. An explicitly supplied checkout must satisfy the same checks.

@@ -19,12 +19,12 @@ description: Agents write the code. The orchestrator makes them prove it, checki
       <pre><code>curl -fsSL https://agentic.markoarsov.com/install.sh | sh</code></pre>
       <p class="install-os">Windows · PowerShell</p>
       <pre><code>irm https://agentic.markoarsov.com/install.ps1 | iex</code></pre>
-      <p>Then run <code>/af-setup</code> in your agent. Needs Python 3.11+ and Git.</p>
+      <p>Then run <code>/plovi-setup</code> in your agent. Needs Python 3.11+ and Git.</p>
     </div>
   </div>
-  <div class="run-panel" aria-label="Example Agent Flow run">
+  <div class="run-panel" aria-label="Example plovi run">
     <div class="run-panel-top"><span class="run-dot" aria-hidden="true"></span><span>csv-export</span><span class="run-live">RUNNING</span></div>
-    <div class="run-command"><span>$</span> agentflow status csv-export</div>
+    <div class="run-command"><span>$</span> plovi status csv-export</div>
     <div class="run-status"><span>stage</span><strong>review</strong><span class="status-signal">green evidence bound to diff c0045111…</span></div>
     <ol class="run-stages">
       <li class="is-complete" data-run-stage><span>01</span><strong>Plan</strong><em>confirmed</em></li>
@@ -47,7 +47,7 @@ description: Agents write the code. The orchestrator makes them prove it, checki
     <div class="stat-tile"><p class="stat-figure">46%</p><p class="stat-label">of fixes proposed by coding agents in real open-source projects were rejected.</p><p class="stat-source"><a href="https://arxiv.org/abs/2606.13468">AIDev, 2026</a></p></div>
     <div class="stat-tile"><p class="stat-figure">96%</p><p class="stat-label">of engineering leaders don't think their process is ready for AI agents.</p><p class="stat-source"><a href="https://www.qodo.ai/blog/state-of-ai-code-quality-report-2026/">Qodo, 2026</a></p></div>
   </div>
-  <p class="home-closing-line">Writing code is no longer the hard part. Proving it's right is, so Agent Flow makes every stage prove it.</p>
+  <p class="home-closing-line">Writing code is no longer the hard part. Proving it's right is, so plovi makes every stage prove it.</p>
   <p><a class="text-link" href="why/">Read the research <span aria-hidden="true">→</span></a></p>
 </section>
 
@@ -72,7 +72,7 @@ description: Agents write the code. The orchestrator makes them prove it, checki
   <div class="section-intro">
     <p class="section-label">THE SCORECARD</p>
     <h2 id="scorecard-title">Measured against <!-- scorecard: total --> checkpoints. Gaps included.</h2>
-    <p>Most tools tell you they're safe. Agent Flow publishes the scorecard: what the orchestrator enforces, what's partial, what belongs to your organization, and what's still open.</p>
+    <p>Most tools tell you they're safe. plovi publishes the scorecard: what the orchestrator enforces, what's partial, what belongs to your organization, and what's still open.</p>
   </div>
 <!-- scorecard: grid -->
   <p><a class="text-link" href="scorecard/">Read the scorecard <span aria-hidden="true">→</span></a></p>
@@ -111,7 +111,7 @@ description: Agents write the code. The orchestrator makes them prove it, checki
 <section class="home-split" aria-labelledby="review-title">
   <div class="section-intro">
     <p class="section-label">REVIEW</p>
-    <h2 id="review-title">Review is the new bottleneck. Agent Flow treats it that way.</h2>
+    <h2 id="review-title">Review is the new bottleneck. plovi treats it that way.</h2>
     <p>Agents produce diffs faster than anyone can responsibly merge them. Use AI to understand a change before you judge it, keep your own queue short, and spend the waits reviewing. A named human still approves.</p>
   </div>
   <div class="mono-chips"><code>understand</code><code>review-guide</code><code>peer-pr-review</code><code>address-pr-comments</code><code>pr-preflight</code></div>
@@ -127,14 +127,14 @@ description: Agents write the code. The orchestrator makes them prove it, checki
   <div class="ownership-grid">
     <div class="code-card">
       <p>CHANGE WHAT YOUR AGENTS KNOW</p>
-      <pre><code>agentflow skill copy review
-agentflow skill new release-notes --description "Draft release notes from verified changes."
-agentflow refresh</code></pre>
+      <pre><code>plovi skill copy review
+plovi skill new release-notes --description "Draft release notes from verified changes."
+plovi refresh</code></pre>
       <a href="customize/">Customize skills and stages <span aria-hidden="true">→</span></a>
     </div>
     <div class="tree-card">
       <p>KEEP EXTENSIONS WITH THE PROJECT</p>
-      <pre aria-label="Project extension file tree"><code>.agentflow/
+      <pre aria-label="Project extension file tree"><code>.plovi/
 ├── skills/
 ├── rules/
 ├── references/

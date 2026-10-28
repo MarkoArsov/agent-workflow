@@ -6,12 +6,12 @@ description: Publish workflow changes through a pull request, or prepare a revie
 
 # Publish workflow changes
 
-Run **af-publish-workflow** to collect this workflow checkout's local edits and all commits
+Run **plovi-publish-workflow** to collect this workflow checkout's local edits and all commits
 missing from the remote default branch into a draft GitHub pull request. A clean working tree
 with unpublished commits is supported. The skill resolves the workflow source checkout even
 when invoked from an application project; copied installations need an explicit source checkout.
 
-An optional short summary guides the PR title. Use **af-publish-workflow --dry-run** to inspect
+An optional short summary guides the PR title. Use **plovi-publish-workflow --dry-run** to inspect
 the included work, checks, and proposed PR without committing or publishing. A dry run may fetch
 remote metadata and run checks. The normal invocation verifies the full change, commits reviewed
 edits on a feature branch, pushes normally, and creates or updates the matching PR. Already-pushed
@@ -38,7 +38,7 @@ Publication is a separate maintainer action after local verification.
 6. Verify installation from the published pinned revision in an isolated environment.
 
 The site is served at [agentic.markoarsov.com](https://agentic.markoarsov.com/), a custom domain configured in the repository's Pages settings.
-The v0.1.0 installer expects a matching v0.1.0 tag.
+The v0.1.1 installer expects a matching v0.1.1 tag.
 
 ## Custom domain later
 

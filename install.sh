@@ -1,5 +1,5 @@
 #!/bin/sh
-# Install Agent Flow.
+# Install plovi.
 #
 #   curl -fsSL https://agentic.markoarsov.com/install.sh | sh
 #
@@ -7,14 +7,14 @@
 #   --project PATH       install into one project instead of for your user account
 #   --agents claude ...  choose agent CLIs instead of detecting them
 # Other:
-#   AGENTFLOW_REF=v0.1.0 pin a release tag or branch (default: latest release, else main)
+#   PLOVI_REF=v0.1.0 pin a release tag or branch (default: latest release, else main)
 #   --local-source PATH  install from a checkout without downloading (first argument)
 set -eu
 
 repo="MarkoArsov/agent-workflow"
 
 fail() {
-  printf 'agentflow: %s\n' "$1" >&2
+  printf 'plovi: %s\n' "$1" >&2
   exit 1
 }
 
@@ -28,9 +28,9 @@ if [ "${1:-}" = "--local-source" ]; then
   exec python3 "$workflow_source/install.py" --local-source "$workflow_source" "$@"
 fi
 
-command -v curl >/dev/null 2>&1 || fail "curl is required to download Agent Flow."
+command -v curl >/dev/null 2>&1 || fail "curl is required to download plovi."
 
-workflow_ref="${AGENTFLOW_REF:-}"
+workflow_ref="${PLOVI_REF:-${AGENTFLOW_REF:-}}"
 if [ -z "$workflow_ref" ]; then
   # /releases/latest redirects to /releases/tag/<tag> once a release exists.
   latest=$(curl -fsSLI -o /dev/null -w '%{url_effective}' "https://github.com/$repo/releases/latest" 2>/dev/null || true)
@@ -42,7 +42,7 @@ fi
 
 workflow_temp=$(mktemp -d)
 trap 'rm -rf "$workflow_temp"' EXIT HUP INT TERM
-printf 'Downloading Agent Flow (%s)...\n' "$workflow_ref"
+printf 'Downloading plovi (%s)...\n' "$workflow_ref"
 curl -fsSL "https://github.com/$repo/archive/$workflow_ref.tar.gz" -o "$workflow_temp/package.tar.gz" \
   || fail "Could not download $workflow_ref from github.com/$repo."
 python3 - "$workflow_temp" <<'PY'
