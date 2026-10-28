@@ -10,3 +10,7 @@ Never modify real user agent configuration during tests. Use isolated child envi
 Keep private identifiers, real credentials, and machine-specific paths out of deliverables.
 Commit logical changes locally. Publishing and remote changes require an explicit request.
 
+<!-- agentflow:start -->
+Read PROJECT_WORKFLOW.md for this project's workflow defaults and custom skills.
+Do not apply workflow defaults from an unrelated ancestor project.
+<!-- agentflow:end -->
