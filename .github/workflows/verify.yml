@@ -1,11 +1,17 @@
 name: Verify
 on:
   push:
+    branches: [main]
   pull_request:
+  workflow_dispatch:
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:
   core:
+    timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
@@ -15,19 +21,59 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          fetch-depth: 0
           persist-credentials: false
       - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python }}
-      - run: python -m unittest discover -s tests -v
-      - run: python scripts/generate_docs.py --check
-      - run: python scripts/check_public_content.py --history
+      - name: Run isolated unit tests
+        shell: bash
+        run: |
+          set -o pipefail
+          python -m unittest discover -s tests -v 2>&1 | tee "$RUNNER_TEMP/tests.log"
+      - name: Summarize failure
+        if: failure()
+        shell: bash
+        run: echo 'Unit tests failed. Read the failing test above or download the test log artifact.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Preserve test failure log
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: tests-${{ matrix.os }}-${{ matrix.python }}
+          path: ${{ runner.temp }}/tests.log
+          retention-days: 7
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      - name: Check generated documentation and public history
+        shell: bash
+        run: |
+          set -o pipefail
+          python scripts/generate_docs.py --check 2>&1 | tee "$RUNNER_TEMP/generated-docs.log"
+          python scripts/check_public_content.py --history 2>&1 | tee "$RUNNER_TEMP/public-content.log"
+      - name: Summarize failure
+        if: failure()
+        shell: bash
+        run: echo 'Repository audit failed. Read the reported file or commit and finding type; do not bypass the audit.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Preserve audit failure logs
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: repository-audit
+          path: |
+            ${{ runner.temp }}/generated-docs.log
+            ${{ runner.temp }}/public-content.log
+          retention-days: 7
   windows-install:
-    # The documented one-liner against this commit: Windows PowerShell 5.1 installs, PowerShell 7 reinstalls.
     runs-on: windows-latest
-    env:
-      AGENTFLOW_REF: ${{ github.sha }}
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
         with:
@@ -35,20 +81,68 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
-      - name: Install from Windows PowerShell
-        shell: powershell
-        run: Get-Content install.ps1 -Raw | Invoke-Expression
-      - name: Reinstall from PowerShell 7
-        shell: pwsh
-        run: Get-Content install.ps1 -Raw | Invoke-Expression
-      - name: Run the installed command
-        shell: pwsh
+      - name: Install and reinstall checked-out source in isolated child environments
+        shell: python
         run: |
-          & "$HOME\.local\bin\agentflow.cmd" --version
-          if ($LASTEXITCODE -ne 0) { exit 1 }
-          if (-not (Test-Path "$HOME\.claude\skills\af-setup\SKILL.md")) { exit 1 }
+          import json
+          import os
+          from pathlib import Path
+          import subprocess
+          import tempfile
+
+          runner_temp = Path(os.environ['RUNNER_TEMP'])
+          with (runner_temp / 'windows-install.log').open('w', encoding='utf-8') as log:
+              with tempfile.TemporaryDirectory(prefix='agentflow-install-', dir=runner_temp) as folder:
+                  home = Path(folder)
+                  env = {key: os.environ[key] for key in (
+                      'PATH', 'SYSTEMROOT', 'SYSTEMDRIVE', 'WINDIR', 'COMSPEC', 'PATHEXT', 'TEMP', 'TMP'
+                  ) if key in os.environ}
+                  env.update({
+                      'HOME': str(home), 'USERPROFILE': str(home),
+                      'APPDATA': str(home / 'roaming'), 'LOCALAPPDATA': str(home / 'local'),
+                      'XDG_DATA_HOME': str(home / 'data'), 'XDG_CONFIG_HOME': str(home / 'config'),
+                      'XDG_CACHE_HOME': str(home / 'cache'), 'CODEX_HOME': str(home / 'codex'),
+                      'CLAUDE_CONFIG_DIR': str(home / 'claude'),
+                      'GIT_CONFIG_NOSYSTEM': '1', 'GIT_CONFIG_GLOBAL': os.devnull,
+                      'AGENTFLOW_NO_MODIFY_PATH': '1', 'PYTHONUTF8': '1',
+                  })
+                  def run(shell, command):
+                      result = subprocess.run(
+                          [shell, '-NoProfile', '-NonInteractive', '-Command', command],
+                          env=env, capture_output=True, text=True, encoding='utf-8', errors='replace', timeout=180,
+                      )
+                      log.write(result.stdout + result.stderr)
+                      log.flush()
+                      if result.returncode:
+                          raise RuntimeError(f'{shell} failed with exit code {result.returncode}; see windows-install.log')
+                      return result.stdout.strip()
+
+                  command = '& ./install.ps1 --local-source . --global --agents codex cursor --json'
+                  run('powershell', command)
+                  discovery = home / '.agents/skills/af-setup/SKILL.md'
+                  baseline = discovery.read_bytes()
+                  run('pwsh', command)
+                  if discovery.read_bytes() != baseline:
+                      raise RuntimeError('Reinstall changed the setup discovery entry')
+                  version = run('pwsh', "& (Join-Path $env:USERPROFILE '.local/bin/agentflow.cmd') --version; exit $LASTEXITCODE")
+                  expected = json.loads(Path('workflow-package.json').read_text())['version']
+                  if version != expected:
+                      raise RuntimeError('Installed command returned an unexpected version')
+          print('Windows PowerShell install, PowerShell 7 reinstall, discovery, and installed command passed.')
+      - name: Summarize failure
+        if: failure()
+        shell: bash
+        run: echo 'Windows local installation failed. Download windows-install.log for the failing shell output.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Preserve installer failure log
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: windows-install
+          path: ${{ runner.temp }}/windows-install.log
+          retention-days: 7
   docs:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
         with:
@@ -56,7 +150,28 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
-      - run: python -m pip install -r requirements-docs.txt
-      - run: python -m mkdocs build --strict
-      - run: python scripts/check_links.py site
-      - run: python scripts/check_public_content.py site
+          cache: pip
+          cache-dependency-path: requirements-docs.txt
+      - name: Install documentation dependencies
+        shell: bash
+        run: |
+          set -o pipefail
+          python -m pip install -r requirements-docs.txt 2>&1 | tee "$RUNNER_TEMP/docs-install.log"
+      - name: Build and verify documentation
+        shell: bash
+        run: |
+          set -o pipefail
+          python -m mkdocs build --strict 2>&1 | tee "$RUNNER_TEMP/docs-build.log"
+          python scripts/check_links.py site 2>&1 | tee "$RUNNER_TEMP/docs-links.log"
+          python scripts/check_public_content.py site 2>&1 | tee "$RUNNER_TEMP/docs-public-content.log"
+      - name: Summarize failure
+        if: failure()
+        shell: bash
+        run: echo 'Documentation verification failed. Download the docs logs for build, links, and public-content results.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Preserve documentation failure logs
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: docs
+          path: ${{ runner.temp }}/docs-*.log
+          retention-days: 7

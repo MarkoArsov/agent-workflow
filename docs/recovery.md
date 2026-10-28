@@ -101,3 +101,43 @@ The run state, the evidence directory, and the final status should hold those an
 ## See also
 
 [Task lifecycle](tasks.md) · [Code map](code-map.md#where-to-look-for-an-answer) · [Evidence and checks](verification.md)
+
+## When GitHub Actions fails
+
+The **Verify** workflow checks pull requests, pushes to `main`, and manual dispatches.
+A feature branch without a PR can be checked with **Run workflow** in GitHub Actions.
+New updates cancel superseded verification runs for that PR or branch; documentation
+publishing uses a separate concurrency group.
+
+The six `core` jobs run isolated tests on Linux, macOS, and Windows with Python 3.11
+and 3.14. The `audit` job checks generated documentation and public content once,
+including all fetched reachable history. The `docs` job checks the built site.
+`windows-install` installs the checked-out source in Windows PowerShell 5.1 and
+reinstalls it in PowerShell 7 using temporary child environments. This proves local
+installation, discovery stability, and the installed command; it does not prove
+remote archive availability. Keep the documented remote bootstrap release smoke
+check separate.
+
+Read the failing step first. A failed test or audit stays blocking; there is no
+blanket retry or success override. Failed jobs retain their diagnostic logs as
+artifacts for seven days and add a short job summary. These logs come from isolated
+checks, not from a dump of the runner's credentials or environment.
+
+For an audit finding, the diagnostic identifies a file or a representative commit
+and a finding type without printing matched credentials or private denylist terms.
+Repeated unchanged path/blob pairs are inspected once; every reachable commit
+message is still checked. One reviewed public automation address is accepted only
+inside a final `Co-Authored-By` trailer block. That exception does not apply to ordinary
+file content or to other addresses, and a supplied private denylist still takes
+precedence. Investigate an unexpected finding before changing the policy.
+
+To reproduce the shared audit locally:
+
+```sh
+python3 scripts/generate_docs.py --check
+python3 scripts/check_public_content.py --history
+```
+
+The history audit checks every locally reachable ref. Fetch the relevant remote
+history before comparing local and CI results. Scan a release tree or built site
+separately when verifying those deliverables.
