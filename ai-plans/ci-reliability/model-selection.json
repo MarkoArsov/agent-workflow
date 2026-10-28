@@ -1,0 +1,58 @@
+{
+  "advisories": [],
+  "evaluator_version": "1.0.0",
+  "notice": "No model catalogue; retaining configured routes. Run update-models when convenient.",
+  "provenance": {
+    "catalogue": "9aecf438c3f923ce02f488be25cae648068d632535d5ec4d38b0fa6abb6b055f",
+    "facts": {
+      "kind": "code",
+      "repository_count": 1,
+      "risk": "standard",
+      "size": "medium",
+      "stages": [
+        "specify",
+        "implement-tests",
+        "implement",
+        "review"
+      ],
+      "test_files": 2,
+      "test_lines": 200,
+      "uncertain": false
+    },
+    "policy": "6db414a553f7e4c7defff33c640a73a507afaae3961ed955ddb14ddd1bd9389e",
+    "registry": "d46858249ba32df18d9374251d7501e43b6c335ec2aa4cd5135e4d02c2eef89c",
+    "settings": "1ad50ee4dc6be9306fbb99bccb3d4504637d634d260d3d042be263d2becabdfe"
+  },
+  "reasons": {
+    "implement": "no-reviewed-available-route",
+    "implement-tests": "no-reviewed-available-route",
+    "review": "no-reviewed-available-route",
+    "specify": "no-reviewed-available-route"
+  },
+  "routes": {
+    "implement": [],
+    "implement-tests": [],
+    "review": [],
+    "specify": []
+  },
+  "schema_version": 1,
+  "snapshot_hash": "6c495564a94f7342786524eb8cf3792a92f666bd81408163912c4781d37e2334",
+  "unresolved": [
+    {
+      "reason": "no-reviewed-available-route",
+      "stage": "specify"
+    },
+    {
+      "reason": "no-reviewed-available-route",
+      "stage": "implement-tests"
+    },
+    {
+      "reason": "no-reviewed-available-route",
+      "stage": "implement"
+    },
+    {
+      "reason": "no-reviewed-available-route",
+      "stage": "review"
+    }
+  ]
+}
