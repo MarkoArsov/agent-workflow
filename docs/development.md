@@ -45,6 +45,14 @@ python3 -m venv .venv
 The E2E fixture needs permission to listen on localhost.
 Tests must use their isolated HOME and provider configuration; never test installation against your real settings.
 
+CI runs the full suite on Linux and macOS. Each Windows Python version runs the
+same suite in three deterministic batches on separate runners, so long installation
+and migration checks fit within the existing job limit. No tests are omitted.
+To reproduce one batch, run `python3 scripts/run_tests.py --shard 1 --shards 3`.
+Use `--list` to inspect its test IDs. CI retains each batch's log and per-test
+timings for seven days, including successful runs. A test-step deadline leaves
+time for those artifacts to upload before the job deadline.
+
 The optional local host check, `python3 scripts/host_smoke.py`, validates installed command interfaces and exercises Claude plugin lifecycle in a temporary configuration. It does not generate model responses or publish anything.
 
 ## One source of truth

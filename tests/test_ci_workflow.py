@@ -50,6 +50,23 @@ class CIWorkflowTests(WorkspaceTest):
                 self.assertIn('retention-days: 7', job)
         self.assertIn('pipefail', self.job('core'))
 
+    def test_windows_batches_cover_both_python_versions_and_keep_diagnostics(self):
+        core = self.job('core')
+        self.assertIn('shard: [1]', core)
+        self.assertRegex(core, r'os: windows-latest\s+shard: 1\s+shards: 3')
+        for version in ('3.11', '3.14'):
+            for shard in (2, 3):
+                self.assertRegex(core, r'os: windows-latest\s+python: "' + re.escape(version)
+                                 + r'"\s+shard: ' + str(shard) + r'\s+shards: 3')
+        self.assertIn('python scripts/run_tests.py', core)
+        self.assertIn('--shard ${{ matrix.shard }}', core)
+        self.assertIn('--shards ${{ matrix.shards || 1 }}', core)
+        self.assertIn('--timings "$RUNNER_TEMP/test-timings.json"', core)
+        self.assertRegex(core, r'name: Run isolated unit tests\s+timeout-minutes: 12')
+        self.assertIn('if: always()', core)
+        self.assertIn('name: tests-${{ matrix.os }}-${{ matrix.python }}-${{ matrix.shard }}', core)
+        self.assertIn('${{ runner.temp }}/test-timings.json', core)
+
     def smoke_code(self):
         match = re.search(r'shell: python\s*\n\s+run: \|\n(.*?)(?=^      - |\Z)',
                           self.job('windows-install'), re.M | re.S)

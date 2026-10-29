@@ -11,12 +11,34 @@ permissions:
   contents: read
 jobs:
   core:
+    name: core (${{ matrix.os }}, ${{ matrix.python }}${{ matrix.shards && format(', batch {0}/3', matrix.shard) || '' }})
     timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
         python: ["3.11", "3.14"]
+        shard: [1]
+        include:
+          - os: windows-latest
+            shard: 1
+            shards: 3
+          - os: windows-latest
+            python: "3.11"
+            shard: 2
+            shards: 3
+          - os: windows-latest
+            python: "3.11"
+            shard: 3
+            shards: 3
+          - os: windows-latest
+            python: "3.14"
+            shard: 2
+            shards: 3
+          - os: windows-latest
+            python: "3.14"
+            shard: 3
+            shards: 3
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7
@@ -26,20 +48,23 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
       - name: Run isolated unit tests
+        timeout-minutes: 12
         shell: bash
         run: |
           set -o pipefail
-          python -m unittest discover -s tests -v 2>&1 | tee "$RUNNER_TEMP/tests.log"
+          python scripts/run_tests.py --shard ${{ matrix.shard }} --shards ${{ matrix.shards || 1 }} --timings "$RUNNER_TEMP/test-timings.json" 2>&1 | tee "$RUNNER_TEMP/tests.log"
       - name: Summarize failure
         if: failure()
         shell: bash
         run: echo 'Unit tests failed. Read the failing test above or download the test log artifact.' >> "$GITHUB_STEP_SUMMARY"
-      - name: Preserve test failure log
-        if: failure()
+      - name: Preserve test log and timings
+        if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: tests-${{ matrix.os }}-${{ matrix.python }}
-          path: ${{ runner.temp }}/tests.log
+          name: tests-${{ matrix.os }}-${{ matrix.python }}-${{ matrix.shard }}
+          path: |
+            ${{ runner.temp }}/tests.log
+            ${{ runner.temp }}/test-timings.json
           retention-days: 7
   audit:
     runs-on: ubuntu-latest

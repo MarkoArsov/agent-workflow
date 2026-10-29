@@ -741,7 +741,7 @@
   },
   {
     "path": "site/search/search_index.json",
-    "sha256": "742848f4fd3a09a08e8a5519a96cc6496be7ecbad98fc103311b98644f437e81",
+    "sha256": "ff9af5d368a4fa44e0aaa5f402e3b022b9c2633aa582278e28da5832b4ee54f4",
     "reason": "generated-search-for-migration-documentation"
   },
   {
