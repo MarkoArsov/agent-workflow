@@ -1,7 +1,10 @@
 # Improve workflow guidance and learning
 
-Status: proposed; awaiting implementation approval.
-Lane: manual, in-session implementation with focused verification.
+Status: revised proposal; awaiting implementation approval.
+Revision: 29 October 2026; expands the comparison beyond the supplied attachment.
+Previous complete proposal: `v1/`.
+Lane: manual, in-session implementation in logical chunks, with test-first runtime changes.
+No detached stages or automatic delivery are selected.
 
 ## Request and boundary
 
@@ -123,12 +126,32 @@ An alternative check needs a concrete reason and repeatable evidence. Build/impo
 failures remain invalid assertion-level red proof. Do not change the manifest,
 approved_no_red_reason semantics, stage order, or approval boundary.
 
+### 5. Upgrade model evaluation and update-models
+
+Include the newer lineage-aware evaluator and optional Artificial Analysis evidence
+collection. The complete requirements, compatibility decisions, files, and tests
+are in [model-upgrade.md](model-upgrade.md), which is part of this proposal.
+This work is no longer deferred. Keep evaluation offline; the optional network
+request belongs to `models watch` / `update-models`. Review evidence before proposing
+settings changes and require approval of the exact settings diff.
+
+### 6. Align related review and reporting skills
+
+Make peer-pr-review reuse the effective review order and selected project guidance
+in read-only mode, with a plain-language explanation of intent and solution before
+its findings. Never inherit pipeline review's permission to fix. Have request-review
+support a concise PR-title-and-links draft for selected companion PRs; no separate
+pr-oneliner skill is needed. Mechanical workflow answers should explain the result
+and next action, with raw output only when needed or requested. Keep these changes
+in the corresponding skills and docs rather than adding always-on global prose.
+
 ## Intended implementation files
 
 | Files | Purpose |
 | --- | --- |
 | `skills/specify/SKILL.md` | Select shared guidance; require the documented defect facts and evidence-based request refinement. |
 | `skills/implement/SKILL.md`, `skills/implement-tests/SKILL.md` | Load selected quality guidance consistently; clarify manual regression-first implementation. |
+| `skills/peer-pr-review/SKILL.md`, `skills/request-review/SKILL.md` | Reuse review guidance read-only; explain intent before findings; offer concise title-and-links drafts. |
 | `skills/review/SKILL.md` | Explicit evidence order and scoped checklist; retain direct/pipeline boundaries. |
 | `references/quality-guidance.md` (new), `references/pipeline-contract.md` | One portable guidance contract; explain existing reference selection. |
 | `skills/session-retro/SKILL.md`, `skills/session-retro/scripts/resolve.py` (new) | Optional retrospective procedure and standard package resolver. |
@@ -140,9 +163,11 @@ approved_no_red_reason semantics, stage order, or approval boundary.
 | `docs/generated/skills.md` | Regenerate canonical skill documentation through existing tooling. |
 | `PLAN.md` | Record the approved extension and observed completion evidence after approval. |
 
-No runtime/schema edits are expected. If a fixture reveals that current snapshot
-delivery cannot satisfy the contract, report the concrete gap and revise scope
-before changing runtime behavior. Do not change design tokens, layout, or assets.
+Model-policy runtime changes and their tests are explicitly included as detailed
+in model-upgrade.md. No runner, manifest schema, verification gate, or environment
+permission changes are included. If another runtime gap appears, report it and
+revise scope before expanding implementation. Do not change design tokens, layout,
+or assets.
 
 ## Acceptance and verification
 
@@ -170,6 +195,9 @@ before changing runtime behavior. Do not change design tokens, layout, or assets
    the final diff for private source material, machine paths, and credentials. The
    generic scan has no private denylist unless separately supplied; state that limit.
 
+8. Run the model-specific behavioral checks in model-upgrade.md, including legacy
+   compatibility, network failure preservation, and secret-safe diagnostics.
+
 These are future implementation checks, not checks claimed to have passed during
 specification. No assertion-red requirement is invented for prose-only changes.
 
@@ -177,9 +205,15 @@ specification. No assertion-red requirement is invented for prose-only changes.
 
 - Source-specific plugin pins, company plugin adoption lists, nullable rules,
   service scaffolding, E2E defaults, and tracker workflows remain in their projects.
-- Model evaluator lineage diversity and benchmark watching are separate runtime
-  work. The attachment explicitly treats that source work as in progress. Do not
-  copy dirty source modules, change settings, or overwrite saved routes here.
+- Existing source-workspace model changes remain untouched. Reimplement the portable
+  behavior here with tests; do not copy private adapters, settings, or keys.
+- Compile-blocked independent tests are a separate runner protocol candidate: this
+  package currently requires green checks for approved_no_red_reason. Supporting
+  a non-executable test handoff safely requires a separate manifest/evidence design;
+  do not silently bypass checks as part of model-policy work.
+- Source-specific support rotation, production SQL/migrations, service scaffolding,
+  CI adapters, and dynamic repository attachment stay outside this scope. See the
+  comparison matrix in model-upgrade.md for rationale and existing equivalents.
 - Provider/session-history adapters and automatic transcript condensation require
   separate requirements and portability/privacy tests if requested later.
 - Do not weaken verification, delivery guards, rule enforcement, or plan binding;
@@ -189,12 +223,18 @@ specification. No assertion-red requirement is invented for prose-only changes.
 
 ## Model recommendation and execution
 
-The required offline evaluator ran once; see `facts.json` and
-`model-selection.json`. This project's allowed hosts are Codex and Cursor, but no
-catalogue or configured routes were available, so the evaluator produced no valid
-recommendation. It did not switch models or alter settings. Continue the manual
-lane in the active session after approval; detached execution would first require
-valid selected routes and a full validated manifest. No pipeline.json is needed
-for this bounded manual change, so validate-plan/preflight do not apply here.
+Run the required offline evaluator once for this revision; `facts.json` now reflects
+runtime work rather than documentation alone. `model-selection.json` is the revised
+result, while v1 retains the prior complete snapshot. The project allows Codex and
+Cursor, but currently has no catalogue or configured routes, so a valid automatic
+recommendation may remain unavailable. Do not inspect credentials or refresh real
+provider state just to prepare the plan.
+
+The manual lane uses the active session after approval and does not switch models.
+Runtime work proceeds test-first in logical chunks, followed by the package suite
+and a final review against this plan. If the user chooses detached execution instead,
+first select valid routes and prepare a full validated manifest; no detached run can
+start with unresolved routes. This manual plan needs no pipeline.json, so
+validate-plan/preflight do not apply.
 
 Approve this plan and start implementation?

@@ -1,10 +1,13 @@
 {
-  "stages": ["specify", "implement"],
-  "kind": "docs",
+  "stages": [
+    "specify",
+    "implement"
+  ],
+  "kind": "code",
   "size": "medium",
   "risk": "standard",
   "uncertain": false,
   "repository_count": 1,
-  "test_files": 1,
-  "test_lines": 80
+  "test_files": 3,
+  "test_lines": 420
 }

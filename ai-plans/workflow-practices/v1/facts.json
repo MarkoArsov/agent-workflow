@@ -1,0 +1,10 @@
+{
+  "stages": ["specify", "implement"],
+  "kind": "docs",
+  "size": "medium",
+  "risk": "standard",
+  "uncertain": false,
+  "repository_count": 1,
+  "test_files": 1,
+  "test_lines": 80
+}

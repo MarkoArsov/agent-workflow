@@ -5,7 +5,7 @@
   "provenance": {
     "catalogue": "9aecf438c3f923ce02f488be25cae648068d632535d5ec4d38b0fa6abb6b055f",
     "facts": {
-      "kind": "docs",
+      "kind": "code",
       "repository_count": 1,
       "risk": "standard",
       "size": "medium",
@@ -13,8 +13,8 @@
         "specify",
         "implement"
       ],
-      "test_files": 1,
-      "test_lines": 80,
+      "test_files": 3,
+      "test_lines": 420,
       "uncertain": false
     },
     "policy": "6db414a553f7e4c7defff33c640a73a507afaae3961ed955ddb14ddd1bd9389e",
@@ -30,7 +30,7 @@
     "specify": []
   },
   "schema_version": 1,
-  "snapshot_hash": "6d7de29255a75a77262e11a5f0da18635b1e2df698d3e77d2ad4efc86e625e83",
+  "snapshot_hash": "f8e20b60bac03d8bc85fa75def52473a33cc5653e84a4ba2bde8274f45a4aba2",
   "unresolved": [
     {
       "reason": "no-reviewed-available-route",
