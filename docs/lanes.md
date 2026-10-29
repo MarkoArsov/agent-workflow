@@ -83,3 +83,14 @@ until the plan is approved.
     Expect a full contract for substantive work. Ask for manual execution when you
     want implement to own tests, code and verification in one session. Full planning
     selects only needed stages; it does not automatically authorize publishing.
+
+
+## New tasks always get isolated worktrees
+
+Lane choice changes how implementation runs, not where files live. Before a new
+specification writes its plan, run `plovi task start <task>`. It allocates a distinct
+branch and worktree even for manual tasks or older current-checkout profiles.
+Continue editing at the returned paths and use --project with the returned canonical
+root for the runner. A task name collision is refused; --resume is only for an
+explicit continuation of that same owned task. Existing shared source edits stay
+where they are. Branches alone do not isolate two agents in one working directory.

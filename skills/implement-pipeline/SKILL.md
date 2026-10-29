@@ -31,3 +31,7 @@ configuration root with --project so a copied profile cannot cause nested worktr
 
 8. Report final stage state, checks, participating repositories, and any partial delivery. Unknown token usage/cost remains unknown.
 
+
+New specifications must use task start and the returned owned paths. Manual lane
+selection does not waive worktree isolation. Resume only this task's allocation;
+never use a name collision to take over a different chat's branch or checkout.

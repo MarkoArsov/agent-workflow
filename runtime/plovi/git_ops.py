@@ -65,6 +65,13 @@ def prepare(project, manifest):
         name = row["id"]; repo = project.repository(name); root = project.repo_path(name)
         if row["access"] == "read":
             result[name] = str(root); continue
+        from .tasks import owned_checkout
+        owned = owned_checkout(project, manifest['task'], name, row.get('branch'))
+        if owned is not None:
+            if git(Path(owned), "diff", "--cached", "--name-only"):
+                raise WorkflowError(f"{name}: existing staged changes must be preserved before execution")
+            result[name] = owned
+            continue
         strategy = repo["checkout_strategy"]
         branch = row.get("branch")
         if strategy != "current-checkout":

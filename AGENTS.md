@@ -15,3 +15,9 @@ Read PROJECT_WORKFLOW.md for this project's workflow defaults and custom skills.
 Do not apply workflow defaults from an unrelated ancestor project.
 <!-- plovi:end -->
 Design: anything people see (app, docs site, brand) follows design/README.md and design/DESIGN.md; use only tokens from design/tokens.json.
+
+
+New issues/tasks started through specify must allocate their own branch and worktree
+with task start before any plan writes. Manual execution does not waive isolation.
+Use returned checkout paths for every tool operation; never switch another chat's
+shared checkout. Only explicit continuation may resume the same owned task.

@@ -10,11 +10,12 @@ the full contract a draft; it is not a reason to silently select manual executio
 Run validate-plan and preflight before reporting a contract ready, distinguishing
 their actual results from planned checks. Specification still ends at approval.
 
-Prepare/reuse the configured task checkout before writing the plan; task/repository
+Allocate a new owned branch/worktree with task start before writing a new plan; task/repository
 and branch/base selection does not require an existing manifest. Keep single-repo
 plans inside that checkout, or use the configured multi-repository plan owner/shared
 store. Record the chosen branch for execution handoff and reuse that worktree.
-Honor current-checkout policy and never move dirty/staged work automatically.
+Legacy current-checkout does not bypass new-task isolation. Only resume the same
+task with its receipt; never move dirty/staged work automatically.
 
 Include `quality-guidance.md` and applicable project quality names in `references`; see
 `quality-guidance.md`. All three AI stages receive those frozen sources, with
@@ -82,3 +83,8 @@ only those actions, not reviewer requests or tracker updates.
 Custom stage definitions come from the project's stages.json and are included by
 ID in the ordered stage array. Check IDs refer to this plan's checks. Inputs are
 exact repository-relative files; outputs may use declared path patterns.
+
+The task-start result records branch, checkout, plan path and canonical configuration
+root without needing a manifest first. Include the allocated branch for each writable
+repository; runner preparation uses the owned receipt and rejects changed ownership.
+Read-only companions remain untouched. Old manifests retain legacy execution semantics.

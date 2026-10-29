@@ -50,6 +50,12 @@ def parser():
     command = sub.add_parser("sync-base")
     command.add_argument("repositories", nargs="+")
     sub.add_parser("worktrees")
+    task = sub.add_parser("task", help="Allocate an isolated task worktree before specification")
+    task.add_argument("action", choices=["start"])
+    task.add_argument("name")
+    task.add_argument("--repository", action="append", help="Writable repository ID; required when several exist")
+    task.add_argument("--base", help="Explicit local base ref; defaults to each repository's configured base")
+    task.add_argument("--resume", action="store_true", help="Resume only this task's existing owned allocation")
     command = sub.add_parser("rule")
     command.add_argument("action", choices=["list", "record"])
     command.add_argument("name", nargs="?")
@@ -79,6 +85,9 @@ def parser():
     return p
 
 def execute(args):
+    if args.command == "task":
+        from .tasks import start
+        return start(context(args), args.name, repositories=args.repository, base=args.base, resume=args.resume)
     if args.command == "models":
         from .model_routing import execute as models_execute
         return models_execute(args)
