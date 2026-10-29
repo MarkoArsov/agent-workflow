@@ -139,7 +139,8 @@ class RenameTests(WorkspaceTest):
         baseline_path = root / ".plovi/local/setup-baseline.json"
         baseline = json.loads(baseline_path.read_text())
         previous = alias.read_text() + "\n# Previous release adapter\n"
-        alias.write_text(previous)
+        # Match the saved baseline exactly, without Windows newline translation.
+        alias.write_bytes(previous.encode("utf-8"))
         baseline["files"][alias.relative_to(root).as_posix()] = previous
         baseline_path.write_text(json.dumps(baseline))
         preview = install.install(PACKAGE, project=root, dry_run=True)

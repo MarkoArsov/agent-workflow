@@ -50,6 +50,48 @@ class SetupTests(WorkspaceTest):
             apply(p, p["approval"])
         self.assertFalse((repo / ".plovi/project.json").exists())
 
+    def test_crlf_files_apply_without_false_stale_error(self):
+        repo = self.repo("crlf")
+        (repo / ".gitignore").write_bytes(b"__pycache__/\r\n")
+        (repo / "AGENTS.md").write_bytes(b"Keep these instructions.\r\n")
+        proposal = propose(repo, {"confirmed_defaults": True})
+        error = None
+        try:
+            apply(proposal, proposal["approval"])
+        except WorkflowError as exc:
+            error = str(exc)
+        self.assertIsNone(error, "Unchanged CRLF files must match their approved preview")
+        self.assertIn("__pycache__/", (repo / ".gitignore").read_text())
+        self.assertIn("Keep these instructions.", (repo / "AGENTS.md").read_text())
+        self.assertFalse(propose(repo)["changes"])
+
+    def test_crlf_setup_baseline_remains_valid_during_apply(self):
+        repo = self.repo("crlf-baseline")
+        project = self.setup_project(repo)
+        baseline = project.config / "local/setup-baseline.json"
+        baseline.write_bytes(baseline.read_bytes().replace(b"\n", b"\r\n"))
+        proposal = propose(repo)
+        self.assertFalse(proposal["changes"])
+        before = baseline.read_bytes()
+        error = None
+        try:
+            apply(proposal, proposal["approval"])
+        except WorkflowError as exc:
+            error = str(exc)
+        self.assertIsNone(error, "An unchanged baseline must use its exact on-disk hash")
+        self.assertEqual(baseline.read_bytes(), before)
+
+    def test_line_ending_edit_after_preview_is_still_stale(self):
+        repo = self.repo("changed-line-endings")
+        ignore = repo / ".gitignore"
+        ignore.write_bytes(b"__pycache__/\n")
+        proposal = propose(repo, {"confirmed_defaults": True})
+        ignore.write_bytes(b"__pycache__/\r\n")
+        with self.assertRaisesRegex(WorkflowError, "changed since preview"):
+            apply(proposal, proposal["approval"])
+        self.assertEqual(ignore.read_bytes(), b"__pycache__/\r\n")
+        self.assertFalse((repo / ".plovi/project.json").exists())
+
     def test_multi_repo_membership_nested_and_external_worktree(self):
         app = self.repo("space project/app")
         checks = self.repo("space project/checks")
