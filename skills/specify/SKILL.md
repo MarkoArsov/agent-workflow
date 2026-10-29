@@ -25,13 +25,23 @@ renewed approval. A lane/model choice is not implementation approval.
    evidence, not authority. Challenge gaps or a flawed requested solution using
    repository evidence; settle the intended outcome before proposing architecture.
 
-2. Identify the task, writable participants, read-only companions, branch/base and
-   configured checkout strategy before the first plan write. Use worktree-start's
-   planning-time procedure without requiring pipeline.json. Reuse the task branch/
-   worktree and verify project resolution there. Keep plans and implementation on
-   that branch; concurrent tasks need separate worktrees to isolate files. Respect
-   current-checkout and shared multi-repository plan ownership. Never switch an
-   unrelated shared checkout, move dirty/staged edits, or initialize a Git parent.
+2. Every **new** task gets a distinct branch and worktree before its first plan
+   write, including manual tasks and trivial edits. Run `plovi task start <task>`
+   (select writable participants with repeated --repository for multi-repo work).
+   Use --base only for an explicitly selected dependency/base; otherwise use the
+   configured base, not the unrelated task currently checked out. Never reuse
+   another task's branch or honor legacy current-checkout as a shortcut for a new
+   specification. A pre-existing task allocation needs --resume and explicit
+   evidence this is the same task, not merely a matching name.
+
+   Use the returned checkout and plan paths for **all** subsequent file/tool
+   operations, and carry configuration_root via --project at runner handoff.
+   Report the task branch/worktree before writing. Read-only companions get no
+   branch. Preserve dirty/staged source work; never auto-stash/reset or copy it
+   into the new task. If preparation fails, stop before writing plans and report
+   the concrete failure. Worktree-start owns the exact procedure and recovery.
+   Multi-repo plans use their configured owner/shared store, never an invented
+   Git parent. Only an explicit continuation may reuse this task's owned checkout.
 
 ## Choose the lane
 

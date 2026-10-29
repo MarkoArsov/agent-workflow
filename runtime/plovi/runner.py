@@ -31,6 +31,10 @@ def binding(project, manifest):
 
 def preflight(project, manifest, *, check_providers=True):
     contracts.validate(manifest, project)
+    from .tasks import owned_checkout
+    for row in manifest['repositories']:
+        if row['access'] == 'write':
+            owned_checkout(project, manifest['task'], row['id'], row.get('branch'))
     bound = binding(project, manifest)
     custom = contracts.custom_stages(project)
     routes, seen = [], set()
