@@ -1,10 +1,12 @@
 # Improve workflow guidance and learning
 
 Status: revised proposal; awaiting implementation approval.
-Revision: 29 October 2026; expands the comparison beyond the supplied attachment.
-Previous complete proposal: `v1/`.
-Lane: manual, in-session implementation in logical chunks, with test-first runtime changes.
-No detached stages or automatic delivery are selected.
+Revision: 29 October 2026; includes full-contract-first specification.
+Previous complete proposals: `v1/` and `v2/`.
+Lane: full pipeline, with implement-tests -> implement -> review.
+No commit/push/PR stage or automatic external delivery is selected.
+Contract: prompt.md, requirements.md, implementation.md, deferred.md, pipeline.json.
+Validation and preflight status are recorded in planning-checks.md.
 
 ## Request and boundary
 
@@ -145,19 +147,52 @@ pr-oneliner skill is needed. Mechanical workflow answers should explain the resu
 and next action, with raw output only when needed or requested. Keep these changes
 in the corresponding skills and docs rather than adding always-on global prose.
 
+### 7. Make specify prefer complete, executable contracts
+
+Full planning is the default for substantive code/runtime changes, behavioral tests,
+multiple components/repositories, compatibility, migrations, or significant risk or
+uncertainty. A short user prompt or an established pattern alone does not make the
+manual lane appropriate. This task itself uses the full lane.
+
+Allow a concise manual plan only when the user explicitly requests manual execution
+or the change is a clearly trivial, low-risk wording/format correction. State the
+concrete reason for any exception. Respect explicit user choices without repeatedly
+asking them to choose a lane. Full pipeline does not imply publishing: select only
+necessary stages, usually implement-tests -> implement -> review for substantive
+behavior changes. Keep review optional by risk/project policy and explain omission.
+
+Before presenting a full plan as ready, create all four plan documents plus the
+manifest. Include explicit read/write repository membership, allowed/test paths,
+executable checks and outcome mappings, stage routes/effort/fallbacks and saved
+model selection, references/connectors, limits, and any selected delivery action.
+Run validate-plan and preflight and report actual results. A prose plan with a
+promise to create the manifest later does not satisfy specification completion.
+
+If required routes or capabilities are missing, keep the full planning artifacts,
+label the manifest draft and execution unready, name the precise missing input,
+and request it. Do not silently drop stages, invent model access, mark readiness,
+or switch to manual execution because a route is unavailable. A complete draft
+contract and a validated runnable contract are different states.
+
+On revision, update every artifact and preserve earlier complete versions. Approval
+is bound to the reviewed scope/routes/actions. Specification ends at approval;
+implementation-pipeline performs the later execution handoff. Keep planning-only
+boundaries even for follow-ups. Update pipeline-workflow, implement-pipeline and
+lanes/first-task/tasks docs to explain this consistently.
+
 ## Intended implementation files
 
 | Files | Purpose |
 | --- | --- |
-| `skills/specify/SKILL.md` | Select shared guidance; require the documented defect facts and evidence-based request refinement. |
+| `skills/specify/SKILL.md` | Default substantive work to full contracts; state manual exceptions; enforce readiness reporting; select shared guidance and defect facts. |
 | `skills/implement/SKILL.md`, `skills/implement-tests/SKILL.md` | Load selected quality guidance consistently; clarify manual regression-first implementation. |
 | `skills/peer-pr-review/SKILL.md`, `skills/request-review/SKILL.md` | Reuse review guidance read-only; explain intent before findings; offer concise title-and-links drafts. |
 | `skills/review/SKILL.md` | Explicit evidence order and scoped checklist; retain direct/pipeline boundaries. |
 | `references/quality-guidance.md` (new), `references/pipeline-contract.md` | One portable guidance contract; explain existing reference selection. |
 | `skills/session-retro/SKILL.md`, `skills/session-retro/scripts/resolve.py` (new) | Optional retrospective procedure and standard package resolver. |
-| `skills/pipeline-workflow/SKILL.md`, `skills/list-pipeline/SKILL.md` | Discover quality guidance and the optional retrospective without adding a stage. |
+| `skills/pipeline-workflow/SKILL.md`, `skills/list-pipeline/SKILL.md`, `skills/implement-pipeline/SKILL.md` | Explain full-contract-first planning, readiness and handoff; discover quality guidance and retrospective. |
 | `skills/add-rule/SKILL.md`, `skills/prune-context/SKILL.md` | Link verified retrospective findings to existing capture/pruning procedures. |
-| `docs/review.md`, `docs/lanes.md`, `docs/maintaining.md` | Explain resulting user behavior and remove the bugfix documentation mismatch. |
+| `docs/review.md`, `docs/lanes.md`, `docs/first-task.md`, `docs/tasks.md`, `docs/maintaining.md` | Explain resulting user behavior and remove the bugfix documentation mismatch. |
 | `tests/test_workflow_practices.py` (new) | Meaningful isolated discovery/context-delivery coverage. |
 | `templates/plugin-skills/**` | Regenerate only affected discovery wrappers through the existing generator. |
 | `docs/generated/skills.md` | Regenerate canonical skill documentation through existing tooling. |
@@ -197,6 +232,14 @@ or assets.
 
 8. Run the model-specific behavioral checks in model-upgrade.md, including legacy
    compatibility, network failure preservation, and secret-safe diagnostics.
+9. Exercise specify with isolated scenario inputs: substantive model-policy feature,
+   a short behavioral bugfix, a trivial wording edit, explicit manual preference,
+   a missing-route case, and a substantive revision after prior approval. Inspect
+   the resulting lane rationale, artifact completeness, executable outcome mappings,
+   actual validation/preflight status, and approval boundary. Missing routes must
+   produce a pending full contract, never an automatic manual fallback. Do not
+   claim static word searches or hand-authored manifests prove agent behavior.
+   Record whether these are observed agent runs or procedure walkthroughs.
 
 These are future implementation checks, not checks claimed to have passed during
 specification. No assertion-red requirement is invented for prose-only changes.
@@ -223,18 +266,36 @@ specification. No assertion-red requirement is invented for prose-only changes.
 
 ## Model recommendation and execution
 
-Run the required offline evaluator once for this revision; `facts.json` now reflects
-runtime work rather than documentation alone. `model-selection.json` is the revised
-result, while v1 retains the prior complete snapshot. The project allows Codex and
-Cursor, but currently has no catalogue or configured routes, so a valid automatic
-recommendation may remain unavailable. Do not inspect credentials or refresh real
-provider state just to prepare the plan.
+The selected execution stages are implement-tests, implement, and review. Evaluate
+only those stages in the full route snapshot; specify is not an executable stage.
+Read-only native discovery may supply availability evidence saved to temporary
+planning storage, without refreshing real workflow settings or reading API keys.
+Native listing does not prove model entitlement or successful generation.
 
-The manual lane uses the active session after approval and does not switch models.
-Runtime work proceeds test-first in logical chunks, followed by the package suite
-and a final review against this plan. If the user chooses detached execution instead,
-first select valid routes and prepare a full validated manifest; no detached run can
-start with unresolved routes. This manual plan needs no pipeline.json, so
-validate-plan/preflight do not apply.
+Use the required offline evaluator once for this revision. Save its exact snapshot
+and routes in pipeline.json. If no valid recommendation can be established, retain
+the full draft and report the unresolved route before execution rather than
+reverting this task to the manual lane. planning-checks.md records the observed
+validation and preflight outcomes, not assumed success.
+
+Observed for this revision: read-only discovery succeeded for both configured
+hosts after retrying outside restricted execution. The existing 1.0 evaluator
+produced valid routes with no unresolved entries. Both validate-plan and preflight
+passed. No workflow defaults or native model preferences were changed. Listing
+and preflight do not prove entitlement or successful generation. The current
+snapshot uses today's evaluator; the planned lineage upgrade will not silently
+rewrite this approved task's routes.
+
+| Stage | Proposed primary | Ordered fallbacks |
+| --- | --- | --- |
+| implement-tests | Codex gpt-6-astra, high | Cursor claude-opus-5-5-high |
+| implement | Codex gpt-6.1-sol, medium | Cursor claude-sonnet-5-5-medium; Codex gpt-6-astra, medium |
+| review | Cursor claude-sonnet-5-5-medium | Codex gpt-6.1-sol, medium; Codex gpt-6-astra, medium |
+
+Run the approved contract through implement-pipeline only after approval. Use the
+configured current checkout and trusted execution defaults; provider sessions
+remain bounded by task paths and existing verification guards. No delivery stages
+are selected. Repository-required local commits are a separate local handoff after
+verification, with no push or remote action.
 
 Approve this plan and start implementation?

@@ -1,0 +1,447 @@
+{
+  "schema_version": 1,
+  "task": "workflow-practices",
+  "plan_files": [
+    "prompt.md",
+    "requirements.md",
+    "implementation.md",
+    "deferred.md"
+  ],
+  "repositories": [
+    {
+      "id": "agent-workflow",
+      "access": "write",
+      "paths": [
+        "skills/specify/SKILL.md",
+        "skills/implement/SKILL.md",
+        "skills/implement-tests/SKILL.md",
+        "skills/review/SKILL.md",
+        "skills/peer-pr-review/SKILL.md",
+        "skills/request-review/SKILL.md",
+        "skills/pipeline-workflow/SKILL.md",
+        "skills/list-pipeline/SKILL.md",
+        "skills/implement-pipeline/SKILL.md",
+        "skills/add-rule/SKILL.md",
+        "skills/prune-context/SKILL.md",
+        "skills/update-models/SKILL.md",
+        "skills/session-retro/**",
+        "references/quality-guidance.md",
+        "references/pipeline-contract.md",
+        "references/model-routing.md",
+        "runtime/plovi/model_policy/**",
+        "runtime/plovi/cli.py",
+        "scripts/export_model_policy.py",
+        "templates/plugin-skills/**",
+        "docs/review.md",
+        "docs/lanes.md",
+        "docs/first-task.md",
+        "docs/tasks.md",
+        "docs/maintaining.md",
+        "docs/models.md",
+        "docs/cli.md",
+        "docs/generated/skills.md",
+        "PLAN.md",
+        "ai-plans/workflow-practices/specify-scenarios.md",
+        "tests/test_model_policy.py",
+        "tests/test_model_watch.py",
+        "tests/test_workflow_practices.py",
+        "tests/test_release.py"
+      ],
+      "test_paths": [
+        "tests/test_model_policy.py",
+        "tests/test_model_watch.py",
+        "tests/test_workflow_practices.py",
+        "tests/test_release.py"
+      ]
+    }
+  ],
+  "stages": [
+    "implement-tests",
+    "implement",
+    "review"
+  ],
+  "checks": [
+    {
+      "id": "lineage-regression",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "-m",
+          "unittest",
+          "tests.test_model_policy.ModelPolicyTests.test_adversary_lineage_prefers_alternate_lab",
+          "-v"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 900
+      },
+      "parser": "unittest",
+      "phases": [
+        "red",
+        "green"
+      ],
+      "identities": [
+        "test_adversary_lineage_prefers_alternate_lab"
+      ]
+    },
+    {
+      "id": "model-policy",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "-m",
+          "unittest",
+          "tests.test_model_policy",
+          "-v"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 900
+      },
+      "parser": "unittest",
+      "phases": [
+        "green"
+      ]
+    },
+    {
+      "id": "model-watch",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "-m",
+          "unittest",
+          "tests.test_model_watch",
+          "-v"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 900
+      },
+      "parser": "unittest",
+      "phases": [
+        "green"
+      ]
+    },
+    {
+      "id": "workflow-practices",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "-m",
+          "unittest",
+          "tests.test_workflow_practices",
+          "-v"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 900
+      },
+      "parser": "unittest",
+      "phases": [
+        "green"
+      ]
+    },
+    {
+      "id": "full-suite",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "-m",
+          "unittest",
+          "discover",
+          "-s",
+          "tests",
+          "-v"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 900
+      },
+      "parser": "unittest",
+      "phases": [
+        "green"
+      ]
+    },
+    {
+      "id": "wrappers",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "scripts/generate_plugin_skills.py",
+          "--check"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 900
+      },
+      "parser": "generic",
+      "phases": [
+        "green"
+      ],
+      "success_pattern": "Native discovery wrappers are current"
+    },
+    {
+      "id": "docs",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "-m",
+          "mkdocs",
+          "build",
+          "--strict"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 900
+      },
+      "parser": "generic",
+      "phases": [
+        "green"
+      ],
+      "success_pattern": "Documentation built"
+    },
+    {
+      "id": "links",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "scripts/check_links.py",
+          "site",
+          "--prefix",
+          "/agent-workflow/"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 900
+      },
+      "parser": "generic",
+      "phases": [
+        "green"
+      ],
+      "success_pattern": "0 failures"
+    },
+    {
+      "id": "public-content",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "scripts/check_public_content.py"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 900
+      },
+      "parser": "generic",
+      "phases": [
+        "green"
+      ],
+      "success_pattern": "0 findings"
+    },
+    {
+      "id": "portable-export",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "-c",
+          "import os, pathlib, subprocess, sys, tempfile\nsource = pathlib.Path.cwd()\nwith tempfile.TemporaryDirectory(prefix='plovi-export-check-') as scratch:\n    root = pathlib.Path(scratch)\n    home = root / 'home'\n    home.mkdir()\n    env = {'PATH': os.environ.get('PATH', ''), 'HOME': str(home), 'USERPROFILE': str(home), 'XDG_DATA_HOME': str(home/'data'), 'XDG_CONFIG_HOME': str(home/'config'), 'XDG_CACHE_HOME': str(home/'cache'), 'CODEX_HOME': str(home/'codex'), 'CLAUDE_CONFIG_DIR': str(home/'claude'), 'PYTHONDONTWRITEBYTECODE': '1'}\n    for key in ('SYSTEMROOT','SYSTEMDRIVE','WINDIR','COMSPEC','PATHEXT','TEMP','TMP'):\n        if key in os.environ:\n            env[key] = os.environ[key]\n    target = root/'model_policy'\n    for tail in ([str(target)], [str(target), '--check']):\n        subprocess.run([sys.executable, str(source/'scripts/export_model_policy.py'), *tail], check=True, env=env)\n    subprocess.run([sys.executable, '-m', 'model_policy.selftest'], cwd=root, check=True, env=env)\nprint('Portable export verified')\n"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 900
+      },
+      "parser": "generic",
+      "phases": [
+        "green"
+      ],
+      "success_pattern": "Portable export verified"
+    }
+  ],
+  "outcomes": [
+    {
+      "id": "lineage-aware-compatible-routing",
+      "checks": [
+        "lineage-regression",
+        "model-policy",
+        "full-suite"
+      ]
+    },
+    {
+      "id": "bounded-secret-safe-benchmark-evidence",
+      "checks": [
+        "model-watch",
+        "full-suite"
+      ]
+    },
+    {
+      "id": "shared-frozen-quality-guidance",
+      "checks": [
+        "workflow-practices",
+        "full-suite"
+      ]
+    },
+    {
+      "id": "retrospective-discovery-and-project-isolation",
+      "checks": [
+        "workflow-practices",
+        "full-suite",
+        "wrappers"
+      ]
+    },
+    {
+      "id": "specify-full-contract-guidance-discoverable-and-documented",
+      "checks": [
+        "wrappers",
+        "docs",
+        "links"
+      ]
+    },
+    {
+      "id": "portable-component-and-release-compatibility",
+      "checks": [
+        "portable-export",
+        "full-suite"
+      ]
+    },
+    {
+      "id": "coherent-public-documentation",
+      "checks": [
+        "docs",
+        "links",
+        "public-content"
+      ]
+    }
+  ],
+  "routes": {
+    "implement": [
+      {
+        "model": "gpt-6.1-sol",
+        "provider": "codex",
+        "reasoning": "medium"
+      },
+      {
+        "model": "claude-sonnet-5-5-medium",
+        "provider": "cursor"
+      },
+      {
+        "model": "gpt-6-astra",
+        "provider": "codex",
+        "reasoning": "medium"
+      }
+    ],
+    "implement-tests": [
+      {
+        "model": "gpt-6-astra",
+        "provider": "codex",
+        "reasoning": "high"
+      },
+      {
+        "model": "claude-opus-5-5-high",
+        "provider": "cursor"
+      }
+    ],
+    "review": [
+      {
+        "model": "claude-sonnet-5-5-medium",
+        "provider": "cursor"
+      },
+      {
+        "model": "gpt-6.1-sol",
+        "provider": "codex",
+        "reasoning": "medium"
+      },
+      {
+        "model": "gpt-6-astra",
+        "provider": "codex",
+        "reasoning": "medium"
+      }
+    ]
+  },
+  "model_selection": {
+    "advisories": [],
+    "evaluator_version": "1.0.0",
+    "provenance": {
+      "catalogue": "08c9441f9e3b759945013986f89ea5f1552846fa0d4c334da352604ac3a7e437",
+      "facts": {
+        "kind": "code",
+        "repository_count": 1,
+        "risk": "standard",
+        "size": "medium",
+        "stages": [
+          "implement-tests",
+          "implement",
+          "review"
+        ],
+        "test_files": 3,
+        "test_lines": 420,
+        "uncertain": false
+      },
+      "policy": "6db414a553f7e4c7defff33c640a73a507afaae3961ed955ddb14ddd1bd9389e",
+      "registry": "d46858249ba32df18d9374251d7501e43b6c335ec2aa4cd5135e4d02c2eef89c",
+      "settings": "1ad50ee4dc6be9306fbb99bccb3d4504637d634d260d3d042be263d2becabdfe"
+    },
+    "reasons": {
+      "implement": "routine-scoped-work",
+      "implement-tests": "large-test-scope",
+      "review": "routine-scoped-work"
+    },
+    "routes": {
+      "implement": [
+        {
+          "model": "gpt-6.1-sol",
+          "provider": "codex",
+          "reasoning": "medium"
+        },
+        {
+          "model": "claude-sonnet-5-5-medium",
+          "provider": "cursor"
+        },
+        {
+          "model": "gpt-6-astra",
+          "provider": "codex",
+          "reasoning": "medium"
+        }
+      ],
+      "implement-tests": [
+        {
+          "model": "gpt-6-astra",
+          "provider": "codex",
+          "reasoning": "high"
+        },
+        {
+          "model": "claude-opus-5-5-high",
+          "provider": "cursor"
+        }
+      ],
+      "review": [
+        {
+          "model": "claude-sonnet-5-5-medium",
+          "provider": "cursor"
+        },
+        {
+          "model": "gpt-6.1-sol",
+          "provider": "codex",
+          "reasoning": "medium"
+        },
+        {
+          "model": "gpt-6-astra",
+          "provider": "codex",
+          "reasoning": "medium"
+        }
+      ]
+    },
+    "schema_version": 1,
+    "snapshot_hash": "b87fddcb9bde76da4f74ba82b084b9af508043b9cdf3878c81ec4097832ae202",
+    "unresolved": []
+  },
+  "limits": {
+    "attempts_per_route": 2,
+    "timeout_seconds": 3600,
+    "inactivity_seconds": 300,
+    "tool_timeout_seconds": 600
+  },
+  "references": [
+    "model-routing.md",
+    "pipeline-contract.md"
+  ],
+  "connectors": []
+}

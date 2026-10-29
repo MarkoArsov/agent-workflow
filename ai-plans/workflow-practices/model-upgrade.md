@@ -150,6 +150,9 @@ Update PLAN.md only after implementation is approved.
 
 ## Behavioral checks and execution order
 
+This revision uses the full pipeline: implement-tests, implement, then review.
+The stage contracts and executable checks are in pipeline.json.
+
 First author focused tests and observe assertion failures for missing behavior,
 then implement in two logical chunks: evaluator compatibility and watch evidence.
 Tests use fictional model IDs and synthetic keys in isolated child environments;

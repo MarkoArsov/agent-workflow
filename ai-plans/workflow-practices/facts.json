@@ -1,7 +1,8 @@
 {
   "stages": [
-    "specify",
-    "implement"
+    "implement-tests",
+    "implement",
+    "review"
   ],
   "kind": "code",
   "size": "medium",
