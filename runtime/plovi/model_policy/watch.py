@@ -172,10 +172,11 @@ def summarize(previous, current, aliases, catalogue, routes, registry, today):
         entries[key] = {**row, "lineage": row.get("lineage", entries.get(key, {}).get("lineage"))}
     labs = {entries.get(route_key(chain[0]), {}).get("lineage") for chain in routes.values() if chain}
     labs.discard(None)
+    focused_names = {re.sub(r"[^a-z0-9]", "", lab.lower()) for lab in labs}
     def relevant(row):
         creator = re.sub(r"[^a-z0-9]", "", row["creator"].lower())
         names = {"spacexai": "xai"}
-        return names.get(creator, creator) in labs
+        return names.get(creator, creator) in focused_names
     route_rows = []
     for stage, chain in sorted(routes.items()):
         if not chain:
@@ -188,8 +189,9 @@ def summarize(previous, current, aliases, catalogue, routes, registry, today):
             fresh = stamp.tzinfo is not None and 0 <= (today - stamp.astimezone(timezone.utc).date()).days <= 30
         except (TypeError, ValueError):
             fresh = False
-        status = ("missing-catalogue" if not host else "stale-catalogue" if not fresh or host.get("refresh_failed") else
-                  "unavailable" if host.get("installed") is False or (observed and observed.get("status") == "unavailable") else
+        status = ("missing-catalogue" if not host else "unavailable" if host.get("installed") is False else
+                  "stale-catalogue" if not fresh or host.get("refresh_failed") else
+                  "unavailable" if observed and observed.get("status") == "unavailable" else
                   "missing-id" if observed is None else observed.get("status", "unknown"))
         slug = mappings.get(route_key(route))
         route_rows.append({"stage": stage, **route, "slug": slug, "matched": slug in new if slug else False,

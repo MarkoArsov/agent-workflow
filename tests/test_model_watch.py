@@ -141,7 +141,7 @@ class ModelWatchTests(WorkspaceTest):
         current['models'][0]['pricing']['price_1m_input_tokens']=3
         aliases={'schema_version':1,'routes':[{'provider':'codex','model':'host-model','slug':'fixture-model'}]}
         routes={'implement':[{'provider':'codex','model':'host-model'}]}
-        registry=[{'provider':'codex','model':'host-model','lineage':'laba'}]
+        registry=[{'provider':'codex','model':'host-model','lineage':'lab-a'}]
         cat={'providers':{'codex':{'installed':True,'observed_at':self.now.isoformat(),'models':[{'model':'host-model','status':'advertised'}]}}}
         args=(aliases,cat,routes,registry,self.now.date())
         result=watch.summarize(previous,current,*args)
@@ -157,6 +157,8 @@ class ModelWatchTests(WorkspaceTest):
         self.assertEqual(watch.summarize({},current,*args)['routes'][0]['catalogue_status'],'stale-catalogue')
         cat['providers']['codex']['observed_at']=self.now.isoformat();cat['providers']['codex']['models']=[]
         self.assertEqual(watch.summarize({},current,*args)['routes'][0]['catalogue_status'],'missing-id')
+        cat['providers']['codex']['installed']=False
+        self.assertEqual(watch.summarize({},current,*args)['routes'][0]['catalogue_status'],'unavailable')
 
     def test_command_dispatch_and_missing_key_never_print_key(self):
         args=parser().parse_args(['models','watch'])
