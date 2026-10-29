@@ -35,12 +35,14 @@ def payload_digest(source):
 
 def validate_source(source):
     marker = read_json(source / "workflow-package.json")
-    if not marker or marker.get("name") != "plovi" or marker.get("schema_version") != 1:
+    if not marker or marker.get("name") not in {"plovi", "agentflow"} or marker.get("schema_version") != 1:
         raise WorkflowError("Not a compatible plovi package")
     version = marker.get("version", "")
     from .util import identifier
     identifier(version)
-    for required in ("bin/plovi", "runtime/plovi/cli.py", "skills/project-setup/SKILL.md"):
+    legacy = marker["name"] == "agentflow" and not (source / "runtime/plovi/cli.py").is_file()
+    name = "agentflow" if legacy else "plovi"
+    for required in (f"bin/{name}", f"runtime/{name}/cli.py", "skills/project-setup/SKILL.md"):
         if not (source / required).is_file():
             raise WorkflowError(f"Package is missing {required}")
     catalog(package=source)
@@ -61,8 +63,8 @@ def detect_agents():
     found = [name for name, binaries in AGENT_BINARIES.items() if any(shutil.which(b) for b in binaries)]
     return found or list(AGENT_BINARIES)
 
-def installation_root(project=None):
-    return Path(project).expanduser().resolve() / ".plovi/runtime" if project else user_data()
+def installation_root(project=None, *, migrate=True):
+    return Path(project).expanduser().resolve() / ".plovi/runtime" if project else user_data(migrate=migrate)
 
 def wrappers(source, project, agents):
     result = {}
@@ -126,7 +128,7 @@ def install(source, *, project=None, agents=None, dry_run=False, link=False):
             import base64
             return digest(base64.b64decode(predicted[key]["after"]))
         return file_hash(original)
-    root = installation_root(project)
+    root = installation_root(project, migrate=not dry_run)
     version = marker["version"]
     target = source if link else root / "versions" / version
     receipt_path = root / "receipt.json"
@@ -175,6 +177,10 @@ def install(source, *, project=None, agents=None, dry_run=False, link=False):
     backend = "linked" if link else "standalone"
     result = {"mode": "project" if project else "global", "backend": backend, "version": version, "target": str(target),
               "files": [str(p) for p in desired], "conflicts": conflicts, "dry_run": dry_run}
+    if not project and root.name in {"agentflow", "agent-workflow"}:
+        result["migration"] = {"from": str(root), "to": str(root.with_name("plovi"))}
+        if not link:
+            result["target"] = str(root.with_name("plovi") / "versions" / version)
     if project and (project / ".agentflow").exists():
         result["migration"] = "Move .agentflow/ to .plovi/ on apply"
     if dry_run:
@@ -251,7 +257,7 @@ def prune_adapter_dirs(path):
 
 def sync_linked(*, dry_run=False):
     """Reconcile discovery from the linked checkout, without touching projects."""
-    root = installation_root()
+    root = installation_root(migrate=not dry_run)
     receipt = read_json(root / "receipt.json", {})
     if receipt.get("backend") != "linked":
         raise WorkflowError("No linked global install; run install.py --global --link first")
@@ -278,7 +284,7 @@ def override_updates(project, package):
 
 def uninstall(*, project=None, dry_run=False):
     project = Path(project).expanduser().resolve() if project else None
-    root = installation_root(project)
+    root = installation_root(project, migrate=not dry_run)
     receipt = read_json(root / "receipt.json")
     if not receipt:
         raise WorkflowError("No standalone installation receipt; use native plugin uninstall for plugin-owned installs")
@@ -371,11 +377,11 @@ def main(argv=None):
                 raise WorkflowError("Use --global --sync without --project, --link, or --agents")
             result = sync_linked(dry_run=args.dry_run)
         else:
-            receipt = read_json(installation_root(args.project) / "receipt.json", {})
+            receipt = read_json(installation_root(args.project, migrate=not args.dry_run) / "receipt.json", {})
             profile = read_json(Path(args.project).resolve() / ".plovi/project.json", {}) if args.project else {}
             agents = args.agents or profile.get("agents") or receipt.get("agents") or detect_agents()
             result = install(args.local_source, project=args.project, agents=agents, dry_run=args.dry_run, link=args.link)
-        receipt = read_json(installation_root(args.project) / "receipt.json", {})
+        receipt = read_json(installation_root(args.project, migrate=not args.dry_run) / "receipt.json", {})
         print(json_text(result) if args.json or args.sync else summary(result, receipt.get("agents") or agents), end="")
     except (WorkflowError, OSError) as exc:
         parser.exit(2, f"Error: {exc}\n")

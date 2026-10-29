@@ -120,6 +120,9 @@ jobs:
                   command = '& ./install.ps1 --local-source . --global --agents codex cursor --json'
                   run('powershell', command)
                   discovery = home / '.agents/skills/plovi-setup/SKILL.md'
+                  alias = home / '.agents/skills/af-setup/SKILL.md'
+                  if not alias.is_file():
+                      raise RuntimeError('Compatibility setup skill is missing')
                   baseline = discovery.read_bytes()
                   run('pwsh', command)
                   if discovery.read_bytes() != baseline:

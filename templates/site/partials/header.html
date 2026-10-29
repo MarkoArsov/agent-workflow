@@ -1,36 +1,15 @@
 <header class="site-header" data-site-header>
   <div class="site-header__inner">
-    <a class="brand" href="{{ '' | url }}" aria-label="{{ config.site_name }} overview">
-      <span class="brand-mark" aria-hidden="true"></span>
-      <span>{{ config.extra.brand }}</span>
+    <a class="brand" href="{{ '' | url }}" aria-label="plovi overview">
+      <img class="brand-dark" src="{{ 'assets/brand/logo.svg' | url }}" alt="plovi" width="94" height="24">
+      <img class="brand-light" src="{{ 'assets/brand/logo-light.svg' | url }}" alt="plovi" width="94" height="24">
     </a>
-    <nav class="header-tabs" aria-label="Documentation sections">
-      {% for section in nav %}
-        {% if section.children %}
-          <div class="header-menu{% if section.active %} is-active{% endif %}" data-menu>
-            <a class="header-tab" href="{{ section.children[0].url | url }}">{{ section.title }}</a>
-            <button class="menu-toggle" type="button" aria-label="Show {{ section.title }} pages" aria-expanded="false" aria-controls="menu-panel-{{ loop.index }}" data-menu-toggle>
-              <svg aria-hidden="true" viewBox="0 0 12 12"><path d="m2.25 4.5 3.75 3.75 3.75-3.75"></path></svg>
-            </button>
-            <div id="menu-panel-{{ loop.index }}" class="tab-menu" aria-hidden="true" data-menu-panel>
-              {% for item in section.children if item.is_page %}
-                <a href="{{ item.url | url }}"{% if item.active %} aria-current="page"{% endif %} tabindex="-1"><span>{{ item.title }}</span><small>{{ item.meta.description if item.meta and item.meta.description else config.site_description }}</small></a>
-              {% endfor %}
-            </div>
-          </div>
-        {% endif %}
-      {% endfor %}
-    </nav>
+    <nav class="header-links" aria-label="Documentation sections"><a href="{{ 'first-task/' | url }}">Docs</a><a href="{{ 'cli/' | url }}">CLI</a></nav>
     <div class="header-actions">
-      <button class="search-trigger" type="button" data-search-open aria-label="Search documentation">
-        <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"></circle><path d="m16 16 4 4"></path></svg><span>Search docs</span>
-      </button>
-      <a class="github-link" href="{{ config.repo_url }}" aria-label="{{ config.repo_name }} repository" title="Open {{ config.repo_name }} repository">
-        <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 2.5a9.5 9.5 0 0 0-3 18.51c.48.09.65-.2.65-.46v-1.83c-2.66.58-3.22-1.13-3.22-1.13-.43-1.11-1.06-1.4-1.06-1.4-.87-.59.07-.58.07-.58.96.07 1.47.99 1.47.99.86 1.46 2.25 1.04 2.79.79.08-.62.33-1.04.6-1.28-2.12-.24-4.35-1.06-4.35-4.71 0-1.04.37-1.89.98-2.55-.1-.24-.42-1.21.09-2.52 0 0 .8-.26 2.61.97a9.12 9.12 0 0 1 4.75 0c1.81-1.23 2.61-.97 2.61-.97.51 1.31.19 2.28.09 2.52.61.66.98 1.51.98 2.55 0 3.66-2.23 4.46-4.36 4.7.34.3.65.88.65 1.77v2.63c0 .26.17.55.66.46A9.5 9.5 0 0 0 12 2.5Z"></path></svg><span>{{ config.repo_name }}</span>
-      </a>
-      <button class="drawer-trigger" type="button" aria-controls="site-drawer" aria-expanded="false" aria-label="Open documentation menu" data-drawer-open>
-        <span></span><span></span><span></span>
-      </button>
+      <button class="search-trigger" type="button" data-search-open aria-label="Search documentation"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m16 16 4 4"></path></svg><span>Search docs</span><kbd>/</kbd></button>
+      <label class="theme-control"><span class="sr-only">Color theme</span><select data-theme-select aria-label="Color theme"><option value="system">System</option><option value="dark">Dark</option><option value="light">Light</option></select></label>
+      <a class="github-link" href="{{ config.repo_url }}" aria-label="GitHub repository">GitHub</a>
+      <button class="drawer-trigger" type="button" aria-controls="site-drawer" aria-expanded="false" aria-label="Open documentation menu" data-drawer-open><span></span><span></span><span></span></button>
     </div>
   </div>
 </header>

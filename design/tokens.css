@@ -79,6 +79,9 @@
   --column-width: 280px;
   --peek-width: 520px;
   --docs-measure: 680px;
+  --docs-header-height: 60px;
+  --docs-shell-width: 1280px;
+  --docs-home-width: 1120px;
   --font-sans: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 }

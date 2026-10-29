@@ -795,3 +795,16 @@ Model-routing extension evidence (14 October 2026):
 - Strict MkDocs build, 2,189 internal link/asset checks, and skill validation passed.
 - Public-content scan found zero findings. Separate downstream installation and
   private workflow evidence remain outside this package. No publication occurred.
+
+## Approved issue #15 revision (29 October 2026)
+
+The user requested syncing the current task branch with the remote base and
+implementing the expanded issue. The default branch is main; it was fast-forwarded
+and merged without discarding either branch's changes. In addition to the completed
+name change, this revision includes the docs design, System/Dark/Light themes,
+Geist fonts and supplied sailboat assets; legacy import/source compatibility;
+canonical-project preference with a warning when both folders exist; held-lock
+migration refusal, moved-worktree repair, and one-time global user-data migration.
+The complete revised requirements and check mapping are retained in
+ai-plans/rename-plovi/revision-2026-10-29.md. Tests use isolated homes; real global
+installation, publishing, PR creation, and deployment remain separate operations.

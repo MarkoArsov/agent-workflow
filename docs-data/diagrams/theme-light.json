@@ -1,0 +1,12 @@
+{
+  "theme": "base",
+  "themeVariables": {
+    "darkMode": false,
+    "fontFamily": "Geist",
+    "primaryColor": "#ffffff",
+    "primaryTextColor": "#17171a",
+    "primaryBorderColor": "#d9d9de",
+    "lineColor": "#6a6a73",
+    "background": "#f4f4f5"
+  }
+}

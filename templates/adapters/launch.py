@@ -13,7 +13,7 @@ start = Path.cwd().resolve()
 if "--project" in args and args.index("--project") + 1 < len(args):
     start = Path(args[args.index("--project") + 1]).expanduser().resolve()
 if Path(__file__).stem == "agentflow":
-    print("agentflow is now plovi; use plovi (alias available until 1.0).", file=sys.stderr)
+    print("agentflow is now plovi; this alias works until 1.0", file=sys.stderr)
 project, profile, candidates, linked = bootstrap(start)
 if LOCAL_RUNTIME and not profile:
     local = bootstrap_read(LOCAL_RUNTIME / "active.json", {})

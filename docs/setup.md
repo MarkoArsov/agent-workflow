@@ -15,7 +15,7 @@ question: How do I configure plovi for my repositories?
     - Re-running setup keeps your manual edits, and leaves files byte-identical when nothing changed.
 
 Open the intended repository or multi-repository parent and invoke **plovi-setup**, or its full name **plovi-project-setup**
-(**plovi:setup** in the native Claude plugin). From a terminal, `claude "/plovi-setup"` starts Claude Code with it.
+(**plovi:plovi-setup** in the native Claude plugin). From a terminal, `claude "/plovi-setup"` starts Claude Code with it.
 
 The setup skill reads existing instructions, manifests, commands, Git conventions, and CI configuration.
 It reports findings with their sources, asks about unresolved choices, and presents a complete proposal.

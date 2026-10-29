@@ -24,7 +24,7 @@ There are two first-class lanes. Both start with `specify`.
 | Manual | `specify`, then `implement` | A small, contained change or follow-up with an established local pattern. |
 | Full pipeline | `specify`, then `implement-pipeline` | Test-first work, independent review, several repositories, risky areas, or automated delivery. |
 
-Invoke skills as `plovi-specify` in standalone installs, or `plovi:specify` in the native Claude plugin.
+Invoke skills as `plovi-specify` in standalone installs, or `plovi:plovi-specify` in the native Claude plugin.
 [Lanes and bugfixes](lanes.md) has the full guidance, including how to handle a defect.
 
 ## End-to-end timeline

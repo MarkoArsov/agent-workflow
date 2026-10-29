@@ -18,7 +18,7 @@ Before you start, [install](install.md) plovi and [set up your project](setup.md
 
 ## 1. Specify
 
-In your agent, invoke `plovi-specify` (or `plovi:specify` in the native Claude plugin):
+In your agent, invoke `plovi-specify` (or `plovi:plovi-specify` in the native Claude plugin):
 
 ~~~text
 plovi-specify Add CSV export to the reports endpoint.

@@ -88,3 +88,17 @@ Anything marked partial on the [checkpoint scorecard](scorecard.md) is a good pl
 ## See also
 
 [Open source](open-source.md) · [Code map](code-map.md) · [Publish a release](publish.md) · [How it's tested](coverage.md)
+
+## Documentation design assets
+
+`design/tokens.json` is the source for color, type, spacing and size. The docs use
+the supplied Geist fonts, sailboat SVGs, and components. After editing the design,
+run `python3 scripts/sync_docs_design.py`; use `--check` to detect stale copies.
+The generated Mermaid theme files in `docs-data/diagrams/` use the same colors.
+The hand-rendered HTML diagrams inherit the active theme through CSS variables.
+
+Rebuild the committed PNG derivatives with `python3 scripts/generate_brand.py`.
+This development command needs Node, Playwright, and an existing Chromium. It
+performs no downloads. Use `--node`, `--node-modules`, and `--chromium` to select
+existing tools if needed; they are not runtime dependencies. Both PNGs render
+from the supplied SVGs with the supplied Geist font in an isolated browser profile.

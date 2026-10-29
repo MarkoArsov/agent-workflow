@@ -192,9 +192,9 @@ Finish or cancel running tasks before upgrading. On the first normal run of the
 new runtime, an existing `.agentflow/` project directory moves to `.plovi/`.
 User files and configuration stay intact, known configuration paths are rebased,
 and a notice appears once. Preview commands report the pending migration without
-changing files. If both directories exist, or either configuration directory is
-a symlink, plovi stops: preserve both trees, compare their contents, and resolve
-the conflicting configuration before retrying. It never merges them automatically.
+changing files. If both project profiles exist, plovi uses `.plovi/` and warns; it preserves the
+legacy tree without merging it. A conflicting directory without a canonical profile
+or a symlink still needs manual resolution.
 
 Interrupted migrations keep a local recovery journal and resume on the next run.
 If metadata changed outside plovi during recovery, preserve the journal and both
@@ -202,8 +202,10 @@ versions of the edit; resolve that edit before retrying. Do not remove the journ
 to bypass a recovery error. Completed run evidence and approved snapshots are
 preserved; a deliberate resume still needs the usual reviewed rebind.
 
-Global installation receipts and model settings in a legacy data directory remain
-in use; plovi does not move machine-wide configuration automatically. Projects
+Global user data also migrates once to the `plovi` data directory. Model settings,
+receipts, package pins and user files are preserved; owned metadata paths are rebased
+and a notice reports the move. Read-only installation and setup previews do not move
+that data. Finish active updates before upgrading. Projects
 pinned to an older installed runtime keep selecting that runtime until you upgrade
 the pin; migration happens when the project starts using the new runtime. Version
 0.1.1 gives the renamed payload a distinct immutable version, so reinstalling does

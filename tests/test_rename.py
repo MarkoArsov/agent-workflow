@@ -42,7 +42,7 @@ class RenameTests(WorkspaceTest):
             old = self.invoke(self.home / ".local/bin/agentflow", root, *args)
             self.assertEqual((old.returncode, old.stdout), (normal.returncode, normal.stdout))
             self.assertEqual(old.stderr.splitlines()[1:], normal.stderr.splitlines())
-            self.assertIn("alias available until 1.0", old.stderr.splitlines()[0])
+            self.assertIn("this alias works until 1.0", old.stderr.splitlines()[0])
 
     def test_all_host_skill_aliases_resolve_same_override(self):
         root = self.repo("app")

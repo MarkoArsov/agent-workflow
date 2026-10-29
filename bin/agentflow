@@ -6,5 +6,5 @@ import sys
 if sys.platform == "win32" and not sys.flags.utf8_mode:
     import subprocess
     raise SystemExit(subprocess.call([sys.executable, "-X", "utf8", *sys.orig_argv[1:]]))
-print("agentflow is now plovi; use plovi (alias available until 1.0).", file=sys.stderr)
+print("agentflow is now plovi; this alias works until 1.0", file=sys.stderr)
 runpy.run_path(str(Path(__file__).resolve().with_name("plovi")), run_name="__main__")

@@ -1,1 +1,11 @@
-{"name": "plovi", "version": "0.1.1", "schema_version": 1, "discovery": {"prefix": "plovi", "aliases": {}}}
+{
+  "name": "plovi",
+  "version": "0.1.1",
+  "schema_version": 1,
+  "discovery": {
+    "prefix": "plovi",
+    "aliases": {
+      "af": "plovi"
+    }
+  }
+}

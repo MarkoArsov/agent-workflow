@@ -29,6 +29,8 @@ class WorkspaceTest(unittest.TestCase):
         if os.name == "nt":
             # Path.home() reads USERPROFILE; child processes need the system variables.
             self.env["USERPROFILE"] = str(self.home)
+            self.env["APPDATA"] = str(self.home / "roaming")
+            self.env["LOCALAPPDATA"] = str(self.home / "local")
             self.env.update({key: os.environ[key] for key in ("SYSTEMROOT", "SYSTEMDRIVE", "WINDIR", "COMSPEC",
                                                               "PATHEXT", "TEMP", "TMP") if key in os.environ})
         self.patch = unittest.mock.patch.dict(os.environ, self.env, clear=True)

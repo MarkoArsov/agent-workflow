@@ -1,7 +1,34 @@
 {% extends "main.html" %}
-
 {% block body %}
-<main id="main-content" class="home-shell" tabindex="-1">
-  {{ page.content }}
+<main id="main-content" class="home-page" tabindex="-1">
+  <section class="home-hero" aria-labelledby="home-title">
+    <h1 id="home-title">Hand off the work. Keep the decisions.</h1>
+    <p class="home-lead">plovi turns a plan into checked code. Your agents do the work, with clear evidence at every stage and a pause whenever you need to decide.</p>
+    <div class="home-actions"><a class="pl-btn pl-btn--primary pl-btn--lg" href="{{ 'install/' | url }}">Get started</a><a class="pl-btn pl-btn--lg" href="{{ 'first-task/' | url }}">Read the docs</a></div>
+  </section>
+  <section aria-label="Product preview">
+    <div class="product-preview">
+      <div class="preview-sidebar"><strong>plovi</strong><span>Inbox</span><span class="selected">Board</span><span>Settings</span></div>
+      <div class="preview-content"><div class="preview-heading">Example project <span aria-hidden="true">&nbsp; › &nbsp;</span> Board</div><div class="preview-board">
+        <div class="preview-column"><div class="pl-col__head">Planning <span class="pl-col__count">2</span></div>
+          <div class="pl-card"><span class="pl-card__top"><span class="pl-card__id">#142</span><span class="pl-avatar">CC</span></span><span class="pl-card__title">Handle a failed check</span><span class="pl-card__foot"><span class="pl-flag pl-flag--attention">Question for you</span></span></div>
+          <div class="pl-card"><span class="pl-card__top"><span class="pl-card__id">#149</span><span class="pl-avatar">CX</span></span><span class="pl-card__title">Add the missing test</span></div>
+        </div>
+        <div class="preview-column"><div class="pl-col__head">Building <span class="pl-col__count">2</span></div>
+          <div class="pl-card"><span class="pl-card__top"><span class="pl-card__id">#146</span><span class="pl-avatar">CX</span></span><span class="pl-card__title">Retry the GitHub sync</span></div>
+          <div class="pl-card"><span class="pl-card__top"><span class="pl-card__id">#151</span><span class="pl-avatar">CC</span></span><span class="pl-card__title">Rename the CLI to plovi</span></div>
+        </div>
+        <div class="preview-column"><div class="pl-col__head">In review <span class="pl-col__count">1</span></div>
+          <div class="pl-card"><span class="pl-card__top"><span class="pl-card__id">#133</span><span class="pl-avatar">CX</span></span><span class="pl-card__title">Clean up finished worktrees</span><span class="pl-card__foot"><span class="pl-flag pl-flag--attention">Ready for review</span></span></div>
+        </div>
+      </div></div>
+    </div><p class="product-caption">Product preview. The current release runs from your agent or terminal.</p>
+  </section>
+  <section class="home-points" aria-label="How plovi works">
+    <div><h2>It asks before it guesses</h2><p>Review the plan before implementation starts. Your project keeps its own rules, commands and choices.</p></div>
+    <div><h2>Every stage shows its work</h2><p>Tests, implementation and review run with named checks. Evidence stays with the task.</p></div>
+    <div><h2>You keep the decisions</h2><p>Choose the agents and delivery steps. A push, pull request or merge needs your authorization.</p></div>
+  </section>
+  <section class="home-quickstart"><div><h2>Start with your project</h2><p>Runs on your machine with the agents you already use. Install once, then review setup with <code>/plovi-setup</code>.</p><p><a href="{{ 'install/' | url }}">Installation and first task</a></p></div><pre><code class="language-sh">plovi setup .</code></pre></section>
 </main>
 {% endblock %}

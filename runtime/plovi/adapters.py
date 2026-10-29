@@ -35,7 +35,7 @@ def project_files(root: Path, profile: dict) -> dict[str, str]:
     project = Project(root, profile)
     skills = catalog(project)
     files = {}
-    receipt = read_json(user_data() / "receipt.json", {})
+    receipt = read_json(user_data(migrate=False) / "receipt.json", {})
     # A live global install already resolves each project's overrides. Repeating
     # bundled adapters in projects would leave stale names/scripts after a sync.
     linked = (receipt.get("backend") == "linked"
@@ -63,7 +63,7 @@ def project_files(root: Path, profile: dict) -> dict[str, str]:
 
 def entry_names(name, package=None):
     public = entry_name(name, package)
-    # Compatibility aliases until 1.0 apply to the default plovi namespace.
+    # TODO(1.0): remove compatibility aliases. They apply to the default plovi namespace.
     return (public, "af-" + public[len("plovi-"):]) if public.startswith("plovi-") else (public,)
 
 
@@ -75,6 +75,8 @@ def validate_names(skills, package=None):
 
 def adapter_source(name, package=None):
     root = package or package_root()
+    if not (root / "templates/adapters/bootstrap.py").is_file():
+        root = package_root()  # One-release legacy source compatibility uses the current bootstrap.
     text = (root / "templates/adapters" / name).read_text()
     return text.replace("# bootstrap:include", (root / "templates/adapters/bootstrap.py").read_text())
 
@@ -84,6 +86,9 @@ def skill_files(name, info, public, package=None):
     note = f"{public} is now {canonical}; use {canonical} (alias available until 1.0)." if public != canonical else None
     template = adapter_source("dispatch.py", package)
     template = template.replace("SKILL_NAME = None", f"SKILL_NAME = {name!r}").replace("ALIAS_NOTE = None", f"ALIAS_NOTE = {note!r}")
-    text = f"---\nname: {public}\ndescription: {json.dumps(info['description'])}\n---\n\nRun this skill folder's scripts/dispatch.py with the current project as its working directory. Read the returned effective skill file, then follow its procedure. Project overrides take precedence. Do not use defaults from another project.\n"
+    description = (f"Deprecated alias of {canonical}. " if note else "") + info["description"]
+    text = f"---\nname: {public}\ndescription: {json.dumps(description)}\n---\n\nRun this skill folder's scripts/dispatch.py with the current project as its working directory. Read the returned effective skill file, then follow its procedure. Project overrides take precedence. Do not use defaults from another project.\n"
+    if note:
+        text += f"\nDeprecated alias of {canonical}. Use {canonical} for new work.\n"
     return {"SKILL.md": text, "scripts/dispatch.py": template,
             "agents/openai.yaml": interface_metadata(name, package)}

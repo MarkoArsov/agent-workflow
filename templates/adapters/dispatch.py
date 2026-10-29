@@ -19,7 +19,8 @@ for candidate in candidates:
             if SKILL_NAME not in {"project-setup", "setup", "update-models", "publish-workflow"} or project:
                 raise
             context = None
-        print(resolve_skill(SKILL_NAME, context, candidate))
+        selected_package = importlib.import_module(runtime + ".util").package_root()
+        print(resolve_skill(SKILL_NAME, context, selected_package))
         break
 else:
     raise SystemExit("No matching workflow runtime. Install the project's pinned version or run project-setup after a global installation.")

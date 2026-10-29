@@ -84,6 +84,5 @@ Reinstall to use `plovi` and `/plovi-<skill>`. The `agentflow` command and
 `/af-<skill>` aliases keep working until 1.0 and print a short deprecation note.
 Finish or cancel running tasks before upgrading. On the first normal run of the
 new runtime, each project's `.agentflow/` directory moves to `.plovi/`, with one
-notice. If both directories exist, plovi stops and preserves both for you to
-resolve. Setup and installation previews report the move without performing it.
+notice. If both project profiles exist, plovi uses `.plovi/`, warns, and preserves the legacy data. Setup and installation previews report the move without performing it.
 See [upgrade details](https://agentic.markoarsov.com/install/#upgrade-to-plovi).

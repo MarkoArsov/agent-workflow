@@ -79,16 +79,16 @@ def common_dir(root: Path) -> Path | None:
         return None
     return (root / result.stdout.strip()).resolve()
 
-def user_data() -> Path:
+def user_data(*, migrate=True) -> Path:
     base = Path(os.environ.get("XDG_DATA_HOME", str(Path.home() / ".local/share")))
+    from .migration import migrate_user_data
+    if migrate:
+        return migrate_user_data(base)
     current = base / "plovi"
-    if (current / "receipt.json").exists():
-        return current
-    # Legacy installation ownership and model settings stay where they are.
-    for name in ("agentflow", "agent-workflow"):
-        legacy = base / name
-        if (legacy / "receipt.json").is_file():
-            return legacy
+    if not current.exists():
+        for name in ("agentflow", "agent-workflow"):
+            if (base / name).is_dir():
+                return base / name
     return current
 
 def redact(text: str) -> str:

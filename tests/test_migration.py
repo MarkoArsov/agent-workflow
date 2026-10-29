@@ -50,13 +50,13 @@ class MigrationTests(WorkspaceTest):
         if os.name != "nt":
             self.assertEqual(moved.stat().st_mode & 0o777, 0o600)
         self.assertFalse((root / ".agentflow").exists())
-        self.assertEqual(result.stderr.count("Moved .agentflow/ to .plovi/"), 1)
+        self.assertEqual(result.stderr.count("Moved .agentflow/ to .plovi/ (one-time rename)."), 1)
 
     def test_repeat_run_does_not_repeat_notice(self):
         root = self.legacy()
         first = self.run_cli(root, "inspect")
         second = self.run_cli(root, "inspect")
-        self.assertEqual(first.stderr.count("Moved .agentflow/ to .plovi/"), 1)
+        self.assertEqual(first.stderr.count("Moved .agentflow/ to .plovi/ (one-time rename)."), 1)
         self.assertEqual(second.returncode, 0, second.stderr)
         self.assertEqual(second.stderr, "")
 
@@ -130,17 +130,19 @@ class MigrationTests(WorkspaceTest):
                 for _ in range(4)]
         outputs = [(p, p.communicate(timeout=40)) for p in runs]
         self.assertTrue(all(p.returncode == 0 for p, _ in outputs), str(outputs))
-        self.assertEqual(sum(err.count("Moved .agentflow/ to .plovi/") for _, (_, err) in outputs), 1)
+        self.assertEqual(sum(err.count("Moved .agentflow/ to .plovi/ (one-time rename).") for _, (_, err) in outputs), 1)
 
     def test_active_runner_blocks_migration(self):
         root = self.legacy()
         state = root / ".agentflow/local/evidence/task/state.json"
         state.parent.mkdir(parents=True)
         state.write_text(json.dumps({"status": "running"}))
-        result = self.run_cli(root, "inspect")
-        self.assertNotEqual(result.returncode, 0)
-        self.assertTrue((root / ".agentflow").exists())
-        self.assertFalse((root / ".plovi").exists())
+        from plovi.state import lock
+        with lock(root / ".agentflow/local/runner.lock"):
+            result = self.run_cli(root, "inspect")
+            self.assertNotEqual(result.returncode, 0)
+            self.assertTrue((root / ".agentflow").exists())
+            self.assertFalse((root / ".plovi").exists())
 
     def test_symlink_is_not_followed(self):
         root = self.repo("app")

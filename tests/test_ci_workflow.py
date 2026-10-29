@@ -75,6 +75,9 @@ class CIWorkflowTests(WorkspaceTest):
                 discovery = Path(env['HOME']) / '.agents/skills/plovi-setup/SKILL.md'
                 discovery.parent.mkdir(parents=True, exist_ok=True)
                 discovery.write_text('fixture discovery')
+                alias = discovery.parent.parent / 'af-setup/SKILL.md'
+                alias.parent.mkdir(parents=True, exist_ok=True)
+                alias.write_text('fixture compatibility alias')
             return subprocess.CompletedProcess(argv, 0, '0.1.1\n', '')
         with patch.dict(os.environ, {'RUNNER_TEMP': str(self.root), 'GH_TOKEN': 'test-only'}, clear=False), \
              patch('subprocess.run', side_effect=run):

@@ -9,7 +9,7 @@ import re
 import subprocess
 
 ROOT = Path(__file__).resolve().parents[1]
-OLD_NAME = re.compile(r"agent[ ]?flow", re.I)
+OLD_NAME = re.compile(r"agent[ ]?flow|\baf-", re.I)
 EXCLUSIONS = {".git", ".venv", "node_modules", "__pycache__", ".build", ".dist"}
 
 

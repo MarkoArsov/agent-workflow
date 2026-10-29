@@ -1,6 +1,8 @@
 ---
 name: af-prune-context
-description: "Propose evidence-based instruction pruning while preserving meaningful project safeguards."
+description: "Deprecated alias of plovi-prune-context. Propose evidence-based instruction pruning while preserving meaningful project safeguards."
 ---
 
 Run this skill folder's scripts/dispatch.py with the current project as its working directory. Read the returned effective skill file, then follow its procedure. Project overrides take precedence. Do not use defaults from another project.
+
+Deprecated alias of plovi-prune-context. Use plovi-prune-context for new work.

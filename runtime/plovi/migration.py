@@ -10,19 +10,86 @@ from .util import WorkflowError, atomic_write, digest, json_text, read_json
 
 LEGACY = ".agentflow"
 CURRENT = ".plovi"
+_warned_conflicts = set()
 
 def checkpoint(phase):
     """Fault boundary used by isolated migration tests."""
 
+def relocate_imports(old, new):
+    """Keep a copied runtime importable when its containing directory moves."""
+    import importlib
+    from importlib.machinery import ModuleSpec, SourceFileLoader
+    def moved(value):
+        if isinstance(value, str):
+            path = Path(value)
+            if path.is_absolute() and path.is_relative_to(old):
+                return str(new / path.relative_to(old))
+        return value
+    sys.path[:] = [moved(value) for value in sys.path]
+    for module in list(sys.modules.values()):
+        data = vars(module) if module is not None else {}
+        if "__file__" in data:
+            data["__file__"] = moved(data["__file__"])
+        if "__path__" in data:
+            data["__path__"] = [moved(value) for value in data["__path__"]]
+        spec = data.get("__spec__")
+        if isinstance(spec, ModuleSpec):
+            spec.origin = moved(spec.origin)
+            if spec.submodule_search_locations is not None:
+                spec.submodule_search_locations = [moved(value) for value in spec.submodule_search_locations]
+            if isinstance(spec.loader, SourceFileLoader):
+                spec.loader.path = moved(spec.loader.path)
+    importlib.invalidate_caches()
+
+
 def configuration(root):
     root = Path(root)
     old, new = root / LEGACY, root / CURRENT
+    if new.is_dir() and not new.is_symlink() and (new / "project.json").is_file():
+        if (old.exists() or old.is_symlink()) and root not in _warned_conflicts:
+            print("Both .agentflow/ and .plovi/ exist; using .plovi/ and preserving .agentflow/.", file=sys.stderr)
+            _warned_conflicts.add(root)
+        return new
     for path in (old, new):
         if path.is_symlink() or (path.exists() and not path.is_dir()):
             raise WorkflowError(f"Project configuration must be a directory, not a symlink: {path.name}")
     if old.exists() and new.exists() and old.exists():
-        raise WorkflowError("Both .agentflow/ and .plovi/ exist; preserve both and resolve the conflict before retrying.")
+        raise WorkflowError("Both .agentflow/ and .plovi/ exist without a canonical profile; preserve both and resolve the conflict before retrying.")
     return old if old.exists() else new
+
+
+def lock_held(path):
+    """Probe an existing OS lock without writing its PID or trusting stale state."""
+    from .state import _acquire, _release
+    try:
+        with Path(path).open("r+b") as handle:
+            try:
+                _acquire(handle)
+            except OSError:
+                return True
+            _release(handle)
+    except FileNotFoundError:
+        pass
+    return False
+
+
+def worktree_repairs(root, old):
+    from .util import run
+    profile = read_json(old / "project.json", {})
+    repairs = []
+    for repo in profile.get("repositories", []):
+        location = (root / repo["path"]).resolve()
+        if not location.is_relative_to(root):
+            raise WorkflowError("Registered repository leaves its project")
+        result = run(["git", "worktree", "list", "--porcelain"], location, check=False)
+        if result.returncode:
+            continue
+        for line in result.stdout.splitlines():
+            if line.startswith("worktree "):
+                path = Path(line[len("worktree "):])
+                if path.is_relative_to(old):
+                    repairs.append({"repository": repo["path"], "path": (Path(CURRENT) / path.relative_to(old)).as_posix()})
+    return repairs
 
 def rebase_path(value):
     """Only path components change; arbitrary prose and user file contents do not."""
@@ -32,15 +99,19 @@ def rebase_path(value):
     return value
 
 def profile_paths(profile):
-    import copy
-    result = copy.deepcopy(profile)
-    for section, keys in (("planning", ("directory", "evidence_directory")),
-                          ("git", ("worktree_directory",)),
-                          ("extensions", tuple(result.get("extensions", {})))):
-        for key in keys:
-            if key in result.get(section, {}):
-                result[section][key] = rebase_path(result[section][key])
-    return result
+    """Rebase rooted path values in the profile, preserving embedded prose."""
+    def visit(value):
+        if isinstance(value, str):
+            for separator in ("/", "\\"):
+                if value.startswith(LEGACY + separator):
+                    return CURRENT + value[len(LEGACY):]
+            return value
+        if isinstance(value, dict):
+            return {key: visit(item) for key, item in value.items()}
+        if isinstance(value, list):
+            return [visit(item) for item in value]
+        return value
+    return visit(profile)
 
 def ignore_paths(text):
     """Rebase the managed ignore region; retain all custom surrounding patterns."""
@@ -52,7 +123,8 @@ def ignore_paths(text):
             raise WorkflowError("Malformed managed ignore block; repair it before migration")
         before, rest = text.split(begin)
         block, after = rest.split(end)
-        lines = [rebase_path(line) for line in block.strip("\n").splitlines()]
+        original = block.strip("\n").splitlines()
+        lines = list(dict.fromkeys([*original, *(rebase_path(line) for line in original)]))
         lines += [line for line in required if line not in lines]
         return before + begin + "\n" + "\n".join(lines) + "\n" + end + after
     lines = text.splitlines()
@@ -135,10 +207,14 @@ def migrate(root):
     from .state import lock
     root = Path(root).resolve()
     old, new = root / LEGACY, root / CURRENT
-    configuration(root)
+    selected = configuration(root)
+    if selected == new and old.exists():
+        return False
     journal = root / ".plovi-migration.json"
     if not old.exists() and not journal.exists():
         return False
+    if old.exists() and lock_held(old / "local/runner.lock"):
+        raise WorkflowError("Finish or cancel active tasks before migrating the project; its run lock is held")
     # Lock outside the moved tree. Leave this inode in place so waiting processes
     # cannot acquire different locks after another process unlinks it.
     stack = ExitStack()
@@ -152,7 +228,8 @@ def migrate(root):
                 raise WorkflowError("Project migration is busy; retry after the other process finishes")
             time.sleep(.02)
     with stack:
-        configuration(root)
+        if configuration(root) == new and old.exists():
+            return False
         saved = read_json(journal)
         if not old.exists() and not saved:
             return False
@@ -162,22 +239,20 @@ def migrate(root):
             evidence_path = (root / evidence).resolve()
             if not evidence_path.is_relative_to(root):
                 raise WorkflowError("Migration evidence directory leaves the project")
-            for state in evidence_path.glob("*/state.json"):
-                if read_json(state, {}).get("status") in {"starting", "running", "needs_input"}:
-                    raise WorkflowError("Finish or cancel active tasks before migrating the project")
-            # Checking the OS-held runner lock also catches live processes whose
-            # state has not yet been written.
-            runner_lock = old / "local/runner.lock"
-            if runner_lock.exists():
-                with lock(runner_lock):
-                    pass
-            saved = {"schema_version": 1, "changes": _changes(root, old)}
+            if lock_held(old / "local/runner.lock"):
+                raise WorkflowError("Finish or cancel active tasks before migrating the project; its run lock is held")
+            saved = {"schema_version": 1, "changes": _changes(root, old), "worktrees": worktree_repairs(root, old)}
             atomic_write(journal, json_text(saved), 0o600)
         checkpoint("before-move")
         if old.exists():
             if new.exists():
                 raise WorkflowError("Migration destination already exists; preserve both folders")
-            old.rename(new)
+            try:
+                import os
+                os.replace(old, new)
+            except OSError as exc:
+                raise WorkflowError("Could not rename .agentflow/ to .plovi/. Close open files and retry; preserve the migration journal for recovery.") from exc
+        relocate_imports(old, new)
         checkpoint("after-move")
         for relative, change in saved["changes"].items():
             relative_path = Path(relative)
@@ -193,6 +268,108 @@ def migrate(root):
             if actual != after:
                 atomic_write(destination, after.decode(), change["mode"])
             checkpoint("metadata")
+        from .util import run
+        for repair in saved.get("worktrees", []):
+            repository = (root / repair["repository"]).resolve()
+            moved = (root / repair["path"]).resolve()
+            if not repository.is_relative_to(root) or not moved.is_relative_to(new):
+                raise WorkflowError("Worktree repair leaves the project; preserve the migration journal")
+            run(["git", "worktree", "repair", str(moved)], repository)
         journal.unlink()
-        print("Moved .agentflow/ to .plovi/.", file=sys.stderr)
+        print("Moved .agentflow/ to .plovi/ (one-time rename).", file=sys.stderr)
         return True
+
+
+def migrate_user_data(base):
+    """Move legacy global state once and rebase only receipt-owned metadata."""
+    import os
+    from .state import lock
+    base = Path(base).expanduser().resolve()
+    current = base / "plovi"
+    journal = base / ".plovi-data-migration.json"
+    if current.is_symlink():
+        raise WorkflowError("The plovi user-data location is a symlink; resolve it before migrating")
+    if current.exists() and not journal.exists():
+        return current
+    candidates = [base / name for name in ("agentflow", "agent-workflow") if (base / name).exists()]
+    if not candidates and not journal.exists():
+        return current
+    if len(candidates) > 1 and not journal.exists():
+        raise WorkflowError("Both legacy user-data folders exist; preserve both and select the one to migrate")
+    base.mkdir(parents=True, exist_ok=True)
+    with lock(base / ".plovi-data-migration.lock"):
+        saved = read_json(journal)
+        if current.exists() and saved is None:
+            return current
+        if saved is None:
+            legacy = candidates[0]
+            if legacy.is_symlink() or not legacy.is_dir():
+                raise WorkflowError("Legacy user data must be a directory, not a symlink")
+            for held in (legacy / "install.lock", legacy / "models/write.lock"):
+                if lock_held(held):
+                    raise WorkflowError("User-data migration is busy; finish the active update and retry")
+            changes = []
+            def rebase(value):
+                if isinstance(value, str):
+                    path = Path(value)
+                    if path.is_absolute() and path.is_relative_to(legacy):
+                        return str(current / path.relative_to(legacy))
+                return value
+            def add(path, content, destination=None):
+                before = path.read_bytes()
+                after = content.encode()
+                if before != after:
+                    changes.append({"path": str(destination or path), "before": base64.b64encode(before).decode(),
+                                    "after": base64.b64encode(after).decode(), "mode": path.stat().st_mode & 0o777})
+            receipt_path = legacy / "receipt.json"
+            receipt = read_json(receipt_path)
+            if receipt:
+                receipt["files"] = {rebase(key): value for key, value in receipt.get("files", {}).items()}
+                for key in ("source", "project"):
+                    if key in receipt:
+                        receipt[key] = rebase(receipt[key])
+                for info in receipt.get("versions", {}).values():
+                    info["path"] = rebase(info["path"])
+                for name, info in receipt["files"].items():
+                    destination = Path(name)
+                    original = legacy / destination.relative_to(current) if destination.is_relative_to(current) else destination
+                    if original.is_file() and not original.is_symlink() and digest(original.read_bytes()) == info["sha256"]:
+                        code = original.read_text(encoding="utf-8")
+                        updated = code.replace(str(legacy), str(current))
+                        # Older generated adapters select their data root before
+                        # importing a runtime. Only receipt-owned bytes change.
+                        updated = updated.replace('/ "' + legacy.name + '"', '/ "plovi"')
+                        updated = updated.replace("/ '" + legacy.name + "'", "/ 'plovi'")
+                        if updated != code:
+                            add(original, updated, destination)
+                            info["sha256"] = digest(updated)
+                add(receipt_path, json_text(receipt), current / "receipt.json")
+            active = legacy / "active.json"
+            if active.is_file():
+                data = read_json(active)
+                if "path" in data:
+                    data["path"] = rebase(data["path"])
+                add(active, json_text(data), current / "active.json")
+            saved = {"schema_version": 1, "legacy": legacy.name, "changes": changes}
+            atomic_write(journal, json_text(saved), 0o600)
+        legacy = base / saved["legacy"]
+        if legacy.name not in {"agentflow", "agent-workflow"}:
+            raise WorkflowError("Invalid user-data migration journal")
+        if legacy.exists():
+            if current.exists():
+                raise WorkflowError("Both user-data directories exist; preserve them and the recovery journal")
+            try:
+                os.replace(legacy, current)
+            except OSError as exc:
+                raise WorkflowError("Could not rename user data. Close open files and retry; the recovery journal is preserved.") from exc
+        relocate_imports(legacy, current)
+        for change in saved["changes"]:
+            path = Path(change["path"])
+            before, after = (base64.b64decode(change[key]) for key in ("before", "after"))
+            if path.is_symlink() or path.read_bytes() not in (before, after):
+                raise WorkflowError("User-data migration metadata changed externally; preserve the journal and resolve the edit")
+            if path.read_bytes() != after:
+                atomic_write(path, after.decode(), change["mode"])
+        journal.unlink()
+        print(f"Moved {saved['legacy']} user data to plovi (one-time rename).", file=sys.stderr)
+    return current

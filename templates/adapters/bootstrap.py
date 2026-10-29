@@ -83,6 +83,7 @@ def bootstrap(start):
     override = os.environ.get("PLOVI_PACKAGE") or os.environ.get("AGENTFLOW_PACKAGE")
     if override:
         candidates.append(Path(override))
+    bootstrap.data_root = global_root
     return project, profile, candidates, linked
 
 
@@ -94,4 +95,10 @@ def bootstrap_runtime(candidate, profile, linked):
     if not (compatible_link or (candidate != linked and (not profile or marker.get("version") == profile["package"]["version"]))):
         return None
     sys.path.insert(0, str(candidate / "runtime"))
-    return "agentflow" if marker["name"] == "agentflow" else "plovi"
+    if marker["name"] == "agentflow":
+        if (candidate / "runtime/agentflow/util.py").is_file():
+            # Older pins keep their runtime while sharing the relocated data.
+            legacy_util = importlib.import_module("agentflow.util")
+            legacy_util.user_data = lambda root=bootstrap.data_root: root
+        return "agentflow"
+    return "plovi"
