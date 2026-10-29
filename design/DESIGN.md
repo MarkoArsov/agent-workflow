@@ -45,6 +45,7 @@ The interface is a quiet tool in the tradition of Linear, Vercel and GitHub: neu
 - Board: six columns of `column-width`, 16px apart, scrolling sideways inside the panel. Columns have no background.
 - Side peek: pinned to the right edge of the content panel at `peek-width`, full height, over the board, never below it. Full width under 720px.
 - Inbox: a list on the left (360px) and the selected decision on the right.
+- Schedules: a list of ScheduleRows; the selected schedule opens in the side panel with its steps, guard and executions. "New schedule" opens a dialog that starts with a plain-language box ("every weekday at 8, run test-on-staging") and falls back to a form.
 - Settings: one centred column, 640px, settings grouped in bordered lists; a SaveBar floats at the bottom when something changed.
 - Spacing: `space-2` between cards, `space-3` inside cards, `space-4` around the board, `space-6` inside the peek.
 
@@ -72,7 +73,8 @@ The interface is a quiet tool in the tradition of Linear, Vercel and GitHub: neu
 Plain HTML and CSS: load `tokens.css`, then `components.css`, and use the `pl-` classes shown in each `components/<Name>.html` preview. There is no JavaScript bundle; the app rebuilds these in its own framework with the same class names and tokens.
 
 - Actions: Button. Status: StatusIcon, Avatar.
-- Board: TaskCard, BoardColumn. Panels: SidePeek, Activity.
+- Board: TaskCard (with a `pl-tag` naming the schedule that started it), BoardColumn. Panels: SidePeek, Activity.
+- Schedules: ScheduleRow; the selected schedule opens in the SidePeek.
 - Navigation: SidebarNav, CommandPalette. Inbox: InboxRow.
 - Settings: SettingRow, SaveBar. Feedback: Toast.
 - Docs: Callout, CodeBlock.
