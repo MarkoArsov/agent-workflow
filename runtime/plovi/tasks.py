@@ -21,7 +21,9 @@ def _validate_checkout(project, row):
     if git(target, 'branch', '--show-current') != row['branch']:
         raise WorkflowError('Task worktree branch changed; preserve it and resolve ownership')
     registrations = git(root, 'worktree', 'list', '--porcelain', '-z').split('\0')
-    if 'worktree ' + str(target.resolve()) not in registrations:
+    registered_paths = {Path(field[len('worktree '):]).resolve()
+                        for field in registrations if field.startswith('worktree ')}
+    if target.resolve() not in registered_paths:
         raise WorkflowError('Task worktree is not registered at its owned path')
     return str(target)
 

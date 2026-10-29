@@ -115,3 +115,48 @@ class TaskIsolationTests(WorkspaceTest):
         self.git(target,'switch','-c','feature/not-this-task')
         with self.assertRaisesRegex(WorkflowError,'branch'):
             runner.preflight(project,plan,check_providers=False)
+
+    def test_registration_compares_canonical_paths_instead_of_literal_text(self):
+        from plovi import tasks
+        project,root=self.configured()
+        allocated=tasks.start(project,'path-format')
+        target=Path(allocated['checkouts']['app'])
+        row={'repository':'app','path':str(target),'branch':allocated['branches']['app']}
+        original=tasks.git
+        def alternate_representation(directory,*args,**kwargs):
+            if args==('worktree','list','--porcelain','-z'):
+                path=target.as_posix()+'/.'
+                return 'worktree '+path+'\0HEAD fixture\0branch refs/heads/'+row['branch']+'\0\0'
+            return original(directory,*args,**kwargs)
+        with patch.object(tasks,'git',side_effect=alternate_representation):
+            try:
+                actual=tasks._validate_checkout(project,row)
+            except WorkflowError as error:
+                self.fail('A registered equivalent path must be accepted: '+str(error))
+            self.assertEqual(actual,str(target))
+
+
+    def test_registration_accepts_windows_slashes_and_case_without_relaxing_ownership(self):
+        from pathlib import PureWindowsPath
+        from types import SimpleNamespace
+        from plovi import tasks
+        root=PureWindowsPath('C:/fixture/repo')
+        target=PureWindowsPath('C:/fixture/task')
+        project=SimpleNamespace(repo_path=lambda name:root)
+        row={'repository':'app','path':str(target),'branch':'feature/windows'}
+        class WindowsPath:
+            def __init__(self,value): self.path=PureWindowsPath(value)
+            def is_dir(self): return True
+            def resolve(self): return self.path
+            def __str__(self): return str(self.path)
+        def answer(directory,*args):
+            if args==('branch','--show-current'):return row['branch']
+            return 'worktree c:/FIXTURE/task\0HEAD fixture\0branch refs/heads/feature/windows\0\0'
+        with patch.object(tasks,'Path',WindowsPath),patch.object(tasks,'common_dir',return_value=root),patch.object(tasks,'git',side_effect=answer):
+            self.assertEqual(tasks._validate_checkout(project,row),str(target))
+        def unrelated(directory,*args):
+            if args==('branch','--show-current'):return row['branch']
+            return 'worktree C:/fixture/other\0HEAD fixture\0\0'
+        with patch.object(tasks,'Path',WindowsPath),patch.object(tasks,'common_dir',return_value=root),patch.object(tasks,'git',side_effect=unrelated):
+            with self.assertRaisesRegex(WorkflowError,'not registered'):
+                tasks._validate_checkout(project,row)
