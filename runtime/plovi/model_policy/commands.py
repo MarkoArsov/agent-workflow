@@ -5,7 +5,8 @@ from .storage import read, write, summary
 
 
 def arguments(parser):
-    parser.add_argument("action", choices=["inspect", "refresh", "evaluate", "propose", "apply", "recover"])
+    parser.add_argument("action", choices=["inspect", "refresh", "watch", "evaluate", "propose", "apply", "recover"])
+    parser.add_argument("--key-file", type=Path, help="Explicit local AA_API_KEY assignment file; watch only")
     parser.add_argument("--scope", choices=["global", "project", "both"])
     parser.add_argument("--providers", help="Confirmed provider set, comma-separated")
     parser.add_argument("--confirm-model", action="append", default=[], help="Explicitly confirmed provider:model access; refresh only")
@@ -17,6 +18,11 @@ def arguments(parser):
 
 
 def execute(args, store, cwd):
+    if args.key_file is not None and args.action != "watch":
+        raise ValueError("--key-file is only supported by models watch")
+    if args.action == "watch":
+        from .watch import refresh
+        return {"workflow": store.workflow, **refresh(store, args.key_file)}
     if args.action in {"propose", "apply"} and not args.input:
         raise ValueError("A reviewed --input file is required")
     if args.action == "inspect":

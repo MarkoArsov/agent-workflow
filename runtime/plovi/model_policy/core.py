@@ -33,6 +33,8 @@ def validate_entry(entry):
     validate_route({k: entry[k] for k in ("provider", "model") if k in entry})
     if entry.get("band") not in BANDS or not isinstance(entry.get("family"), str) or not entry["family"]:
         raise ValueError("Registry entry requires band and model family")
+    if "lineage" in entry and (not isinstance(entry["lineage"], str) or not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", entry["lineage"])):
+        raise ValueError("Registry lineage must be a lab slug")
     if not isinstance(entry.get("stages"), list) or not entry["stages"] or not all(isinstance(s, str) for s in entry["stages"]):
         raise ValueError("Registry entry requires suitable stages")
     if not isinstance(entry.get("rank"), int) or entry["rank"] < 0:
@@ -157,17 +159,58 @@ def requirement(facts, stage, policy):
     return "strong", "balanced", "routine-scoped-work"
 
 
+def adversary_policy(policy):
+    mapping = policy.get("adversaries", {})
+    slack = policy.get("adversary_band_slack", 0)
+    if not isinstance(mapping, dict) or any(not isinstance(stage, str) or not isinstance(others, list) or not all(isinstance(x, str) for x in others) for stage, others in mapping.items()):
+        raise ValueError("Adversaries must map stages to stage lists")
+    if type(slack) is not int or not 0 <= slack <= 1:
+        raise ValueError("Adversary band slack must be zero or one")
+    return mapping, slack
+
+
+def diverse_chain(rows, limit):
+    selected, deferred, lineages, identities = [], [], set(), set()
+    for route, entry in rows:
+        identity = (route["provider"], entry["family"])
+        if identity in identities:
+            continue
+        lineage = entry.get("lineage")
+        if selected and (not lineage or lineage in lineages):
+            deferred.append((route, identity))
+            continue
+        selected.append(route)
+        identities.add(identity)
+        if lineage:
+            lineages.add(lineage)
+        if len(selected) == limit:
+            return selected
+    for route, identity in deferred:
+        if identity not in identities:
+            selected.append(route)
+            identities.add(identity)
+        if len(selected) == limit:
+            break
+    return selected
+
+
 def evaluate(registry, policy, catalogue, settings, facts):
     validate_facts(facts)
     entries = {route_key(e): deepcopy(e) for e in registry}
+    known_lineages = {key: e["lineage"] for key, e in entries.items() if e.get("lineage") and e.get("confidence") == "reviewed"}
     entries.update({route_key(e): deepcopy(e) for e in settings.get("registry", [])})
+    for key, entry in entries.items():
+        if "lineage" not in entry and key in known_lineages:
+            entry["lineage"] = known_lineages[key]
     for entry in entries.values():
         validate_entry(entry)
     catalogue = catalogue or {"providers": {}}
     allowed = set(settings["providers"])
     blocked = set(settings.get("blocked", []))
     output = {"schema_version": 1, "evaluator_version": VERSION, "routes": {}, "reasons": {}, "unresolved": [], "advisories": []}
-    family = None
+    adversaries, slack = adversary_policy(policy)
+    chosen = {}
+    chosen_families = {}
 
     def observation(route):
         host = catalogue.get("providers", {}).get(route["provider"], {})
@@ -186,8 +229,8 @@ def evaluate(registry, policy, catalogue, settings, facts):
             return "required-capability-not-established"
         return None
 
-    # Always evaluate implement before review, regardless of input display order.
-    stages = sorted((s for s in facts["stages"] if s not in MECHANICAL), key=lambda s: (s == "review", facts["stages"].index(s)))
+    order = {"implement": 0, "implement-tests": 1, "review": 3}
+    stages = sorted((s for s in facts["stages"] if s not in MECHANICAL), key=lambda s: (order.get(s, 2), s))
     for stage in stages:
         band, effort_mode, reason = requirement(facts, stage, policy)
         defaults = settings.get("defaults", {})
@@ -195,6 +238,8 @@ def evaluate(registry, policy, catalogue, settings, facts):
         pins = settings.get("pins", {})
         explicit = facts.get("routes", {})
         pinned = explicit.get(stage, explicit.get("default", pins.get(stage, pins.get("default"))))
+        prior_stages = [other for other in adversaries.get(stage, []) if other in chosen]
+        prior = {chosen[other] for other in prior_stages if chosen[other]}
         selected = None
         if pinned is not None:
             selected = deepcopy(pinned)
@@ -203,9 +248,10 @@ def evaluate(registry, policy, catalogue, settings, facts):
             selected, reason = [], "explicitly-disabled"
         else:
             candidates = []
+            floor = BANDS[band] - (slack if prior else 0)
             for key, entry in entries.items():
                 host, model = observation(entry)
-                if entry.get("confidence") != "reviewed" or (stage not in entry["stages"] and "*" not in entry["stages"]) or BANDS[entry["band"]] < BANDS[band]:
+                if entry.get("confidence") != "reviewed" or (stage not in entry["stages"] and "*" not in entry["stages"]) or BANDS[entry["band"]] < floor:
                     continue
                 if not host.get("installed") or model.get("status") not in {"advertised", "confirmed", "used"}:
                     continue
@@ -219,18 +265,23 @@ def evaluate(registry, policy, catalogue, settings, facts):
                     route["reasoning"] = effort
                 if invalid(route):
                     continue
-                same_family = int(stage == "review" and family is not None and entry["family"] == family)
+                below = int(BANDS[entry["band"]] < BANDS[band])
+                collision = int(bool(prior) and (not entry.get("lineage") or entry["lineage"] in prior))
                 keep = int(not current or route != current[0])
-                candidates.append(((BANDS[entry["band"]], entry["rank"], same_family, keep, key), route))
+                candidates.append(((below, collision, BANDS[entry["band"]], entry["rank"], int(entry["family"] in {chosen_families[other] for other in prior_stages}), keep, key), route, entry))
             candidates.sort(key=lambda x: x[0])
             if candidates:
-                selected, seen = [], set()
-                for _, route in candidates:
-                    identity = (route["provider"], entries[route_key(route)]["family"])
-                    if identity not in seen:
-                        selected.append(route); seen.add(identity)
-                    if len(selected) >= policy["max_fallbacks"] + 1:
-                        break
+                adequate = [row for row in candidates if row[0][0] == 0]
+                alternate = [row for row in adequate if row[0][1] == 0]
+                lower = [row for row in candidates if row[0][0] == 1 and row[0][1] == 0]
+                if prior and not alternate and lower:
+                    candidates = lower + adequate
+                    output["advisories"].append({"stage": stage, "reason": "adversary-below-band"})
+                else:
+                    candidates = adequate
+                    if prior and not alternate:
+                        output["advisories"].append({"stage": stage, "reason": "single-lineage"})
+                selected = diverse_chain([(route, entry) for _, route, entry in candidates], policy["max_fallbacks"] + 1)
             elif current:
                 selected, reason = deepcopy(current), "retained-configured-default"
                 entry = entries.get(route_key(current[0]))
@@ -247,8 +298,13 @@ def evaluate(registry, policy, catalogue, settings, facts):
                 output["advisories"].append({"stage": stage, "reason": "explicit-route-below-recommended-band"})
         output["routes"][stage] = selected
         output["reasons"][stage] = reason
-        if stage == "implement" and selected:
-            family = entries.get(route_key(selected[0]), {}).get("family")
+        primary = entries.get(route_key(selected[0]), {}) if selected else {}
+        chosen[stage] = primary.get("lineage")
+        chosen_families[stage] = primary.get("family")
+        if pinned and chosen[stage] in prior:
+            output["advisories"].append({"stage": stage, "reason": "single-lineage"})
+        if prior_stages and (any(chosen[other] is None for other in prior_stages) or not chosen[stage]):
+            output["advisories"].append({"stage": stage, "reason": "unknown-lineage"})
     output["provenance"] = {"registry": fingerprint(list(entries.values())), "policy": fingerprint(policy), "catalogue": fingerprint(catalogue), "settings": fingerprint(settings), "facts": deepcopy(facts)}
     output["snapshot_hash"] = fingerprint(output)
     return output
