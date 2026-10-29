@@ -20,7 +20,7 @@ The design language for plovi: the app, the documentation site and the brand. Re
 | `components/` | Guideline and preview per component. |
 | `brand/` | Logo mark, wordmark, lockups, app icons and the social card. `source-sailboat.svg` is the original mark. |
 | `fonts/` | Geist and Geist Mono variable fonts, with their licence (SIL Open Font License 1.1). |
-| `screens/app/` | App screens: board with side panel (`Main`), inbox, settings, take over, Ask palette, empty and error states, phone, sidebar. |
+| `screens/app/` | App screens: board with side panel (`Main`), schedules, inbox, settings, take over, Ask palette, empty and error states, phone, sidebar. |
 | `screens/docs/` | Documentation site: home, guide page, CLI reference. |
 | `screens/brand/` | The brand sheet. |
 
@@ -30,6 +30,7 @@ The `*.dc.html` files are exported from the design canvas they were drawn in. Ea
 
 - `Main.dc.html` is the board. It also defines the side panel for every task state (question, plan, breakdown, running, failed, review, with you), the Ask palette and toasts. `TakeOver` and `Palette` reuse it with a different starting state.
 - `Sidebar.dc.html` is shared by every app screen.
+- `Schedules.dc.html` is the Schedules tab: the list, the selected schedule with its steps and recent runs, Run now, and the New schedule dialog that starts from a plain-language description.
 
 ## Rules for agents
 

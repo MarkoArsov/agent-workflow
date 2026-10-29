@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>plovi schedules</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="../../tokens.css">
+<link rel="stylesheet" href="../../components.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.peek-label{font-size:12px;font-weight:500;color:var(--ink-subtle)}
+.step{display:grid;grid-template-columns:22px 22px minmax(0,1fr);gap:10px;align-items:start;padding:10px 0;border-top:1px solid var(--border)}
+.step:first-child{border-top:0}
+.step i{font:500 11px/22px var(--font-mono);color:var(--ink-subtle);font-style:normal;text-align:right}
+.step .ico{width:22px;height:22px;display:grid;place-items:center;border-radius:9999px;background:var(--surface-hover);color:var(--ink-muted)}
+.step .ico svg{width:13px;height:13px}
+.step b{display:block;font-weight:500}
+.step span{display:block;font-size:12px;line-height:17px;color:var(--ink-muted)}
+.run{display:grid;grid-template-columns:16px 92px minmax(0,1fr) 64px 48px;gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--border);font-size:13px}
+.run .t{color:var(--ink-subtle);font-size:12px}
+.run .r{color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.run .n{font:400 12px/16px var(--font-mono);color:var(--ink-subtle);text-align:right}
+.head{display:grid;grid-template-columns:30px minmax(0,1.4fr) minmax(0,1fr) minmax(0,1fr) 72px;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);font-size:12px;color:var(--ink-subtle)}
+.diff{margin:0;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-lg);background:var(--surface-sunken);font:400 12px/20px var(--font-mono);white-space:pre;overflow-x:auto;color:var(--success)}
+</style>
+</helmet>
+<div data-theme="{{theme}}" class="pl-shell" style="position: relative; height: 900px">
+<dc-import name="Sidebar" active="schedules" theme="{{theme}}" hint-size="232px,900px"></dc-import>
+<main class="pl-panel">
+<div class="pl-panel__head">
+<div class="pl-crumbs"><span>agent-workflow</span><span style="color: var(--ink-subtle)">›</span><b>Schedules</b></div>
+<span style="margin-left: auto"><button class="pl-btn pl-btn--primary pl-btn--sm" onClick="{{openNew}}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>New schedule</button></span>
+</div>
+<div style="flex: 1; min-height: 0; overflow-y: auto">
+<div class="head"><span></span><span>Schedule</span><span>When</span><span>Last run</span><span>Next</span></div>
+<sc-for list="{{rows}}" as="s" hint-placeholder-count="3">
+<div class="pl-sched" aria-current="{{s.cur}}" data-off="{{s.offAttr}}" style="cursor: default">
+<input type="checkbox" class="pl-switch" checked="{{s.on}}" onChange="{{s.toggle}}" aria-label="Turn {{s.id}} on or off">
+<button class="pl-sched__name" onClick="{{s.pick}}" style="all: unset; cursor: pointer; display: flex; flex-direction: column; min-width: 0"><b>{{s.id}}<sc-if value="{{s.builtin}}" hint-placeholder-val="{{ false }}"><span class="pl-tag" style="margin-left: 8px; display: inline-flex">built in</span></sc-if></b><span>{{s.desc}}</span></button>
+<span class="pl-sched__cell"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width: 14px; height: 14px; flex: none"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>{{s.when}}</span>
+<span class="pl-sched__cell">
+<sc-if value="{{s.lastOk}}" hint-placeholder-val="{{ true }}"><svg class="pl-si pl-si--done" viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="6.5" fill="currentColor"/><path d="M4.3 7.2 6.1 9 9.7 5.2" style="stroke: var(--surface)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></sc-if>
+<sc-if value="{{s.lastBad}}" hint-placeholder-val="{{ false }}"><svg class="pl-si pl-si--failed" viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="6.5" fill="currentColor"/><path d="M4.9 4.9l4.2 4.2M9.1 4.9 4.9 9.1" style="stroke: var(--surface)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></sc-if>
+<sc-if value="{{s.lastRun}}" hint-placeholder-val="{{ false }}"><svg class="pl-si pl-si--building" viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="5.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M7 7V3.5A3.5 3.5 0 0 1 7 10.5Z" fill="currentColor"/></svg></sc-if>
+{{s.lastText}} · {{s.lastTime}}</span>
+<span class="pl-sched__cell pl-num">{{s.nextShown}}</span>
+</div>
+</sc-for>
+<p style="margin: 0; padding: 14px 16px; font-size: 12px; color: var(--ink-subtle)">Schedules are saved in .plovi/schedules/ and run while plovi is running. Press ⌘K to describe a new one in plain words.</p>
+</div>
+
+<sc-if value="{{hasSel}}" hint-placeholder-val="{{ true }}">
+<aside class="pl-peek" aria-label="Schedule details">
+<div class="pl-peek__bar">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width: 14px; height: 14px"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+<span style="color: var(--ink-muted)">{{sel.file}}</span>
+<span style="margin-left: auto; display: flex; gap: 2px; align-items: center">
+<button class="pl-btn pl-btn--ghost pl-btn--sm" onClick="{{runNow}}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 5v14l11-7z"/></svg>Run now</button>
+<button class="pl-btn pl-btn--ghost pl-btn--icon" aria-label="More actions" title="Edit, duplicate, delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button>
+<button class="pl-btn pl-btn--ghost pl-btn--icon" aria-label="Close" onClick="{{close}}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+</span>
+</div>
+<div class="pl-peek__body">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<h2 class="title" style="margin: 0">{{sel.id}}</h2>
+<p style="margin: 0; color: var(--ink-muted)">{{sel.desc}}</p>
+</div>
+<dl class="pl-props">
+<dt>When</dt><dd>{{sel.when}} <span class="pl-num" style="font-size: 12px; color: var(--ink-subtle)">{{sel.cron}}</span></dd>
+<sc-if value="{{sel.hasPicks}}" hint-placeholder-val="{{ false }}"><dt>Picks</dt><dd>{{sel.picks}}</dd></sc-if>
+<dt>Guard</dt><dd style="line-height: 20px; padding: 2px 0">{{sel.guard}}</dd>
+<dt>If missed</dt><dd>{{sel.catchup}}</dd>
+<dt>Next run</dt><dd>{{sel.nextShown}}</dd>
+</dl>
+<section style="display: flex; flex-direction: column; gap: 4px">
+<div class="peek-label">Steps</div>
+<div>
+<sc-for list="{{sel.steps}}" as="p" hint-placeholder-count="3">
+<div class="step"><i>{{p.n}}</i>
+<sc-if value="{{p.isAgent}}" hint-placeholder-val="{{ true }}"><span class="ico" title="Agent session"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6"/></svg></span></sc-if>
+<sc-if value="{{p.isScript}}" hint-placeholder-val="{{ false }}"><span class="ico" title="Script"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 17 6-5-6-5M12 19h8"/></svg></span></sc-if>
+<span style="font-size: 13px"><b>{{p.name}}</b><span>{{p.detail}}</span><sc-if value="{{p.hasFb}}" hint-placeholder-val="{{ false }}"><span>If it fails: {{p.fb}}</span></sc-if></span>
+</div>
+</sc-for>
+</div>
+</section>
+<section style="display: flex; flex-direction: column; gap: 4px">
+<div class="peek-label">Recent runs</div>
+<div>
+<sc-for list="{{sel.runs}}" as="r" hint-placeholder-count="4">
+<div class="run">
+<span style="display: flex">
+<sc-if value="{{r.ok}}" hint-placeholder-val="{{ true }}"><svg class="pl-si pl-si--done" viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="6.5" fill="currentColor"/><path d="M4.3 7.2 6.1 9 9.7 5.2" style="stroke: var(--surface)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></sc-if>
+<sc-if value="{{r.bad}}" hint-placeholder-val="{{ false }}"><svg class="pl-si pl-si--failed" viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="6.5" fill="currentColor"/><path d="M4.9 4.9l4.2 4.2M9.1 4.9 4.9 9.1" style="stroke: var(--surface)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></sc-if>
+<sc-if value="{{r.skip}}" hint-placeholder-val="{{ false }}"><svg class="pl-si pl-si--paused" viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="5.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M5.6 5v4M8.4 5v4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></sc-if>
+<sc-if value="{{r.running}}" hint-placeholder-val="{{ false }}"><svg class="pl-si pl-si--building" viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="5.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M7 7V3.5A3.5 3.5 0 0 1 7 10.5Z" fill="currentColor"/></svg></sc-if>
+</span>
+<span class="t">{{r.time}}<br>{{r.trig}}</span>
+<span class="r">{{r.result}}</span>
+<span class="n">{{r.dur}}</span>
+<span class="n">{{r.cost}}</span>
+</div>
+</sc-for>
+</div>
+</section>
+</div>
+</aside>
+</sc-if>
+
+<sc-if value="{{hasToast}}" hint-placeholder-val="{{ false }}">
+<div class="pl-toast" role="status" style="position: absolute; left: 16px; bottom: 16px; z-index: 3"><svg class="pl-si pl-si--done" viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="6.5" fill="currentColor"/><path d="M4.3 7.2 6.1 9 9.7 5.2" style="stroke: var(--surface)" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>{{toast}}<button class="pl-btn pl-btn--ghost pl-btn--sm" onClick="{{dismiss}}">Dismiss</button></div>
+</sc-if>
+</main>
+
+<sc-if value="{{newOpen}}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; inset: 0; z-index: 5; background: var(--overlay); display: flex; align-items: flex-start; justify-content: center; padding: 96px 16px 0">
+<div role="dialog" aria-label="New schedule" style="width: 100%; max-width: 600px; box-sizing: border-box; background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--radius-xl); box-shadow: var(--shadow-pop); display: flex; flex-direction: column">
+<div style="display: flex; align-items: center; gap: 8px; padding: 16px 20px; border-bottom: 1px solid var(--border)">
+<h2 class="heading" style="margin: 0">New schedule</h2>
+<button class="pl-btn pl-btn--ghost pl-btn--icon" aria-label="Close" onClick="{{closeNew}}" style="margin-left: auto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+</div>
+<sc-if value="{{describing}}" hint-placeholder-val="{{ true }}">
+<div style="padding: 20px; display: flex; flex-direction: column; gap: 12px">
+<label for="describe" style="font-size: 13px; font-weight: 500">Describe what should run and when</label>
+<textarea id="describe" class="pl-input" style="height: 96px; padding: 10px 12px; line-height: 20px; resize: vertical; font-family: var(--font-sans)">Every Monday at 9, check outdated npm packages and open an issue for anything risky. Use Codex, and fall back to Claude if it fails.</textarea>
+<p style="margin: 0; font-size: 12px; color: var(--ink-muted)">plovi drafts the schedule and shows it to you before anything is saved. You can also fill in the form yourself.</p>
+<div style="display: flex; gap: 8px"><button class="pl-btn pl-btn--primary" onClick="{{draft}}">Draft schedule</button><button class="pl-btn pl-btn--ghost">Fill in a form instead</button></div>
+</div>
+</sc-if>
+<sc-if value="{{drafted}}" hint-placeholder-val="{{ false }}">
+<div style="padding: 20px; display: flex; flex-direction: column; gap: 14px">
+<dl class="pl-props" style="row-gap: 2px">
+<dt>Name</dt><dd>dependency-review</dd>
+<dt>When</dt><dd>Mondays at 09:00 <span class="pl-num" style="font-size: 12px; color: var(--ink-subtle)">0 9 * * 1</span></dd>
+<dt>If missed</dt><dd>Run once when plovi is next running</dd>
+</dl>
+<div>
+<div class="step"><i>1</i><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 17 6-5-6-5M12 19h8"/></svg></span><span style="font-size: 13px"><b>npm outdated --json</b><span>Script · output passed to the next step</span></span></div>
+<div class="step"><i>2</i><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6"/></svg></span><span style="font-size: 13px"><b>Review the updates and open issues for risky ones</b><span>Codex · medium</span><span>If it fails: Claude Code · Sonnet</span></span></div>
+</div>
+<div class="diff">+ .plovi/schedules/dependency-review.toml</div>
+<div style="display: flex; justify-content: flex-end; gap: 8px"><button class="pl-btn" onClick="{{backNew}}">Back</button><button class="pl-btn pl-btn--primary" onClick="{{saveNew}}">Save schedule</button></div>
+</div>
+</sc-if>
+</div>
+</div>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+constructor(props) {
+super(props);
+this.state = { sel: 'staging-check', off: {}, extraRuns: {}, added: false, newOpen: false, drafted: false, toast: null };
+}
+renderVals() {
+const st = this.state;
+const agent = (name, detail, fb) => ({ kind: 'agent', name, detail, fb });
+const script = (name, detail) => ({ kind: 'script', name, detail });
+let S = [
+{ id: 'factory', builtin: true, desc: 'Builds issues labelled plovi, one per run', when: 'Every 15 min, weekdays 9–19', cron: '*/15 9-19 * * 1-5', next: 'in 5 min',
+last: { k: 'ok', text: 'Picked #160', time: '10 min ago' }, picks: 'Open issues labelled plovi, oldest first, 1 per run',
+guard: 'Starts only while fewer than 3 issues are active and fewer than 3 PRs wait for review.', catchup: 'Skip missed runs',
+steps: [ agent('specify', 'Claude Code · Opus · high. Questions that matter go to your Inbox.', 'Codex · high'), agent('implement-tests', 'Claude Code · Sonnet', 'Codex · medium'), agent('implement', 'Claude Code · Sonnet', 'Codex · medium'), agent('review', 'Codex · high, a different agent than the one that wrote the code', 'Claude Code · Opus'), script('commit-and-push', 'Built in, after every check passes'), script('draft-pr', 'Built in, with the evidence in the PR body') ],
+runs: [ { k: 'ok', time: 'Today 10:15', trig: 'Schedule', result: 'Picked #160 → Planning', dur: '4s', cost: '—' }, { k: 'skip', time: 'Today 10:00', trig: 'Schedule', result: 'Skipped: 3 of 3 issues active', dur: '1s', cost: '—' }, { k: 'ok', time: 'Today 09:45', trig: 'Schedule', result: 'Picked #158 → Planning', dur: '3s', cost: '—' }, { k: 'ok', time: 'Today 09:20', trig: 'Run now', result: 'Picked #153 → Planning', dur: '5s', cost: '—' } ] },
+{ id: 'staging-check', desc: "Tests everything deployed to staging yesterday", when: 'Weekdays at 08:00', cron: '0 8 * * 1-5', next: 'Fri 08:00',
+last: { k: 'bad', text: '2 failures', time: 'today 08:06' }, guard: 'Skips a run if the previous one is still going. Stops after 20 minutes or $2.', catchup: 'Run once when plovi is next running',
+steps: [ script('gh run list --workflow deploy.yml --created yesterday', 'Script · lists yesterday’s deploys for the next step'), agent('test-on-staging', 'Claude Code · Sonnet. Failures go to your Inbox.', 'Codex · medium') ],
+runs: [ { k: 'bad', time: 'Today 08:00', trig: 'Schedule', result: '2 failures, sent to your Inbox', dur: '6m 12s', cost: '$0.41' }, { k: 'ok', time: 'Wed 08:00', trig: 'Schedule', result: 'All 14 checks passed', dur: '5m 40s', cost: '$0.37' }, { k: 'ok', time: 'Tue 08:41', trig: 'Catch-up', result: 'All 11 checks passed', dur: '5m 02s', cost: '$0.33' }, { k: 'ok', time: 'Mon 08:00', trig: 'Schedule', result: 'Nothing deployed on Sunday', dur: '9s', cost: '$0.02' } ] },
+{ id: 'nightly-e2e', desc: 'Full end-to-end suite against staging', when: 'Every night at 02:00', cron: '0 2 * * *', next: 'Tonight 02:00',
+last: { k: 'ok', text: '312 passed', time: 'today 02:19' }, guard: 'Skips a run if the previous one is still going. Stops after 45 minutes.', catchup: 'Skip missed runs',
+steps: [ script('npm run e2e', 'Script · a failure creates an Inbox item with the log') ],
+runs: [ { k: 'ok', time: 'Today 02:00', trig: 'Schedule', result: '312 passed', dur: '19m 03s', cost: '—' }, { k: 'bad', time: 'Wed 02:00', trig: 'Schedule', result: '1 failed: checkout_flow.spec', dur: '21m 40s', cost: '—' } ] } ];
+if (st.added) S.push({ id: 'dependency-review', desc: 'Checks outdated packages and opens issues for risky ones', when: 'Mondays at 09:00', cron: '0 9 * * 1', next: 'Mon 09:00',
+last: { k: 'none', text: 'Not run yet', time: 'new' }, guard: 'Skips a run if the previous one is still going.', catchup: 'Run once when plovi is next running',
+steps: [ script('npm outdated --json', 'Script · output passed to the next step'), agent('Review the updates and open issues for risky ones', 'Codex · medium', 'Claude Code · Sonnet') ], runs: [] });
+let sel = null;
+const rows = S.map((s) => {
+const on = !st.off[s.id];
+const extra = st.extraRuns[s.id] || [];
+const runs = [...extra, ...s.runs].map((r) => ({ ...r, ok: r.k === 'ok', bad: r.k === 'bad', skip: r.k === 'skip', running: r.k === 'run' }));
+const steps = s.steps.map((p, i) => ({ ...p, n: i + 1, isAgent: p.kind === 'agent', isScript: p.kind === 'script', hasFb: !!p.fb }));
+const last = extra.length ? { k: 'run', text: 'Running', time: 'now' } : s.last;
+const row = { ...s, on, offAttr: on ? 'false' : 'true', nextShown: on ? s.next : 'Off', builtin: !!s.builtin,
+lastOk: last.k === 'ok', lastBad: last.k === 'bad', lastRun: last.k === 'run', lastText: last.text, lastTime: last.time,
+runs, steps, hasPicks: !!s.picks, file: '.plovi/schedules/' + s.id + '.toml', cur: st.sel === s.id ? 'true' : 'false',
+pick: () => this.setState({ sel: s.id }),
+toggle: () => this.setState({ off: { ...st.off, [s.id]: on }, toast: (on ? 'Turned off ' : 'Turned on ') + s.id + '. Saved to ' + '.plovi/schedules/' + s.id + '.toml' }) };
+if (st.sel === s.id) sel = row;
+return row;
+});
+return { theme: this.props.theme ?? 'dark', rows, sel, hasSel: !!sel, toast: st.toast, hasToast: !!st.toast,
+newOpen: st.newOpen, describing: st.newOpen && !st.drafted, drafted: st.newOpen && st.drafted,
+close: () => this.setState({ sel: null }),
+dismiss: () => this.setState({ toast: null }),
+runNow: () => { if (!sel) return; this.setState({ extraRuns: { ...st.extraRuns, [sel.id]: [ { k: 'run', time: 'Just now', trig: 'Run now', result: 'Running step 1 of ' + sel.steps.length, dur: '—', cost: '—' } ] }, toast: sel.id + ' started. Follow it here or in the Inbox.' }); },
+openNew: () => this.setState({ newOpen: true, drafted: false }),
+closeNew: () => this.setState({ newOpen: false, drafted: false }),
+draft: () => this.setState({ drafted: true }),
+backNew: () => this.setState({ drafted: false }),
+saveNew: () => this.setState({ newOpen: false, drafted: false, added: true, sel: 'dependency-review', toast: 'Saved dependency-review. First run Monday at 09:00.' }) };
+}
+}
+</script>
+</body>
+</html>
