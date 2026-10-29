@@ -8,7 +8,7 @@ question: Which lane fits this change?
 
 !!! summary "In one minute"
     - Both lanes start with `specify` and a plan you confirm. They differ in how the plan runs.
-    - **Manual:** `implement` in the same session. Small, contained changes with an established pattern.
+    - **Manual:** `implement` in the same session when explicitly requested, or for a trivial low-risk edit.
     - **Full pipeline:** `implement-pipeline`. Fresh stages, saved evidence, optional review and delivery.
     - The manual lane is first-class, not a reduced-quality run: same rules, same named checks.
     - A bugfix is a normal task whose regression check should fail before the fix and pass after it.
@@ -17,8 +17,8 @@ question: Which lane fits this change?
 
 | Lane | Commands | Use when |
 |---|---|---|
-| Manual | `specify`, then `implement` | A small, contained change, especially a follow-up to work that already has an established local pattern. |
-| Full pipeline | `specify`, then `implement-pipeline` | Test-first work, several repositories, migrations, public contracts or access boundaries, or when you want independent review and orchestrator-owned delivery. |
+| Manual | `specify`, then `implement` | An explicit manual request, or a clearly trivial low-risk wording/format correction. |
+| Full pipeline | `specify`, then `implement-pipeline` | The default for substantive code, behavioral tests, multiple components/repositories, compatibility, migration, risk or uncertainty. |
 
 The manual lane keeps a concise, decision-complete plan instead of a detached manifest.
 `implement` owns tests plus implementation in the same session, follows the same path and authorization rules, runs the named checks, and reports what it observed.
@@ -36,8 +36,7 @@ There is no separate bugfix pipeline. A defect is an ordinary task whose plan re
 3. **The suspected cause and affected scope,** based on evidence.
 4. **A regression check** that fails before the fix and passes after it.
 
-!!! note "Recommended practice"
-    `specify` does not enforce this template yet. Treat it as the team convention, or [copy the skill](customize.md#change-a-skill) and make it part of your project's `specify`.
+`specify` requires these four facts before finalizing a defect plan. An import, startup or build failure is not assertion-level regression evidence.
 
 For an isolated defect in the manual lane, `implement` should:
 
@@ -60,16 +59,27 @@ The full lane already has the ideal shape for a defect: `implement-tests` proves
 
 | Situation | Recommended lane |
 |---|---|
-| Isolated defect, deterministic reproduction, established local pattern | Manual |
-| Narrow feature follow-up with an established local pattern | Manual |
+| Isolated defect, deterministic reproduction, established local pattern | Full by default; manual when explicitly requested |
+| Narrow feature follow-up with an established local pattern | Full by default; manual when explicitly requested |
 | The regression needs several test layers, or the cause is uncertain | Full pipeline |
 | Authorization, money, schema or migrations, public contracts, data correction | Full pipeline with review |
 | Several repositories, or orchestrator-owned delivery wanted | Full pipeline |
 
-Lane choice is guidance, not a gate. You confirm it when you approve the plan.
+A short prompt or familiar pattern alone does not justify manual execution.
+An explicit user choice takes precedence; specify records why the manual exception
+applies. Missing routes leave the full contract pending rather than changing lanes.
+A full plan needs all four documents and pipeline.json, with actual validate-plan
+and preflight results before it is called ready. Neither lane starts implementation
+until the plan is approved.
 
 <!-- checkpoints: IN-1, PLN-1, VER-5 -->
 
 ## See also
 
 [Task lifecycle](tasks.md) · [Your first task](first-task.md) · [Evidence and checks](verification.md)
+
+
+!!! note "What changes for your workflow"
+    Expect a full contract for substantive work. Ask for manual execution when you
+    want implement to own tests, code and verification in one session. Full planning
+    selects only needed stages; it does not automatically authorize publishing.

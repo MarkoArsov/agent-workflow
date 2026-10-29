@@ -1,5 +1,29 @@
 # plovi implementation plan
 
+## Approved extension: workflow practices and model evidence (29 October 2026)
+
+The user approved implementation in the manual lane using Codex only for this
+project, followed by guarded commit/push and a draft PR. Keep the package generic.
+Add lineage-aware model-policy 1.1 with backward-compatible custom registries and
+saved snapshots, optional bounded Artificial Analysis evidence using AA_API_KEY or
+an explicitly selected key file, and reviewed update-models proposals. Task evaluation
+remains offline. Keys and private workspace data never enter snapshots or exports.
+
+Specify defaults substantive work to complete full contracts with actual readiness
+checks, while explicit manual requests and trivial low-risk edits remain exceptions.
+Prepare/reuse the configured task checkout before plan writes and keep plans with
+implementation, preserving current-checkout policy and multi-repository plan ownership.
+Share selected project quality guidance across implementation/tests/review, make the
+review order explicit, and add an optional read-only session-retro with explicit apply.
+The canonical requirements and research are in ai-plans/workflow-practices/. No runner,
+manifest protocol, environment permissions or global installation changes are included.
+Implemented and verified locally: 172 isolated tests passed, strict MkDocs build
+and 3,964 internal links/assets passed, standalone export/check/self-test passed,
+source/site rename and public-content/history audits passed (no private denylist).
+Scenario decisions are manual walkthroughs, not live-agent evaluations; benchmark
+responses are mocked and exact aliases remain unmatched until reviewed. Delivery
+is recorded in ai-plans/workflow-practices/progress.md.
+
 ## Approved extension: publish workflow
 
 Add a maintainer skill that publishes the workflow source checkout's unpublished commits and

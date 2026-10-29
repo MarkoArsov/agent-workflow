@@ -90,3 +90,18 @@ See [skills and stages](customize.md).
 ## See also
 
 [Skills and stages](customize.md) · [Rules and references](rules.md) · [Checkpoint scorecard](scorecard.md)
+
+
+## Learn from selected sessions
+
+Use `plovi-session-retro` to investigate repeated corrections. It separates mistakes
+from changed requests, checks whether the problem still exists on the configured
+remote default branch, and proposes one authoritative home loaded by fresh sessions.
+Analysis writes nothing; saving a report and applying a fix require explicit requests.
+PR review threads are a separate optional read-only pass, off by default. Missing
+access or uncertain cached-branch freshness is reported, never filled in by guesses.
+Use add-rule/prune-context for selected maintenance or specify for broader changes.
+
+!!! note "What changes for your workflow"
+    A retrospective produces verified proposals first. It does not silently edit
+    personal memory, install a plugin, create a PR or turn feedback into new rules.

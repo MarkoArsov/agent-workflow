@@ -1,11 +1,11 @@
 # Implementation contract
 
 Execution: manual implement only, in the active Codex session and current checkout.
-The project is Codex only by explicit user request. This revision does not start
-feature implementation. Once implementation is authorized, implement owns tests,
+The project is Codex only by explicit user request. The user subsequently authorized feature implementation and separate guarded
+commit/push/draft-PR delivery. Implement owns tests,
 product/guidance edits, verification and self-review; do not invoke independent
-stages or a detached runner. No push, branch change, posting or real user-agent
-configuration edit is included.
+stages or a detached runner. No branch change, unrelated posting or real user-agent
+configuration edit is included; guarded normal push and draft PR are authorized.
 
 ## Tests within manual implement
 

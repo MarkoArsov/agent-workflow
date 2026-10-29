@@ -741,7 +741,7 @@
   },
   {
     "path": "site/search/search_index.json",
-    "sha256": "dbf72f4bbc0aa9c478cdf01d926d463236ed3b354f8c92dbe267a3bbba63eac6",
+    "sha256": "742848f4fd3a09a08e8a5519a96cc6496be7ecbad98fc103311b98644f437e81",
     "reason": "generated-search-for-migration-documentation"
   },
   {
@@ -1648,5 +1648,15 @@
     "path": "tests/test_rename.py",
     "sha256": "fb84c74f874bf25136b3759a1be82f2b9046b1fad4b188e758cd6d3a6f4fe309",
     "reason": "alias-and-migration-regression-tests"
+  },
+  {
+    "path": "templates/plugin-skills/af-session-retro/SKILL.md",
+    "sha256": "cdc6442e8f10535070b3312d99e7b562b6696204062a8405afdb04df330f0af7",
+    "reason": "Generated deprecated skill alias, retained until 1.0."
+  },
+  {
+    "path": "templates/plugin-skills/af-session-retro/scripts/dispatch.py",
+    "sha256": "0f71d1feb4f9bb57ded00905cef03f33e2603721f830107277e15dbabf21c844",
+    "reason": "Generated deprecated skill alias, retained until 1.0."
   }
 ]

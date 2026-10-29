@@ -11,6 +11,13 @@ Run this skill folder's scripts/resolve.py from the active project once. If it r
 
 1. Fetch PR metadata, the complete diff, and relevant repository context using read-only operations. Inspect base and head revisions.
 
+Read the effective review skill and references/quality-guidance.md as read-only
+method dependencies. Reuse its requirements -> behavioral tests -> correctness ->
+conventions/semantic-duplication order and selected project guidance. Never inherit
+pipeline review's permission to edit. Explain the PR's intent, project context and
+solution in plain language before findings. Missing requirements are uncertainty,
+not permission to guess.
+
 2. Understand requirements and existing patterns before evaluating correctness, regressions, data/security boundaries, and test coverage.
 
 3. Reproduce high-value concerns when feasible in an isolated checkout. Tie each finding to a concrete trigger and affected line.

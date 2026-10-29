@@ -63,3 +63,20 @@ plovi --project . inspect
     user-data folders migrate once, with a notice. Finish running tasks before
     upgrading. If both project folders exist, plovi uses `.plovi/`, warns, and
     leaves the legacy data intact.
+
+
+## Model evidence
+
+`plovi models watch` refreshes optional Artificial Analysis evidence once, separate
+from `plovi watch <task>`, which follows task progress. Supply AA_API_KEY through the
+environment, or select a local assignment file:
+
+~~~sh
+plovi models watch --key-file /path/to/local/models.env
+~~~
+
+The file is parsed, never executed. The command updates only machine-local evidence;
+missing keys or failed fetches preserve the previous snapshot. Unmatched aliases
+stay unknown and displayed figures include attribution/date. Review the evidence
+through update-models, then approve the exact settings proposal before applying it.
+See [models and cost](models.md).

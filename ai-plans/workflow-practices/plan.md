@@ -1,10 +1,10 @@
 # Improve workflow guidance and learning
 
-Status: revised manual proposal; implementation has not started.
+Status: implemented; local verification passed; delivery in progress.
 Revision: 29 October 2026; explicit user choice of Codex-only manual execution.
 Previous complete proposals: `v1/`, `v2/`, and `v3/`.
 Lane: manual. Selected AI stage: implement only, in the active Codex session.
-No independent implement-tests/review stage, detached runner or external delivery.
+No independent implement-tests/review stage or detached runner. The user subsequently authorized commit/push and a draft PR.
 Keep the detailed prompt, requirements, implementation and deferred documents as
 manual task references. The former pipeline.json is archived under v3/ and removed
 from the active plan directory. Evidence is recorded in planning-checks.md.
@@ -25,8 +25,8 @@ profile edit and matching PROJECT_WORKFLOW.md update are applied now. This does
 not restrict the package's general support for other harnesses in other projects.
 Project pipeline defaults remain unchanged; implement-only is this task's choice.
 The source workflow and company plugin checkout are read-only research inputs.
-No worktree, plugin update, installation, push, PR, tracker edit, or external
-communication is included. Preserve existing plans and model-policy settings.
+No worktree, plugin update, installation, tracker mutation or unrelated external
+communication is included. Verified normal push and draft PR are explicitly authorized. Preserve existing plans and model-policy settings.
 Commit this planning set locally. After approval, commit logical implementation
 changes locally as repository instructions require.
 
@@ -327,5 +327,16 @@ v3/pipeline.json as reference only, not a contract to run.
 Use the configured current checkout and trusted execution defaults. Repository-
 required local commits follow successful verification. No push, PR, installation,
 benchmark request with a real key or external communication is authorized by this
-revision. The broader feature implementation remains proposed; this request edits
-configuration and planning only.
+revision. The broader feature implementation and separate verified commit/push/draft-PR
+handoff were subsequently authorized by the user and are now complete locally.
+
+
+## Implementation and delivery authorization
+
+The user explicitly invoked implement, commit-and-push and draft-pr after the plan
+was completed. That authorizes the broader feature implementation and its verified
+normal push/draft-PR handoff, superseding the earlier no-publication boundary for
+this task. Stay in the configured current checkout, preserve existing branch work,
+use no force push, add no reviewers/messages, and reuse the matching PR if present.
+The task branch already has an open PR; its remote-only CI fix was preserved with
+a normal merge before implementation. Do not alter prior complete plan snapshots.

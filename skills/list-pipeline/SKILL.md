@@ -17,3 +17,9 @@ Run this skill folder's scripts/resolve.py from the active project once. If it r
 
 4. Keep the inventory concise and link to the configuration or effective skill file for details.
 
+
+Include the effective project quality sources, available manual/full planning paths,
+update-models (optional models watch evidence; offline task evaluation), and optional
+session-retro (read-only analysis, explicit apply). These are tools, not implicitly
+selected execution stages. Report full-plan draft versus validated/preflight-ready
+status honestly; do not present a concise manual plan as a runnable pipeline.

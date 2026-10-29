@@ -11,7 +11,7 @@ footer_order: 3
 !!! summary "In one minute"
     - This walkthrough adds CSV export to a reports endpoint in a repository called `app`.
     - `specify` writes a plan in which one outcome, `exports-report-as-csv`, maps to one check, `csv-export-behavior`.
-    - The manual lane implements it in your session. The full lane runs fresh stages and keeps evidence on disk.
+    - Substantive work defaults to the full lane with fresh stages and saved evidence; manual execution is an explicit choice.
     - Every command below exists; output blocks show the real format, trimmed.
 
 Before you start, [install](install.md) plovi and [set up your project](setup.md).
@@ -27,7 +27,12 @@ plovi-specify Add CSV export to the reports endpoint.
 It reads the project workflow, repository instructions, and the nearest working examples, then asks only what it can't find out.
 For this task it might ask whether the export must match the on-screen column order, and whether the existing JSON endpoint stays unchanged.
 
-For the full lane it writes the plan folder:
+Before writing plans it prepares or reuses the configured task checkout, preserving
+existing edits and read-only companions. Plans and implementation share that task
+branch. Concurrent tasks need separate worktrees; current-checkout policies and
+configured multi-repository plan ownership remain authoritative.
+
+CSV export changes behavior, so the default is a full contract. It writes:
 
 ~~~text
 ai-plans/csv-export/
@@ -79,7 +84,7 @@ Approve when another engineer could implement it without inventing behavior:
 
 ## 3. Manual lane
 
-For a change this small you could stop here and implement in the same session:
+If you explicitly choose manual execution, implement can do the tests and change in the same session:
 
 ~~~text
 plovi-implement
@@ -232,3 +237,9 @@ Each attempt also records `usage` and `cost_usd` exactly as the provider reporte
 - Read how the evidence is judged: [evidence and checks](verification.md).
 
 <!-- checkpoints: IN-1, VER-1, VER-2, VER-5 -->
+
+
+!!! note "What changes for your workflow"
+    Specify completes the contract and runs validation/preflight before reporting
+    readiness. Missing routes stay explicit in a draft; it does not quietly switch
+    to manual implementation. You approve before the selected stages start.

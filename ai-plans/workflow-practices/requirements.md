@@ -1,9 +1,10 @@
 # Requirements
 
-Status: proposed; implementation has not started. The user explicitly selected
+Status: implemented and verified locally; see progress.md for evidence. The user explicitly selected
 manual execution with implement only, in the current Codex session and configured
 current checkout. Implement owns tests, implementation, verification and self-review;
-there is no independent test-author/reviewer stage or publishing stage. The project
+there is no independent test-author/reviewer or runner-owned publishing stage;
+manual guarded commit/push and draft PR were separately authorized. The project
 profile is now Codex only. Package support for other hosts remains in scope.
 
 ## Specification and lane choice
@@ -132,3 +133,14 @@ Never weaken tests or delivery guards. All automated fixtures use isolated child
 environments, fictional keys and provider/network doubles. Complete the full
 unittest suite, strict documentation build, links, generated freshness, standalone
 export/self-test and public-content audit. Report limits and mocks honestly.
+
+
+## Implementation and delivery authorization
+
+The user explicitly invoked implement, commit-and-push and draft-pr after the plan
+was completed. That authorizes the broader feature implementation and its verified
+normal push/draft-PR handoff, superseding the earlier no-publication boundary for
+this task. Stay in the configured current checkout, preserve existing branch work,
+use no force push, add no reviewers/messages, and reuse the matching PR if present.
+The task branch already has an open PR; its remote-only CI fix was preserved with
+a normal merge before implementation. Do not alter prior complete plan snapshots.

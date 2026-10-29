@@ -99,7 +99,7 @@ Otherwise, review.
 
 **One medium task, full pipeline.** Specify, confirm, and start `implement-pipeline`. Spend the long wait reviewing another pull request. When the run completes, review *this* diff before asking a colleague. Start the next medium task only once this one is in CI or with a reviewer.
 
-**Two or three small follow-ups.** Use the manual lane. Keep each change independently mergeable. Switch only when one is waiting on CI or a reviewer.
+**Two or three small follow-ups.** Ask for the manual lane if you want them implemented in session; substantive changes otherwise default to the full contract. Keep each change independently mergeable. Switch only when one is waiting on CI or a reviewer.
 
 **What not to do.** Several worktrees, several draft pull requests, and a day spent resolving merge conflicts. The isolation works. The queue doesn't.
 

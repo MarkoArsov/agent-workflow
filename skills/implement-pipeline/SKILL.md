@@ -9,6 +9,12 @@ Run this skill folder's scripts/resolve.py from the active project once. If it r
 
 # implement pipeline
 
+Full planning is the default for substantive work, but explicit manual tasks use
+implement in session instead. A prose plan or draft with unresolved routes is not
+an execution-ready contract. Do not silently generate missing approval or change
+lanes to get past preflight. Reuse the branch/worktree chosen during specification, passing its recorded canonical
+configuration root with --project so a copied profile cannot cause nested worktrees.
+
 1. Resolve the configured project and locate the complete pipeline.json. Read the plan and confirm there are no unresolved product choices or unapproved delivery actions.
 
 2. Run validate-plan and preflight. Address missing routes, binaries, connector availability, verification contracts, and checkout mismatches before launch. Never silently change trusted/restricted settings.
