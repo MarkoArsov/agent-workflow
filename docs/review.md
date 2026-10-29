@@ -17,7 +17,18 @@ question: How does work get reviewed and delivered?
 The `review` stage starts a new session. It receives the requirements, the project's rules, the actual diff of every participating repository, and the content of new files.
 It never receives `implementation.md`, the implementer's reasoning. A reviewer that reads the author's story tends to agree with it.
 
-Review checks correctness, regressions, interfaces, authorization where relevant, failure handling, test adequacy, and unnecessary complexity, citing concrete paths and triggering scenarios.
+Review follows the requirements and outcomes, behavioral test gaps, correctness
+and failure paths, then project conventions and semantic duplication. It cites
+concrete paths and triggers rather than trusting the implementation summary.
+
+Specify selects existing project quality references for implementation, independent
+tests and review. The runner supplies the same frozen references to all three;
+live overrides are not reloaded mid-run. The portable checklist covers contract
+strength of guards, evidence for external error classification, asynchronous
+failure/resource lifetimes, and tests with distinct fixtures and useful data cases.
+Language-specific rules remain project decisions, not universal style defects.
+Peer PR review reuses this method read-only and explains intent/solution before
+findings. An explicitly selected missing reference is reported as a concrete gap.
 
 - **In a pipeline,** review may make safe corrections within the approved paths. It must preserve frozen tests and the intended design. The orchestrator then re-runs the named checks and records new evidence.
 - **In direct use,** review is check-only unless you ask for edits.
@@ -75,3 +86,9 @@ No bot-control comments, replies, or thread resolutions are sent implicitly.
 ## See also
 
 [Review and everyday use](everyday.md) · [Skill reference](generated/skills.md) · [When a task stops](recovery.md)
+
+
+!!! note "What changes for your workflow"
+    The reviewer checks the same selected quality guidance used during implementation
+    and tests. Direct review stays check-only; a review note does not authorize edits
+    or posting. Session-retro can analyze recurring feedback separately, read-only.

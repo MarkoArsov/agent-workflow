@@ -1,9 +1,9 @@
 import json
 from pathlib import Path
 from tests.helpers import WorkspaceTest
-from agentflow.setup import apply, merge, propose
-from agentflow.project import resolve
-from agentflow.util import WorkflowError
+from plovi.setup import apply, merge, propose
+from plovi.project import resolve
+from plovi.util import WorkflowError
 
 class SetupTests(WorkspaceTest):
     def test_read_only_preview_approval_and_idempotence(self):
@@ -21,13 +21,13 @@ class SetupTests(WorkspaceTest):
         self.assertFalse(again["changes"])
         apply(again, again["approval"])
         self.assertEqual(first, {str(p): p.read_bytes() for p in repo.rglob("*") if p.is_file()})
-        profile = json.loads((repo / ".agentflow/project.json").read_text())
+        profile = json.loads((repo / ".plovi/project.json").read_text())
         self.assertEqual(profile["repositories"][0]["commands"]["test"]["parser"], "unittest")
 
     def test_manual_configuration_and_prose_survive_multiple_reruns(self):
         repo = self.repo("custom")
         self.setup_project(repo)
-        p = repo / ".agentflow/project.json"
+        p = repo / ".plovi/project.json"
         data = json.loads(p.read_text())
         data["tracking"]["provider"] = "linear"
         data["my_extension"] = {"enabled": True}
@@ -48,7 +48,49 @@ class SetupTests(WorkspaceTest):
         (repo / "AGENTS.md").write_text("New instructions\n")
         with self.assertRaisesRegex(WorkflowError, "changed since preview"):
             apply(p, p["approval"])
-        self.assertFalse((repo / ".agentflow/project.json").exists())
+        self.assertFalse((repo / ".plovi/project.json").exists())
+
+    def test_crlf_files_apply_without_false_stale_error(self):
+        repo = self.repo("crlf")
+        (repo / ".gitignore").write_bytes(b"__pycache__/\r\n")
+        (repo / "AGENTS.md").write_bytes(b"Keep these instructions.\r\n")
+        proposal = propose(repo, {"confirmed_defaults": True})
+        error = None
+        try:
+            apply(proposal, proposal["approval"])
+        except WorkflowError as exc:
+            error = str(exc)
+        self.assertIsNone(error, "Unchanged CRLF files must match their approved preview")
+        self.assertIn("__pycache__/", (repo / ".gitignore").read_text())
+        self.assertIn("Keep these instructions.", (repo / "AGENTS.md").read_text())
+        self.assertFalse(propose(repo)["changes"])
+
+    def test_crlf_setup_baseline_remains_valid_during_apply(self):
+        repo = self.repo("crlf-baseline")
+        project = self.setup_project(repo)
+        baseline = project.config / "local/setup-baseline.json"
+        baseline.write_bytes(baseline.read_bytes().replace(b"\n", b"\r\n"))
+        proposal = propose(repo)
+        self.assertFalse(proposal["changes"])
+        before = baseline.read_bytes()
+        error = None
+        try:
+            apply(proposal, proposal["approval"])
+        except WorkflowError as exc:
+            error = str(exc)
+        self.assertIsNone(error, "An unchanged baseline must use its exact on-disk hash")
+        self.assertEqual(baseline.read_bytes(), before)
+
+    def test_line_ending_edit_after_preview_is_still_stale(self):
+        repo = self.repo("changed-line-endings")
+        ignore = repo / ".gitignore"
+        ignore.write_bytes(b"__pycache__/\n")
+        proposal = propose(repo, {"confirmed_defaults": True})
+        ignore.write_bytes(b"__pycache__/\r\n")
+        with self.assertRaisesRegex(WorkflowError, "changed since preview"):
+            apply(proposal, proposal["approval"])
+        self.assertEqual(ignore.read_bytes(), b"__pycache__/\r\n")
+        self.assertFalse((repo / ".plovi/project.json").exists())
 
     def test_multi_repo_membership_nested_and_external_worktree(self):
         app = self.repo("space project/app")

@@ -1,0 +1,96 @@
+{
+  "agents": [
+    "codex"
+  ],
+  "delivery": {
+    "merge_to_base": "explicit",
+    "publish": "plan-selected",
+    "pull_requests": "draft"
+  },
+  "execution": {
+    "permission_mode": "trusted",
+    "provider_settings": {}
+  },
+  "extensions": {
+    "connectors": ".plovi/connectors",
+    "references": ".plovi/references",
+    "rules": ".plovi/rules",
+    "skills": ".plovi/skills",
+    "stages": ".plovi/stages.json"
+  },
+  "git": {
+    "branch_template": "codex/{task}",
+    "commit_style": "imperative",
+    "worktree_directory": ".plovi/local/worktrees"
+  },
+  "package": {
+    "version": "0.1.1"
+  },
+  "pipeline": {
+    "default_stages": [
+      "implement-tests",
+      "implement",
+      "review"
+    ],
+    "enabled": true,
+    "routes": {}
+  },
+  "planning": {
+    "directory": "ai-plans",
+    "evidence_directory": ".plovi/local/evidence"
+  },
+  "project": {
+    "configuration_root": ".",
+    "id": "agent-workflow",
+    "kind": "single-repo"
+  },
+  "repositories": [
+    {
+      "base_branch": "main",
+      "checkout_strategy": "current-checkout",
+      "commands": {
+        "docs": {
+          "argv": [
+            "python3",
+            "-m",
+            "mkdocs",
+            "build",
+            "--strict"
+          ],
+          "cwd": ".",
+          "timeout_seconds": 300
+        },
+        "test": {
+          "argv": [
+            "python3",
+            "-m",
+            "unittest",
+            "discover",
+            "-s",
+            "tests",
+            "-v"
+          ],
+          "cwd": ".",
+          "parser": "unittest",
+          "timeout_seconds": 300
+        }
+      },
+      "id": "agent-workflow",
+      "languages": [
+        "python"
+      ],
+      "path": ".",
+      "remote": "origin",
+      "roles": [
+        "library",
+        "docs"
+      ],
+      "task_policy": "when-changed"
+    }
+  ],
+  "schema_version": 1,
+  "tracking": {
+    "project_url": "https://github.com/users/MarkoArsov/projects/1",
+    "provider": "github"
+  }
+}

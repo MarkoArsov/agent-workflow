@@ -1,4 +1,4 @@
-# Install Agent Flow on Windows.
+# Install plovi on Windows.
 #
 #   irm https://agentic.markoarsov.com/install.ps1 | iex
 #
@@ -7,8 +7,8 @@
 #   --project PATH       install into one project instead of for your user account
 #   --agents claude ...  choose agent CLIs instead of detecting them
 # Other:
-#   $env:AGENTFLOW_REF = "v0.1.0"   pin a release tag or branch (default: latest release, else main)
-#   $env:AGENTFLOW_NO_MODIFY_PATH = 1  leave your user PATH unchanged
+#   $env:PLOVI_REF = "v0.1.0"   pin a release tag or branch (default: latest release, else main)
+#   $env:PLOVI_NO_MODIFY_PATH = 1  leave your user PATH unchanged
 #   --local-source PATH             install from a checkout without downloading (first argument)
 & {
   $ErrorActionPreference = "Stop"
@@ -25,19 +25,19 @@
       } catch { continue }
       if ($LASTEXITCODE -eq 0 -and $found) { return "$found".Trim() }
     }
-    throw "agentflow: Python 3.11 or newer is required. Install it from https://www.python.org/downloads/ and run this again."
+    throw "plovi: Python 3.11 or newer is required. Install it from https://www.python.org/downloads/ and run this again."
   }
 
   $python = Find-Python
   if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
-    throw "agentflow: Git is required. Install it from https://git-scm.com/downloads and run this again."
+    throw "plovi: Git is required. Install it from https://git-scm.com/downloads and run this again."
   }
   $options = @($args)
   $binDir = Join-Path $HOME ".local\bin"
 
   function Add-ToPath {
     # Before installing, so the summary sees the command on PATH; say so after.
-    if ($options -contains "--project" -or $env:AGENTFLOW_NO_MODIFY_PATH) { return $false }
+    if ($options -contains "--project" -or ($env:PLOVI_NO_MODIFY_PATH -or $env:AGENTFLOW_NO_MODIFY_PATH)) { return $false }
     if (@($env:Path -split ";") -notcontains $binDir) { $env:Path = "$binDir;$env:Path" }
     $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
     $entries = @($userPath -split ";" | Where-Object { $_ })
@@ -49,9 +49,9 @@
   function Install-From([string]$source, [string[]]$extra) {
     $pathAdded = Add-ToPath
     & $python -X utf8 (Join-Path $source "install.py") --local-source $source @extra
-    if ($LASTEXITCODE -ne 0) { throw "agentflow: installation failed." }
+    if ($LASTEXITCODE -ne 0) { throw "plovi: installation failed." }
     if ($pathAdded -and $options -notcontains "--json") {
-      Write-Host "Added $binDir to your user PATH. New terminals will find the agentflow command."
+      Write-Host "Added $binDir to your user PATH. New terminals will find the plovi command."
     }
   }
 
@@ -61,7 +61,8 @@
   }
 
   [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
-  $ref = $env:AGENTFLOW_REF
+  $ref = $env:PLOVI_REF
+  if (-not $ref) { $ref = $env:AGENTFLOW_REF }
   if (-not $ref) {
     # /releases/latest redirects to /releases/tag/<tag> once a release exists.
     $ref = "main"
@@ -76,15 +77,15 @@
     } catch { }
   }
 
-  $temp = Join-Path ([IO.Path]::GetTempPath()) ("agentflow-" + [guid]::NewGuid())
+  $temp = Join-Path ([IO.Path]::GetTempPath()) ("plovi-" + [guid]::NewGuid())
   New-Item -ItemType Directory -Path $temp | Out-Null
   try {
-    Write-Host "Downloading Agent Flow ($ref)..."
+    Write-Host "Downloading plovi ($ref)..."
     $archive = Join-Path $temp "package.tar.gz"
     try {
       Invoke-WebRequest -UseBasicParsing -Uri "https://github.com/$repo/archive/$ref.tar.gz" -OutFile $archive
     } catch {
-      throw "agentflow: Could not download $ref from github.com/$repo."
+      throw "plovi: Could not download $ref from github.com/$repo."
     }
     $extract = Join-Path $temp "extract.py"
     Set-Content -Path $extract -Encoding ASCII -Value @'
@@ -108,7 +109,7 @@ if len(packages) != 1:
 print(packages[0].parent)
 '@
     $source = & $python $extract $temp
-    if ($LASTEXITCODE -ne 0) { throw "agentflow: the downloaded archive failed its safety check." }
+    if ($LASTEXITCODE -ne 0) { throw "plovi: the downloaded archive failed its safety check." }
     Install-From "$source".Trim() $options
   } finally {
     Remove-Item -Recurse -Force $temp -ErrorAction SilentlyContinue

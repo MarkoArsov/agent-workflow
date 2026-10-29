@@ -4,7 +4,7 @@ description: Turn an idea, problem, or requirements into well-sized, detailed, t
 ---
 
 <!-- resolver:start -->
-Run this skill folder's scripts/resolve.py from the active project once. If it returns a different effective skill, follow that file instead. Otherwise continue below. Use the selected package's bin/agentflow for commands.
+Run this skill folder's scripts/resolve.py from the active project once. If it returns a different effective skill, follow that file instead. Otherwise continue below. Use the selected package's bin/plovi for commands.
 <!-- resolver:end -->
 
 # issue writer

@@ -1,6 +1,6 @@
 from tests.helpers import WorkspaceTest
-from agentflow.providers import command, Events
-from agentflow.util import WorkflowError
+from plovi.providers import command, Events
+from plovi.util import WorkflowError
 import json
 
 class ProviderTests(WorkspaceTest):

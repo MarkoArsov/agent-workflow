@@ -1,0 +1,8 @@
+---
+name: af-checkout-branch
+description: "Deprecated alias of plovi-checkout-branch. Resolve and switch to an existing requested branch or its registered worktree."
+---
+
+Run this skill folder's scripts/dispatch.py with the current project as its working directory. Read the returned effective skill file, then follow its procedure. Project overrides take precedence. Do not use defaults from another project.
+
+Deprecated alias of plovi-checkout-branch. Use plovi-checkout-branch for new work.

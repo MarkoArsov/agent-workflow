@@ -8,13 +8,13 @@ import sys
 import time
 from unittest.mock import patch
 from tests.helpers import WorkspaceTest, PACKAGE
-from agentflow.model_policy import core, storage, discovery
-from agentflow.model_policy.storage import Store, write, read
+from plovi.model_policy import core, storage, discovery
+from plovi.model_policy.storage import Store, write, read
 
 
-def entry(provider, model, band='strong', family=None, **extra):
+def entry(provider, model, band='strong', family=None, rank=10, **extra):
     return dict(provider=provider, model=model, band=band, family=family or model,
-                stages=['specify','implement-tests','implement','review'], rank=10,
+                stages=['specify','implement-tests','implement','review'], rank=rank,
                 confidence='reviewed', sources=['https://example.invalid/evidence'],
                 reviewed_at='2026-10-14', **extra)
 
@@ -30,7 +30,7 @@ def catalogue(entries):
 class ModelPolicyTests(WorkspaceTest):
     def setUp(self):
         super().setUp()
-        self.policy = read(PACKAGE/'runtime/agentflow/model_policy/policy.json')
+        self.policy = read(PACKAGE/'runtime/plovi/model_policy/policy.json')
         self.entries = [entry(p,p+'-routine',efforts={'balanced':'medium','demanding':'high'} if p != 'cursor' else {}) for p in sorted(core.PROVIDERS)]
         self.catalogue = catalogue(self.entries)
         self.store = Store(self.home/'data/models',self.root/'project/models.json',workflow='fixture')
@@ -223,3 +223,74 @@ class ModelPolicyTests(WorkspaceTest):
         import subprocess
         output=subprocess.run([sys.executable,str(PACKAGE/'skills/update-models/scripts/resolve.py')],cwd=self.root,env=self.env,capture_output=True,text=True,check=True)
         self.assertEqual(output.stdout.strip(),str(PACKAGE/'skills/update-models/SKILL.md'))
+
+    def test_adversary_lineage_prefers_alternate_lab(self):
+        rows = [entry('codex', 'favored', lineage='lab-a', rank=1),
+                entry('codex', 'alternate', lineage='lab-b', rank=99),
+                entry('codex', 'third', lineage='lab-c', rank=100)]
+        result = self.evaluate({'stages':['review','implement-tests','implement']}, rows, catalog=catalogue(rows))
+        self.assertEqual(result['routes']['implement'][0]['model'], 'favored')
+        self.assertEqual(result['routes']['implement-tests'][0]['model'], 'alternate')
+        self.assertEqual(result['routes']['review'][0]['model'], 'third')
+        ordered = self.evaluate({'stages':['implement','implement-tests','review']}, rows, catalog=catalogue(rows))
+        self.assertEqual(result['routes'], ordered['routes'])
+
+    def test_adversary_band_slack_and_single_lineage_are_advisory(self):
+        rows = [entry('codex','deep-a','deep',lineage='lab-a'), entry('cursor','strong-b',lineage='lab-b')]
+        facts = {'stages':['implement','review'],'risk':'high'}
+        result = self.evaluate(facts,rows,catalog=catalogue(rows))
+        self.assertEqual(result['routes']['review'][0]['model'],'strong-b')
+        self.assertIn({'stage':'review','reason':'adversary-below-band'},result['advisories'])
+        self.assertFalse(result['unresolved'])
+        rows[1]['lineage']='lab-a'
+        result=self.evaluate(facts,rows,catalog=catalogue(rows))
+        self.assertEqual(result['routes']['review'][0]['model'],'deep-a')
+        self.assertIn({'stage':'review','reason':'single-lineage'},result['advisories'])
+        rows[1]['lineage']='lab-b'; rows[1]['band']='fast'
+        result=self.evaluate(facts,rows,catalog=catalogue(rows))
+        self.assertEqual(result['routes']['review'][0]['model'],'deep-a')
+
+    def test_fallbacks_diversify_labs_not_harnesses(self):
+        rows=[entry('codex','a',lineage='lab-a',rank=1),entry('cursor','b',lineage='lab-a',rank=2),
+              entry('cursor','c',lineage='lab-b',rank=99)]
+        result=self.evaluate({'stages':['implement']},rows,catalog=catalogue(rows))
+        self.assertEqual([r['model'] for r in result['routes']['implement']],['a','c','b'])
+
+    def test_legacy_lineage_is_unknown_and_pins_stay_fixed(self):
+        rows=[entry('codex','old'),entry('cursor','other')]
+        settings=core.resolve_settings([{'schema_version':1,'pins':{'implement':[{'provider':'codex','model':'old'}]}}],core.PROVIDERS)
+        before=deepcopy(settings)
+        result=self.evaluate({'stages':['implement','review']},rows,settings,catalogue(rows))
+        self.assertEqual(settings,before)
+        self.assertEqual(result['routes']['implement'],[{'provider':'codex','model':'old'}])
+        self.assertIn({'stage':'review','reason':'unknown-lineage'},result['advisories'])
+        rows[0]['lineage']='Not a slug'
+        with self.assertRaisesRegex(ValueError,'lineage'):
+            self.evaluate(entries=rows,catalog=catalogue(rows))
+
+    def test_legacy_snapshot_survives_evaluator_upgrade(self):
+        legacy={'schema_version':1,'evaluator_version':'1.0.0','routes':{'implement':[{'provider':'codex','model':'old'}]},
+                'reasons':{},'unresolved':[],'advisories':[]}
+        legacy['snapshot_hash']=core.fingerprint(legacy)
+        core.validate_snapshot(legacy,legacy['routes'])
+
+    def test_diversity_never_adds_an_unreported_lower_band_fallback(self):
+        rows=[entry('codex','deep-a','deep',lineage='lab-a',rank=1),
+              entry('codex','deep-b','deep',lineage='lab-b',rank=2),
+              entry('cursor','strong-c',lineage='lab-c',rank=3)]
+        result=self.evaluate({'stages':['implement','review'],'risk':'high'},rows,catalog=catalogue(rows))
+        self.assertEqual(result['routes']['review'][0]['model'],'deep-b')
+        self.assertNotIn('strong-c',[r['model'] for r in result['routes']['review']])
+        self.assertNotIn({'stage':'review','reason':'adversary-below-band'},result['advisories'])
+
+    def test_exact_reviewed_match_supplies_legacy_lineage_without_writes(self):
+        base=[entry('codex','a',lineage='lab-a'),entry('cursor','b',lineage='lab-b')]
+        legacy=deepcopy(base[0]);del legacy['lineage']
+        settings=core.resolve_settings([{'schema_version':1,'registry':[legacy],
+            'pins':{'implement':[{'provider':'codex','model':'a'}],
+                    'review':[{'provider':'codex','model':'a'}]}}],core.PROVIDERS)
+        before=deepcopy(settings)
+        result=self.evaluate({'stages':['implement','review']},base,settings,catalogue(base))
+        self.assertEqual(before,settings)
+        self.assertIn({'stage':'review','reason':'single-lineage'},result['advisories'])
+        self.assertNotIn({'stage':'review','reason':'unknown-lineage'},result['advisories'])

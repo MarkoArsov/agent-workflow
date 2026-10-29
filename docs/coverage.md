@@ -1,7 +1,7 @@
 ---
 title: How it's tested
-description: Automated coverage, real-host checks, and known limitations of Agent Flow itself.
-question: How do we know Agent Flow itself works?
+description: Automated coverage, real-host checks, and known limitations of plovi itself.
+question: How do we know plovi itself works?
 footer: reference
 footer_order: 4
 ---

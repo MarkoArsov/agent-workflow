@@ -1,6 +1,6 @@
 from tests.helpers import WorkspaceTest, PACKAGE
-from agentflow.extensions import copy_skill, new_skill, resolve_skill, snapshot
-from agentflow.setup import propose, apply
+from plovi.extensions import copy_skill, new_skill, resolve_skill, snapshot
+from plovi.setup import propose, apply
 
 class ExtensionTests(WorkspaceTest):
     def test_override_and_new_skill_are_project_local_and_discoverable(self):
@@ -14,7 +14,7 @@ class ExtensionTests(WorkspaceTest):
         self.assertEqual(resolve_skill("release-notes", a), new)
         proposal = propose(a.root)
         apply(proposal, proposal["approval"])
-        self.assertTrue((a.root / ".agents/skills/af-release-notes/SKILL.md").is_file())
+        self.assertTrue((a.root / ".agents/skills/plovi-release-notes/SKILL.md").is_file())
         self.assertIn("A project-specific instruction.", snapshot(a)["skills"]["project-setup"]["content"])
         self.assertNotIn("release-notes", snapshot(b)["skills"])
 

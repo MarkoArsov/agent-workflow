@@ -1,6 +1,7 @@
+%%{init: {"theme":"base","themeVariables":{"darkMode":true,"fontFamily":"Geist","primaryColor":"#1a1b1f","primaryTextColor":"#ececee","primaryBorderColor":"#2c2e33","lineColor":"#85878f","background":"#0e0f11"}}}%%
 %% What runs when you start a run. Rendered by hand as run-path.html.
 flowchart LR
-    A[implement-pipeline skill] --> B[bin/agentflow]
+    A[implement-pipeline skill] --> B[bin/plovi]
     B --> C[cli.py]
     C --> D[runner.py]
     D --> E[providers: claude, codex, agent]

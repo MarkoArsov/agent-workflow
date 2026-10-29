@@ -4,18 +4,42 @@ description: Prepare only the repositories selected for a task using their confi
 ---
 
 <!-- resolver:start -->
-Run this skill folder's scripts/resolve.py from the active project once. If it returns a different effective skill, follow that file instead. Otherwise continue below. Use the selected package's bin/agentflow for commands.
+Run this skill folder's scripts/resolve.py from the active project once. If it returns a different effective skill, follow that file instead. Otherwise continue below. Use the selected package's bin/plovi for commands.
 <!-- resolver:end -->
 
-# worktree start
+# Prepare the task checkout
 
-1. Read the task manifest and project repository policies. Explicitly distinguish read-only companions from writable participants.
+Use before specify writes plans, or when resuming a selected task. A complete
+pipeline.json is optional at planning time; it is not needed to create the location
+where that contract will be written.
 
-2. Check for existing user changes and worktree registrations. Do not move parked base checkouts onto task branches.
+1. Resolve the project, task ID, participating writable repositories, read-only
+   companions, branch/base and checkout strategy from the user and profile. If a
+   manifest exists, reuse its selection. Otherwise record these planning choices
+   in the later plan. Do not create branches for unchanged/read-only companions.
 
-3. Use the orchestrator's preparation when launching a pipeline. For a manual task, use Git worktree add at the configured worktree directory with the approved branch/base; reuse a matching existing worktree.
+2. Inspect status, staged edits, Git common directories, existing branches and
+   registered worktrees. Reuse an unambiguous checkout already owned by this task.
+   Never auto-stash/reset, move user edits, switch another task's shared checkout,
+   or take over a branch in use elsewhere. Ask only for unresolved ownership/base
+   or dirty-checkout decisions before any dependent switch.
 
-4. A feature-branch strategy deliberately switches only its selected writable checkout. Current-checkout means validate the existing branch.
+3. Honor the configured strategy: current-checkout validates the existing branch;
+   feature-branch creates/reuses the selected branch in its writable checkout;
+   worktree creates/reuses the configured task worktree with that branch and base.
+   Use the project's branch template and worktree directory. For concurrent work,
+   separate worktrees isolate files; branches alone in one directory do not.
 
-5. Verify branch, common Git directory, and project resolution inside each task checkout. Report exact paths and unchanged companion repositories.
+4. Verify project resolution, branch, repository/common directory and task paths
+   before plan writes. Single-repository plans belong inside that task checkout's
+   configured plan directory. Multi-repository plans use the configured plan-owning
+   checkout or shared store; never initialize an unversioned parent or invent a
+   repository to hold them. Report shared-location limitations explicitly.
 
+5. Record the canonical configuration root as well as the chosen branches/paths.
+   A single-repository worktree can contain a copied profile; pass the original
+   configuration root explicitly with --project at runner handoff so its configured
+   worktree directory is reused rather than nesting a second worktree. Execution must reuse that checkout;
+   run the runner's preparation at pipeline handoff rather than creating a second
+   worktree with a different identity. For manual work stay in the selected checkout.
+   Report the resulting task paths and unchanged companions.

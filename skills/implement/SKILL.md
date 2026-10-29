@@ -4,16 +4,26 @@ description: Implement an approved change and complete the named verification an
 ---
 
 <!-- resolver:start -->
-Run this skill folder's scripts/resolve.py from the active project once. If it returns a different effective skill, follow that file instead. Otherwise continue below. Use the selected package's bin/agentflow for commands.
+Run this skill folder's scripts/resolve.py from the active project once. If it returns a different effective skill, follow that file instead. Otherwise continue below. Use the selected package's bin/plovi for commands.
 <!-- resolver:end -->
 
 # implement
+
+Read the selected package's references/quality-guidance.md and the plan-selected
+project quality sources before changing or judging code. In a detached stage use
+only the supplied frozen resources; do not reload live overrides or plugin caches.
+In direct use resolve the effective project sources. Report an explicitly selected
+missing source rather than silently substituting unrelated guidance.
 
 1. Read the complete plan, project workflow, native instructions, and nearest established implementation. Follow the planned repository membership and path boundaries.
 
 2. Use the current checkout or prepared task worktree. Read-only companion repositories supply context and checks; do not branch or edit them.
 
-3. Implement the smallest complete change that satisfies the requirements. Handle authorization, data boundaries, failure modes, compatibility, and migrations where the project requires them. Avoid opportunistic refactors.
+3. For a manual bugfix, reproduce the defect, add a regression check, observe its
+   behavioral failure, make the minimal fix, rerun it green and run focused checks.
+   Record concise before/after evidence. When automation is impractical, explain
+   why and use the strongest repeatable alternative. Never call an import/build
+   failure behavioral red. Implement the smallest complete change that satisfies the requirements. Handle authorization, data boundaries, failure modes, compatibility, and migrations where the project requires them. Avoid opportunistic refactors.
 
 4. Preserve independent tests. Do not weaken, skip, remove, or rewrite assertion-proven tests to make results green. A wrong test or changed requirement needs a complete plan revision and renewed red evidence.
 

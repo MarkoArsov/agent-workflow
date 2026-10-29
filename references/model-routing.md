@@ -1,9 +1,9 @@
 # Model routing contract
 
-`bin/agentflow models` owns this workflow's settings. It never writes native
+`bin/plovi models` owns this workflow's settings. It never writes native
 agent preferences. `models inspect` resolves paths and shows effective settings.
 Machine state lives under the existing user data root's `models/`; project policy
-lives in `.agentflow/models.json`. Catalogues remain machine-local.
+lives in `.plovi/models.json`. Catalogues remain machine-local.
 
 ## Refresh and reviewed settings
 
@@ -17,7 +17,7 @@ The seed registry is a dated qualitative starting point, not benchmark truth.
 Official source URLs and review dates accompany its model/effort assessments.
 New model IDs appear in `unreviewed_models`. Add relevant reviewed entries through
 scope settings; no package edit is required. A registry entry has `provider`,
-`model`, `family`, `band` (`fast`, `strong`, `deep`), `stages`, nonnegative `rank`
+`model`, `family`, optional `lineage` (the model's lab slug), `band` (`fast`, `strong`, `deep`), `stages`, nonnegative `rank`
 (lower is preferred), `confidence` (`reviewed` or `provisional`), `sources` and
 `reviewed_at`. Optional `efforts` maps `simple`, `balanced`, `demanding` to supported
 host values. Cursor instead uses exact IDs, `encoded_effort`, and a `modes` array.
@@ -88,6 +88,18 @@ test files or 300 expected test lines escalate test authoring. Numeric facts mus
 estimates from the plan, not invented certainty. Higher effort is not always better;
 use reviewed model-specific mappings. Maximum levels are never selected automatically.
 
+The evaluator selects implement first, then implement-tests, then review, without
+changing pipeline execution order. Test authoring avoids implementation's lab;
+review avoids both. A suitable alternate lab wins over a better rank from a used
+lab; fallbacks prefer distinct labs too. The configured adversary policy permits
+at most one band below the requirement when that is the only alternate, with
+`adversary-below-band`. Otherwise `single-lineage` keeps a suitable in-band choice.
+Legacy custom entries without lineage remain valid: an exact reviewed registry
+match can supply lineage, otherwise it stays unknown with `unknown-lineage` when
+independence cannot be established. Hosting the same lab through another CLI does
+not make it independent. Advisories do not block execution or rewrite explicit
+pins. Old 1.0 snapshots remain validated against their own recorded routes/hash.
+
 For a full plan, evaluate the executable AI stages and copy the saved result into
 `pipeline.json.model_selection` and its `routes` into `pipeline.json.routes`.
 For the full lane omit `specify` from the executable route snapshot; the active
@@ -104,9 +116,45 @@ selection on approved plans. Aliases remain mutable; inspect actual execution re
 
 ## Independent distribution
 
-The standard-library component is `runtime/agentflow/model_policy` and imports
+The standard-library component is `runtime/plovi/model_policy` and imports
 no runner code. `scripts/export_model_policy.py <target>/model_policy` exports a
 standalone snapshot with checksums; `--check` detects drift. Locally edited exports
 must be reviewed before replacement. Each export includes a portable contract check:
 run `python -m model_policy.selftest` from its parent directory. Downstream adapters own their data paths and
 provider restrictions. Updating this package never mutates another workflow's settings.
+
+
+## Optional benchmark evidence
+
+`models watch` makes one bounded request sequence to Artificial Analysis's free
+language-model endpoint, using `AA_API_KEY` from the environment or an explicitly
+selected `--key-file <path>`. Environment wins; a selected file is parsed for the
+assignment, never executed. No other workflow's key file is searched. Never put a
+key in arguments, settings, a proposal, a task plan, exports or version control.
+
+The documented API contract is [Artificial Analysis's API reference](https://artificialanalysis.ai/data-api/docs/reference).
+The allowlisted snapshot records source/date/tier/index version, model identity,
+release/creator metadata, nullable headline/capability indices, median performance,
+and input/output pricing. API price/speed is not subscription cost or task quality.
+Attribute displayed figures to [Artificial Analysis](https://artificialanalysis.ai/).
+
+The command replaces only machine-local `models/watch.json` after a complete valid
+fetch. Missing key, HTTP/network errors, invalid/partial data or exhausted bounds
+preserve prior evidence. Redirects are refused and error bodies are not printed.
+A first snapshot is a baseline; later reports distinguish additions/removals and
+same-version changes. Index-version changes suppress misleading score deltas.
+Recent releases are bounded to dates within 45 days of today in UTC. Reports focus on the labs
+of effective defaults/pins and distinguish missing/stale host discovery from a
+missing exact ID or advertised access. Listing never establishes entitlement.
+
+`model_policy/aliases.json` holds reviewed exact provider/model-to-benchmark mappings.
+It starts empty because no exact version/effort mapping has been independently
+verified for the seed entries. Unmapped routes stay unmatched; never guess or borrow
+another effort variant's score. Review source/version evidence before adding a map.
+This does not prevent reporting new/recent models for a known lab.
+
+Watch is optional evidence for update-models, not input to offline evaluate. It
+never changes ranks, suitability, defaults, fallbacks or approved plans. With no
+key or a failed fetch, continue review using host discovery/official docs and label
+any cached snapshot by date. Proposed settings still require exact-diff approval.
+There is no recurring watcher or benchmark request on specify/run/resume.

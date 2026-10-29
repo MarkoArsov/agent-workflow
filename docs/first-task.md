@@ -11,23 +11,28 @@ footer_order: 3
 !!! summary "In one minute"
     - This walkthrough adds CSV export to a reports endpoint in a repository called `app`.
     - `specify` writes a plan in which one outcome, `exports-report-as-csv`, maps to one check, `csv-export-behavior`.
-    - The manual lane implements it in your session. The full lane runs fresh stages and keeps evidence on disk.
+    - Substantive work defaults to the full lane with fresh stages and saved evidence; manual execution is an explicit choice.
     - Every command below exists; output blocks show the real format, trimmed.
 
-Before you start, [install](install.md) Agent Flow and [set up your project](setup.md).
+Before you start, [install](install.md) plovi and [set up your project](setup.md).
 
 ## 1. Specify
 
-In your agent, invoke `af-specify` (or `agentflow:specify` in the native Claude plugin):
+In your agent, invoke `plovi-specify` (or `plovi:plovi-specify` in the native Claude plugin):
 
 ~~~text
-af-specify Add CSV export to the reports endpoint.
+plovi-specify Add CSV export to the reports endpoint.
 ~~~
 
 It reads the project workflow, repository instructions, and the nearest working examples, then asks only what it can't find out.
 For this task it might ask whether the export must match the on-screen column order, and whether the existing JSON endpoint stays unchanged.
 
-For the full lane it writes the plan folder:
+Before writing plans it prepares or reuses the configured task checkout, preserving
+existing edits and read-only companions. Plans and implementation share that task
+branch. Concurrent tasks need separate worktrees; current-checkout policies and
+configured multi-repository plan ownership remain authoritative.
+
+CSV export changes behavior, so the default is a full contract. It writes:
 
 ~~~text
 ai-plans/csv-export/
@@ -79,10 +84,10 @@ Approve when another engineer could implement it without inventing behavior:
 
 ## 3. Manual lane
 
-For a change this small you could stop here and implement in the same session:
+If you explicitly choose manual execution, implement can do the tests and change in the same session:
 
 ~~~text
-af-implement
+plovi-implement
 ~~~
 
 `implement` follows the plan's path boundaries, writes the test and the code, runs `csv-export-behavior`, fixes what fails, and inspects the final diff.
@@ -93,7 +98,7 @@ It reports what it observed and what remains. It doesn't commit or push.
 Validate the plan and check readiness:
 
 ~~~sh
-agentflow validate-plan ai-plans/csv-export/pipeline.json
+plovi validate-plan ai-plans/csv-export/pipeline.json
 ~~~
 
 Example output
@@ -107,7 +112,7 @@ Example output
 ~~~
 
 ~~~sh
-agentflow preflight ai-plans/csv-export/pipeline.json
+plovi preflight ai-plans/csv-export/pipeline.json
 ~~~
 
 Example output, trimmed
@@ -135,7 +140,7 @@ Example output, trimmed
 `run --dry-run` prints the same report and stops. When you're ready, start the run in the background:
 
 ~~~sh
-agentflow run ai-plans/csv-export/pipeline.json --detach
+plovi run ai-plans/csv-export/pipeline.json --detach
 ~~~
 
 Example output
@@ -143,8 +148,8 @@ Example output
 
 ~~~json
 {
-  "log": "/path/to/project/.agentflow/local/evidence/csv-export/runner.log",
-  "next": "agentflow --project /path/to/project status csv-export",
+  "log": "/path/to/project/.plovi/local/evidence/csv-export/runner.log",
+  "next": "plovi --project /path/to/project status csv-export",
   "pid": 48213,
   "task": "csv-export"
 }
@@ -153,7 +158,7 @@ Example output
 Follow it:
 
 ~~~sh
-agentflow watch csv-export --seconds 300
+plovi watch csv-export --seconds 300
 ~~~
 
 Example output
@@ -184,10 +189,10 @@ A `ModuleNotFoundError` or a syntax error in the same place would have been reje
 
 ## 5. Read the evidence
 
-Everything the orchestrator observed stays in the project's evidence directory, by default `.agentflow/local/evidence/csv-export/`:
+Everything the orchestrator observed stays in the project's evidence directory, by default `.plovi/local/evidence/csv-export/`:
 
 ~~~text
-.agentflow/local/evidence/csv-export/
+.plovi/local/evidence/csv-export/
 ├── state.json           # the run journal: status, stages, attempts, delivery
 ├── binding.json         # the plan, profile, skills, and rules this run is bound to
 ├── attempts/0000.json   # each agent attempt: route, session, usage, output
@@ -232,3 +237,9 @@ Each attempt also records `usage` and `cost_usd` exactly as the provider reporte
 - Read how the evidence is judged: [evidence and checks](verification.md).
 
 <!-- checkpoints: IN-1, VER-1, VER-2, VER-5 -->
+
+
+!!! note "What changes for your workflow"
+    Specify completes the contract and runs validation/preflight before reporting
+    readiness. Missing routes stay explicit in a draft; it does not quietly switch
+    to manual implementation. You approve before the selected stages start.

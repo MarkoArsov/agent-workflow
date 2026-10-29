@@ -4,14 +4,24 @@ description: Review requirements against the actual diff, with independent evide
 ---
 
 <!-- resolver:start -->
-Run this skill folder's scripts/resolve.py from the active project once. If it returns a different effective skill, follow that file instead. Otherwise continue below. Use the selected package's bin/agentflow for commands.
+Run this skill folder's scripts/resolve.py from the active project once. If it returns a different effective skill, follow that file instead. Otherwise continue below. Use the selected package's bin/plovi for commands.
 <!-- resolver:end -->
 
 # review
 
+Read the selected package's references/quality-guidance.md and the plan-selected
+project quality sources before changing or judging code. In a detached stage use
+only the supplied frozen resources; do not reload live overrides or plugin caches.
+In direct use resolve the effective project sources. Report an explicitly selected
+missing source rather than silently substituting unrelated guidance.
+
 1. Start from the user requirements, native project rules, and actual current diff. Reconstruct behavior from code and tests rather than trusting an implementation summary.
 
-2. Check correctness, regressions, interfaces, tenancy/authorization where relevant, failure handling, test adequacy, and unnecessary complexity. Cite concrete paths and triggering scenarios for findings.
+2. Review in order: requirements and observable outcomes; behavioral test gaps;
+   correctness and failure paths; project conventions and semantic duplication.
+   Use the quality-guidance checklist inside approved paths. Find established
+   owners before alleging duplicated logic; do not turn preferences into defects.
+   Check correctness, regressions, interfaces, tenancy/authorization where relevant, failure handling, test adequacy, and unnecessary complexity. Cite concrete paths and triggering scenarios for findings.
 
 3. In direct review, make no edits unless asked. Prioritize actionable defects; do not invent issues to fill a quota. Distinguish confirmed problems from questions requiring evidence.
 

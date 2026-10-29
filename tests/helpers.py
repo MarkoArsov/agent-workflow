@@ -25,10 +25,12 @@ class WorkspaceTest(unittest.TestCase):
                     "GIT_CONFIG_KEY_1": "gc.auto", "GIT_CONFIG_VALUE_1": "0",
                     "GIT_AUTHOR_NAME": "Fixture", "GIT_AUTHOR_EMAIL": "fixture@example.invalid",
                     "GIT_COMMITTER_NAME": "Fixture", "GIT_COMMITTER_EMAIL": "fixture@example.invalid",
-                    "PYTHONDONTWRITEBYTECODE": "1", "AGENTFLOW_PACKAGE": str(PACKAGE)}
+                    "PYTHONDONTWRITEBYTECODE": "1", "PLOVI_PACKAGE": str(PACKAGE)}
         if os.name == "nt":
             # Path.home() reads USERPROFILE; child processes need the system variables.
             self.env["USERPROFILE"] = str(self.home)
+            self.env["APPDATA"] = str(self.home / "roaming")
+            self.env["LOCALAPPDATA"] = str(self.home / "local")
             self.env.update({key: os.environ[key] for key in ("SYSTEMROOT", "SYSTEMDRIVE", "WINDIR", "COMSPEC",
                                                               "PATHEXT", "TEMP", "TMP") if key in os.environ})
         self.patch = unittest.mock.patch.dict(os.environ, self.env, clear=True)
@@ -48,14 +50,14 @@ class WorkspaceTest(unittest.TestCase):
         return path
 
     def setup_project(self, path, patch=None):
-        from agentflow.setup import apply, propose
+        from plovi.setup import apply, propose
         p = propose(path, {"confirmed_defaults": True, "profile": patch or {}})
         apply(p, p["approval"])
-        from agentflow.project import load
+        from plovi.project import load
         return load(path)
 
     def cli(self, *args, cwd=None, check=True):
-        return subprocess.run([sys.executable, str(PACKAGE / "bin/agentflow"), *map(str, args)],
+        return subprocess.run([sys.executable, str(PACKAGE / "bin/plovi"), *map(str, args)],
                               cwd=cwd or PACKAGE, env=self.env, text=True, capture_output=True, check=check)
 
 import unittest.mock

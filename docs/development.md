@@ -1,13 +1,13 @@
 ---
 title: Contribute and develop
-description: Contribute to Agent Flow, run its checks, and change a public contract safely.
-question: How do I contribute to Agent Flow?
+description: Contribute to plovi, run its checks, and change a public contract safely.
+question: How do I contribute to plovi?
 ---
 
 # Contribute and develop
 
 !!! summary "In one minute"
-    - Agent Flow is MIT-licensed and developed in the open. Contributions are welcome.
+    - plovi is MIT-licensed and developed in the open. Contributions are welcome.
     - Runtime code is Python 3.11+ with the standard library only, and no new dependencies without a concrete need.
     - A good change comes with tests for its behavior and failure modes, and keeps schemas, validation, skills, and docs aligned.
     - Run the same checks CI runs before you open a pull request.
@@ -44,6 +44,14 @@ python3 -m venv .venv
 
 The E2E fixture needs permission to listen on localhost.
 Tests must use their isolated HOME and provider configuration; never test installation against your real settings.
+
+CI runs the full suite on Linux and macOS. Each Windows Python version runs the
+same suite in three deterministic batches on separate runners, so long installation
+and migration checks fit within the existing job limit. No tests are omitted.
+To reproduce one batch, run `python3 scripts/run_tests.py --shard 1 --shards 3`.
+Use `--list` to inspect its test IDs. CI retains each batch's log and per-test
+timings for seven days, including successful runs. A test-step deadline leaves
+time for those artifacts to upload before the job deadline.
 
 The optional local host check, `python3 scripts/host_smoke.py`, validates installed command interfaces and exercises Claude plugin lifecycle in a temporary configuration. It does not generate model responses or publish anything.
 
@@ -88,3 +96,17 @@ Anything marked partial on the [checkpoint scorecard](scorecard.md) is a good pl
 ## See also
 
 [Open source](open-source.md) · [Code map](code-map.md) · [Publish a release](publish.md) · [How it's tested](coverage.md)
+
+## Documentation design assets
+
+`design/tokens.json` is the source for color, type, spacing and size. The docs use
+the supplied Geist fonts, sailboat SVGs, and components. After editing the design,
+run `python3 scripts/sync_docs_design.py`; use `--check` to detect stale copies.
+The generated Mermaid theme files in `docs-data/diagrams/` use the same colors.
+The hand-rendered HTML diagrams inherit the active theme through CSS variables.
+
+Rebuild the committed PNG derivatives with `python3 scripts/generate_brand.py`.
+This development command needs Node, Playwright, and an existing Chromium. It
+performs no downloads. Use `--node`, `--node-modules`, and `--chromium` to select
+existing tools if needed; they are not runtime dependencies. Both PNGs render
+from the supplied SVGs with the supplied Geist font in an isolated browser profile.

@@ -1,0 +1,77 @@
+{
+  "advisories": [],
+  "evaluator_version": "1.0.0",
+  "provenance": {
+    "catalogue": "08c9441f9e3b759945013986f89ea5f1552846fa0d4c334da352604ac3a7e437",
+    "facts": {
+      "kind": "code",
+      "repository_count": 1,
+      "risk": "standard",
+      "size": "medium",
+      "stages": [
+        "implement-tests",
+        "implement",
+        "review"
+      ],
+      "test_files": 3,
+      "test_lines": 420,
+      "uncertain": false
+    },
+    "policy": "6db414a553f7e4c7defff33c640a73a507afaae3961ed955ddb14ddd1bd9389e",
+    "registry": "d46858249ba32df18d9374251d7501e43b6c335ec2aa4cd5135e4d02c2eef89c",
+    "settings": "1ad50ee4dc6be9306fbb99bccb3d4504637d634d260d3d042be263d2becabdfe"
+  },
+  "reasons": {
+    "implement": "routine-scoped-work",
+    "implement-tests": "large-test-scope",
+    "review": "routine-scoped-work"
+  },
+  "routes": {
+    "implement": [
+      {
+        "model": "gpt-6.1-sol",
+        "provider": "codex",
+        "reasoning": "medium"
+      },
+      {
+        "model": "claude-sonnet-5-5-medium",
+        "provider": "cursor"
+      },
+      {
+        "model": "gpt-6-astra",
+        "provider": "codex",
+        "reasoning": "medium"
+      }
+    ],
+    "implement-tests": [
+      {
+        "model": "gpt-6-astra",
+        "provider": "codex",
+        "reasoning": "high"
+      },
+      {
+        "model": "claude-opus-5-5-high",
+        "provider": "cursor"
+      }
+    ],
+    "review": [
+      {
+        "model": "claude-sonnet-5-5-medium",
+        "provider": "cursor"
+      },
+      {
+        "model": "gpt-6.1-sol",
+        "provider": "codex",
+        "reasoning": "medium"
+      },
+      {
+        "model": "gpt-6-astra",
+        "provider": "codex",
+        "reasoning": "medium"
+      }
+    ]
+  },
+  "schema_version": 1,
+  "snapshot_hash": "b87fddcb9bde76da4f74ba82b084b9af508043b9cdf3878c81ec4097832ae202",
+  "unresolved": []
+}

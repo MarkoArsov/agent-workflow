@@ -4,6 +4,23 @@ Use this reference when authoring a pipeline.json. Replace example repository ID
 paths, model names, checks, and outcomes with confirmed project facts. Keep all four
 plan files complete alongside the manifest.
 
+Substantive work defaults to this full contract. Manual is an explicit user choice
+or a clearly trivial low-risk edit, with its reason recorded. A missing route keeps
+the full contract a draft; it is not a reason to silently select manual execution.
+Run validate-plan and preflight before reporting a contract ready, distinguishing
+their actual results from planned checks. Specification still ends at approval.
+
+Prepare/reuse the configured task checkout before writing the plan; task/repository
+and branch/base selection does not require an existing manifest. Keep single-repo
+plans inside that checkout, or use the configured multi-repository plan owner/shared
+store. Record the chosen branch for execution handoff and reuse that worktree.
+Honor current-checkout policy and never move dirty/staged work automatically.
+
+Include `quality-guidance.md` and applicable project quality names in `references`; see
+`quality-guidance.md`. All three AI stages receive those frozen sources, with
+project references taking precedence. Do not put implementation reasoning into a
+reference shared with independent review.
+
 ~~~json
 {
   "schema_version": 1,

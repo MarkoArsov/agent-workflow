@@ -7,7 +7,7 @@ question: Why is it cheap, and why isn't it locked to one model?
 # Cost and models
 
 !!! summary "In one minute"
-    - Most of Agent Flow is Python and shell. Verification, status, watching, and delivery make no model calls.
+    - Most of plovi is Python and shell. Verification, status, watching, and delivery make no model calls.
     - The cheapest complete path is two sessions: `specify`, then `implement`.
     - Routes are chosen per stage: Claude Code, Codex, or Cursor, with the model you pick and explicit fallbacks.
     - Usage and cost are recorded only when the provider reports them. Unknown is never shown as zero.
@@ -15,7 +15,7 @@ question: Why is it cheap, and why isn't it locked to one model?
 ## Why a complex workflow can still be cheap
 
 A long chat that rediscovers the repository, re-reads huge logs, and retries until something looks green is expensive.
-Agent Flow writes the repeatable procedure down once as skills and scripts, then spends model tokens only on judgement.
+plovi writes the repeatable procedure down once as skills and scripts, then spends model tokens only on judgement.
 
 | What looks expensive | Why it usually isn't |
 |---|---|
@@ -47,7 +47,7 @@ The plan is the contract: repositories, paths, checks, and evidence. The model i
 - Use one route for every stage, or a different one per stage.
 - Give each stage an ordered list of fallbacks, or none. Authentication, quota, and unavailable-model failures move to the next route you approved.
 - An answer to a paused question always resumes the session that asked. It is never rerouted.
-- Agent Flow ships no model catalog. Setup records the models you choose.
+- plovi ships reviewed seed assessments; native availability is discovered locally. Setup records the models you choose.
 
 <!-- diagram: routes -->
 
@@ -72,7 +72,7 @@ See [commands and permissions](execution.md#routes).
 
 ## The cost knobs you actually have
 
-1. **Lane.** The manual lane for an isolated change; the full lane when independent tests, review, or delivery are worth it.
+1. **Lane.** Full contracts for substantive work; manual when explicitly requested or for a trivial low-risk edit.
 2. **Review.** Skip it for a small change. Select it when the risk is higher.
 3. **Route.** A cheaper or stronger model per stage, or one route for everything.
 4. **Fallbacks.** Keep, reorder, or clear the ordered list before the run.
@@ -80,7 +80,7 @@ See [commands and permissions](execution.md#routes).
 6. **Limits.** `attempts_per_route` (up to 5), `timeout_seconds`, `inactivity_seconds`, and `tool_timeout_seconds` bound every stage.
 7. **Claude budget.** `execution.provider_settings.claude.max_budget_usd` passes a spending cap to Claude Code. Other providers' cost controls depend on their own interfaces.
 
-If a run feels expensive, the usual causes are a plan that is too wide, a huge log reaching the model, or the full lane on a one-file follow-up.
+If a run feels expensive, the usual causes are a plan that is too wide, a huge log reaching the model, or repeated rediscovery of a task that should have stayed bounded.
 
 ## Usage honesty
 
@@ -92,7 +92,7 @@ A missing cost is `null`, meaning unknown, never zero. Provider doubles used in 
 
 ## Refresh models and choose effort
 
-Use **AF Update Models** (`af-update-models`) to refresh native model catalogues,
+Use **Update models** (`plovi-update-models`) to refresh native model catalogues,
 confirm the providers and scope, and approve the proposed changes to machine or
 project defaults. Other workflows keep separate settings. Refreshing the catalogue
 does not change defaults, native app preferences or existing plans.
@@ -121,3 +121,31 @@ and applies only the user-approved digest with `models apply --approve ...`.
 ## See also
 
 [Commands and permissions](execution.md) · [Code map](code-map.md) · [Lanes and bugfixes](lanes.md)
+
+
+## Independent labs and optional benchmark evidence
+
+The offline evaluator selects implementation first, test authoring next and review
+last. It prefers suitable models from different labs, even through the same CLI;
+a different CLI hosting the same lab is not independent. Limited availability is
+honest: adversary-below-band explains a permitted one-band capability tradeoff,
+single-lineage reports no alternate, and unknown-lineage keeps legacy custom entries
+usable without claiming independence. Explicit pins and approved snapshots stay fixed.
+
+`plovi models watch` fetches optional evidence with `AA_API_KEY`, or an explicitly
+selected local assignment file via `--key-file`. It stores a dated machine-local
+snapshot from the [Artificial Analysis API](https://artificialanalysis.ai/data-api/docs/reference).
+Allowlisted fields include nullable indices, median performance, pricing and model
+metadata. Reports cite [Artificial Analysis](https://artificialanalysis.ai/), distinguish
+baseline from additions/removals, show index-version changes and identify gaps in
+host discovery. API cost is not subscription cost; a benchmark does not prove access.
+
+Missing keys or failed/partial fetches preserve prior evidence. No credential is
+stored in the snapshot; do not put one in arguments, plans or tracked files. Exact
+benchmark aliases start unverified/unmatched, so no model borrows another version
+or effort variant's score. New/recent model reporting still works for known labs.
+
+!!! note "What changes for your workflow"
+    Update models can use benchmark evidence when you configure a key. It still
+    shows the exact proposed settings diff for approval. Watching does not change
+    routes, ranks or saved plans, and specify never needs a benchmark request.

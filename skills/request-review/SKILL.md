@@ -4,7 +4,7 @@ description: Prepare a concise review request using the actual PR and verified c
 ---
 
 <!-- resolver:start -->
-Run this skill folder's scripts/resolve.py from the active project once. If it returns a different effective skill, follow that file instead. Otherwise continue below. Use the selected package's bin/agentflow for commands.
+Run this skill folder's scripts/resolve.py from the active project once. If it returns a different effective skill, follow that file instead. Otherwise continue below. Use the selected package's bin/plovi for commands.
 <!-- resolver:end -->
 
 # request review
@@ -17,3 +17,8 @@ Run this skill folder's scripts/resolve.py from the active project once. If it r
 
 4. Report a draft as a draft and a sent request only after a confirmed tool result.
 
+
+For a short sharing draft, use the actual PR title followed by its URL and any
+explicitly selected companion PR URLs. No greeting or rewritten outcome is needed
+when the user requests a title-and-links line. This remains a draft until sending
+is explicitly authorized; companion discovery does not authorize messaging.

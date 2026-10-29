@@ -4,7 +4,7 @@ description: Capture a recurring project convention with appropriate enforcement
 ---
 
 <!-- resolver:start -->
-Run this skill folder's scripts/resolve.py from the active project once. If it returns a different effective skill, follow that file instead. Otherwise continue below. Use the selected package's bin/agentflow for commands.
+Run this skill folder's scripts/resolve.py from the active project once. If it returns a different effective skill, follow that file instead. Otherwise continue below. Use the selected package's bin/plovi for commands.
 <!-- resolver:end -->
 
 # add rule
@@ -21,3 +21,8 @@ Run this skill folder's scripts/resolve.py from the active project once. If it r
 
 6. Show the proposed rule and expected impact. Preserve existing project conventions and do not modify package defaults.
 
+
+A verified session-retro finding can supply evidence and a proposed home. Recheck
+its premise and effective source; do not duplicate guidance already owned elsewhere.
+Retro analysis does not authorize applying maintenance. Preserve this skill's
+existing apply/approval boundary and use specify for broader implementation work.

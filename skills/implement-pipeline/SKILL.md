@@ -4,10 +4,16 @@ description: Preflight, start, observe, and recover a fresh-session implementati
 ---
 
 <!-- resolver:start -->
-Run this skill folder's scripts/resolve.py from the active project once. If it returns a different effective skill, follow that file instead. Otherwise continue below. Use the selected package's bin/agentflow for commands.
+Run this skill folder's scripts/resolve.py from the active project once. If it returns a different effective skill, follow that file instead. Otherwise continue below. Use the selected package's bin/plovi for commands.
 <!-- resolver:end -->
 
 # implement pipeline
+
+Full planning is the default for substantive work, but explicit manual tasks use
+implement in session instead. A prose plan or draft with unresolved routes is not
+an execution-ready contract. Do not silently generate missing approval or change
+lanes to get past preflight. Reuse the branch/worktree chosen during specification, passing its recorded canonical
+configuration root with --project so a copied profile cannot cause nested worktrees.
 
 1. Resolve the configured project and locate the complete pipeline.json. Read the plan and confirm there are no unresolved product choices or unapproved delivery actions.
 

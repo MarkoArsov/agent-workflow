@@ -1,7 +1,7 @@
 ---
 title: Checkpoint scorecard
-description: Agent Flow measured against 36 verification checkpoints, gaps included.
-question: What does Agent Flow cover, and what is still open?
+description: plovi measured against 36 verification checkpoints, gaps included.
+question: What does plovi cover, and what is still open?
 footer: reference
 footer_order: 3
 ---
@@ -14,7 +14,7 @@ footer_order: 3
     - The largest gaps are operating-system isolation, network egress, and scoped credentials. See the [open frontier](#the-open-frontier).
     - Every row cites the files that implement it, and the build checks that those files exist.
 
-Most tools tell you they're safe. Agent Flow publishes the scorecard: what the orchestrator enforces, what's partial, what belongs to your organization, and what's still open.
+Most tools tell you they're safe. plovi publishes the scorecard: what the orchestrator enforces, what's partial, what belongs to your organization, and what's still open.
 
 <!-- scorecard: grid -->
 
@@ -37,7 +37,7 @@ Most tools tell you they're safe. Agent Flow publishes the scorecard: what the o
 
 ## Beyond the rubric
 
-Some controls matter precisely because agent execution is stateful, fallible, and easy to misrepresent. The rubric doesn't name them, but Agent Flow relies on them.
+Some controls matter precisely because agent execution is stateful, fallible, and easy to misrepresent. The rubric doesn't name them, but plovi relies on them.
 
 <!-- scorecard: beyond -->
 

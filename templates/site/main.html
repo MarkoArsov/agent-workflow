@@ -4,6 +4,15 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="site-root" content="{{ '' | url }}">
+    <script>
+      (() => {
+        let choice = 'system';
+        try { choice = localStorage.getItem('plovi-theme') || 'system'; } catch (_) {}
+        if (!['system', 'dark', 'light'].includes(choice)) choice = 'system';
+        const light = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
+        document.documentElement.setAttribute('data-theme', choice === 'system' ? (light ? 'light' : 'dark') : choice);
+      })();
+    </script>
     {% set description = page.meta.get('description') if page and page.meta else config.site_description %}
     <title>{% if page and page.title %}{{ page.title }} · {% endif %}{{ config.site_name }}</title>
     <meta name="description" content="{{ description }}">
@@ -18,15 +27,15 @@
     <meta name="twitter:image" content="{{ config.site_url }}assets/brand/og.png?v={{ config.extra.asset_version }}">
     <link rel="icon" href="{{ 'assets/brand/favicon.svg' | url }}?v={{ config.extra.asset_version }}" type="image/svg+xml">
     <link rel="apple-touch-icon" href="{{ 'assets/brand/apple-touch-icon.png' | url }}?v={{ config.extra.asset_version }}">
-    <link rel="preload" href="{{ 'assets/fonts/IBMPlexSans-Regular-Latin1.woff2' | url }}" as="font" type="font/woff2" crossorigin>
-    <link rel="preload" href="{{ 'assets/fonts/IBMPlexMono-Regular-Latin1.woff2' | url }}" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="{{ 'assets/fonts/Geist-Variable.woff2' | url }}" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="{{ 'assets/fonts/GeistMono-Variable.woff2' | url }}" as="font" type="font/woff2" crossorigin>
     {% for path in config.extra_css %}<link rel="stylesheet" href="{{ path | url }}?v={{ config.extra.asset_version }}">{% endfor %}
   </head>
   <body data-page-url="{{ page.url if page else '' }}"{% if page and page.file.src_uri == 'index.md' %} data-page-home="true"{% endif %}>
     <a class="skip-link" href="#main-content">Skip to content</a>
     <div class="rename-banner" data-rename-banner>
       <div class="rename-banner__inner">
-        <p>Scorebook is now <strong>Agent Flow</strong></p>
+        <p>Agent Flow is now <strong>plovi</strong></p>
         <button type="button" aria-label="Dismiss rename notice" data-rename-dismiss><svg aria-hidden="true" viewBox="0 0 12 12"><path d="M3 3l6 6M9 3l-6 6"/></svg></button>
       </div>
     </div>

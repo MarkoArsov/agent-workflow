@@ -4,10 +4,16 @@ description: Author independent tests and obtain behavioral red evidence before 
 ---
 
 <!-- resolver:start -->
-Run this skill folder's scripts/resolve.py from the active project once. If it returns a different effective skill, follow that file instead. Otherwise continue below. Use the selected package's bin/agentflow for commands.
+Run this skill folder's scripts/resolve.py from the active project once. If it returns a different effective skill, follow that file instead. Otherwise continue below. Use the selected package's bin/plovi for commands.
 <!-- resolver:end -->
 
 # implement tests
+
+Read the selected package's references/quality-guidance.md and the plan-selected
+project quality sources before changing or judging code. In a detached stage use
+only the supplied frozen resources; do not reload live overrides or plugin caches.
+In direct use resolve the effective project sources. Report an explicitly selected
+missing source rather than silently substituting unrelated guidance.
 
 1. Read the approved requirements and test contract. Locate existing fixtures and same-domain tests. Write tests for required behavior, boundary cases, and expected failures using the repository's established style.
 

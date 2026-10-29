@@ -1,14 +1,14 @@
 {
-  "name": "agentflow",
+  "name": "plovi",
   "owner": {
-    "name": "Agent Flow contributors"
+    "name": "plovi contributors"
   },
   "plugins": [
     {
-      "name": "agentflow",
+      "name": "plovi",
       "source": "./",
       "description": "Project-aware skills and a verified fresh-session runner.",
-      "version": "0.1.0"
+      "version": "0.1.1"
     }
   ],
   "description": "Project-owned agent workflows with executable verification."

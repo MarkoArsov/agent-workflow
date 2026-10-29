@@ -1,0 +1,98 @@
+[
+  {
+    "page": "home",
+    "background": "rgb(14, 15, 17)",
+    "documentWidth": 1425,
+    "font": "Geist, ui-sans-serif, system-ui, -apple-system, \"Segoe UI\", sans-serif",
+    "theme": "dark",
+    "width": 1440
+  },
+  {
+    "page": "guide",
+    "background": "rgb(20, 21, 24)",
+    "documentWidth": 1425,
+    "font": "Geist, ui-sans-serif, system-ui, -apple-system, \"Segoe UI\", sans-serif",
+    "theme": "dark",
+    "width": 1440
+  },
+  {
+    "page": "cli",
+    "background": "rgb(20, 21, 24)",
+    "documentWidth": 1425,
+    "font": "Geist, ui-sans-serif, system-ui, -apple-system, \"Segoe UI\", sans-serif",
+    "theme": "dark",
+    "width": 1440
+  },
+  {
+    "page": "home",
+    "background": "rgb(14, 15, 17)",
+    "documentWidth": 375,
+    "font": "Geist, ui-sans-serif, system-ui, -apple-system, \"Segoe UI\", sans-serif",
+    "theme": "dark",
+    "width": 390
+  },
+  {
+    "page": "guide",
+    "background": "rgb(20, 21, 24)",
+    "documentWidth": 375,
+    "font": "Geist, ui-sans-serif, system-ui, -apple-system, \"Segoe UI\", sans-serif",
+    "theme": "dark",
+    "width": 390
+  },
+  {
+    "page": "cli",
+    "background": "rgb(20, 21, 24)",
+    "documentWidth": 375,
+    "font": "Geist, ui-sans-serif, system-ui, -apple-system, \"Segoe UI\", sans-serif",
+    "theme": "dark",
+    "width": 390
+  },
+  {
+    "page": "home",
+    "background": "rgb(244, 244, 245)",
+    "documentWidth": 1425,
+    "font": "Geist, ui-sans-serif, system-ui, -apple-system, \"Segoe UI\", sans-serif",
+    "theme": "light",
+    "width": 1440
+  },
+  {
+    "page": "guide",
+    "background": "rgb(255, 255, 255)",
+    "documentWidth": 1425,
+    "font": "Geist, ui-sans-serif, system-ui, -apple-system, \"Segoe UI\", sans-serif",
+    "theme": "light",
+    "width": 1440
+  },
+  {
+    "page": "cli",
+    "background": "rgb(255, 255, 255)",
+    "documentWidth": 1425,
+    "font": "Geist, ui-sans-serif, system-ui, -apple-system, \"Segoe UI\", sans-serif",
+    "theme": "light",
+    "width": 1440
+  },
+  {
+    "page": "home",
+    "background": "rgb(244, 244, 245)",
+    "documentWidth": 375,
+    "font": "Geist, ui-sans-serif, system-ui, -apple-system, \"Segoe UI\", sans-serif",
+    "theme": "light",
+    "width": 390
+  },
+  {
+    "page": "guide",
+    "background": "rgb(255, 255, 255)",
+    "documentWidth": 375,
+    "font": "Geist, ui-sans-serif, system-ui, -apple-system, \"Segoe UI\", sans-serif",
+    "theme": "light",
+    "width": 390
+  },
+  {
+    "page": "cli",
+    "background": "rgb(255, 255, 255)",
+    "documentWidth": 375,
+    "font": "Geist, ui-sans-serif, system-ui, -apple-system, \"Segoe UI\", sans-serif",
+    "theme": "light",
+    "width": 390
+  }
+]

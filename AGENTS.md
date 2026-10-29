@@ -1,4 +1,4 @@
-# agentflow
+# plovi
 
 This repository is a standalone public package. PLAN.md defines the approved scope.
 Work in this checkout; do not route package development through an installed personal workflow.
@@ -10,8 +10,8 @@ Never modify real user agent configuration during tests. Use isolated child envi
 Keep private identifiers, real credentials, and machine-specific paths out of deliverables.
 Commit logical changes locally. Publishing and remote changes require an explicit request.
 
-<!-- agentflow:start -->
+<!-- plovi:start -->
 Read PROJECT_WORKFLOW.md for this project's workflow defaults and custom skills.
 Do not apply workflow defaults from an unrelated ancestor project.
-<!-- agentflow:end -->
+<!-- plovi:end -->
 Design: anything people see (app, docs site, brand) follows design/README.md and design/DESIGN.md; use only tokens from design/tokens.json.

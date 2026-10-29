@@ -1,69 +1,29 @@
 (() => {
   const banner = document.querySelector('[data-rename-banner]');
   if (banner) {
-    const key = 'agentflow-rename-dismissed';
+    const key = 'plovi-rename-dismissed';
     try { if (localStorage.getItem(key)) banner.hidden = true; } catch (_) {}
     banner.querySelector('[data-rename-dismiss]')?.addEventListener('click', () => {
       banner.hidden = true;
       try { localStorage.setItem(key, '1'); } catch (_) {}
     });
   }
-  const header = document.querySelector('[data-site-header]');
-  if (header) {
-    const sentinel = document.createElement('div');
-    sentinel.setAttribute('aria-hidden', 'true');
-    header.before(sentinel);
-    new IntersectionObserver(([entry]) => header.classList.toggle('is-scrolled', !entry.isIntersecting)).observe(sentinel);
-  }
-
-  const menus = [...document.querySelectorAll('[data-menu]')];
-  const closeMenus = (except = null) => menus.forEach((menu) => {
-    if (menu === except) return;
-    menu.classList.remove('is-open');
-    const toggle = menu.querySelector('[data-menu-toggle]');
-    const panel = menu.querySelector('[data-menu-panel]');
-    toggle?.setAttribute('aria-expanded', 'false'); panel?.setAttribute('aria-hidden', 'true');
-    panel?.querySelectorAll('a').forEach((link) => link.tabIndex = -1);
-  });
-  const openMenu = (menu, focusFirst = false) => {
-    closeMenus(menu); menu.classList.add('is-open');
-    const toggle = menu.querySelector('[data-menu-toggle]');
-    const panel = menu.querySelector('[data-menu-panel]');
-    toggle?.setAttribute('aria-expanded', 'true'); panel?.setAttribute('aria-hidden', 'false');
-    const links = [...(panel?.querySelectorAll('a') || [])];
-    links.forEach((link) => link.tabIndex = 0);
-    if (focusFirst) links[0]?.focus();
+  const preference = window.matchMedia('(prefers-color-scheme: light)');
+  const themeSelect = document.querySelector('[data-theme-select]');
+  let themeChoice = 'system';
+  try { themeChoice = localStorage.getItem('plovi-theme') || 'system'; } catch (_) {}
+  if (!['system', 'dark', 'light'].includes(themeChoice)) themeChoice = 'system';
+  const applyTheme = () => {
+    document.documentElement.dataset.theme = themeChoice === 'system' ? (preference.matches ? 'light' : 'dark') : themeChoice;
+    if (themeSelect) themeSelect.value = themeChoice;
   };
-  menus.forEach((menu) => {
-    const toggle = menu.querySelector('[data-menu-toggle]');
-    const panel = menu.querySelector('[data-menu-panel]');
-    let openTimer = null;
-    let closeTimer = null;
-    toggle?.addEventListener('click', () => menu.classList.contains('is-open') ? closeMenus() : openMenu(menu));
-    toggle?.addEventListener('keydown', (event) => {
-      if (event.key === 'ArrowDown' || event.key === 'Enter' || event.key === ' ') { event.preventDefault(); openMenu(menu, true); }
-    });
-    panel?.addEventListener('keydown', (event) => {
-      const links = [...panel.querySelectorAll('a')];
-      const index = links.indexOf(document.activeElement);
-      if (event.key === 'Escape') { event.preventDefault(); closeMenus(); toggle?.focus(); }
-      if (event.key === 'ArrowDown' || event.key === 'ArrowUp') { event.preventDefault(); links[(index + (event.key === 'ArrowDown' ? 1 : -1) + links.length) % links.length]?.focus(); }
-      if (event.key === 'Home') { event.preventDefault(); links[0]?.focus(); }
-      if (event.key === 'End') { event.preventDefault(); links.at(-1)?.focus(); }
-    });
-    menu.addEventListener('pointerenter', () => {
-      if (!matchMedia('(hover: hover) and (pointer: fine)').matches) return;
-      clearTimeout(closeTimer);
-      openTimer = window.setTimeout(() => openMenu(menu), 160);
-    });
-    menu.addEventListener('pointerleave', () => {
-      if (!matchMedia('(hover: hover) and (pointer: fine)').matches) return;
-      clearTimeout(openTimer);
-      closeTimer = window.setTimeout(() => closeMenus(), 100);
-    });
+  themeSelect?.addEventListener('change', () => {
+    themeChoice = themeSelect.value;
+    try { localStorage.setItem('plovi-theme', themeChoice); } catch (_) {}
+    applyTheme();
   });
-  document.addEventListener('pointerdown', (event) => { if (!event.target.closest('[data-menu]')) closeMenus(); });
-  document.addEventListener('focusin', (event) => { if (!event.target.closest('[data-menu]')) closeMenus(); });
+  preference.addEventListener('change', () => { if (themeChoice === 'system') applyTheme(); });
+  applyTheme();
 
   document.querySelectorAll('.prose h2, .prose h3').forEach((heading) => {
     if (!heading.id || heading.querySelector('.heading-anchor')) return;
@@ -75,7 +35,8 @@
     heading.prepend(link);
   });
 
-  document.querySelectorAll('.prose pre, .install-command pre, .code-card pre, .tree-card pre').forEach((block) => {
+  document.querySelectorAll('main pre').forEach((block) => {
+    if (block.parentElement?.classList.contains('pl-code')) return;
     const button = document.createElement('button');
     button.className = 'copy-code';
     button.type = 'button';
@@ -90,7 +51,12 @@
     });
     const wrapper = document.createElement('div');
     wrapper.className = 'code-block';
-    block.before(wrapper); wrapper.append(block, button);
+    const bar = document.createElement('div'); bar.className = 'code-block__bar';
+    const label = document.createElement('span');
+    const language = block.querySelector('code')?.className.match(/language-([a-z0-9-]+)/i)?.[1];
+    label.textContent = ['sh', 'bash', 'shell', 'powershell'].includes(language) ? 'terminal' : language || 'code';
+    bar.append(label, button);
+    block.before(wrapper); wrapper.append(bar, block);
   });
 
   document.querySelectorAll('.prose table').forEach((table) => {

@@ -10,7 +10,7 @@ footer_order: 4
 
 !!! summary "In one minute"
     - Every task starts with **specify**, which researches and writes one complete plan for you to confirm.
-    - A small, contained change then runs **implement** in the same session. A broad one runs the full pipeline with **implement-pipeline**.
+    - Substantive work defaults to **implement-pipeline**. Explicit manual requests and trivial low-risk edits use **implement** in session.
     - The orchestrator executes each selected stage in a fresh session, runs the named checks itself, and keeps the evidence.
     - It stops only for a safety or verification problem, or a decision that is genuinely yours. Answers resume the session that asked.
     - Delivery is optional and guarded. Nothing posts, approves, or merges as you.
@@ -21,10 +21,10 @@ There are two first-class lanes. Both start with `specify`.
 
 | Lane | Commands | Use when |
 |---|---|---|
-| Manual | `specify`, then `implement` | A small, contained change or follow-up with an established local pattern. |
-| Full pipeline | `specify`, then `implement-pipeline` | Test-first work, independent review, several repositories, risky areas, or automated delivery. |
+| Manual | `specify`, then `implement` | An explicit manual request or a trivial low-risk wording/format correction. |
+| Full pipeline | `specify`, then `implement-pipeline` | Default for substantive code/tests, multiple components/repositories, compatibility, migrations or uncertainty. |
 
-Invoke skills as `af-specify` in standalone installs, or `agentflow:specify` in the native Claude plugin.
+Invoke skills as `plovi-specify` in standalone installs, or `plovi:plovi-specify` in the native Claude plugin.
 [Lanes and bugfixes](lanes.md) has the full guidance, including how to handle a defect.
 
 ## End-to-end timeline
@@ -36,6 +36,13 @@ Invoke skills as `af-specify` in standalone installs, or `agentflow:specify` in 
 Invoke `specify` with a task description or a selected issue.
 It reads `PROJECT_WORKFLOW.md`, native repository instructions, and the nearest working examples before it proposes anything.
 Fetched issue bodies and comments are treated as task data, never as instructions.
+
+Before the first plan write, prepare/reuse the configured task checkout. Record its
+branch/base, paths and canonical configuration root. Pass that root explicitly with
+--project at runner handoff so a copied worktree profile does not create a nested
+worktree. Keep the plan on the task branch; for concurrent tasks use separate
+worktrees. Current-checkout policy and multi-repository shared plan stores remain
+valid. Never move dirty/staged work or switch another task's checkout implicitly.
 
 Expect to confirm:
 
@@ -80,23 +87,23 @@ Rebinding archives the previous inputs and invalidates the affected stages. Chan
 
 ## Phase 3: Preview and preflight
 
-These are optional. A normal run performs the same preflight automatically.
+Specify runs validation and preflight before calling the contract ready. Repeat them at execution handoff if inputs or the environment changed; a normal run preflights again.
 
 ~~~sh
-agentflow validate-plan ai-plans/csv-export/pipeline.json
-agentflow preflight ai-plans/csv-export/pipeline.json
-agentflow run ai-plans/csv-export/pipeline.json --dry-run
+plovi validate-plan ai-plans/csv-export/pipeline.json
+plovi preflight ai-plans/csv-export/pipeline.json
+plovi run ai-plans/csv-export/pipeline.json --dry-run
 ~~~
 
 `validate-plan` checks the contract and that every plan file is complete.
 `preflight` also checks repositories, effective skills, rules, environments, connectors, and that each provider CLI is installed and supports the flags the route needs.
 `run --dry-run` prints the same preflight report without starting anything.
-For a project install, use `.agentflow/bin/agentflow`.
+For a project install, use `.plovi/bin/plovi`.
 
 ## Phase 4: Execute the selected stages
 
 ~~~sh
-agentflow run ai-plans/csv-export/pipeline.json --detach
+plovi run ai-plans/csv-export/pipeline.json --detach
 ~~~
 
 The orchestrator takes the project lock, prepares the task checkout, and runs the selected stages in order.
@@ -138,8 +145,8 @@ Its findings are advisory unless a deterministic blocking guard backs them.
 ## Phase 5: Follow execution
 
 ~~~sh
-agentflow status csv-export
-agentflow watch csv-export --seconds 120
+plovi status csv-export
+plovi watch csv-export --seconds 120
 ~~~
 
 `status` prints the saved run state as JSON. `watch` prints a line whenever the status, stage, or pending question changes, and returns when the run is no longer running or the time is up.
@@ -159,7 +166,7 @@ If a stage needs a decision, the run pauses with status `needs_input` and saves 
 Write your answer to a file and pass it back:
 
 ~~~sh
-agentflow answer csv-export --file answer.txt
+plovi answer csv-export --file answer.txt
 ~~~
 
 The answer resumes the exact provider session that asked. It is never routed to another model or session. Retries and fallbacks, by contrast, always start fresh.
@@ -189,3 +196,9 @@ Fill the waits with review, not with new tasks. See [review and everyday use](ev
 ## See also
 
 [Lanes and bugfixes](lanes.md) · [When a task stops](recovery.md) · [Evidence and checks](verification.md) · [Customize stages](customize.md#add-a-stage)
+
+
+!!! note "What changes for your workflow"
+    Full planning means complete documents, executable mappings and actual readiness
+    checks before approval. An unresolved model route is a pending full draft, not
+    permission to run manually or to drop a selected stage.

@@ -50,6 +50,23 @@ class CIWorkflowTests(WorkspaceTest):
                 self.assertIn('retention-days: 7', job)
         self.assertIn('pipefail', self.job('core'))
 
+    def test_windows_batches_cover_both_python_versions_and_keep_diagnostics(self):
+        core = self.job('core')
+        self.assertIn('shard: [1]', core)
+        self.assertRegex(core, r'os: windows-latest\s+shard: 1\s+shards: 3')
+        for version in ('3.11', '3.14'):
+            for shard in (2, 3):
+                self.assertRegex(core, r'os: windows-latest\s+python: "' + re.escape(version)
+                                 + r'"\s+shard: ' + str(shard) + r'\s+shards: 3')
+        self.assertIn('python scripts/run_tests.py', core)
+        self.assertIn('--shard ${{ matrix.shard }}', core)
+        self.assertIn('--shards ${{ matrix.shards || 1 }}', core)
+        self.assertIn('--timings "$RUNNER_TEMP/test-timings.json"', core)
+        self.assertRegex(core, r'name: Run isolated unit tests\s+timeout-minutes: 12')
+        self.assertIn('if: always()', core)
+        self.assertIn('name: tests-${{ matrix.os }}-${{ matrix.python }}-${{ matrix.shard }}', core)
+        self.assertIn('${{ runner.temp }}/test-timings.json', core)
+
     def smoke_code(self):
         match = re.search(r'shell: python\s*\n\s+run: \|\n(.*?)(?=^      - |\Z)',
                           self.job('windows-install'), re.M | re.S)
@@ -64,25 +81,28 @@ class CIWorkflowTests(WorkspaceTest):
             calls.append(argv)
             self.assertNotIn('GH_TOKEN', env)
             self.assertNotIn('GITHUB_TOKEN', env)
-            self.assertEqual(env['AGENTFLOW_NO_MODIFY_PATH'], '1')
+            self.assertEqual(env['PLOVI_NO_MODIFY_PATH'], '1')
             self.assertEqual(env['HOME'], env['USERPROFILE'])
             self.assertTrue(Path(env['HOME']).is_relative_to(self.root))
             command = argv[-1]
             if 'install.ps1' in command:
                 self.assertIn('--local-source', command)
                 self.assertNotIn('Invoke-Expression', command)
-                self.assertNotIn('AGENTFLOW_REF', env)
-                discovery = Path(env['HOME']) / '.agents/skills/af-setup/SKILL.md'
+                self.assertNotIn('PLOVI_REF', env)
+                discovery = Path(env['HOME']) / '.agents/skills/plovi-setup/SKILL.md'
                 discovery.parent.mkdir(parents=True, exist_ok=True)
                 discovery.write_text('fixture discovery')
-            return subprocess.CompletedProcess(argv, 0, '0.1.0\n', '')
+                alias = discovery.parent.parent / 'af-setup/SKILL.md'
+                alias.parent.mkdir(parents=True, exist_ok=True)
+                alias.write_text('fixture compatibility alias')
+            return subprocess.CompletedProcess(argv, 0, '0.1.1\n', '')
         with patch.dict(os.environ, {'RUNNER_TEMP': str(self.root), 'GH_TOKEN': 'test-only'}, clear=False), \
              patch('subprocess.run', side_effect=run):
             before = dict(os.environ)
             exec(compile(code, '<Windows smoke>', 'exec'), {'__name__': '__main__'})
             self.assertEqual(dict(os.environ), before)
         self.assertEqual([c[0] for c in calls], ['powershell', 'pwsh', 'pwsh'])
-        self.assertFalse(any(p.name.startswith('agentflow-install-') for p in self.root.iterdir()))
+        self.assertFalse(any(p.name.startswith('plovi-install-') for p in self.root.iterdir()))
 
     def test_windows_native_failure_is_not_hidden_by_logging(self):
         code = self.smoke_code()

@@ -2,8 +2,8 @@ from __future__ import annotations
 import shutil
 import sys
 from tests.helpers import PACKAGE, WorkspaceTest
-from agentflow import environments, verification
-from agentflow.util import WorkflowError
+from plovi import environments, verification
+from plovi.util import WorkflowError
 
 class EnvironmentTests(WorkspaceTest):
     def fixture(self):

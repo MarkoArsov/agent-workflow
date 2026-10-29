@@ -23,7 +23,7 @@ The scarce work is now:
 - judging whether it is the *right* change, not only a green one;
 - reviewing other people's pull requests at the same increased volume.
 
-Agent Flow can open a draft pull request. It never approves or merges one.
+plovi can open a draft pull request. It never approves or merges one.
 
 <!-- checkpoints: REV-3, REV-1 -->
 
@@ -46,7 +46,7 @@ Neither replaces the named approver.
 ## Prefer a short queue
 
 Worktrees isolate parallel checkouts. That is an isolation feature, not a throughput target.
-Agent Flow also admits only one orchestrator per project, held by an operating-system lock, so concurrent runs can't fight over the same files.
+plovi also admits only one orchestrator per project, held by an operating-system lock, so concurrent runs can't fight over the same files.
 
 Running many tasks at once produces:
 
@@ -99,7 +99,7 @@ Otherwise, review.
 
 **One medium task, full pipeline.** Specify, confirm, and start `implement-pipeline`. Spend the long wait reviewing another pull request. When the run completes, review *this* diff before asking a colleague. Start the next medium task only once this one is in CI or with a reviewer.
 
-**Two or three small follow-ups.** Use the manual lane. Keep each change independently mergeable. Switch only when one is waiting on CI or a reviewer.
+**Two or three small follow-ups.** Ask for the manual lane if you want them implemented in session; substantive changes otherwise default to the full contract. Keep each change independently mergeable. Switch only when one is waiting on CI or a reviewer.
 
 **What not to do.** Several worktrees, several draft pull requests, and a day spent resolving merge conflicts. The isolation works. The queue doesn't.
 

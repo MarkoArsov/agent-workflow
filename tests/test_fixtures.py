@@ -4,9 +4,9 @@ import shutil
 import subprocess
 import sys
 from tests.helpers import PACKAGE, WorkspaceTest
-from agentflow.process import Reader
-from agentflow.project import resolve
-from agentflow.setup import propose
+from plovi.process import Reader
+from plovi.project import resolve
+from plovi.setup import propose
 
 class ExecutableFixtureTests(WorkspaceTest):
     def fixture(self, name, source):

@@ -1,0 +1,42 @@
+{
+  "advisories": [],
+  "evaluator_version": "1.0.0",
+  "provenance": {
+    "catalogue": "08c9441f9e3b759945013986f89ea5f1552846fa0d4c334da352604ac3a7e437",
+    "facts": {
+      "kind": "code",
+      "repository_count": 1,
+      "risk": "standard",
+      "size": "medium",
+      "stages": [
+        "implement"
+      ],
+      "test_files": 3,
+      "test_lines": 420,
+      "uncertain": false
+    },
+    "policy": "6db414a553f7e4c7defff33c640a73a507afaae3961ed955ddb14ddd1bd9389e",
+    "registry": "d46858249ba32df18d9374251d7501e43b6c335ec2aa4cd5135e4d02c2eef89c",
+    "settings": "b69809844138629bec4edc593e872aa2dba5466f15585079f01a11a5977b4844"
+  },
+  "reasons": {
+    "implement": "routine-scoped-work"
+  },
+  "routes": {
+    "implement": [
+      {
+        "model": "gpt-6.1-sol",
+        "provider": "codex",
+        "reasoning": "medium"
+      },
+      {
+        "model": "gpt-6-astra",
+        "provider": "codex",
+        "reasoning": "medium"
+      }
+    ]
+  },
+  "schema_version": 1,
+  "snapshot_hash": "7be68ce7387844bc581990280fe91157b0422e08bc73597398be917c9425fe6d",
+  "unresolved": []
+}

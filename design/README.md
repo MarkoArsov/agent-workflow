@@ -39,3 +39,6 @@ The `*.dc.html` files are exported from the design canvas they were drawn in. Ea
 - Cards and rows carry an ID, a title and at most one flag. Details go in the side panel.
 - Write copy as the voice section of `DESIGN.md` says: lowercase "plovi", short active sentences, no emoji.
 - When you change a token or component, update `tokens.json` or `components.css`, its guideline, and its preview together.
+
+Documentation shells use `docs-header-height`, `docs-shell-width` and
+`docs-home-width`; the values match the existing docs reference screens.
