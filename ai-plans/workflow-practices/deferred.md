@@ -13,13 +13,14 @@
 - No host-specific transcript collector/parser or automatic personal memory scan.
 - No design token, site layout or asset change. Docs use the established style.
 - No new publishing stage. Repository-required local commits happen as a separate
-  verified local handoff after the selected pipeline; no remote action is included.
+  verified local handoff after manual implement; no remote action is included.
 
-Earlier complete proposals remain under v1/ and v2/. Current plan.md is the human
-overview; the four canonical plan files plus pipeline.json form the executable
-contract. model-upgrade.md contains the detailed adaptation research. Previous
-unresolved snapshots are historical evidence, not recommended executable routes.
+Earlier complete proposals remain under v1/, v2/ and v3/. Current plan.md is the
+human overview; prompt.md, requirements.md, implementation.md and deferred.md are
+manual task references. model-upgrade.md contains the detailed adaptation research.
+The former full pipeline.json is archived under v3/ and removed from the active
+directory. Its routes/stages are historical and must not be executed for this task.
 
-If required model routes or native host preflight cannot be established, retain
-this full draft, report the precise missing input and resolve it before execution.
-Do not switch the task to manual implementation to avoid the missing configuration.
+Codex-only project configuration and this task's implement-only manual choice are
+explicit user instructions, not a fallback caused by missing model configuration.
+Keep the package's broader harness support and the planned full-contract default.

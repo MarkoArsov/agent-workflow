@@ -1,7 +1,10 @@
 # Requirements
 
-Status: proposed; approval required. Execution uses implement-tests -> implement
--> review in the configured current checkout. No publishing stage is selected.
+Status: proposed; implementation has not started. The user explicitly selected
+manual execution with implement only, in the current Codex session and configured
+current checkout. Implement owns tests, implementation, verification and self-review;
+there is no independent test-author/reviewer stage or publishing stage. The project
+profile is now Codex only. Package support for other hosts remains in scope.
 
 ## Specification and lane choice
 
@@ -23,6 +26,24 @@ Status: proposed; approval required. Execution uses implement-tests -> implement
 - Use the existing bugfix facts: expected behavior, observed reproduction,
   evidence-based suspected cause/scope and meaningful regression check. Challenge
   material requirement gaps using code evidence before finalizing the definition.
+
+## Planning location
+
+- Prepare or reuse the configured task branch/checkout before first plan writes,
+  using task identity, selected writable repositories and branch/base; a complete
+  manifest is not a prerequisite for selecting the planning checkout.
+- Keep plans and implementation on the same task branch. Separate worktrees isolate
+  concurrent tasks; branches in a shared directory do not. Respect dirty/staged
+  user work, branch/worktree ownership and read-only companions.
+- Honor explicit current-checkout policy. Single-repository plans use the task
+  checkout's configured plan directory. Multi-repository work uses its configured
+  plan owner/shared store, without initializing an unversioned parent.
+- Reuse the chosen checkout at execution handoff, verify project resolution, and
+  avoid duplicate worktrees or incidental branch switches. Do not promise that
+  task branches prevent all merge conflicts.
+- This task stays in the current checkout with manual Codex implement only. The
+  user asked for an opinion about future planning placement, not relocation of
+  the current plans or a project checkout-strategy change.
 
 ## Model evaluation
 
@@ -94,9 +115,11 @@ Status: proposed; approval required. Execution uses implement-tests -> implement
 
 ## Acceptance mappings and evidence
 
-pipeline.json maps portable executable outcomes to focused model-policy/watch/
-context/discovery tests, full tests, docs build/links, wrapper freshness and content
-audit. Do not claim those checks prove future agent obedience to prose.
+For this manual task, the executable check commands are retained in the archived
+v3/pipeline.json and summarized in plan.md/model-upgrade.md: focused model-policy,
+watch and context/discovery tests, full tests, docs build/links, wrapper freshness,
+portable export and content audit. There is no active pipeline manifest. Do not
+claim those checks prove future agent obedience to prose.
 
 Independently review the specify procedure using six isolated scenarios: substantive
 model feature; short behavioral bugfix; trivial wording edit; explicit manual

@@ -1,12 +1,13 @@
 # Improve workflow guidance and learning
 
-Status: revised proposal; awaiting implementation approval.
-Revision: 29 October 2026; includes full-contract-first specification.
-Previous complete proposals: `v1/` and `v2/`.
-Lane: full pipeline, with implement-tests -> implement -> review.
-No commit/push/PR stage or automatic external delivery is selected.
-Contract: prompt.md, requirements.md, implementation.md, deferred.md, pipeline.json.
-Validation and preflight status are recorded in planning-checks.md.
+Status: revised manual proposal; implementation has not started.
+Revision: 29 October 2026; explicit user choice of Codex-only manual execution.
+Previous complete proposals: `v1/`, `v2/`, and `v3/`.
+Lane: manual. Selected AI stage: implement only, in the active Codex session.
+No independent implement-tests/review stage, detached runner or external delivery.
+Keep the detailed prompt, requirements, implementation and deferred documents as
+manual task references. The former pipeline.json is archived under v3/ and removed
+from the active plan directory. Evidence is recorded in planning-checks.md.
 
 ## Request and boundary
 
@@ -19,6 +20,10 @@ this public repository; private paths, identifiers, source text, and configurati
 are intentionally excluded from these deliverables.
 
 Only this repository is writable, using its configured current checkout strategy.
+The user explicitly authorized setting this project's agents to Codex only; that
+profile edit and matching PROJECT_WORKFLOW.md update are applied now. This does
+not restrict the package's general support for other harnesses in other projects.
+Project pipeline defaults remain unchanged; implement-only is this task's choice.
 The source workflow and company plugin checkout are read-only research inputs.
 No worktree, plugin update, installation, push, PR, tracker edit, or external
 communication is included. Preserve existing plans and model-policy settings.
@@ -152,7 +157,9 @@ in the corresponding skills and docs rather than adding always-on global prose.
 Full planning is the default for substantive code/runtime changes, behavioral tests,
 multiple components/repositories, compatibility, migrations, or significant risk or
 uncertainty. A short user prompt or an established pattern alone does not make the
-manual lane appropriate. This task itself uses the full lane.
+manual lane appropriate. This task is an explicit user-requested manual exception and uses implement only.
+That choice does not weaken the planned full-contract default for other substantive
+work or the package's cross-harness support.
 
 Allow a concise manual plan only when the user explicitly requests manual execution
 or the change is a clearly trivial, low-risk wording/format correction. State the
@@ -180,11 +187,43 @@ implementation-pipeline performs the later execution handoff. Keep planning-only
 boundaries even for follow-ups. Update pipeline-workflow, implement-pipeline and
 lanes/first-task/tasks docs to explain this consistently.
 
+### 8. Localize plans with the task checkout
+
+Before writing plan artifacts, specify identifies the task, participating writable
+repositories, branch/base and configured checkout strategy, then prepares or reuses
+the selected task checkout. Plans and implementation should live on the same task
+branch rather than accumulating on an unrelated development or base branch. Use a
+separate worktree for concurrent tasks: switching branches in one shared directory
+does not isolate their files. Reuse matching existing worktrees and validate project
+resolution from the selected location before writing.
+
+Update worktree-start to accept this planning-time task/repository selection before
+a full pipeline.json exists, avoiding a specify/worktree-start dependency cycle.
+The later manifest records the already selected branch and paths; runner handoff
+reuses that checkout instead of creating another task or switching a shared checkout.
+Preserve dirty/staged work and branch ownership; never auto-stash, reset, move user
+edits, or create a branch in a read-only companion. Ambiguous ownership needs a
+specific choice before switching or moving anything.
+
+Honor current-checkout as an explicit project policy. For single-repository tasks,
+write the configured plan path inside the task checkout. For multi-repository work,
+use the configured plan-owning repository/checkout or explicit shared plan location;
+never initialize a Git repository around an unversioned parent. Explain that plans
+on a branch improve ownership/history, while worktrees provide concurrent file
+isolation; neither guarantees zero later merge conflicts.
+
+For this task, the user has not requested moving the existing plans or checkout.
+Keep the configured current-checkout policy and the explicitly selected manual
+Codex implement-only lane. The new localization behavior is proposed skill work,
+not authorization to move earlier commits, change this project's checkout strategy,
+or start another worktree now.
+
 ## Intended implementation files
 
 | Files | Purpose |
 | --- | --- |
 | `skills/specify/SKILL.md` | Default substantive work to full contracts; state manual exceptions; enforce readiness reporting; select shared guidance and defect facts. |
+| `skills/worktree-start/SKILL.md` | Support planning-time checkout selection before a full manifest exists; reuse it at execution handoff. |
 | `skills/implement/SKILL.md`, `skills/implement-tests/SKILL.md` | Load selected quality guidance consistently; clarify manual regression-first implementation. |
 | `skills/peer-pr-review/SKILL.md`, `skills/request-review/SKILL.md` | Reuse review guidance read-only; explain intent before findings; offer concise title-and-links drafts. |
 | `skills/review/SKILL.md` | Explicit evidence order and scoped checklist; retain direct/pipeline boundaries. |
@@ -240,6 +279,11 @@ or assets.
    produce a pending full contract, never an automatic manual fallback. Do not
    claim static word searches or hand-authored manifests prove agent behavior.
    Record whether these are observed agent runs or procedure walkthroughs.
+10. Add localization scenarios: an existing task worktree, two concurrent tasks,
+    dirty shared checkout, explicit current-checkout policy, and multi-repository
+    shared planning. Verify plan destination and same-checkout handoff without
+    creating duplicate branches, moving user edits or requiring a manifest before
+    planning can begin. Label observed fixture behavior versus procedural guidance.
 
 These are future implementation checks, not checks claimed to have passed during
 specification. No assertion-red requirement is invented for prose-only changes.
@@ -266,36 +310,22 @@ specification. No assertion-red requirement is invented for prose-only changes.
 
 ## Model recommendation and execution
 
-The selected execution stages are implement-tests, implement, and review. Evaluate
-only those stages in the full route snapshot; specify is not an executable stage.
-Read-only native discovery may supply availability evidence saved to temporary
-planning storage, without refreshing real workflow settings or reading API keys.
-Native listing does not prove model entitlement or successful generation.
+This project's allowed harness is Codex only. Evaluate only implement for this
+manual revision. The recommendation is informational: use the active Codex session
+without starting a detached provider or switching its model. Preserve the evaluator
+snapshot in model-selection.json, but do not create a new active pipeline manifest.
+No Cursor or Claude route is eligible for this project. Native model preferences,
+installed harnesses, machine defaults and other projects are unchanged.
 
-Use the required offline evaluator once for this revision. Save its exact snapshot
-and routes in pipeline.json. If no valid recommendation can be established, retain
-the full draft and report the unresolved route before execution rather than
-reverting this task to the manual lane. planning-checks.md records the observed
-validation and preflight outcomes, not assumed success.
+Implement owns tests, assertion-level regression evidence, product/guidance edits,
+verification and a final self-review in the same session. No independent test-author
+or reviewer session is selected. All previously named test/build/link/export/content
+checks still apply; test coverage and safety boundaries are not reduced by the lane
+change. The earlier executable check definitions remain available in
+v3/pipeline.json as reference only, not a contract to run.
 
-Observed for this revision: read-only discovery succeeded for both configured
-hosts after retrying outside restricted execution. The existing 1.0 evaluator
-produced valid routes with no unresolved entries. Both validate-plan and preflight
-passed. No workflow defaults or native model preferences were changed. Listing
-and preflight do not prove entitlement or successful generation. The current
-snapshot uses today's evaluator; the planned lineage upgrade will not silently
-rewrite this approved task's routes.
-
-| Stage | Proposed primary | Ordered fallbacks |
-| --- | --- | --- |
-| implement-tests | Codex gpt-6-astra, high | Cursor claude-opus-5-5-high |
-| implement | Codex gpt-6.1-sol, medium | Cursor claude-sonnet-5-5-medium; Codex gpt-6-astra, medium |
-| review | Cursor claude-sonnet-5-5-medium | Codex gpt-6.1-sol, medium; Codex gpt-6-astra, medium |
-
-Run the approved contract through implement-pipeline only after approval. Use the
-configured current checkout and trusted execution defaults; provider sessions
-remain bounded by task paths and existing verification guards. No delivery stages
-are selected. Repository-required local commits are a separate local handoff after
-verification, with no push or remote action.
-
-Approve this plan and start implementation?
+Use the configured current checkout and trusted execution defaults. Repository-
+required local commits follow successful verification. No push, PR, installation,
+benchmark request with a real key or external communication is authorized by this
+revision. The broader feature implementation remains proposed; this request edits
+configuration and planning only.

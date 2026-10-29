@@ -1,20 +1,24 @@
 # Implementation contract
 
-Implement only after the user approves this full contract. Use the current
-checkout as configured. The pipeline owns stage execution and verification;
-no stage may commit, push, change branches, post feedback or edit real user config.
+Execution: manual implement only, in the active Codex session and current checkout.
+The project is Codex only by explicit user request. This revision does not start
+feature implementation. Once implementation is authorized, implement owns tests,
+product/guidance edits, verification and self-review; do not invoke independent
+stages or a detached runner. No push, branch change, posting or real user-agent
+configuration edit is included.
 
-## Independent tests
+## Tests within manual implement
 
-Change only declared test_paths. Add behavioral regression coverage described
+Author tests in the planned test paths before the corresponding product changes. Add behavioral regression coverage described
 below. The named red proof is
 ModelPolicyTests.test_adversary_lineage_prefers_alternate_lab: supply the existing
 evaluate function with fictional reviewed entries from two labs under the same
 host, where the implementation lab has a better rank. Assert test authoring selects
 the available alternate lab. The old evaluator ignores lineage, so this must reach
 an assertion failure. Keep imports/setup working and use the existing helpers.
-Other new tests may target the explicitly planned watch module/command interfaces;
-they must not supply product implementations or claim import/setup failures as red.
+Other new tests may target the explicitly planned watch module/command interfaces.
+Implement may add the planned product code afterward in the same session. Never
+claim import/setup failures as red or weaken existing behavioral assertions.
 
 Add ModelWatchTests in test_model_watch.py and WorkflowPracticesTests in
 test_workflow_practices.py. Use isolated child homes, synthetic keys, and provider/
@@ -156,7 +160,8 @@ in the corresponding skills and docs rather than adding always-on global prose.
 Full planning is the default for substantive code/runtime changes, behavioral tests,
 multiple components/repositories, compatibility, migrations, or significant risk or
 uncertainty. A short user prompt or an established pattern alone does not make the
-manual lane appropriate. This task itself uses the full lane.
+manual lane appropriate. This task uses the manual exception explicitly selected by the user: implement
+only in Codex. Future substantive tasks still default to full contracts.
 
 Allow a concise manual plan only when the user explicitly requests manual execution
 or the change is a clearly trivial, low-risk wording/format correction. State the
@@ -184,11 +189,43 @@ implementation-pipeline performs the later execution handoff. Keep planning-only
 boundaries even for follow-ups. Update pipeline-workflow, implement-pipeline and
 lanes/first-task/tasks docs to explain this consistently.
 
+### 8. Localize plans with the task checkout
+
+Before writing plan artifacts, specify identifies the task, participating writable
+repositories, branch/base and configured checkout strategy, then prepares or reuses
+the selected task checkout. Plans and implementation should live on the same task
+branch rather than accumulating on an unrelated development or base branch. Use a
+separate worktree for concurrent tasks: switching branches in one shared directory
+does not isolate their files. Reuse matching existing worktrees and validate project
+resolution from the selected location before writing.
+
+Update worktree-start to accept this planning-time task/repository selection before
+a full pipeline.json exists, avoiding a specify/worktree-start dependency cycle.
+The later manifest records the already selected branch and paths; runner handoff
+reuses that checkout instead of creating another task or switching a shared checkout.
+Preserve dirty/staged work and branch ownership; never auto-stash, reset, move user
+edits, or create a branch in a read-only companion. Ambiguous ownership needs a
+specific choice before switching or moving anything.
+
+Honor current-checkout as an explicit project policy. For single-repository tasks,
+write the configured plan path inside the task checkout. For multi-repository work,
+use the configured plan-owning repository/checkout or explicit shared plan location;
+never initialize a Git repository around an unversioned parent. Explain that plans
+on a branch improve ownership/history, while worktrees provide concurrent file
+isolation; neither guarantees zero later merge conflicts.
+
+For this task, the user has not requested moving the existing plans or checkout.
+Keep the configured current-checkout policy and the explicitly selected manual
+Codex implement-only lane. The new localization behavior is proposed skill work,
+not authorization to move earlier commits, change this project's checkout strategy,
+or start another worktree now.
+
 ## Intended implementation files
 
 | Files | Purpose |
 | --- | --- |
 | `skills/specify/SKILL.md` | Default substantive work to full contracts; state manual exceptions; enforce readiness reporting; select shared guidance and defect facts. |
+| `skills/worktree-start/SKILL.md` | Support planning-time checkout selection and same-checkout handoff before a full manifest exists. |
 | `skills/implement/SKILL.md`, `skills/implement-tests/SKILL.md` | Load selected quality guidance consistently; clarify manual regression-first implementation. |
 | `skills/peer-pr-review/SKILL.md`, `skills/request-review/SKILL.md` | Reuse review guidance read-only; explain intent before findings; offer concise title-and-links drafts. |
 | `skills/review/SKILL.md` | Explicit evidence order and scoped checklist; retain direct/pipeline boundaries. |
@@ -422,8 +459,8 @@ Update PLAN.md only after implementation is approved.
 
 ## Behavioral checks and execution order
 
-This revision uses the full pipeline: implement-tests, implement, then review.
-The stage contracts and executable checks are in pipeline.json.
+This task uses manual implement only by explicit user choice. The earlier check
+commands are retained in v3/pipeline.json as reference, not for detached execution.
 
 First author focused tests and observe assertion failures for missing behavior,
 then implement in two logical chunks: evaluator compatibility and watch evidence.
@@ -480,17 +517,16 @@ private integration has been audited. It makes exclusions explicit so future
 requests can select the next workstream without guessing what was overlooked.
 
 
-## Handoff and independent review
+## Manual verification and handoff
 
 Implement runs all named green checks, fixes in-scope failures and repeats relevant
-checks against the current diff. Record the six specify procedure scenarios in
+checks against the current diff. Record the specify lane/readiness and checkout-localization scenarios in
 specify-scenarios.md, labeling walkthroughs versus real agent executions honestly.
-Review starts from requirements.md, prompt.md, actual changes and supplied frozen
-references, not this implementation narrative. Check the full-contract default,
-manual exception, missing-route behavior and approval boundary, then model policy,
-compatibility and evidence handling. Corrections stay inside approved paths and
-preserve the frozen tests. If a required test or contract is wrong, report the
-specific issue for plan revision rather than weakening it.
+Perform a final self-review against requirements.md, the actual diff and selected
+project guidance. Check the full-contract default, explicit manual exception,
+missing-route behavior, model compatibility, secret-safe evidence handling and
+approval boundaries. Preserve existing tests; revise incorrect requirements openly.
 
-After all stages pass, report results for the repository-required local commit
-handoff. No publication stage or external action is included.
+Report observed results and material limitations, then make repository-required
+local commits of verified task changes. No push, PR, independent review session
+or other external action is included.

@@ -1,7 +1,7 @@
 # Model-policy upgrade and broader comparison
 
 Part of the revised workflow-practices proposal; not implementation approval.
-The original proposal is preserved under v1/. All source-workspace files remain
+Earlier proposals are preserved under v1/, v2/ and v3/. All source-workspace files remain
 read-only, including their uncommitted model-policy edits.
 
 ## Findings
@@ -150,8 +150,10 @@ Update PLAN.md only after implementation is approved.
 
 ## Behavioral checks and execution order
 
-This revision uses the full pipeline: implement-tests, implement, then review.
-The stage contracts and executable checks are in pipeline.json.
+This revision uses manual implement only by explicit user choice. Implement owns
+all test authoring, product changes, verification and self-review in the active
+Codex session. The prior stage contracts and executable check definitions are
+retained in v3/pipeline.json for reference; no detached pipeline is selected.
 
 First author focused tests and observe assertion failures for missing behavior,
 then implement in two logical chunks: evaluator compatibility and watch evidence.

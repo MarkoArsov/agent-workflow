@@ -1,7 +1,6 @@
 {
   "agents": [
-    "codex",
-    "cursor"
+    "codex"
   ],
   "delivery": {
     "merge_to_base": "explicit",
