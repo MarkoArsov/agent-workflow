@@ -1,6 +1,6 @@
 # Improve workflow guidance and learning
 
-Status: implemented; local verification passed; delivery in progress.
+Status: implemented, verified, committed and pushed; draft PR #39 updated.
 Revision: 29 October 2026; explicit user choice of Codex-only manual execution.
 Previous complete proposals: `v1/`, `v2/`, and `v3/`.
 Lane: manual. Selected AI stage: implement only, in the active Codex session.
@@ -325,9 +325,9 @@ change. The earlier executable check definitions remain available in
 v3/pipeline.json as reference only, not a contract to run.
 
 Use the configured current checkout and trusted execution defaults. Repository-
-required local commits follow successful verification. No push, PR, installation,
-benchmark request with a real key or external communication is authorized by this
-revision. The broader feature implementation and separate verified commit/push/draft-PR
+required local commits follow successful verification. No installation, benchmark request with a real key, or unrelated external
+communication is authorized. The later explicit request authorizes normal push
+and draft PR. The broader feature implementation and separate verified commit/push/draft-PR
 handoff were subsequently authorized by the user and are now complete locally.
 
 

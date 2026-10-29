@@ -64,3 +64,17 @@ portable provider-subset contracts passed. Source/site rename audits and generic
 source/site/history public-content scans had zero findings, without a private denylist.
 The existing exact generated-search compatibility hash was refreshed after reviewing
 that its old names occur only in existing migration documentation.
+
+
+## Completed delivery
+
+Normal push succeeded to the existing codex/rename-plovi branch. PR #39 was reused,
+converted to draft, and updated to cover the complete branch change:
+https://github.com/MarkoArsov/agent-workflow/pull/39
+
+Implementation commits: 2b871ef (model policy/watch), c298435 (benchmark reporting
+refinements), and 3ed3109 (skills, guidance, docs and evidence). A final documentation
+commit records this verified delivery; it changes no runtime or tests. No force
+push, duplicate PR, reviewers, comments, tracker changes or deployment was performed.
+Hosted CI remains separate from the observed local verification. Temporary local
+browser/server preview resources were closed.
