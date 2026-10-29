@@ -102,6 +102,7 @@ def propose(root: Path, answers: dict | None = None) -> dict:
     migration_roots = ["."] if pending else []
     aliases = {CURRENT + "/": LEGACY + "/"} if pending else {}
     source_before = {}
+    before_hashes = {}
     def existing(relative):
         original = relative
         for canonical, legacy in aliases.items():
@@ -110,8 +111,13 @@ def propose(root: Path, answers: dict | None = None) -> dict:
                 break
         source_before[original] = file_hash(root / original)
         if original in predicted:
-            return base64.b64decode(predicted[original]["after"]).decode()
+            content = base64.b64decode(predicted[original]["after"])
+            before_hashes[relative] = digest(content)
+            return content.decode()
         path = root / original
+        # Text reads normalize CRLF for merging; approval binds the exact bytes
+        # apply will inspect, including changes made only to line endings.
+        before_hashes[relative] = source_before[original]
         return path.read_text() if path.is_file() else None
     baseline_text = existing(".plovi/local/setup-baseline.json")
     baseline = json.loads(baseline_text) if baseline_text is not None else {}
@@ -163,7 +169,7 @@ def propose(root: Path, answers: dict | None = None) -> dict:
                 desired = old
         files[relative] = desired
         if old != desired:
-            changes.append({"path": relative, "before": digest(old) if old is not None else None, "content": desired,
+            changes.append({"path": relative, "before": before_hashes[relative], "content": desired,
                             "diff": "".join(difflib.unified_diff((old or "").splitlines(True), desired.splitlines(True), fromfile=relative, tofile=relative))})
     for relative, old_generated in baseline_files.items():
         if relative in files or not discovery_file(relative):
@@ -175,7 +181,7 @@ def propose(root: Path, answers: dict | None = None) -> dict:
     proposal = {"schema_version": 1, "root": str(root), "profile": profile, "findings": detected["findings"],
                 "questions": [] if answers.get("confirmed_defaults") or current is not MISSING else detected["questions"],
                 "conflicts": conflicts, "changes": changes, "baseline": {"profile": detected["profile"], "files": generation_base},
-                "baseline_before": digest(baseline_text) if baseline_text is not None else None}
+                "baseline_before": before_hashes[".plovi/local/setup-baseline.json"]}
     if migration_roots:
         proposal["migration"] = {"notice": "Move .agentflow/ to .plovi/ on apply",
                                  "roots": migration_roots,

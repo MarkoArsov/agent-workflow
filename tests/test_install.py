@@ -12,6 +12,18 @@ from plovi.extensions import copy_skill, new_skill
 from plovi.util import WorkflowError, read_json, write_json
 
 class InstallTests(WorkspaceTest):
+    def test_setup_baseline_does_not_own_line_ending_edits(self):
+        root = self.repo("edited-discovery")
+        self.setup_project(root)
+        wrapper = root / ".agents/skills/plovi-review/scripts/dispatch.py"
+        changed = wrapper.read_bytes().replace(b"\n", b"\r\n")
+        wrapper.write_bytes(changed)
+        preview = install.install(PACKAGE, project=root, dry_run=True)
+        self.assertIn(str(wrapper), preview["conflicts"])
+        with self.assertRaisesRegex(WorkflowError, "conflicts"):
+            install.install(PACKAGE, project=root)
+        self.assertEqual(wrapper.read_bytes(), changed)
+
     def test_pre_rename_link_keeps_receipt_settings_and_discovery(self):
         caller = self.repo("project")
         install.install(PACKAGE, link=True)

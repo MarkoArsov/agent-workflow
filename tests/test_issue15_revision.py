@@ -73,8 +73,9 @@ class RebrandRevisionTests(WorkspaceTest):
         self.assertEqual(result.returncode, 0, result.stderr)
         moved = root / ".plovi/local/worktrees/task"
         listing = self.git(root, "worktree", "list", "--porcelain")
-        self.assertIn(str(moved), listing)
-        self.assertNotIn(str(old), listing)
+        registered = {Path(line[len("worktree "):]) for line in listing.splitlines() if line.startswith("worktree ")}
+        self.assertIn(moved, registered)
+        self.assertNotIn(old, registered)
         self.assertEqual(self.git(moved, "branch", "--show-current"), "task/sample")
         common = self.git(moved, "rev-parse", "--git-common-dir")
         self.assertTrue(common)
