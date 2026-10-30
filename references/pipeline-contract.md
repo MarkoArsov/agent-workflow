@@ -16,6 +16,20 @@ plans inside that checkout, or use the configured multi-repository plan owner/sh
 store. Record the chosen branch for execution handoff and reuse that worktree.
 Honor current-checkout policy and never move dirty/staged work automatically.
 
+Checkout strategy and planning commits are separate decisions. Feature-branch and
+worktree policies create/reuse the configured task branch before plan writes;
+current-checkout reuses the actual branch and does not create one merely because
+plans must be committed. When native instructions or project policy require
+planning commits, commit the complete contract and its task-owned supporting
+artifacts in the selected plan-owning branch before handoff. Do not include
+unrelated changes or push. An unversioned shared plan store remains unversioned
+unless the user selects a configuration repository.
+
+The handoff links requirements.md and pipeline.json, names each actual branch as
+created or reused with its checkout strategy, and gives the planning commit hash
+or an explicit uncommitted limitation. An optional plan.md is a summary, not a
+replacement for the contract below.
+
 Include `quality-guidance.md` and applicable project quality names in `references`; see
 `quality-guidance.md`. All three AI stages receive those frozen sources, with
 project references taking precedence. Do not put implementation reasoning into a

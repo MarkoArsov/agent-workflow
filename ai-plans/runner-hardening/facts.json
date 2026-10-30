@@ -9,8 +9,8 @@
   "risk": "high",
   "uncertain": true,
   "repository_count": 1,
-  "test_files": 7,
-  "test_lines": 1000,
+  "test_files": 9,
+  "test_lines": 1250,
   "routes": {
     "implement-tests": [
       {

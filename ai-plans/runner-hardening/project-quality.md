@@ -1,9 +1,8 @@
 # Frozen project quality sources
 
-These are the existing applicable native standards at specification time. Their
-repository-relative paths are named below; originals retain authority. No new
-project extension or unrelated installed workflow is introduced. The package
-quality-guidance.md is separately selected in pipeline references.
+Existing native/project/design standards, refreshed for the authorized checkout
+policy revision. Originals retain authority. The package quality-guidance.md is
+selected separately in pipeline references.
 
 
 ## AGENTS.md
@@ -32,7 +31,7 @@ Design: anything people see (app, docs site, brand) follows design/README.md and
 <!-- plovi:start -->
 # Project workflow
 
-- agent-workflow: .; library, docs; current-checkout; participate when-changed.
+- agent-workflow: .; library, docs; worktree; participate when-changed.
 
 Plans: ai-plans/<task>/.
 Harness: Codex only.

@@ -223,7 +223,62 @@ Run generated-docs before a build so auto-generation cannot conceal stale files.
 Run link checks after the strict build; scan public source/history before each
 logical local commit and again afterwards. Private-denylist absence is reported.
 
-Implementation remains local. Do not select commit-and-push or draft-pr stages.
-The native instruction to commit logical changes locally remains applicable;
-commits happen outside runner-owned AI stages. A later separately authorized PR
-must list shipped behavior, exact test cases/results and workflow changes.
+The revised user request includes the #16 PR. Select commit-and-push followed by
+draft-pr after implementation/review; execution still requires plan approval.
+Use the selected issue branch and prepared delivery title/body. The PR must list
+shipped behavior, exact test cases/results and workflow changes. Planning commits
+remain local; do not push or open a PR during specification.
+
+
+## R9. Worktree-per-task defaults and complete planning delivery
+
+New project setup defaults every writable repository to checkout_strategy=worktree:
+a distinct branch named by git.branch_template and a distinct registered worktree
+for each issue/task. Proposals, findings, saved profiles and generated workflow
+summaries must agree; existing worktree history is evidence, not a reason to choose
+current-checkout for a new project. Do not create actual task checkouts during setup.
+
+Setup permits a reviewed explicit feature-branch or current-checkout override,
+per repository. Preserve explicit overrides on repeat setup and updates. For legacy
+projects, propose the new default through reviewed setup only when generation
+baselines establish it was an untouched old default; ambiguous/existing choices
+remain intact until reviewed. Do not modify all installed projects automatically.
+This project has already explicitly opted into worktree, per the user's correction.
+
+Add planning.commit_plans (boolean, default true) to defaults, schema, validation,
+setup proposal/digest and generated guidance; setup can explicitly disable it.
+A missing value in legacy profiles gets the documented default, while native/user
+instructions retain precedence. Existing saved run bindings are not rewritten.
+An unversioned multi-repository plan store must be identified during setup and
+resolve an explicit plan-owning configuration repository or reviewed local-only
+opt-out; never initialize a Git parent or falsely claim plans were committed.
+
+Specify prepares/reuses each writable task branch/worktree before the first plan
+write, even when pipeline.json does not yet exist. Write the complete contract and
+its evaluator/quality/evidence artifacts in the configured task plan store in that
+checkout. When planning.commit_plans or native policy requires it, commit the full
+artifact set before asking for implementation approval. A plan.md summary alone
+is insufficient. Verify each required artifact is tracked in that commit.
+
+Report links to requirements.md and pipeline.json, created/reused branch names,
+checkout paths, planning commit hashes and validation/preflight results. Explicit
+current-checkout opt-outs keep the actual branch; commit policy alone never changes
+checkout strategy. Do not switch another task's checkout, move unrelated edits,
+branch read-only companions, or push during specify. Implementation must reuse the
+same task worktree and canonical configuration root, avoiding nested worktrees.
+
+Checks: planning-default-regression, task-planning, full-suite, generated-docs,
+docs-build and links. Add tests/test_task_planning.py using isolated Git fixtures:
+new single/multi-repo profiles default to worktree; findings agree with proposal;
+explicit checkout and commit opt-outs survive re-setup; plan commit option validates
+and appears in the approval digest; task preparation creates and reuses the actual
+branch/worktree before manifest creation; two issue plans occupy different worktrees;
+complete contracts are committed on their issue branch and root/companions remain
+unchanged. Run documented skill scenarios to inspect actual handoff behavior;
+static wording tests are not proof of agent execution. Tests that need the old
+current-checkout behavior should request that choice explicitly in fixture profiles,
+not weaken the new default or existing assertions.
+
+Update setup/project/profile/task/first-task docs and canonical specify,
+worktree-start and project-setup guidance, then regenerate public references.
+The #16 PR must include this default change and explain the explicit setup opt-out.

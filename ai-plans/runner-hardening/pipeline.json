@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "task": "runner-hardening",
-  "plan_status": "proposed-awaiting-approval",
+  "plan_status": "revised-proposed-awaiting-approval",
   "plan_files": [
     "prompt.md",
     "requirements.md",
@@ -13,7 +13,7 @@
     {
       "id": "agent-workflow",
       "access": "write",
-      "branch": "codex/rename-plovi",
+      "branch": "codex/runner-hardening",
       "paths": [
         "runtime/plovi/**",
         "schemas/policy.schema.json",
@@ -45,7 +45,12 @@
         "scripts/docs_content.py",
         "mkdocs.yml",
         "PLAN.md",
-        "ai-plans/runner-hardening/**"
+        "ai-plans/runner-hardening/**",
+        ".plovi/project.json",
+        "PROJECT_WORKFLOW.md",
+        "skills/specify/**",
+        "skills/worktree-start/**",
+        "tests/test_task_planning.py"
       ],
       "test_paths": [
         "tests/test_runner_outcomes.py",
@@ -62,14 +67,17 @@
         "tests/test_git_ops.py",
         "tests/test_setup.py",
         "tests/test_issue15_revision.py",
-        "tests/test_migration.py"
+        "tests/test_migration.py",
+        "tests/test_task_planning.py"
       ]
     }
   ],
   "stages": [
     "implement-tests",
     "implement",
-    "review"
+    "review",
+    "commit-and-push",
+    "draft-pr"
   ],
   "checks": [
     {
@@ -120,6 +128,29 @@
       ],
       "identities": [
         "test_41_files_need_approval"
+      ]
+    },
+    {
+      "id": "planning-default-regression",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "-m",
+          "unittest",
+          "-v",
+          "tests.test_task_planning.TaskPlanningTests.test_new_project_defaults_to_worktree"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 300
+      },
+      "parser": "unittest",
+      "identities": [
+        "test_new_project_defaults_to_worktree"
+      ],
+      "phases": [
+        "red",
+        "green"
       ]
     },
     {
@@ -246,6 +277,25 @@
           "unittest",
           "-v",
           "tests.test_evidence"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 300
+      },
+      "parser": "unittest",
+      "phases": [
+        "green"
+      ]
+    },
+    {
+      "id": "task-planning",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "-m",
+          "unittest",
+          "-v",
+          "tests.test_task_planning"
         ],
         "cwd": ".",
         "timeout_seconds": 300
@@ -410,6 +460,17 @@
         "links",
         "public-content"
       ]
+    },
+    {
+      "id": "worktree-defaults-and-complete-planning-commits",
+      "checks": [
+        "planning-default-regression",
+        "task-planning",
+        "full-suite",
+        "generated-docs",
+        "docs-build",
+        "links"
+      ]
     }
   ],
   "routes": {
@@ -495,8 +556,8 @@
           "implement",
           "review"
         ],
-        "test_files": 7,
-        "test_lines": 1000,
+        "test_files": 9,
+        "test_lines": 1250,
         "uncertain": true
       },
       "policy": "3c7d03f86602c435d0771f98e34a76bebfd100cc00bbd8ea18722b2b0ce10aa7",
@@ -532,7 +593,7 @@
       ]
     },
     "schema_version": 1,
-    "snapshot_hash": "a5ee38e0b09e6de0d9f94c212731e343a63c556ce523139a4e8c74fa27283174",
+    "snapshot_hash": "dbb668e99bbc8c984bba1109cf818db8119b852bd6ba9bead93863cacb24eff9",
     "unresolved": []
   },
   "limits": {
@@ -544,5 +605,10 @@
   "references": [
     "quality-guidance.md"
   ],
-  "connectors": []
+  "connectors": [],
+  "delivery": {
+    "commit_message": "Harden unattended runs and default to task worktrees",
+    "title": "Harden unattended runs and prepare each task in its own worktree",
+    "body_file": "pr-body.md"
+  }
 }

@@ -4,10 +4,12 @@ Approval pending. Scope is issue #16; do not execute this file during specificat
 
 ## Research and starting point
 
-The source tree at 55cae30 equals local main at 0fe14a9. Current checkout is clean
-before planning and remains codex/rename-plovi under current-checkout policy.
-No other repository participates. Existing registered worktrees are unrelated.
-Use this checkout and its configuration root for all implementation handoff.
+The source tree at 55cae30 equals local main at 0fe14a9. The original plan used current-checkout on codex/rename-plovi. The user revised
+that choice: 53070e1 changes the canonical profile to worktree, and the active
+branch/worktree is codex/runner-hardening at the configured task location.
+The prior complete contract is preserved in v1/. No other repository participates.
+Use this task checkout with the original canonical configuration root explicitly
+at implementation handoff; leave the parked checkout untouched.
 
 Observed in an isolated existing RunnerTests fixture, without product/test edits:
 blocked with attempts_per_route=2 produced two provider calls, failed status and
@@ -26,9 +28,10 @@ OSes and Python 3.11/3.14, with automatic Windows test sharding.
 
 ## Sequence
 
-1. implement-tests writes the seven requested test modules plus minimal shared
-   fixture support. Red checks exercise existing APIs only: one blocked call,
-   the two ignored statuses, and 41 task-owned files requiring approval. Assert
+1. implement-tests writes the seven requested runner modules, test_task_planning.py
+   and minimal shared fixture support. Red checks exercise existing APIs only: one blocked call,
+   the two ignored statuses, 41 task-owned files requiring approval, and the
+   incorrect new-project checkout default. Assert
    user-visible behavior, not implementation structure. The new feature checks
    can exercise missing commands through subprocess results; no new-module import
    failures count as red. Save outputs before product edits. No live provider or
@@ -61,8 +64,16 @@ OSes and Python 3.11/3.14, with automatic Windows test sharding.
    tests and current artifacts, not this implementation narrative. It checks
    outcomes first, then regressions, failure paths, concurrency/recovery and shared
    quality guidance. Correct only in-scope defects and reverify affected checks.
-8. Commit logical verified changes locally, respecting runner-owned delivery
-   boundaries. No publication is part of this plan.
+8. Implement R9: align detect.py's findings and generated repository defaults on
+   worktree, add planning.commit_plans default true to profile/schema/setup and
+   preserve reviewed setup opt-outs. Share policy interpretation across specify
+   and worktree-start, and retain the complete-contract commit/handoff correction
+   already included in this task. Add isolated default/override/actual Git checkout
+   checks; keep role/task participation independent from checkout policy.
+9. After independent review and all checks, use the selected commit-and-push and
+   draft-pr delivery steps for the user-requested #16 PR. Its body includes the
+   planning/default fixes, exact observed verification and workflow changes. Do
+   not execute delivery during specification or before plan approval.
 
 ## Concrete decisions refining the issue
 
@@ -99,3 +110,17 @@ Do not change the real project profile or global agent settings while implementi
 fixture behavior. planning-checks.md records actual checks separately from planned
 acceptance. Missing MkDocs in the default interpreter is addressed by a disposable
 documentation environment; no runtime dependency or user-agent installation changes.
+
+
+## Revision: default task isolation
+
+The detector currently records a worktree suggestion when Git shows existing
+worktrees but unconditionally writes current-checkout in its repository profile.
+Fix both outputs; do not turn observed history into a hidden override of the new
+default. Existing fixture callers that rely on in-place writes must select the
+explicit setup override. The runtime/fixture changes remain future implement work.
+
+The handoff skill/docs corrections were validated before moving them into this task:
+178 isolated tests passed in 85.549s; skill validation, strict MkDocs, generated-doc
+freshness and 3,964 links passed. These are not evidence that the new default or
+#16 runner features have been implemented.

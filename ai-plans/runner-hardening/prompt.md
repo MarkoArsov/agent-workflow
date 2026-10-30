@@ -17,15 +17,31 @@ to implement. The full lane is appropriate because this changes runtime behavior
 persistence, security defaults and concurrent delivery across multiple components.
 
 Use the source checkout, Python 3.11+ standard library runtime and isolated fixtures.
-Do not modify actual user agent configuration. Work locally; no push, PR, tracker
-comment, installation or deployment is selected. Tests may simulate delivery using
+Do not modify actual user agent configuration. Planning stays local. The revised contract selects eventual push/draft-PR delivery
+after approval and verification; no tracker comment, installation or deployment
+is selected. Tests may simulate delivery using
 temporary bare remotes and a recorded gh double.
 
-Planning uses the clean current checkout on codex/rename-plovi, as required by
-PROJECT_WORKFLOW.md and the current-checkout profile. Its starting revision is
-55cae30; the local main ref is 0fe14a9. Their file trees are identical. Do not switch
-branches or prepare another worktree for this task. Plans and later implementation
-stay here; execution must explicitly use this project's configuration root.
+Planning initially used current-checkout on codex/rename-plovi and committed the
+complete contract as 3abe720. The user corrected the desired project policy:
 
+> The project setup should not be current checkout, but new branch and worktree
+> per issue/task. Specify should create the branches and include the full contract
+> there. This should be the default for plovi and all projects using it unless
+> changed during project setup, include these fixes in the #16 plan and PR.
+
+The explicitly authorized project policy change is committed as 53070e1. The active
+task branch is now codex/runner-hardening, in the configured worktree at
+.plovi/local/worktrees/runner-hardening/agent-workflow relative to the canonical
+project root. The base remains main. The old branch is parked and clean; no branch
+history is rewritten. All future task plan writes and implementation belong in
+this worktree. Pass the canonical project root explicitly at runner handoff.
+The previous complete contract is retained in v1/ for provenance.
+
+Add default worktree-per-task setup, explicit setup opt-outs, full-contract planning
+commits and complete handoff reporting to issue #16. Include those changes in the
+planned draft PR, with a prepared pr-body.md. Local planning commits and checkout
+preparation are authorized now; provider implementation and remote delivery still
+follow approval of this revised full contract.
 Specification ends at the user's approval. No product code or product tests are
 authored during specification.

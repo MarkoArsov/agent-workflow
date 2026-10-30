@@ -1,0 +1,100 @@
+{
+  "advisories": [
+    {
+      "reason": "explicit-route-below-recommended-band",
+      "stage": "implement"
+    },
+    {
+      "reason": "explicit-route-below-recommended-band",
+      "stage": "implement-tests"
+    },
+    {
+      "reason": "single-lineage",
+      "stage": "implement-tests"
+    },
+    {
+      "reason": "explicit-route-below-recommended-band",
+      "stage": "review"
+    },
+    {
+      "reason": "single-lineage",
+      "stage": "review"
+    }
+  ],
+  "evaluator_version": "1.1.0",
+  "notice": "No model catalogue; retaining configured routes. Run update-models when convenient.",
+  "provenance": {
+    "catalogue": "9aecf438c3f923ce02f488be25cae648068d632535d5ec4d38b0fa6abb6b055f",
+    "facts": {
+      "kind": "code",
+      "repository_count": 1,
+      "risk": "high",
+      "routes": {
+        "implement": [
+          {
+            "model": "gpt-6.1-sol",
+            "provider": "codex",
+            "reasoning": "medium"
+          }
+        ],
+        "implement-tests": [
+          {
+            "model": "gpt-6.1-sol",
+            "provider": "codex",
+            "reasoning": "medium"
+          }
+        ],
+        "review": [
+          {
+            "model": "gpt-6.1-sol",
+            "provider": "codex",
+            "reasoning": "medium"
+          }
+        ]
+      },
+      "size": "large",
+      "stages": [
+        "implement-tests",
+        "implement",
+        "review"
+      ],
+      "test_files": 7,
+      "test_lines": 1000,
+      "uncertain": true
+    },
+    "policy": "3c7d03f86602c435d0771f98e34a76bebfd100cc00bbd8ea18722b2b0ce10aa7",
+    "registry": "906caf9f74c729ddf882cba34d3fdf9b45082cc375ca45bca1882dcb955622e2",
+    "settings": "b69809844138629bec4edc593e872aa2dba5466f15585079f01a11a5977b4844"
+  },
+  "reasons": {
+    "implement": "explicit-route",
+    "implement-tests": "explicit-route",
+    "review": "explicit-route"
+  },
+  "routes": {
+    "implement": [
+      {
+        "model": "gpt-6.1-sol",
+        "provider": "codex",
+        "reasoning": "medium"
+      }
+    ],
+    "implement-tests": [
+      {
+        "model": "gpt-6.1-sol",
+        "provider": "codex",
+        "reasoning": "medium"
+      }
+    ],
+    "review": [
+      {
+        "model": "gpt-6.1-sol",
+        "provider": "codex",
+        "reasoning": "medium"
+      }
+    ]
+  },
+  "schema_version": 1,
+  "snapshot_hash": "a5ee38e0b09e6de0d9f94c212731e343a63c556ce523139a4e8c74fa27283174",
+  "unresolved": []
+}

@@ -1,0 +1,548 @@
+{
+  "schema_version": 1,
+  "task": "runner-hardening",
+  "plan_status": "proposed-awaiting-approval",
+  "plan_files": [
+    "prompt.md",
+    "requirements.md",
+    "implementation.md",
+    "deferred.md",
+    "project-quality.md"
+  ],
+  "repositories": [
+    {
+      "id": "agent-workflow",
+      "access": "write",
+      "branch": "codex/rename-plovi",
+      "paths": [
+        "runtime/plovi/**",
+        "schemas/policy.schema.json",
+        "schemas/pipeline.schema.json",
+        "schemas/project.schema.json",
+        "tests/test_runner_outcomes.py",
+        "tests/test_limits.py",
+        "tests/test_policy.py",
+        "tests/test_permissions.py",
+        "tests/test_concurrency.py",
+        "tests/test_recovery.py",
+        "tests/test_evidence.py",
+        "tests/helpers.py",
+        "tests/fixtures/**",
+        "tests/test_runner.py",
+        "tests/test_runner_lifecycle.py",
+        "tests/test_git_ops.py",
+        "tests/test_setup.py",
+        "tests/test_issue15_revision.py",
+        "tests/test_migration.py",
+        "docs/**",
+        "references/pipeline-contract.md",
+        "skills/project-setup/**",
+        "skills/implement-pipeline/**",
+        "skills/pr-preflight/**",
+        "skills/list-pipeline/**",
+        "skills/environment-status/**",
+        "scripts/generate_docs.py",
+        "scripts/docs_content.py",
+        "mkdocs.yml",
+        "PLAN.md",
+        "ai-plans/runner-hardening/**"
+      ],
+      "test_paths": [
+        "tests/test_runner_outcomes.py",
+        "tests/test_limits.py",
+        "tests/test_policy.py",
+        "tests/test_permissions.py",
+        "tests/test_concurrency.py",
+        "tests/test_recovery.py",
+        "tests/test_evidence.py",
+        "tests/helpers.py",
+        "tests/fixtures/**",
+        "tests/test_runner.py",
+        "tests/test_runner_lifecycle.py",
+        "tests/test_git_ops.py",
+        "tests/test_setup.py",
+        "tests/test_issue15_revision.py",
+        "tests/test_migration.py"
+      ]
+    }
+  ],
+  "stages": [
+    "implement-tests",
+    "implement",
+    "review"
+  ],
+  "checks": [
+    {
+      "id": "stop-regressions",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "-m",
+          "unittest",
+          "-v",
+          "tests.test_runner_outcomes.RunnerOutcomeTests.test_blocked_stops_after_one_attempt",
+          "tests.test_runner_outcomes.RunnerOutcomeTests.test_spec_conflict_stops_after_one_attempt",
+          "tests.test_runner_outcomes.RunnerOutcomeTests.test_impossible_stops_after_one_attempt"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 300
+      },
+      "parser": "unittest",
+      "phases": [
+        "red",
+        "green"
+      ],
+      "identities": [
+        "test_blocked_stops_after_one_attempt",
+        "test_spec_conflict_stops_after_one_attempt",
+        "test_impossible_stops_after_one_attempt"
+      ]
+    },
+    {
+      "id": "size-regression",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "-m",
+          "unittest",
+          "-v",
+          "tests.test_limits.LimitTests.test_41_files_need_approval"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 300
+      },
+      "parser": "unittest",
+      "phases": [
+        "red",
+        "green"
+      ],
+      "identities": [
+        "test_41_files_need_approval"
+      ]
+    },
+    {
+      "id": "outcomes",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "-m",
+          "unittest",
+          "-v",
+          "tests.test_runner_outcomes"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 300
+      },
+      "parser": "unittest",
+      "phases": [
+        "green"
+      ]
+    },
+    {
+      "id": "limits",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "-m",
+          "unittest",
+          "-v",
+          "tests.test_limits"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 300
+      },
+      "parser": "unittest",
+      "phases": [
+        "green"
+      ]
+    },
+    {
+      "id": "policy",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "-m",
+          "unittest",
+          "-v",
+          "tests.test_policy"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 300
+      },
+      "parser": "unittest",
+      "phases": [
+        "green"
+      ]
+    },
+    {
+      "id": "permissions",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "-m",
+          "unittest",
+          "-v",
+          "tests.test_permissions"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 300
+      },
+      "parser": "unittest",
+      "phases": [
+        "green"
+      ]
+    },
+    {
+      "id": "concurrency",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "-m",
+          "unittest",
+          "-v",
+          "tests.test_concurrency"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 300
+      },
+      "parser": "unittest",
+      "phases": [
+        "green"
+      ]
+    },
+    {
+      "id": "recovery",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "-m",
+          "unittest",
+          "-v",
+          "tests.test_recovery"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 300
+      },
+      "parser": "unittest",
+      "phases": [
+        "green"
+      ]
+    },
+    {
+      "id": "evidence",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "-m",
+          "unittest",
+          "-v",
+          "tests.test_evidence"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 300
+      },
+      "parser": "unittest",
+      "phases": [
+        "green"
+      ]
+    },
+    {
+      "id": "full-suite",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "-m",
+          "unittest",
+          "discover",
+          "-s",
+          "tests",
+          "-v"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 600
+      },
+      "parser": "unittest",
+      "phases": [
+        "green"
+      ]
+    },
+    {
+      "id": "generated-docs",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "scripts/generate_docs.py",
+          "--check"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 120
+      },
+      "parser": "generic",
+      "phases": [
+        "green"
+      ],
+      "success_pattern": "^$"
+    },
+    {
+      "id": "docs-build",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "-m",
+          "mkdocs",
+          "build",
+          "--strict"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 300
+      },
+      "parser": "generic",
+      "phases": [
+        "green"
+      ],
+      "success_pattern": "Documentation built in"
+    },
+    {
+      "id": "links",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "scripts/check_links.py",
+          "site"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 120
+      },
+      "parser": "generic",
+      "phases": [
+        "green"
+      ],
+      "success_pattern": "Checked [1-9]\\d* internal links/assets; 0 failures\\."
+    },
+    {
+      "id": "public-content",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "scripts/check_public_content.py",
+          "--history"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 300
+      },
+      "parser": "generic",
+      "phases": [
+        "green"
+      ],
+      "success_pattern": "Scanned [1-9]\\d* items; 0 findings;"
+    }
+  ],
+  "outcomes": [
+    {
+      "id": "stop-outcomes-and-retry",
+      "checks": [
+        "stop-regressions",
+        "outcomes"
+      ]
+    },
+    {
+      "id": "diff-bound-size-and-path-approvals",
+      "checks": [
+        "size-regression",
+        "limits"
+      ]
+    },
+    {
+      "id": "pr-evidence",
+      "checks": [
+        "evidence",
+        "recovery"
+      ]
+    },
+    {
+      "id": "reviewed-policy",
+      "checks": [
+        "policy",
+        "full-suite",
+        "generated-docs"
+      ]
+    },
+    {
+      "id": "restricted-unattended-permissions",
+      "checks": [
+        "permissions"
+      ]
+    },
+    {
+      "id": "concurrent-worktree-tasks",
+      "checks": [
+        "concurrency",
+        "full-suite"
+      ]
+    },
+    {
+      "id": "crash-safe-delivery",
+      "checks": [
+        "recovery",
+        "evidence"
+      ]
+    },
+    {
+      "id": "docs-and-portable-regressions",
+      "checks": [
+        "full-suite",
+        "generated-docs",
+        "docs-build",
+        "links",
+        "public-content"
+      ]
+    }
+  ],
+  "routes": {
+    "implement": [
+      {
+        "model": "gpt-6.1-sol",
+        "provider": "codex",
+        "reasoning": "medium"
+      }
+    ],
+    "implement-tests": [
+      {
+        "model": "gpt-6.1-sol",
+        "provider": "codex",
+        "reasoning": "medium"
+      }
+    ],
+    "review": [
+      {
+        "model": "gpt-6.1-sol",
+        "provider": "codex",
+        "reasoning": "medium"
+      }
+    ]
+  },
+  "model_selection": {
+    "advisories": [
+      {
+        "reason": "explicit-route-below-recommended-band",
+        "stage": "implement"
+      },
+      {
+        "reason": "explicit-route-below-recommended-band",
+        "stage": "implement-tests"
+      },
+      {
+        "reason": "single-lineage",
+        "stage": "implement-tests"
+      },
+      {
+        "reason": "explicit-route-below-recommended-band",
+        "stage": "review"
+      },
+      {
+        "reason": "single-lineage",
+        "stage": "review"
+      }
+    ],
+    "evaluator_version": "1.1.0",
+    "notice": "No model catalogue; retaining configured routes. Run update-models when convenient.",
+    "provenance": {
+      "catalogue": "9aecf438c3f923ce02f488be25cae648068d632535d5ec4d38b0fa6abb6b055f",
+      "facts": {
+        "kind": "code",
+        "repository_count": 1,
+        "risk": "high",
+        "routes": {
+          "implement": [
+            {
+              "model": "gpt-6.1-sol",
+              "provider": "codex",
+              "reasoning": "medium"
+            }
+          ],
+          "implement-tests": [
+            {
+              "model": "gpt-6.1-sol",
+              "provider": "codex",
+              "reasoning": "medium"
+            }
+          ],
+          "review": [
+            {
+              "model": "gpt-6.1-sol",
+              "provider": "codex",
+              "reasoning": "medium"
+            }
+          ]
+        },
+        "size": "large",
+        "stages": [
+          "implement-tests",
+          "implement",
+          "review"
+        ],
+        "test_files": 7,
+        "test_lines": 1000,
+        "uncertain": true
+      },
+      "policy": "3c7d03f86602c435d0771f98e34a76bebfd100cc00bbd8ea18722b2b0ce10aa7",
+      "registry": "906caf9f74c729ddf882cba34d3fdf9b45082cc375ca45bca1882dcb955622e2",
+      "settings": "b69809844138629bec4edc593e872aa2dba5466f15585079f01a11a5977b4844"
+    },
+    "reasons": {
+      "implement": "explicit-route",
+      "implement-tests": "explicit-route",
+      "review": "explicit-route"
+    },
+    "routes": {
+      "implement": [
+        {
+          "model": "gpt-6.1-sol",
+          "provider": "codex",
+          "reasoning": "medium"
+        }
+      ],
+      "implement-tests": [
+        {
+          "model": "gpt-6.1-sol",
+          "provider": "codex",
+          "reasoning": "medium"
+        }
+      ],
+      "review": [
+        {
+          "model": "gpt-6.1-sol",
+          "provider": "codex",
+          "reasoning": "medium"
+        }
+      ]
+    },
+    "schema_version": 1,
+    "snapshot_hash": "a5ee38e0b09e6de0d9f94c212731e343a63c556ce523139a4e8c74fa27283174",
+    "unresolved": []
+  },
+  "limits": {
+    "attempts_per_route": 2,
+    "timeout_seconds": 7200,
+    "inactivity_seconds": 300,
+    "tool_timeout_seconds": 900
+  },
+  "references": [
+    "quality-guidance.md"
+  ],
+  "connectors": []
+}

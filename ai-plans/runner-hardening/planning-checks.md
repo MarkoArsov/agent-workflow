@@ -1,5 +1,8 @@
 # Specification evidence, 30 October 2026
 
+The original results below are historical. The active checkout/delivery revision
+is recorded at the end; v1/ preserves the previous full contract.
+
 ## Scope and resolution
 
 - PROJECT_WORKFLOW.md and .plovi/project.json resolve this source package, Codex
@@ -72,3 +75,48 @@ checks; new test identities are intentionally absent until implement-tests.
 New regression tests, feature implementation, new-policy activation, live-provider
 inference, hosted CI and cross-platform crash/concurrency results. All remain
 acceptance work after plan approval. No push, PR or deployment is selected.
+
+
+## Revised checkout/default scope
+
+- The user explicitly changed this project from current-checkout to worktree and
+  requested package-wide worktree-per-task defaults with setup opt-outs, full
+  planning commits and complete handoffs in issue #16 and its PR.
+- Commit 53070e1 changes the canonical .plovi/project.json and PROJECT_WORKFLOW.md
+  together. New branch codex/runner-hardening is checked out in the configured
+  task worktree; codex/rename-plovi remains parked and clean. The old planning
+  commit 3abe720 remains in history and is included in the new task branch.
+- All previous complete plan artifacts are archived under v1/. The active prompt,
+  requirements, implementation, exclusions, manifest, model/quality snapshots and
+  PR body have been revised coherently. Nine outcomes now map to named checks.
+- Source evidence: detect.py currently suggests worktree based on history but
+  writes current-checkout into its generated repository row. The new regression
+  tests will assert agreement and the default independently of worktree history.
+- Handoff-instruction changes passed 178 isolated tests in 85.549s, skill structural
+  validation, strict MkDocs, generated reference freshness and 3,964 links before
+  this scope revision. Default/runtime behavior is still not implemented.
+- Offline evaluator reran for the changed scope (nine estimated test files,
+  approximately 1,250 lines). It preserves gpt-6.1-sol/medium for all three AI
+  stages and the same capability/single-lineage/missing-catalogue advisories.
+- The revised manifest selects commit-and-push/draft-pr only for the eventual
+  approved implementation. There is no remote mutation during planning. The
+  initial GitHub CLI account read failed for missing stored credentials; public
+  issue reads worked. Runtime preflight checks provider flags, not GitHub delivery
+  authentication; that prerequisite must be resolved before remote delivery.
+
+
+### Revised readiness observed
+
+- validate-plan and preflight passed with the canonical project selected explicitly.
+  The saved manifest has all nine outcome groups, the full contract and the requested
+  future PR title/body. Current effective runner permissions remain trusted until
+  the unattended-policy implementation lands.
+- Actual git_ops.prepare with this revised manifest reused the same task worktree
+  twice; explicit project resolution returned the canonical configuration root.
+  No duplicate/nested worktree was created and the parked branch stayed unchanged.
+- Strict documentation build passed (0.16s), generated-doc freshness passed,
+  3,964 internal links/assets passed, and the revised source/history audit scanned
+  2,708 items with zero findings. Private denylist was not supplied.
+- No new runtime/product tests were authored or executed during this revision.
+  The latest full existing-suite result is 178 passing tests in 85.549s for the
+  handoff guidance change. Product defaults/runner behavior remain planned work.

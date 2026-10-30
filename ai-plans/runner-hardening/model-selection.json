@@ -58,8 +58,8 @@
         "implement",
         "review"
       ],
-      "test_files": 7,
-      "test_lines": 1000,
+      "test_files": 9,
+      "test_lines": 1250,
       "uncertain": true
     },
     "policy": "3c7d03f86602c435d0771f98e34a76bebfd100cc00bbd8ea18722b2b0ce10aa7",
@@ -95,6 +95,6 @@
     ]
   },
   "schema_version": 1,
-  "snapshot_hash": "a5ee38e0b09e6de0d9f94c212731e343a63c556ce523139a4e8c74fa27283174",
+  "snapshot_hash": "dbb668e99bbc8c984bba1109cf818db8119b852bd6ba9bead93863cacb24eff9",
   "unresolved": []
 }

@@ -32,6 +32,10 @@ renewed approval. A lane/model choice is not implementation approval.
    that branch; concurrent tasks need separate worktrees to isolate files. Respect
    current-checkout and shared multi-repository plan ownership. Never switch an
    unrelated shared checkout, move dirty/staged edits, or initialize a Git parent.
+   Resolve the project's planning-commit policy too. Checkout strategy controls
+   branch creation; a requirement to commit plans does not change current-checkout
+   into feature-branch or worktree. Record the actual branch, even when its name
+   differs from the task ID.
 
 ## Choose the lane
 
@@ -94,7 +98,21 @@ renewed approval. A lane/model choice is not implementation approval.
     identify the precise unresolved route/capability, and ask for that input.
     Never fabricate access, omit stages or call an unvalidated draft ready.
 
-11. On revision preserve prior complete artifacts and synchronize the current set.
+11. When native instructions or project policy require planning commits, commit the
+    complete task-owned contract and supporting planning artifacts locally in the
+    selected plan-owning branch before handoff. Include the manifest and evaluator
+    snapshot, not only a summary. Stage explicit paths, exclude unrelated changes,
+    and verify the committed files match the reviewed contract. This does not
+    authorize pushing or implementation. For an unversioned shared plan store,
+    report that limitation; do not invent a repository or claim a commit exists.
+
+12. Report the full contract location, linking requirements.md and pipeline.json
+    for a full lane; label any plan.md as an optional summary. For each writable
+    repository, name the actual branch and whether it was created or reused under
+    its checkout strategy. Report the planning commit hash, or explain why plans
+    remain uncommitted. Do not describe a summary alone as the full contract.
+
+13. On revision preserve prior complete artifacts and synchronize the current set.
     Do not erase run history; leave approved resume/rebind to implement-pipeline.
     Present the concrete plan and checks, ask "Approve this plan and start
     implementation?", and stop. Only subsequent explicit approval or an explicit

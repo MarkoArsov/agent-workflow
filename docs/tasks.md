@@ -65,6 +65,17 @@ The full lane writes these files under the plan directory (by default `ai-plans/
 | `deferred.md` | Deliberately excluded work, and why. |
 | `pipeline.json` | Repositories, checks, outcomes, stages, routes, limits, and the delivery contract. |
 
+An optional `plan.md` summarizes the contract. The handoff links `requirements.md`
+and `pipeline.json` so you can inspect the full scope and execution settings.
+
+Checkout strategy controls where the plans live. `feature-branch` and `worktree`
+create or reuse the configured task branch; `current-checkout` keeps the actual
+branch. A project rule to commit plans does not change that checkout strategy.
+When project policy or native instructions require planning commits, specify
+commits the complete contract and its supporting artifacts locally before handoff.
+It reports the branch as created or reused and gives the commit hash. If a shared
+plan store is unversioned, it says so. Pushing still requires authorization.
+
 ### What good looks like
 
 | Check | Expected result |
