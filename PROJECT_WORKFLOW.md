@@ -1,7 +1,7 @@
 <!-- plovi:start -->
 # Project workflow
 
-- agent-workflow: .; library, docs; current-checkout; participate when-changed.
+- agent-workflow: .; library, docs; worktree; participate when-changed.
 
 Plans: ai-plans/<task>/.
 Harness: Codex only.
