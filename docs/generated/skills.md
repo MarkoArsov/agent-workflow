@@ -135,6 +135,17 @@ configuration root with --project so a copied profile cannot cause nested worktr
 
 8. Report final stage state, checks, participating repositories, and any partial delivery. Unknown token usage/cost remains unknown.
 
+
+
+Read policy show and preflight's permission mode/source. Detached/non-TTY runs are
+restricted by default; do not silently add --trusted. Report escalated with its
+kind/reason and retry command. Retry starts fresh with a person-provided note;
+answer retains the exact asking session. Resume cannot clear escalations or pending
+size/protected-path approvals. Show the diff and request each exact pending gate.
+Task locks and repository claims permit disjoint worktree tasks to overlap; use
+--no-wait only when an immediate claim conflict is desired. Interrupted recovery
+verifies retained output and reconciles delivery; never duplicate completed work.
+
 ### `issue-writer` { .skill-entry data-skill="issue-writer Turn an idea, problem, or requirements into well-sized, detailed, test-first issues with dependencies and parallel waves." }
 
 Turn an idea, problem, or requirements into well-sized, detailed, test-first issues with dependencies and parallel waves.
@@ -247,6 +258,12 @@ session-retro (read-only analysis, explicit apply). These are tools, not implici
 selected execution stages. Report full-plan draft versus validated/preflight-ready
 status honestly; do not present a concise manual plan as a runnable pipeline.
 
+
+Include effective policy values and sources, permission mode/source, pending diff
+approvals, escalation kind/reason and retry command. Distinguish waiting,
+needs_approval, escalated and interrupted from running/failed. Status probes OS-held
+task ownership; never infer ownership or kill permissions from a saved PID.
+
 ### `pipeline-workflow` { .skill-entry data-skill="pipeline-workflow Explain the installed workflow and route a request to its project-aware stage." }
 
 Explain the installed workflow and route a request to its project-aware stage.
@@ -286,7 +303,7 @@ Use this for a new project, a changed repository layout, or a deliberate update 
 1. Locate the bundled bin/plovi launcher relative to this skill's package. Run its setup command for the intended project root. It reads facts and prints a proposal; it does not apply changes.
 2. Read existing project instructions. Explain detected repositories, roles, commands, branch/worktree conventions, delivery, and integrations, citing the detector's evidence. Distinguish findings from suggestions.
 3. Ask only for missing consequential choices. Repository roles do not prove branch policies. Confirm which repositories participate always, when changed, or never; an unchanged E2E repo may supply checks without getting a task branch.
-4. Confirm agents and whether to inherit machine model defaults or pin exact project routes and fallbacks. Use models inspect to show inherited settings; offer update-models if unconfigured. Leaving pipeline.routes empty permits adaptive selection during specify; existing explicit routes remain pins. Trusted execution is the offered default; explain that it uses provider permission-bypass flags. Restricted execution is available where the selected provider supports it. Save the choice once.
+4. Confirm agents and whether to inherit machine model defaults or pin exact project routes and fallbacks. Use models inspect to show inherited settings; offer update-models if unconfigured. Leaving pipeline.routes empty permits adaptive selection during specify; existing explicit routes remain pins. Interactive execution follows the profile; trusted mode uses provider permission-bypass flags. Detached/non-TTY runs default to restricted unless reviewed policy or --trusted opts in to trusted execution. Save the profile choice once.
 5. Put answers in a temporary JSON file with a profile object containing selected overrides and confirmed_defaults set to true only after the user has confirmed the proposed defaults. Resolve reported merge conflicts explicitly. Re-run setup with --answers and --output to produce the complete proposal.
 6. Show the operating summary and proposed file changes. Include profile location, plan location, rules/references, connector settings, and every host adapter or instruction edit. Wait for approval of those changes.
 7. Run setup --apply on that proposal with --approve and its exact digest. A stale proposal must be regenerated and shown again. Do not manufacture approval or apply a different proposal.
@@ -297,6 +314,22 @@ Re-running setup preserves manual settings, unknown extension keys, deleted opti
 Keep credentials in the host's authentication system or referenced environment variables. Connector availability must be checked for each selected agent, including detached sessions. Show any host configuration patch before applying it.
 
 Do not create task branches, install dependencies, run detected repository commands, start a pipeline, or post tracker updates as part of setup. Those actions have their own workflows.
+
+
+
+New writable repositories default to worktree, regardless of observed Git history.
+Offer a reviewed per-repository feature-branch or current-checkout override; setup
+never creates task branches. Include planning.commit_plans (boolean, default true)
+in the proposal and approval digest. Preserve explicit checkout/commit opt-outs
+on repeat setup. For an unversioned multi-repository plan store, resolve an explicit
+plan-owning configuration repository or planning.commit_plans=false before approval.
+Do not initialize a Git parent. Identify untouched legacy defaults from generation
+baselines before proposing migration; preserve ambiguous existing choices.
+
+Show the commented plovi.toml proposal, effective limits and unattended permissions.
+Interactive execution follows the profile; detached/non-TTY runs default to
+restricted unless reviewed policy or --trusted selects trusted. Re-setup preserves
+policy bytes and comments. Never silently activate policy for an existing run.
 
 ### `setup` { .skill-entry data-skill="setup Set up plovi for this project. Short name for project-setup." }
 
@@ -421,6 +454,16 @@ renewed approval. A lane/model choice is not implementation approval.
     implementation?", and stop. Only subsequent explicit approval or an explicit
     implement/implement-pipeline invocation authorizes execution. Do not start the
     next skill while finishing specify.
+
+
+The package defaults new projects to worktree per task and planning.commit_plans=true.
+A missing legacy commit_plans value means true. Explicit user/native policy takes
+precedence. Honor reviewed checkout and commit opt-outs independently. Include all
+contract, evaluator, quality and evidence files in the local planning commit, then
+verify each required artifact with git ls-tree and compare its committed content.
+Report created/reused branches, checkout paths, commit hashes, requirements.md and
+pipeline.json links, and actual validation/preflight results. A static wording
+check is not proof of agent execution. Do not push during specification.
 
 ## Implementation and verification
 
@@ -741,6 +784,12 @@ Inspect configured local or shared test-environment readiness and ownership.
 
 4. If evidence is unavailable, identify the exact missing access or check instead of assuming readiness.
 
+
+
+Distinguish task claims from shared-environment leases. Task pauses release compute
+claims; environment ownership still follows its configured lease. Read status for
+interruption reconciliation. Never reclaim a live task or environment by PID.
+
 ### `worktree-list` { .skill-entry data-skill="worktree-list Show registered project worktrees and their branch state." }
 
 Show registered project worktrees and their branch state.
@@ -801,6 +850,14 @@ where that contract will be written.
    run the runner's preparation at pipeline handoff rather than creating a second
    worktree with a different identity. For manual work stay in the selected checkout.
    Report the resulting task paths and unchanged companions.
+
+
+New setup profiles default writable participants to worktree. Explicit reviewed
+feature-branch and current-checkout choices remain valid. Missing
+planning.commit_plans means true; it never changes checkout strategy. Prepare
+using the canonical configuration root and reuse existing registered task worktrees,
+including ones with task-owned planning edits. Verify branch/common-dir ownership
+before reuse. Keep read-only companions untouched.
 
 ## Pull requests and design review
 
@@ -878,6 +935,15 @@ Check a branch's readiness for a draft PR using scope, evidence, and delivery gu
 3. Inspect PR title/body against the final implementation and template. Flag unsupported testing claims and missing material limitations.
 
 4. Run narrow missing checks when authorized, then report concrete blockers or readiness. A successful preflight does not itself push, create a PR, request reviews, or post comments.
+
+
+
+Recheck cumulative size/protected-path gates against current task content, modes
+and paths. Both approvals must match the current fingerprint. Use verified check
+results, parsed counts (unknown when absent), completed routes and assumptions in
+one managed Evidence section. Redact/escape displayed strings and redact the final
+body. Reuse the single matching open PR and synchronize only changed Evidence,
+preserving unrelated body content. A saved URL does not skip synchronization.
 
 ### `request-review` { .skill-entry data-skill="request-review Prepare a concise review request using the actual PR and verified change summary." }
 

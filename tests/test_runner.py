@@ -14,7 +14,9 @@ class RunnerTests(WorkspaceTest):
         (root / ".gitignore").write_text("__pycache__/\n")
         (root / "app.py").write_text("VALUE = 1\n")
         (root / "test_app.py").write_text("import unittest\nfrom app import VALUE\nclass Behavior(unittest.TestCase):\n def test_behavior(self): self.assertEqual(VALUE, 1)\n")
-        self.project = self.setup_project(root, {"agents": ["codex"], "pipeline": {"routes": {"default": [{"provider": "codex", "model": "fixture-model"}]}}})
+        self.project = self.setup_project(root, {"agents": ["codex"],
+            "repositories": [{"id": "app", "checkout_strategy": "current-checkout"}],
+            "pipeline": {"routes": {"default": [{"provider": "codex", "model": "fixture-model"}]}}})
         self.git(root, "add", "."); self.git(root, "commit", "-m", "Configure fixture")
         self.scenario = self.root / "scenario.json"
         write_json(self.scenario, steps)
@@ -99,7 +101,7 @@ class RunnerTests(WorkspaceTest):
             runner.run(self.project, self.plan)
 
     def test_profile_change_requires_explicit_rebind(self):
-        self.fixture([{"report": {"status": "blocked", "reason": "fixture"}}, {}], stages=["implement"])
+        self.fixture([{"error": "temporary fixture failure"}, {}], stages=["implement"])
         self.assertEqual(runner.run(self.project, self.plan)["status"], "failed")
         self.project.profile["tracking"] = {"provider": "github"}
         write_json(self.project.config / "project.json", self.project.profile)

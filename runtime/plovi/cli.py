@@ -18,6 +18,11 @@ def parser():
     sub = p.add_subparsers(dest="command", required=True)
     from .model_policy.commands import arguments as model_arguments
     model_arguments(sub.add_parser("models", help="Refresh, review and evaluate workflow-local model routes"))
+    policy = sub.add_parser("policy", help="Review project policy")
+    policy_sub = policy.add_subparsers(dest="action", required=True)
+    policy_sub.add_parser("show").add_argument("--json", action="store_true")
+    edit = policy_sub.add_parser("set")
+    edit.add_argument("key"); edit.add_argument("value"); edit.add_argument("--yes", action="store_true")
     setup = sub.add_parser("setup", help="Detect and preview configuration, then apply the approved proposal")
     setup.add_argument("path", nargs="?", default=".")
     setup.add_argument("--answers", type=Path)
@@ -35,14 +40,24 @@ def parser():
         command.add_argument("manifest", type=Path)
         if name == "verify":
             command.add_argument("--phase", choices=["red", "green"], default="green")
+        if name in {"run", "preflight"}:
+            command.add_argument("--trusted", action="store_true")
         if name == "run":
+            command.add_argument("--no-wait", action="store_true")
+            command.add_argument("--unattended", action="store_true", help=argparse.SUPPRESS)
             command.add_argument("--detach", action="store_true")
             command.add_argument("--dry-run", action="store_true")
-    for name in ("status", "watch", "resume", "answer", "cancel"):
+    for name in ("status", "watch", "resume", "answer", "cancel", "retry", "approve"):
         command = sub.add_parser(name)
         command.add_argument("task")
-        if name in ("resume", "answer"):
+        if name in ("resume", "answer", "retry", "approve"):
             command.add_argument("--rebind", action="store_true")
+        if name == "retry":
+            command.add_argument("--note", type=Path)
+        if name == "approve":
+            gate = command.add_mutually_exclusive_group(required=True)
+            gate.add_argument("--size", action="store_true"); gate.add_argument("--paths", action="store_true")
+            command.add_argument("--actor"); command.add_argument("--reason")
         if name == "answer":
             command.add_argument("--file", type=Path, required=True)
         if name == "watch":
@@ -79,6 +94,10 @@ def parser():
     return p
 
 def execute(args):
+    if args.command == "policy":
+        from . import policy
+        project = context(args)
+        return policy.effective(project) if args.action == "show" else policy.set_value(project, args.key, args.value, yes=args.yes)
     if args.command == "models":
         from .model_routing import execute as models_execute
         return models_execute(args)
@@ -97,7 +116,14 @@ def execute(args):
             return {"output": run(argv, args.target or Path.cwd()).stdout}
         target = None if args.global_install else (args.target or context(args).root)
         if args.command == "doctor":
-            return install.doctor(target)
+            result = install.doctor(target)
+            if target:
+                from .project import load
+                from .policy import diagnostics
+                from .migration import configuration
+                if (configuration(Path(target)) / "project.json").is_file():
+                    result["policy"] = diagnostics(load(Path(target)))
+            return result
         if args.command == "uninstall":
             return install.uninstall(project=target, dry_run=args.dry_run)
         if not args.local_source:
@@ -121,18 +147,31 @@ def execute(args):
             runner.binding(project, plan)
             return {"valid": True, "task": plan["task"]}
         if args.command == "preflight" or args.dry_run:
-            return runner.preflight(project, plan)
-        return runner.detach(project, args.manifest) if args.detach else runner.run(project, plan)
-    if args.command in {"status", "watch", "resume", "answer", "cancel"}:
+            from . import policy
+            return runner.preflight(project, plan, execution=policy.execution(project, plan, trusted=args.trusted,
+                                                                             unattended=getattr(args, "detach", False) or not sys.stdin.isatty()))
+        return runner.detach(project, args.manifest, trusted=args.trusted, no_wait=args.no_wait) if args.detach else runner.run(
+            project, plan, trusted=args.trusted, no_wait=args.no_wait, unattended=args.unattended or not sys.stdin.isatty())
+    if args.command in {"status", "watch", "resume", "answer", "cancel", "retry", "approve"}:
         from . import state, runner, manifest
         project = context(args)
         if args.command == "cancel":
             return state.cancel(project, args.task)
         result = state.read(project, args.task)
-        if args.command in {"resume", "answer"}:
+        if args.command in {"resume", "answer", "retry", "approve"}:
+            approval = None
+            if args.command == "approve":
+                from .util import git
+                actor = args.actor or git(project.root, "config", "user.name", check=False)
+                if not actor.strip():
+                    raise WorkflowError("Configure git user.name or pass --actor to record the approval")
+                kind = "size" if args.size else "protected_paths"
+                approval = (kind, actor, args.reason or "Explicit --size approval" if args.size else args.reason or "Explicit --paths approval")
             plan = manifest.load(result["manifest_path"], project)
             return runner.run(project, plan, resume=True, rebind=args.rebind,
-                              answer=args.file.read_text() if args.command == "answer" else None)
+                              answer=args.file.read_text() if args.command == "answer" else None,
+                              retry=args.command == "retry", note=args.note.read_text() if args.command == "retry" and args.note else None,
+                              approval=approval)
         if args.command == "watch":
             import time
             deadline = time.monotonic() + min(max(args.seconds, 1), 3600)
@@ -142,7 +181,7 @@ def execute(args):
                 current = {k: result.get(k) for k in ("status", "stage", "completed", "pending_input", "error")}
                 if current != previous:
                     print(json.dumps(current), flush=True); previous = current
-                if result["status"] not in {"starting", "running"}:
+                if result["status"] not in {"starting", "running", "waiting"}:
                     break
                 time.sleep(1)
         return result
@@ -216,7 +255,7 @@ def main(argv=None):
         result = execute(parser().parse_args(argv))
         if result is not None:
             print(json_text(result), end="")
-        return 1 if isinstance(result, dict) and result.get("status") in {"failed", "cancelled", "needs_input"} else 0
+        return 1 if isinstance(result, dict) and result.get("status") in {"failed", "cancelled", "escalated"} else 0
     except (WorkflowError, ValueError, KeyError) as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 2

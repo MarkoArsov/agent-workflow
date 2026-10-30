@@ -2,31 +2,30 @@
 
 Addresses #16.
 
-## Scope
+## Shipped behavior
 
 Stop explicit blocked/spec-conflict/impossible outcomes without consuming retries;
 add diff-bound size/protected-path approvals, reviewed plovi.toml, restricted
 unattended execution, per-task claims/locks, delivery crash recovery and verified
 PR evidence.
 
-Include the planning fixes in this same PR: new project setup defaults to a branch
+New project setup defaults to a branch
 and worktree per issue/task; specify prepares/reuses that checkout before writing,
 commits the complete contract when planning commits are enabled, and reports its
 requirements/manifest links, branches, checkout paths and planning commit. Setup
-retains explicit overrides. Detection findings and generated profiles must agree.
+retains explicit overrides. Detection findings and generated profiles agree.
 
 ## Verification
 
-Specification is complete; implementation verification is pending. Before runner
-publication, update this section with the shipped test file/case names, observed
-assertion-red revisions, full-suite/docs/link/generated/public audit results and
-actual platform coverage. Do not present the pre-implementation baseline as proof
-of new behavior. The runner prepends current verified Evidence independently.
+- Regression red at `3bc42c754456e7bd07860ced728faea93374dd99`: all five expected assertion failures, then green for `test_blocked_stops_after_one_attempt`, `test_spec_conflict_stops_after_one_attempt`, `test_impossible_stops_after_one_attempt`, `test_41_files_need_approval`, and `test_new_project_defaults_to_worktree`.
+- All 16 named green checks passed through `plovi verify`. The final full-suite rerun passed 249 tests, no skips, on local macOS/Python 3.14.
+- New suites: runner outcomes (10), limits (14), policy (10), permissions (9), concurrency (6), recovery (12), evidence (5), task planning (5). Existing assertions remain intact.
+- Abrupt-exit cases after commit, push and PR creation prove one delivery effect with local bare remotes and a recorded gh double. Negative cases reject changed content/message/paths/parents, foreign index content and remote divergence.
+- Two detached worktree tasks overlapped and completed. Isolated planning walkthroughs verified complete contracts committed in separate task worktrees with the parked checkout unchanged; these are manual procedures, not agent-execution claims.
+- Generated references are current; strict MkDocs passed; 4,135 internal links/assets passed; public source/history scan had zero findings. Private denylist was not supplied.
+- Tests use isolated child configuration, provider/GitHub doubles and local remotes. Hosted cross-platform CI and real-account provider inference were not run.
 
-Planned modules: test_runner_outcomes, test_limits, test_policy, test_permissions,
-test_concurrency, test_recovery, test_evidence and test_task_planning, plus existing
-setup/fixture compatibility coverage. Tests use isolated configuration, local Git
-remotes and provider/GitHub doubles; no real accounts are used for fixture delivery.
+Detailed acceptance mappings and observed commands: `ai-plans/runner-hardening/implementation-evidence.md`. The runner adds verified Evidence independently.
 
 ## What changes for your workflow
 

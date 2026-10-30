@@ -156,9 +156,10 @@ def validate(value, project):
                 if not branch or branch == project.repository(row["id"])["base_branch"] or branch.startswith("-"):
                     raise WorkflowError("Delivery requires an explicit non-base task branch")
     for key, default, maximum in (("attempts_per_route", 2, 5), ("timeout_seconds", 1800, 86400),
-                                  ("inactivity_seconds", 300, 3600), ("tool_timeout_seconds", 600, 7200)):
+                                  ("inactivity_seconds", 300, 3600), ("tool_timeout_seconds", 600, 7200), ("max_changed_files", 40, 10000000),
+                                  ("max_changed_lines", 1500, 10000000)):
         val = value.get("limits", {}).get(key, default)
-        if not isinstance(val, int) or not 1 <= val <= maximum:
+        if type(val) is not int or not 1 <= val <= maximum:
             raise WorkflowError(f"Invalid runner limit: {key}")
     return value
 
@@ -172,7 +173,13 @@ def command_for(project, check):
     return command
 
 def matches(path, patterns):
-    return any(fnmatch.fnmatchcase(path, p) or (p.endswith("/**") and path == p[:-3]) for p in patterns)
+    def variants(pattern):
+        yield pattern
+        while "**/" in pattern:
+            pattern = pattern.replace("**/", "", 1)
+            yield pattern
+    return any(fnmatch.fnmatchcase(path, p) or (p.endswith("/**") and path == p[:-3])
+               for pattern in patterns for p in variants(pattern))
 
 def digest_manifest(value):
     return digest(json_text({k: v for k, v in value.items() if not k.startswith("_")}))

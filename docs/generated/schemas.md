@@ -57,6 +57,18 @@ An approved plan with explicit repository access, executable outcomes, ordered s
 | connectors | no | array |
 | model_selection | no | object |
 
+## Reviewed plovi policy
+
+
+
+| Field | Required | Format |
+|---|---|---|
+| limits | no | object |
+| paths | no | object |
+| execution | no | object |
+| autonomy | no | object |
+| grants | no | object |
+
 ## Project profile
 
 

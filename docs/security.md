@@ -9,7 +9,7 @@ question: What does plovi protect, and what must your environment protect?
 !!! summary "In one minute"
     - The orchestrator guards outcomes: writable paths, frozen tests, secrets and blocking rules, and delivery.
     - Every external action beyond the selected delivery stages needs its own authorization.
-    - Trusted mode, the offered default, relies on configured access and post-stage checks. It is not operating-system containment.
+    - Interactive trusted mode relies on configured access and post-stage checks. It is not operating-system containment.
     - Isolation, network egress, scoped credentials, branch protection, and central telemetry are your environment's job.
 
 ## What the orchestrator enforces
@@ -37,7 +37,7 @@ You choose the permission mode once, during setup. The orchestrator checks at pr
 | Provider | Trusted | Restricted |
 |---|---|---|
 | Codex | `--dangerously-bypass-approvals-and-sandbox` | `workspace-write` sandbox, never prompts for approval |
-| Claude Code | `--dangerously-skip-permissions` | `dontAsk` with an explicit `allowed_tools` list |
+| Claude Code | `--dangerously-skip-permissions` | `dontAsk` with an explicit or safely derived `allowed_tools` list |
 | Cursor | `--force`, `--sandbox disabled`, `--trust` | `--sandbox enabled`, `--trust` |
 
 Trusted mode lets an unattended agent act without prompts. It relies on the access you configured and on the outcome checks above. **It is not operating-system containment.**
@@ -65,3 +65,9 @@ These are gaps or external controls on the [scorecard](scorecard.md). plovi docu
 ## See also
 
 [Checkpoint scorecard](scorecard.md) · [Commands and permissions](execution.md) · [Open source](open-source.md)
+
+!!! note "What changes for your workflow"
+    Unattended runs default to restricted. Review [policy](policy.md) to opt into
+    trusted execution. Size and protected-path approvals bind the exact task diff.
+    Distinct worktree tasks can run concurrently with non-overlapping claims;
+    shared current-checkout tasks wait for ownership to be released.

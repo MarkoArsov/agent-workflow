@@ -13,6 +13,17 @@ def read(project, task):
     value = read_json(directory(project, task) / "state.json")
     if value is None:
         raise WorkflowError("No run state exists for this task")
+    if value.get("status") in {"starting", "running"}:
+        from .migration import lock_held
+        if not lock_held(project.config / "local/runner.lock"):
+            try:
+                with lock(directory(project, task) / "runner.lock"):
+                    value = read_json(directory(project, task) / "state.json")
+                    if value.get("status") in {"starting", "running"}:
+                        value["status"] = "interrupted"
+                        save(directory(project, task), value)
+            except WorkflowError:
+                pass
     return value
 
 def save(root, state):
@@ -40,13 +51,18 @@ else:
         fcntl.flock(handle, fcntl.LOCK_UN)
 
 @contextmanager
-def lock(path):
+def lock(path, *, wait=False):
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("a+") as handle:
-        try:
-            _acquire(handle)
-        except OSError as exc:
-            raise WorkflowError("A runner owns this project/environment lock") from exc
+        deadline = time.monotonic() + 30
+        while True:
+            try:
+                _acquire(handle)
+                break
+            except OSError as exc:
+                if not wait or time.monotonic() >= deadline:
+                    raise WorkflowError("A runner owns this project/environment lock") from exc
+                time.sleep(0.02)
         handle.seek(0); handle.truncate(); handle.write(str(os.getpid())); handle.flush()
         try:
             yield

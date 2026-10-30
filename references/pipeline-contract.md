@@ -96,3 +96,31 @@ only those actions, not reviewer requests or tracker updates.
 Custom stage definitions come from the project's stages.json and are included by
 ID in the ordered stage array. Check IDs refer to this plan's checks. Inputs are
 exact repository-relative files; outputs may use declared path patterns.
+
+## Runner outcomes and policy
+
+Provider reports accept complete, needs_input, blocked, spec_conflict and impossible.
+needs_input requires a nonempty question; escalations require a nonempty reason.
+Optional assumptions are strings in an array. Malformed reports are not evidence.
+Escalations stop attempts/fallbacks immediately; retry retains history and starts
+fresh. Ordinary resume cannot clear an escalation or pending diff approval.
+
+plovi.toml supplies reviewed per-key policy beneath explicit plan limits and above
+profile/built-in defaults. Limits default to 40 files, 1500 added/removed lines,
+two attempts per route. Protected paths and size gates require separate approvals
+bound to path/content/mode fingerprints. Unattended runs default to restricted.
+Policy and permission provenance are saved with the binding; changes require rebind.
+Legacy bindings without policy retain their legacy inputs until explicit rebind.
+
+New setup profiles default to worktree and planning.commit_plans=true. Setup can
+review per-repository checkout opt-outs and local-only plan commits. Unversioned
+shared plan stores require an explicit plan-owning repository or reviewed opt-out.
+The complete contract, evaluator, quality and evidence artifacts are committed
+locally on the task branch before approval handoff. Verify each artifact in the
+commit; never claim a summary-only commit delivered the contract.
+
+Each task holds its own runner.lock; short repo-ops critical sections protect Git
+mutations and claims. Only disjoint worktree tasks share a repository. Claims are
+released at pauses and completion; stale ownership uses OS locks, never PIDs.
+Recovery persists delivery intent, adopts exact commits, reconciles remote branches,
+and synchronizes one managed PR Evidence section from verified runner state.

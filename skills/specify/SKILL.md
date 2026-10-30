@@ -118,3 +118,13 @@ renewed approval. A lane/model choice is not implementation approval.
     implementation?", and stop. Only subsequent explicit approval or an explicit
     implement/implement-pipeline invocation authorizes execution. Do not start the
     next skill while finishing specify.
+
+
+The package defaults new projects to worktree per task and planning.commit_plans=true.
+A missing legacy commit_plans value means true. Explicit user/native policy takes
+precedence. Honor reviewed checkout and commit opt-outs independently. Include all
+contract, evaluator, quality and evidence files in the local planning commit, then
+verify each required artifact with git ls-tree and compare its committed content.
+Report created/reused branches, checkout paths, commit hashes, requirements.md and
+pipeline.json links, and actual validation/preflight results. A static wording
+check is not proof of agent execution. Do not push during specification.

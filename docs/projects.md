@@ -60,3 +60,12 @@ For several repositories, they live at the configured shared project root.
 Runtime evidence stays ignored.
 
 <!-- checkpoints: CTX-1, EXE-5 -->
+
+!!! note "What changes for your workflow"
+    New projects default to a branch and worktree per task. Setup offers reviewed
+    `feature-branch` and `current-checkout` overrides per repository, and
+    `planning.commit_plans: false` for local-only planning. Specify prepares the
+    task checkout before plan writes, commits the complete contract by default,
+    and reports requirements, manifest, branch, checkout and commit links. An
+    unversioned shared plan store needs an explicit plan-owning repository or a
+    reviewed local-only choice. Read-only companions keep their current checkout.

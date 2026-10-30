@@ -168,6 +168,10 @@
         },
         "evidence_directory": {
           "type": "string"
+        },
+        "commit_plans": {
+          "type": "boolean",
+          "default": true
         }
       }
     },

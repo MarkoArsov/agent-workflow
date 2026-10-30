@@ -31,12 +31,21 @@ Keep credentials in the host or named `env_refs`, never literal environment valu
 | Provider | Trusted | Restricted |
 |---|---|---|
 | Codex | --dangerously-bypass-approvals-and-sandbox | workspace-write with unattended approval refusal |
-| Claude | --dangerously-skip-permissions | dontAsk with an explicit allowed_tools list |
+| Claude | --dangerously-skip-permissions | dontAsk with a narrow allowed_tools list |
 | Cursor | --force, --sandbox disabled, --trust | --sandbox enabled, --trust |
 
 The orchestrator checks installed flags before execution. Unsupported controls stop preflight.
-Restricted Claude requires `execution.provider_settings.claude.allowed_tools`.
-Use only the tools the task actually needs.
+Restricted Claude preserves `execution.provider_settings.claude.allowed_tools`.
+Otherwise plovi derives Read, Edit, Write, Glob, Grep, narrow Git status/diff rules
+and the selected check argv. Unsafe command encodings stop preflight and ask for
+an explicit allowlist. It never derives a broad Bash wildcard.
+
+Detached and non-TTY runs default to restricted. An explicit
+`execution.unattended_permission_mode = "trusted"` in [policy](policy.md), or
+`run --trusted`, opts in to trusted unattended work. Interactive runs keep the
+profile mode. Preflight and run state show the mode and source; detach and resume
+retain the decision. Runner-owned checks and selected delivery actions keep their
+existing contracts; provider tool restrictions do not restrict those commands.
 
 These providers offer different controls; restricted mode is not an identical cross-provider sandbox.
 Trusted mode relies on configured access and post-stage outcome checks. It is not operating-system containment.
@@ -63,3 +72,8 @@ Cursor effort belongs in its supported model expression.
 [Model and cost choices](models.md) · [Evidence formats](verification.md)
 
 <!-- checkpoints: EXE-1, EXE-4, ORG-3 -->
+
+!!! note "What changes for your workflow"
+    Unattended runs use restricted controls by default. Review policy or pass
+    `--trusted` for a deliberate exception. Extend Claude's explicit allowlist
+    when a configured check cannot be encoded safely.

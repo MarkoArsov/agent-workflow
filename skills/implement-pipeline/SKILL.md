@@ -31,3 +31,13 @@ configuration root with --project so a copied profile cannot cause nested worktr
 
 8. Report final stage state, checks, participating repositories, and any partial delivery. Unknown token usage/cost remains unknown.
 
+
+
+Read policy show and preflight's permission mode/source. Detached/non-TTY runs are
+restricted by default; do not silently add --trusted. Report escalated with its
+kind/reason and retry command. Retry starts fresh with a person-provided note;
+answer retains the exact asking session. Resume cannot clear escalations or pending
+size/protected-path approvals. Show the diff and request each exact pending gate.
+Task locks and repository claims permit disjoint worktree tasks to overlap; use
+--no-wait only when an immediate claim conflict is desired. Interrupted recovery
+verifies retained output and reconciles delivery; never duplicate completed work.

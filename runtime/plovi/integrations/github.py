@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import tempfile
 from pathlib import Path
-from ..util import WorkflowError, run
+from ..util import WorkflowError, run, redact
 
 def slug(root, repo):
     configured = repo.get("github")
@@ -63,13 +63,22 @@ def comments(root, repo, number):
 def draft_pr(root, repo, branch, title, body):
     target = slug(root, repo)
     existing = json.loads(run(["gh", "pr", "list", "--repo", target, "--head", branch, "--base", repo["base_branch"],
-                              "--state", "open", "--json", "url,isDraft"], root).stdout)
+                              "--state", "open", "--json", "url,isDraft,body"], root).stdout)
     if existing:
         if len(existing) != 1:
             raise WorkflowError("More than one matching PR; select it explicitly")
+        from ..evidence import synchronize
+        previous = existing[0].get("body")
+        if previous is None:
+            previous = json.loads(run(["gh", "pr", "view", existing[0]["url"], "--repo", target, "--json", "body"], root).stdout)["body"]
+        updated = redact(synchronize(previous, body))
+        if updated != previous:
+            with tempfile.TemporaryDirectory(prefix="workflow-pr-") as temporary:
+                path = Path(temporary) / "body.md"; path.write_text(updated, encoding="utf-8")
+                run(["gh", "pr", "edit", existing[0]["url"], "--repo", target, "--body-file", path], root)
         return existing[0]["url"]
     with tempfile.TemporaryDirectory(prefix="workflow-pr-") as temporary:
-        body_path = Path(temporary) / "body.md"; body_path.write_text(body)
+        body_path = Path(temporary) / "body.md"; body_path.write_text(redact(body), encoding="utf-8")
         return run(["gh", "pr", "create", "--repo", target, "--head", branch, "--base", repo["base_branch"],
                     "--draft", "--title", title, "--body-file", body_path], root).stdout.strip()
 

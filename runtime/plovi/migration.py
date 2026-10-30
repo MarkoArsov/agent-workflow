@@ -73,6 +73,16 @@ def lock_held(path):
     return False
 
 
+def task_locks(config):
+    profile = read_json(config / "project.json", {})
+    evidence = profile.get("planning", {}).get("evidence_directory", config.name + "/local/evidence")
+    parts = Path(evidence).parts
+    if parts and parts[0] in {CURRENT, LEGACY}:
+        evidence = str(Path(config.name, *parts[1:]))
+    from .util import contained
+    return contained(config.parent, evidence).glob("*/runner.lock")
+
+
 def worktree_repairs(root, old):
     from .util import run
     profile = read_json(old / "project.json", {})
@@ -213,6 +223,8 @@ def migrate(root):
     journal = root / ".plovi-migration.json"
     if not old.exists() and not journal.exists():
         return False
+    if old.exists() and any(lock_held(path) for path in task_locks(old)):
+        raise WorkflowError("Finish or cancel active tasks before migrating; a task lock is held")
     if old.exists() and lock_held(old / "local/runner.lock"):
         raise WorkflowError("Finish or cancel active tasks before migrating the project; its run lock is held")
     # Lock outside the moved tree. Leave this inode in place so waiting processes
@@ -239,6 +251,8 @@ def migrate(root):
             evidence_path = (root / evidence).resolve()
             if not evidence_path.is_relative_to(root):
                 raise WorkflowError("Migration evidence directory leaves the project")
+            if any(lock_held(path) for path in task_locks(old)):
+                raise WorkflowError("Finish or cancel active tasks before migrating; a task lock is held")
             if lock_held(old / "local/runner.lock"):
                 raise WorkflowError("Finish or cancel active tasks before migrating the project; its run lock is held")
             saved = {"schema_version": 1, "changes": _changes(root, old), "worktrees": worktree_repairs(root, old)}

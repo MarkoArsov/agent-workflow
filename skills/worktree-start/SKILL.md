@@ -43,3 +43,11 @@ where that contract will be written.
    run the runner's preparation at pipeline handoff rather than creating a second
    worktree with a different identity. For manual work stay in the selected checkout.
    Report the resulting task paths and unchanged companions.
+
+
+New setup profiles default writable participants to worktree. Explicit reviewed
+feature-branch and current-checkout choices remain valid. Missing
+planning.commit_plans means true; it never changes checkout strategy. Prepare
+using the canonical configuration root and reuse existing registered task worktrees,
+including ones with task-owned planning edits. Verify branch/common-dir ownership
+before reuse. Keep read-only companions untouched.
