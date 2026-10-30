@@ -36,7 +36,7 @@ See [stop or flag](principles.md#stop-or-flag).
 
 | Status | What it means | What to do |
 |---|---|---|
-| `starting`, `running` | The run is making progress. | Keep watching, or `watch` if you left. Don't start a duplicate; the project lock would refuse it anyway. |
+| `starting`, `running` | The run is making progress. | Keep watching, or `watch` if you left. Don't start a duplicate; the task lock would refuse it anyway. |
 | `needs_input` | A stage needs a decision only you can make. | Answer the saved question with `answer --file`. |
 | `failed` | A safety, verification, or delivery check failed, or attempts ran out. | Read `error` and the latest evidence. Fix the cause, then `resume`. |
 | `cancelled` | You asked the orchestrator to stop. | `resume` when ready. |
@@ -75,7 +75,7 @@ plovi cancel csv-export
 - **Answer** resumes the exact provider session that asked. Retries and fallbacks always start fresh sessions.
 - **Resume** continues from the first incomplete stage. A stage whose verified evidence still matches the current files is not repeated.
 - **Rebind** accepts a reviewed revision of the plan, profile, or skills. It archives the previous inputs and invalidates the stages they affect. Changing which repositories participate needs a new task ID.
-- **Cancel** asks the owning orchestrator to stop its own process group. A stale PID in the journal never authorizes killing a process, and only one orchestrator owns a project at a time.
+- **Cancel** asks the owning orchestrator to stop its own process group. A stale PID in the journal never authorizes killing a process, and one orchestrator owns each task at a time.
 
 Retries, run time, inactivity, and stalled tools are bounded by the plan's limits.
 
@@ -141,3 +141,38 @@ python3 scripts/check_public_content.py --history
 The history audit checks every locally reachable ref. Fetch the relevant remote
 history before comparing local and CI results. Scan a release tree or built site
 separately when verifying those deliverables.
+
+## Escalations and interruptions
+
+`blocked`, `spec_conflict` and `impossible` stop after one attempt with status
+`escalated`. Status retains the reason, stage, route and session, and shows the
+retry command. Ordinary resume cannot clear an escalation.
+
+```sh
+plovi retry TASK --note decision.txt
+```
+
+Retry retains history and starts a fresh session with your redacted note under
+NOTE FROM THE PERSON. `needs_input` still uses `answer` and the exact asking session.
+
+Status and watch probe the OS-held task lock. A running journal with no owner
+becomes `interrupted`; no process is killed by a saved PID. Resume verifies retained
+stage output and preserves completed work. Delivery persists intent before commit,
+then adopts only the exact expected tree, message, paths and single parent. It
+reconciles the remote branch and matching open PR after a crash. Foreign changes
+or failed remote queries stop recovery. Never force push to repair recovery.
+
+`needs_approval` retains size and protected-path requirements. See [policy](policy.md).
+
+!!! note "What changes for your workflow"
+    Use retry for an escalation, answer for a question, and resume for an
+    interruption. Inspect the recorded reason and diff before continuing.
+
+## Delivery after workflow changes
+
+A task may update plovi's own skills or shared references. If delivery stops after
+the task's verified commit was pushed, resume can retain the original frozen
+inputs when those changes are part of that exact verified commit. Changes to the
+plan or project settings, a different commit, or uncommitted edits still require
+review. Configure the intended `gh` executable in the launching environment's
+`PATH`; plovi does not select a GitHub account from a repository owner.

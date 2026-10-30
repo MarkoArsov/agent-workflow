@@ -23,3 +23,9 @@ update-models (optional models watch evidence; offline task evaluation), and opt
 session-retro (read-only analysis, explicit apply). These are tools, not implicitly
 selected execution stages. Report full-plan draft versus validated/preflight-ready
 status honestly; do not present a concise manual plan as a runnable pipeline.
+
+
+Include effective policy values and sources, permission mode/source, pending diff
+approvals, escalation kind/reason and retry command. Distinguish waiting,
+needs_approval, escalated and interrupted from running/failed. Status probes OS-held
+task ownership; never infer ownership or kill permissions from a saved PID.

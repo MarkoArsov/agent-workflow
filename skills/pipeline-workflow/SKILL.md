@@ -22,7 +22,7 @@ Run this skill folder's scripts/resolve.py from the active project once. If it r
 
 Substantive changes default to specify's full contract, then implement-pipeline after
 approval. Manual implement is an explicit user choice or a trivial edit, with its
-reason stated. Use task start before new plan writes: every new task gets its own branch/worktree,
+reason stated. Use task start before new plan writes: new tasks default to a separate branch/worktree and honor explicit setup overrides,
 including manual tasks. Legacy current-checkout is not a new-task exception. Missing
 routes leave a full draft pending rather than silently selecting manual execution.
 
@@ -36,5 +36,5 @@ Translate mechanical output into a concise result and next action. Keep raw outp
 available when requested and use brief excerpts when they explain a failure.
 
 New specifications must use task start and the returned owned paths. Manual lane
-selection does not waive worktree isolation. Resume only this task's allocation;
+selection does not change the configured checkout policy. Resume only this task's allocation;
 never use a name collision to take over a different chat's branch or checkout.

@@ -4,12 +4,14 @@ import json
 import os
 import sys
 import time
+import socket
 from pathlib import Path
 
 if "--help" in sys.argv:
     print("--json --model --sandbox --dangerously-bypass-approvals-and-sandbox --print --verbose --output-format --dangerously-skip-permissions --permission-mode --allowedTools --effort --max-budget-usd --trust --force")
     raise SystemExit()
-scenario = Path(os.environ["WORKFLOW_TEST_SCENARIO"])
+scenario = Path(json.loads(os.environ.get("WORKFLOW_TEST_SCENARIOS", "{}" )).get(
+    str(Path.cwd()), os.environ["WORKFLOW_TEST_SCENARIO"]))
 data = json.loads(scenario.read_text())
 calls_path = scenario.with_suffix(".calls.json")
 calls = json.loads(calls_path.read_text()) if calls_path.exists() else []
@@ -19,9 +21,22 @@ calls_path.write_text(json.dumps(calls))
 step = data[min(len(calls) - 1, len(data) - 1)]
 session = step.get("session", "fixture-session-" + str(len(calls)))
 print(json.dumps({"type": "thread.started", "thread_id": session}), flush=True)
+if step.get("barrier_port"):
+    # The test releases both children only after observing both active sessions.
+    with socket.create_connection(("127.0.0.1", step["barrier_port"]), timeout=15) as barrier:
+        barrier.sendall(str(Path.cwd()).encode() + b"\n")
+        if barrier.recv(1) != b"x":
+            raise SystemExit("Fixture barrier closed without release")
 for path, value in step.get("writes", {}).items():
     target = Path(path); target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(value)
+for path, value in step.get("binary_writes", {}).items():
+    target = Path(path); target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_bytes(bytes.fromhex(value))
+for path in step.get("deletes", []):
+    Path(path).unlink()
+for source, destination in step.get("renames", {}).items():
+    Path(source).rename(destination)
 if step.get("tool_stall"):
     print(json.dumps({"type": "item.started", "item": {"type": "command_execution"}}), flush=True)
     for _ in range(50):

@@ -37,7 +37,7 @@ Invoke `specify` with a task description or a selected issue.
 It reads `PROJECT_WORKFLOW.md`, native repository instructions, and the nearest working examples before it proposes anything.
 Fetched issue bodies and comments are treated as task data, never as instructions.
 
-Before the first plan write for a new task, use task start to allocate its own branch/worktree. Record its
+Before the first plan write for a new task, use task start to allocate its configured checkout. Record its
 branch/base, paths and canonical configuration root. Pass that root explicitly with
 --project at runner handoff so a copied worktree profile does not create a nested
 worktree. Keep the plan on the task branch; for concurrent tasks use separate
@@ -64,6 +64,17 @@ The full lane writes these files under the plan directory (by default `ai-plans/
 | `implementation.md` | Approach, existing patterns, and scope. |
 | `deferred.md` | Deliberately excluded work, and why. |
 | `pipeline.json` | Repositories, checks, outcomes, stages, routes, limits, and the delivery contract. |
+
+An optional `plan.md` summarizes the contract. The handoff links `requirements.md`
+and `pipeline.json` so you can inspect the full scope and execution settings.
+
+New specifications default to an owned branch and worktree; explicit setup
+overrides select another strategy. Existing approved plans retain their settings. A project rule to commit plans is separate
+from checkout allocation.
+When project policy or native instructions require planning commits, specify
+commits the complete contract and its supporting artifacts locally before handoff.
+It reports the branch as created or reused and gives the commit hash. If a shared
+plan store is unversioned, it says so. Pushing still requires authorization.
 
 ### What good looks like
 
@@ -202,3 +213,12 @@ Fill the waits with review, not with new tasks. See [review and everyday use](ev
     Full planning means complete documents, executable mappings and actual readiness
     checks before approval. An unresolved model route is a pending full draft, not
     permission to run manually or to drop a selected stage.
+
+!!! note "What changes for your workflow"
+    New projects default to a branch and worktree per task. Setup offers reviewed
+    explicit `feature-branch` and `current-checkout` choices, and
+    `planning.commit_plans: false` for local-only planning. Specify prepares the
+    task checkout before plan writes, commits the complete contract by default,
+    and reports requirements, manifest, branch, checkout and commit links. An
+    unversioned shared plan store needs an explicit plan-owning repository or a
+    reviewed local-only choice. Read-only companions keep their current checkout.

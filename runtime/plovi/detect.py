@@ -113,7 +113,7 @@ def scan(root: Path) -> dict:
         role = "e2e" if re.search(r"(e2e|checks|acceptance)", repo.name, re.I) else "infra" if any(repo.glob("*.tf")) else "docs" if (repo / "mkdocs.yml").exists() else "application"
         record(name, "roles", [role], rel, "suggested")
         record(name, "languages", languages, rel)
-        record(name, "checkout_strategy", "worktree" if len(git(repo, "worktree", "list", "--porcelain").split("worktree ")) > 2 else "current-checkout", "git worktree list", "suggested")
+        record(name, "checkout_strategy", "worktree", "git worktree list", "suggested")
         ci = sorted(p.name for p in (repo / ".github/workflows").glob("*") if p.is_file())
         if ci:
             record(name, "ci", "github-actions", rel + "/.github/workflows")
@@ -126,7 +126,7 @@ def scan(root: Path) -> dict:
             record(name, "review_bots", bots, rel)
         instructions = [f for f in ("AGENTS.md", "CLAUDE.md", "README.md") if (repo / f).is_file()]
         record(name, "instructions", instructions, rel)
-        repos.append({"id": name, "path": rel, "roles": [role], "languages": languages, "base_branch": base, "remote": "origin", "task_policy": "when-changed", "checkout_strategy": "current-checkout", "commands": commands})
+        repos.append({"id": name, "path": rel, "roles": [role], "languages": languages, "base_branch": base, "remote": "origin", "task_policy": "when-changed", "checkout_strategy": "worktree", "commands": commands})
     profile = defaults(root, repos)
     styles = [f["value"] for f in findings if f["subject"] == "commit_style"]
     if styles and all(s == "conventional" for s in styles):

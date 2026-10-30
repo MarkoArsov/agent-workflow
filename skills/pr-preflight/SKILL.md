@@ -17,3 +17,11 @@ Run this skill folder's scripts/resolve.py from the active project once. If it r
 
 4. Run narrow missing checks when authorized, then report concrete blockers or readiness. A successful preflight does not itself push, create a PR, request reviews, or post comments.
 
+
+
+Recheck cumulative size/protected-path gates against current task content, modes
+and paths. Both approvals must match the current fingerprint. Use verified check
+results, parsed counts (unknown when absent), completed routes and assumptions in
+one managed Evidence section. Redact/escape displayed strings and redact the final
+body. Reuse the single matching open PR and synchronize only changed Evidence,
+preserving unrelated body content. A saved URL does not skip synchronization.

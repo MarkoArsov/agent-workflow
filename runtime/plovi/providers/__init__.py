@@ -118,7 +118,15 @@ class Events:
             stripped = re.sub(r"^" + re.escape(chr(96) * 3) + r"(?:json)?\s*|\s*" + re.escape(chr(96) * 3) + r"$", "", text.strip())
             try:
                 value = json.loads(stripped)
-                if isinstance(value, dict) and value.get("status") in {"complete", "needs_input", "blocked"}:
+                if isinstance(value, dict) and "status" in value and (not isinstance(value["status"], str) or value["status"] not in {"complete", "needs_input", "blocked", "spec_conflict", "impossible"}):
+                    return None
+                if isinstance(value, dict) and value.get("status") in {"complete", "needs_input", "blocked", "spec_conflict", "impossible"}:
+                    status = value["status"]
+                    required = "question" if status == "needs_input" else "reason" if status != "complete" else None
+                    if required and (not isinstance(value.get(required), str) or not value[required].strip()):
+                        return None
+                    if "assumptions" in value and (not isinstance(value["assumptions"], list) or not all(isinstance(x, str) for x in value["assumptions"])):
+                        return None
                     return value
             except ValueError:
                 continue

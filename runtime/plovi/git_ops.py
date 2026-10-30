@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 from .manifest import matches
-from .util import WorkflowError, contained, digest, git, json_text, run
+from .util import WorkflowError, common_dir, contained, digest, git, json_text, run
 
 def files(root):
     result = run(["git", "ls-files", "-z", "--cached", "--others", "--exclude-standard"], root).stdout
@@ -60,6 +60,11 @@ def guard(before, after, manifest, stage, *, allow_commits=False, custom=None):
     return changed
 
 def prepare(project, manifest):
+    from .state import lock
+    with lock(project.config / "local/repo-ops.lock", wait=True):
+        return _prepare(project, manifest)
+
+def _prepare(project, manifest):
     result = {}
     for row in manifest["repositories"]:
         name = row["id"]; repo = project.repository(name); root = project.repo_path(name)
@@ -78,7 +83,9 @@ def prepare(project, manifest):
             if not branch or branch == repo["base_branch"]:
                 raise WorkflowError(f"{name}: branch strategy requires an explicit feature branch")
             git(root, "check-ref-format", "--branch", branch)
-            if git(root, "status", "--porcelain"):
+            # Reuse a prepared task worktree even while its plan is being written.
+            reusable = strategy == "worktree" and (contained(project.root, project.profile["git"]["worktree_directory"]) / manifest["task"] / name).exists()
+            if not reusable and git(root, "status", "--porcelain"):
                 raise WorkflowError(f"{name}: commit/stash existing changes before preparing a new checkout")
             exists = bool(git(root, "branch", "--list", branch))
             if strategy == "feature-branch":
@@ -87,6 +94,11 @@ def prepare(project, manifest):
                 directory = contained(project.root, project.profile["git"]["worktree_directory"])
                 target = directory / manifest["task"] / name
                 if target.exists():
+                    registered = git(root, "worktree", "list", "--porcelain", "-z").split("\0")
+                    worktrees = {Path(field.removeprefix("worktree ")).resolve()
+                                 for field in registered if field.startswith("worktree ")}
+                    if target.resolve() not in worktrees or common_dir(target) != common_dir(root):
+                        raise WorkflowError(f"Existing task worktree has different repository ownership: {target}")
                     if git(target, "branch", "--show-current") != branch:
                         raise WorkflowError(f"Existing worktree has a different branch: {target}")
                 else:
@@ -110,6 +122,10 @@ def dirty_paths(root):
             result.add(piece[3:] if len(piece) > 3 and piece[2] == " " else piece)
     return sorted(result)
 
+def crash_after(point):
+    if os.environ.get("PLOVI_TESTING") == "1" and os.environ.get("PLOVI_TEST_CRASH_AFTER") == point:
+        os._exit(86)
+
 def deliver(project, manifest, state, save, *, pull_requests=False):
     from .integrations.github import draft_pr
     baseline = state["baseline"]
@@ -123,31 +139,72 @@ def deliver(project, manifest, state, save, *, pull_requests=False):
         branch = git(root, "branch", "--show-current")
         if branch != row.get("branch") or branch == repo["base_branch"] or not branch:
             raise WorkflowError(f"{name}: refusing delivery from an unexpected or base branch")
-        if not progress.get("commit"):
-            changed = paths[name]
-            if not changed:
-                progress["unchanged"] = True; save(); continue
-            overlap = set(changed) & set(state["initial_dirty"].get(name, []))
-            if overlap:
-                raise WorkflowError(f"{name}: refusing to commit pre-existing user changes: {sorted(overlap)}")
+        with __import__('contextlib').ExitStack() as stack:
+            from .state import lock
+            stack.enter_context(lock(project.config / "local/repo-ops.lock", wait=True))
+            head = git(root, "rev-parse", "HEAD")
+            intent = progress.get("intent")
+            if not progress.get("commit") and intent and head != intent["baseline_head"]:
+                parents = git(root, "show", "-s", "--format=%P", head).split()
+                message = git(root, "show", "-s", "--format=%B", head)
+                actual_paths = git(root, "diff-tree", "--no-commit-id", "--name-only", "-r", "--no-renames", head).splitlines()
+                if (parents != [intent["baseline_head"]] or message != intent["message"]
+                        or sorted(actual_paths) != intent["paths"]
+                        or git(root, "rev-parse", "HEAD^{tree}") != intent["tree"]
+                        or git(root, "diff", "--cached", "--name-only")):
+                    raise WorkflowError(f"{name}: unexpected HEAD/index; delivery intent cannot be adopted")
+                progress["commit"] = head; save()
+            if not progress.get("commit"):
+                changed = paths[name]
+                if not changed:
+                    progress["unchanged"] = True; save(); continue
+                if set(changed) & set(state["initial_dirty"].get(name, [])):
+                    raise WorkflowError(f"{name}: refusing to commit pre-existing user changes")
+                if head != baseline[name]["head"]:
+                    raise WorkflowError(f"{name}: unexpected HEAD before delivery")
+                if git(root, "diff", "--cached", "--name-only"):
+                    if not intent or git(root, "write-tree") != intent["tree"]:
+                        raise WorkflowError(f"{name}: the index has changes outside runner ownership")
+                if not intent:
+                    import tempfile
+                    with tempfile.TemporaryDirectory(prefix="plovi-index-") as temporary:
+                        env = dict(os.environ, GIT_INDEX_FILE=str(Path(temporary) / "index"))
+                        run(["git", "read-tree", head], root, env=env)
+                        run(["git", "add", "--", *changed], root, env=env)
+                        tree = run(["git", "write-tree"], root, env=env).stdout.strip()
+                    intent = {"baseline_head": head, "paths": sorted(changed),
+                              "message": manifest["delivery"]["commit_message"], "tree": tree,
+                              "files": {path: current[name]["files"].get(path) for path in changed}}
+                    progress["intent"] = intent; save()
+                git(root, "add", "--", *changed)
+                if git(root, "write-tree") != intent["tree"]:
+                    raise WorkflowError(f"{name}: task contents changed after delivery intent")
+                try:
+                    git(root, "commit", "-m", intent["message"])
+                except WorkflowError:
+                    git(root, "reset", "--", *changed)
+                    raise
+                crash_after("commit")
+                progress["commit"] = git(root, "rev-parse", "HEAD"); save()
+            if git(root, "rev-parse", "HEAD") != progress["commit"]:
+                raise WorkflowError(f"{name}: HEAD changed after the recorded delivery commit")
             if git(root, "diff", "--cached", "--name-only"):
-                raise WorkflowError(f"{name}: the index has changes outside runner ownership")
-            git(root, "add", "--", *changed)
-            try:
-                git(root, "commit", "-m", manifest["delivery"]["commit_message"])
-            except WorkflowError:
-                git(root, "reset", "--", *changed)
-                raise
-            progress["commit"] = git(root, "rev-parse", "HEAD")
-            save()
-        if git(root, "rev-parse", "HEAD") != progress["commit"]:
-            raise WorkflowError(f"{name}: HEAD changed after the recorded delivery commit")
-        if not progress.get("pushed"):
-            git(root, "push", repo["remote"], f"HEAD:refs/heads/{branch}")
+                raise WorkflowError(f"{name}: foreign index changes prevent delivery")
+            # Query failure is an error, never proof of a missing remote branch.
+            remote = git(root, "ls-remote", "--heads", repo["remote"], f"refs/heads/{branch}")
+            remote_head = remote.split()[0] if remote else None
+            if remote_head != progress["commit"]:
+                if progress.get("pushed"):
+                    raise WorkflowError(f"{name}: remote branch diverged after push")
+                git(root, "push", repo["remote"], f"HEAD:refs/heads/{branch}")
+                crash_after("push")
             progress["pushed"] = True; save()
-        if pull_requests and not progress.get("pr"):
-            body = contained(Path(manifest["_directory"]), manifest["delivery"]["body_file"]).read_text()
+        if pull_requests:
+            from .evidence import evidence_markdown
+            body = evidence_markdown(state, manifest) + "\n\n" + contained(Path(manifest["_directory"]), manifest["delivery"]["body_file"]).read_text()
             progress["pr"] = draft_pr(root, repo, branch, manifest["delivery"]["title"], body)
+            crash_after("pr")
+            progress["evidence_digest"] = digest(evidence_markdown(state, manifest))
             save()
     return state.get("delivery", {})
 
@@ -155,6 +212,11 @@ def worktrees(project):
     return {r["id"]: git(project.repo_path(r["id"]), "worktree", "list", "--porcelain") for r in project.profile["repositories"]}
 
 def sync_base(project, names):
+    from .state import lock
+    with lock(project.config / "local/repo-ops.lock", wait=True):
+        return _sync_base(project, names)
+
+def _sync_base(project, names):
     results = {}
     for name in names:
         repo = project.repository(name); root = project.repo_path(name)

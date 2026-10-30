@@ -85,11 +85,12 @@ until the plan is approved.
     selects only needed stages; it does not automatically authorize publishing.
 
 
-## New tasks always get isolated worktrees
+## New tasks use the configured checkout
 
 Lane choice changes how implementation runs, not where files live. Before a new
 specification writes its plan, run `plovi task start <task>`. It allocates a distinct
-branch and worktree even for manual tasks or older current-checkout profiles.
+branch and worktree by default, including for manual tasks and older unmarked
+current-checkout profiles. Explicit setup checkout overrides are honored.
 Continue editing at the returned paths and use --project with the returned canonical
 root for the runner. A task name collision is refused; --resume is only for an
 explicit continuation of that same owned task. Existing shared source edits stay

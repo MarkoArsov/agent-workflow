@@ -38,7 +38,8 @@ def owned_checkout(project, task, repository, branch):
     row = next((r for r in saved['repositories'] if r['repository'] == repository), None)
     if row is None or branch != row['branch']:
         raise WorkflowError('Task manifest branch/repository differs from its owned allocation')
-    expected = contained(project.root, project.profile['git']['worktree_directory']) / task / repository
+    expected = (project.repo_path(repository) if row.get('strategy') in {'current-checkout', 'feature-branch'} else
+                contained(project.root, project.profile['git']['worktree_directory']) / task / repository)
     if row['path'] != str(expected):
         raise WorkflowError('Task worktree directory changed; inspect its ownership before execution')
     return _validate_checkout(project, row)
@@ -59,7 +60,7 @@ def start(project, task, *, repositories=None, base=None, resume=False):
         raise WorkflowError('Select an explicit valid base ref')
     directory = contained(project.root, project.profile['git']['worktree_directory'])
     path = receipt_path(project, task)
-    with lock(project.config / 'local/task-start.lock'):
+    with lock(project.config / 'local/task-start.lock'), lock(project.config / 'local/repo-ops.lock', wait=True):
         saved = read_json(path)
         if saved is not None:
             if not resume:
@@ -80,29 +81,61 @@ def start(project, task, *, repositories=None, base=None, resume=False):
                 if common is None or common in commons:
                     raise WorkflowError('Writable task repositories must be distinct Git repositories')
                 commons.add(common)
-                branch = project.profile['git']['branch_template'].format(task=task)
+                strategy = repo['checkout_strategy'] if repo.get('checkout_strategy_explicit') else 'worktree'
+                if strategy != 'worktree' and git(root, 'status', '--porcelain'):
+                    raise WorkflowError('Explicit shared checkout must be clean before task preparation')
+                if strategy != 'worktree':
+                    from .state import directory as state_directory
+                    for other in path.parent.glob('*.json'):
+                        receipt = read_json(other, {})
+                        if any(Path(item.get('path', '')).resolve() == root.resolve()
+                               for item in receipt.get('repositories', [])):
+                            other_task = receipt.get('task')
+                            status = read_json(state_directory(project, other_task) / 'state.json', {}).get('status')
+                            if status not in {'complete', 'cancelled'}:
+                                raise WorkflowError('Shared checkout belongs to another unfinished task')
+                branch = (git(root, 'branch', '--show-current') if strategy == 'current-checkout' else
+                          project.profile['git']['branch_template'].format(task=task))
                 git(root, 'check-ref-format', '--branch', branch)
-                if branch == repo['base_branch'] or _branch_exists(root, branch):
+                if strategy != 'current-checkout' and (branch == repo['base_branch'] or _branch_exists(root, branch)):
                     raise WorkflowError('Task branch already exists; choose a new task or resume its owned allocation')
-                target = directory / task / name
-                if target.exists() or target.is_symlink():
+                target = root if strategy != 'worktree' else directory / task / name
+                if strategy == 'worktree' and (target.exists() or target.is_symlink()):
                     raise WorkflowError('Task worktree path already exists; no existing files were adopted')
                 selected_base = base or repo['base_branch']
                 if selected_base.startswith('-'):
                     raise WorkflowError('Invalid base ref')
                 commit = git(root, 'rev-parse', '--verify', selected_base + '^{commit}')
                 rows.append({'repository': name, 'branch': branch, 'base': selected_base,
-                             'base_commit': commit, 'path': str(target), 'ready': False})
+                             'base_commit': commit, 'path': str(target), 'strategy': strategy, 'ready': False})
             saved = {'schema_version': 1, 'task': task, 'configuration_root': str(project.root),
                      'complete': False, 'repositories': rows}
             write_json(path, saved)
         for row in saved['repositories']:
             root = project.repo_path(row['repository'])
-            target = directory / task / row['repository']
+            strategy = row.get('strategy', 'worktree')
+            target = root if strategy != 'worktree' else directory / task / row['repository']
             if row['path'] != str(target):
                 raise WorkflowError('Task path changed; preserve the existing allocation')
             if row['ready']:
                 _validate_checkout(project, row)
+                continue
+            if strategy == 'current-checkout':
+                _validate_checkout(project, row)
+                row['ready'] = True
+                write_json(path, saved)
+                continue
+            if strategy == 'feature-branch':
+                active = git(root, 'branch', '--show-current')
+                if active != row['branch']:
+                    if active != row['base']:
+                        raise WorkflowError('Explicit feature checkout is not on its selected base; preserve the current branch')
+                    if git(root, 'status', '--porcelain') or _branch_exists(root, row['branch']):
+                        raise WorkflowError('Explicit feature checkout is not clean or branch is already owned')
+                    git(root, 'switch', '-c', row['branch'], row['base_commit'])
+                _validate_checkout(project, row)
+                row['ready'] = True
+                write_json(path, saved)
                 continue
             # Recover an interrupted worktree add only at this recorded path/base.
             if target.exists():
@@ -125,4 +158,4 @@ def start(project, task, *, repositories=None, base=None, resume=False):
             'branches': {r['repository']: r['branch'] for r in saved['repositories']},
             'plans': {r['repository']: str(Path(r['path']) / project.profile['planning']['directory'] / task)
                       for r in saved['repositories']},
-            'detail': 'New tasks always use owned worktrees, including manual tasks and legacy current-checkout profiles. No plans or product files were written.'}
+            'detail': 'Tasks use owned worktrees unless setup explicitly selected another checkout strategy. No plans or product files were written.'}

@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Reviewed plovi policy",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "running_tasks": {
+          "default": 2,
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10000000
+        },
+        "waiting_for_review": {
+          "default": 3,
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10000000
+        },
+        "attempts_per_stage": {
+          "default": 2,
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        },
+        "max_changed_files": {
+          "default": 40,
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10000000
+        },
+        "max_changed_lines": {
+          "default": 1500,
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10000000
+        },
+        "size_exempt": {
+          "default": [
+            "**/package-lock.json",
+            "**/*.lock"
+          ],
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?![A-Za-z]:)(?!.*\\\\).+"
+          }
+        }
+      }
+    },
+    "paths": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "protected": {
+          "default": [
+            ".github/workflows/**",
+            "**/migrations/**"
+          ],
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?![A-Za-z]:)(?!.*\\\\).+"
+          }
+        }
+      }
+    },
+    "execution": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "unattended_permission_mode": {
+          "default": "restricted",
+          "enum": [
+            "restricted",
+            "trusted"
+          ]
+        }
+      }
+    },
+    "autonomy": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "level": {
+          "default": "assisted",
+          "enum": [
+            "assisted",
+            "ready",
+            "auto"
+          ]
+        }
+      }
+    },
+    "grants": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {}
+    }
+  }
+}

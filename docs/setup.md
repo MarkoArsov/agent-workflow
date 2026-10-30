@@ -32,7 +32,7 @@ Confirm:
 
 A repository's role does not dictate its branch policy. An E2E repository can remain on its existing branch and provide checks without being writable.
 
-Trusted execution is the offered default. It uses provider permission-bypass flags.
+Interactive execution follows your profile. Detached and non-TTY runs default to restricted; reviewed policy or `--trusted` can opt into trusted execution.
 [Restricted execution](execution.md) is configurable during setup. This choice does not authorize messages or tracker changes.
 
 ## Preview, then apply
@@ -67,3 +67,12 @@ Manual settings, deletions, unknown extension fields, and prose are preserved.
 Conflicting changes are shown for a decision. An identical run leaves file bytes unchanged.
 
 <!-- checkpoints: CTX-1, CTX-5, PLN-2 -->
+
+!!! note "What changes for your workflow"
+    New projects default to a branch and worktree per task. Setup offers reviewed
+    explicit `feature-branch` and `current-checkout` choices, and
+    `planning.commit_plans: false` for local-only planning. Specify prepares the
+    task checkout before plan writes, commits the complete contract by default,
+    and reports requirements, manifest, branch, checkout and commit links. An
+    unversioned shared plan store needs an explicit plan-owning repository or a
+    reviewed local-only choice. Read-only companions keep their current checkout.

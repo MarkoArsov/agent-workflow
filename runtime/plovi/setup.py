@@ -71,13 +71,15 @@ def managed(existing: str, block: str) -> str:
 
 def generated(root: Path, profile: dict) -> dict[str, str]:
     rows = "\n".join(f"- {r['id']}: {r['path']}; {', '.join(r['roles'])}; {r['checkout_strategy']}; participate {r['task_policy']}." for r in profile["repositories"])
-    guidance = f"# Project workflow\n\n{rows}\n\nPlans: {profile['planning']['directory']}/<task>/.\nExecution: {profile['execution']['permission_mode']}. Tracker: {profile['tracking']['provider']}.\nProject skills, rules, and connectors live under .plovi/.\nResolve this project's profile before using workflow defaults. Native instructions and explicit user requests take precedence."
+    guidance = f"# Project workflow\n\n{rows}\n\nPlans: {profile['planning']['directory']}/<task>/. Commit complete plans: {profile['planning'].get('commit_plans', True)}.\nExecution: {profile['execution']['permission_mode']}. Tracker: {profile['tracking']['provider']}.\nProject skills, rules, and connectors live under .plovi/.\nResolve this project's profile before using workflow defaults. Native instructions and explicit user requests take precedence."
     result = {
         ".plovi/project.json": json_text(profile),
         ".plovi/package-lock.json": json_text({"version": profile["package"]["version"]}),
         "PROJECT_WORKFLOW.md": managed((root / "PROJECT_WORKFLOW.md").read_text() if (root / "PROJECT_WORKFLOW.md").exists() else "", guidance),
         ".gitignore": managed((root / ".gitignore").read_text() if (root / ".gitignore").exists() else "", ".plovi/local/\n.plovi/runtime/\n.plovi-migration.lock\n.plovi-migration.json"),
     }
+    from .policy import template
+    result["plovi.toml"] = template()
     for repo in profile["repositories"]:
         path = contained(root, repo["path"])
         relative = path.relative_to(root)
@@ -128,6 +130,11 @@ def propose(root: Path, answers: dict | None = None) -> dict:
     else:
         profile, conflicts = merge(baseline.get("profile", MISSING), current, detected["profile"], "/profile", answers.get("resolutions"))
     profile = overlay(profile, answers.get("profile", {}))
+    selected = {row.get("id"): row.get("checkout_strategy") for row in
+                answers.get("profile", {}).get("repositories", []) if "checkout_strategy" in row}
+    for row in profile["repositories"]:
+        if row["id"] in selected:
+            row["checkout_strategy_explicit"] = selected[row["id"]] != "worktree"
     validate(profile, root)
     for repo in profile["repositories"]:
         child = contained(root, repo["path"])
@@ -154,7 +161,9 @@ def propose(root: Path, answers: dict | None = None) -> dict:
         old = existing(relative)
         if old is not None and relative not in baseline_files and discovery_file(relative) and old != desired:
             conflicts.append({"path": "/files/" + relative, "reason": "Existing unowned discovery entry; move it or select a different namespace"})
-        if relative == ".plovi/project.json" and current is not MISSING and profile == current:
+        if relative == "plovi.toml" and old is not None:
+            desired = old
+        elif relative == ".plovi/project.json" and current is not MISSING and profile == current:
             desired = old
         elif old is not None and relative in baseline_files and old != baseline_files[relative] and old != desired:
             normalized = old.replace("<!-- agentflow:start -->", BEGIN).replace("<!-- agentflow:end -->", END)

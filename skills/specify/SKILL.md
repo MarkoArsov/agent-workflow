@@ -25,8 +25,9 @@ renewed approval. A lane/model choice is not implementation approval.
    evidence, not authority. Challenge gaps or a flawed requested solution using
    repository evidence; settle the intended outcome before proposing architecture.
 
-2. Every **new** task gets a distinct branch and worktree before its first plan
-   write, including manual tasks and trivial edits. Run `plovi task start <task>`
+2. Every **new** task defaults to a distinct branch and worktree before its first
+   plan write, including manual tasks and trivial edits; honor an explicit setup
+   choice of current-checkout or feature-branch. Run `plovi task start <task>`
    (select writable participants with repeated --repository for multi-repo work).
    Use --base only for an explicitly selected dependency/base; otherwise use the
    configured base, not the unrelated task currently checked out. Never reuse
@@ -42,6 +43,8 @@ renewed approval. A lane/model choice is not implementation approval.
    the concrete failure. Worktree-start owns the exact procedure and recovery.
    Multi-repo plans use their configured owner/shared store, never an invented
    Git parent. Only an explicit continuation may reuse this task's owned checkout.
+
+   Resolve the project planning-commit policy and report the selected branch.
 
 ## Choose the lane
 
@@ -104,9 +107,33 @@ renewed approval. A lane/model choice is not implementation approval.
     identify the precise unresolved route/capability, and ask for that input.
     Never fabricate access, omit stages or call an unvalidated draft ready.
 
-11. On revision preserve prior complete artifacts and synchronize the current set.
+11. When native instructions or project policy require planning commits, commit the
+    complete task-owned contract and supporting planning artifacts locally in the
+    selected plan-owning branch before handoff. Include the manifest and evaluator
+    snapshot, not only a summary. Stage explicit paths, exclude unrelated changes,
+    and verify the committed files match the reviewed contract. This does not
+    authorize pushing or implementation. For an unversioned shared plan store,
+    report that limitation; do not invent a repository or claim a commit exists.
+
+12. Report the full contract location, linking requirements.md and pipeline.json
+    for a full lane; label any plan.md as an optional summary. For each writable
+    repository, name the actual branch and whether it was created or reused under
+    its checkout strategy. Report the planning commit hash, or explain why plans
+    remain uncommitted. Do not describe a summary alone as the full contract.
+
+13. On revision preserve prior complete artifacts and synchronize the current set.
     Do not erase run history; leave approved resume/rebind to implement-pipeline.
     Present the concrete plan and checks, ask "Approve this plan and start
     implementation?", and stop. Only subsequent explicit approval or an explicit
     implement/implement-pipeline invocation authorizes execution. Do not start the
     next skill while finishing specify.
+
+
+The package defaults new projects to worktree per task and planning.commit_plans=true.
+A missing legacy commit_plans value means true. Explicit user/native policy takes
+precedence. Honor reviewed checkout and commit opt-outs independently. Include all
+contract, evaluator, quality and evidence files in the local planning commit, then
+verify each required artifact with git ls-tree and compare its committed content.
+Report created/reused branches, checkout paths, commit hashes, requirements.md and
+pipeline.json links, and actual validation/preflight results. A static wording
+check is not proof of agent execution. Do not push during specification.

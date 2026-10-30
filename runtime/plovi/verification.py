@@ -49,7 +49,15 @@ def parse(check, output, code, phase="green"):
             failures.append("no observed assertion-level failure")
     elif code != 0 or not success or assertion:
         failures.append("check did not produce successful evidence")
-    return {"passed": not failures, "problems": failures, "parser": parser,
+    counts = None
+    if parser == "unittest":
+        ran = re.search(r"^Ran ([1-9]\d*) tests?", output, re.M)
+        if ran and (success or assertion):
+            counts = {"tests": int(ran[1])}
+            for key, pattern in (("failures", r"failures=(\d+)"), ("errors", r"errors=(\d+)"), ("skipped", r"skipped=(\d+)")):
+                match = re.search(pattern, output)
+                counts[key] = int(match[1]) if match else 0
+    return {"passed": not failures, "problems": failures, "parser": parser, "counts": counts,
             "phase": phase, "identities": check.get("identities", [])}
 
 def command_environment(command, inherited=None):

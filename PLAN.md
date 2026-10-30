@@ -1,5 +1,31 @@
 # plovi implementation plan
 
+## Approved follow-up: specify contract handoff (30 October 2026)
+
+The user requested checking full-contract and branch/commit behavior after a
+specification handoff exposed only its summary. The complete contract was already
+committed under this project's current-checkout policy. Clarify the canonical
+specify skill, pipeline contract and task documentation: apply native/project
+planning-commit requirements to the full artifact set, preserve the configured
+checkout strategy, and report the contract links, actual created/reused branches
+and planning commit or concrete limitation. Keep this an instruction/documentation
+change at first. The user then corrected the project policy to worktree and
+requested that issue #16 include worktree-per-task as the package setup default,
+reviewed setup opt-outs, full-contract planning commits and complete handoffs.
+The local project policy is changed; the task branch/worktree is prepared. Runtime
+setup/default changes remain part of the revised #16 contract awaiting approval.
+Include all these fixes in the user-requested #16 PR after verification. Do not
+modify other installed projects, user-agent configuration or remote state here.
+
+## Approved follow-up: delivery recovery and account routing (30 October 2026)
+
+The user requested including safe self-updating workflow recovery in issue #16 and
+using existing account routing for delivery, while deferring configurable GitHub
+account selection to a separate feature. Preserve the frozen binding only for
+verified, clean, committed task-owned skill/reference changes at delivery; all
+other binding changes still require review. Document scoped CLI path selection.
+Do not introduce personal paths, credentials, or machine-specific defaults.
+
 ## Approved correction: isolate new specifications (29 October 2026)
 
 The user found two chats sharing one branch/checkout and explicitly required new

@@ -124,6 +124,10 @@
               },
               "additionalProperties": true
             }
+          },
+          "checkout_strategy_explicit": {
+            "type": "boolean",
+            "description": "True when setup explicitly selected a non-worktree strategy; legacy unmarked profiles use task worktrees."
           }
         },
         "additionalProperties": true
@@ -168,6 +172,10 @@
         },
         "evidence_directory": {
           "type": "string"
+        },
+        "commit_plans": {
+          "type": "boolean",
+          "default": true
         }
       }
     },

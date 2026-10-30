@@ -8,9 +8,10 @@ from plovi.util import WorkflowError
 
 
 class TaskIsolationTests(WorkspaceTest):
-    def configured(self):
+    def configured(self, strategy=None):
         root=self.repo('app')
-        project=self.setup_project(root)
+        overrides = {'repositories': [{'id': 'app', 'path': '.', 'checkout_strategy': strategy}]} if strategy else None
+        project=self.setup_project(root, overrides)
         self.git(root,'add','.');self.git(root,'commit','-m','Configure fixture')
         return project,root
 
@@ -30,7 +31,8 @@ class TaskIsolationTests(WorkspaceTest):
 
     def test_manual_and_legacy_current_checkout_cannot_bypass_isolation(self):
         from plovi.tasks import start
-        project,root=self.configured()
+        project,root=self.configured('current-checkout')
+        project.repository('app').pop('checkout_strategy_explicit', None)  # Legacy profile.
         (root/'uncommitted.txt').write_text('user work')
         (root/'staged.txt').write_text('staged user work');self.git(root,'add','staged.txt')
         before=git_ops.snapshot(project)
@@ -160,3 +162,29 @@ class TaskIsolationTests(WorkspaceTest):
         with patch.object(tasks,'Path',WindowsPath),patch.object(tasks,'common_dir',return_value=root),patch.object(tasks,'git',side_effect=unrelated):
             with self.assertRaisesRegex(WorkflowError,'not registered'):
                 tasks._validate_checkout(project,row)
+
+    def test_setup_checkout_override_applies_to_new_task(self):
+        from plovi.tasks import start
+        for strategy in ('current-checkout', 'feature-branch'):
+            with self.subTest(strategy=strategy):
+                root=self.repo('override-'+strategy)
+                project=self.setup_project(root, {'repositories':[{'id': 'override-'+strategy, 'checkout_strategy':strategy}]})
+                self.git(root,'add','.');self.git(root,'commit','-m','Configure fixture')
+                result=start(project,'selected')
+                self.assertEqual(Path(result['checkouts']['override-'+strategy]),root)
+                expected='main' if strategy=='current-checkout' else 'feature/selected'
+                self.assertEqual(self.git(root,'branch','--show-current'),expected)
+                self.assertEqual(result['branches']['override-'+strategy],expected)
+                self.assertEqual(start(project,'selected',resume=True)['checkouts'],result['checkouts'])
+                with self.assertRaisesRegex(WorkflowError, 'another unfinished task'):
+                    start(project,'other')
+
+    def test_explicit_feature_override_preserves_unrelated_current_branch(self):
+        from plovi.tasks import start
+        root=self.repo('guard')
+        project=self.setup_project(root, {'repositories':[{'id':'guard','checkout_strategy':'feature-branch'}]})
+        self.git(root,'add','.');self.git(root,'commit','-m','Configure fixture')
+        self.git(root,'switch','-c','feature/unrelated')
+        with self.assertRaisesRegex(WorkflowError, 'not on its selected base'):
+            start(project,'new')
+        self.assertEqual(self.git(root,'branch','--show-current'),'feature/unrelated')

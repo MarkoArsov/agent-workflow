@@ -9,9 +9,9 @@ Run this skill folder's scripts/resolve.py from the active project once. If it r
 
 # Prepare an isolated task checkout
 
-A new task always needs its own branch and worktree **before** plan writes. This
-is independent of manual/full execution and overrides the legacy current-checkout
-shortcut for new specifications. Do not alter old approved manifests or move
+A new task defaults to its own branch and worktree **before** plan writes. This
+is independent of manual/full execution. Honor an explicit checkout choice made
+during setup; unmarked legacy profiles retain isolated worktrees for new tasks. Do not alter old approved manifests or move
 existing work merely to retrofit the rule.
 
 1. Resolve the canonical project, a new task ID and explicit writable participants.
@@ -20,9 +20,9 @@ existing work merely to retrofit the rule.
 
 2. Run `plovi --project <root> task start <task>`; add repeated --repository <id>
    when several writable repositories exist. This command creates owned worktrees
-   even for older profiles configured as current-checkout/feature-branch. It does
-   not switch the shared checkout or write plans. It preserves source staged/dirty
-   work instead of copying or stashing it. Existing branches/paths are refused.
+   for unmarked legacy profiles. Explicit setup choices use the selected checkout
+   strategy; a shared checkout must be clean and unowned by another unfinished task.
+   It never copies or stashes existing edits. Existing branches/paths are refused.
 
 3. Read configuration_root, checkouts, branches and plans from the result. Use those
    paths explicitly for all editing/tool operations and report them before plan
@@ -38,5 +38,8 @@ existing work merely to retrofit the rule.
 5. Put the returned branches in the full manifest and pass its canonical project
    root with --project at handoff. The runner reuses receipt-owned checkouts and
    rejects changed branches/membership. Legacy manifests without allocations keep
-   their recorded execution behavior; that is not permission to start new work in
-   a shared checkout. Do not create nested or duplicate worktrees on resume.
+   their recorded execution behavior; shared checkouts require an explicit setup
+   choice and cannot be taken over from an unfinished task. Do not create nested or duplicate worktrees on resume.
+
+New setup profiles default to worktree; explicit setup choices are honored and
+legacy approved plans retain their recorded checkout strategy. Missing planning.commit_plans means true.

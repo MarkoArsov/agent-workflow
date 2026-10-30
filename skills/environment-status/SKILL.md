@@ -17,3 +17,8 @@ Run this skill folder's scripts/resolve.py from the active project once. If it r
 
 4. If evidence is unavailable, identify the exact missing access or check instead of assuming readiness.
 
+
+
+Distinguish task claims from shared-environment leases. Task pauses release compute
+claims; environment ownership still follows its configured lease. Read status for
+interruption reconciliation. Never reclaim a live task or environment by PID.

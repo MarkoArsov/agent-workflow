@@ -49,6 +49,8 @@ def validate(profile: dict, root: Path | None = None) -> dict:
             contained(root, path)
         if repo.get("task_policy") not in {"always", "when-changed", "never"}:
             raise WorkflowError(f"{name}: invalid task_policy")
+        if "checkout_strategy_explicit" in repo and not isinstance(repo["checkout_strategy_explicit"], bool):
+            raise WorkflowError(f"{name}: checkout_strategy_explicit must be boolean")
         if repo.get("checkout_strategy") not in {"current-checkout", "feature-branch", "worktree"}:
             raise WorkflowError(f"{name}: invalid checkout_strategy")
         if not repo.get("base_branch") or not repo.get("remote"):
@@ -61,6 +63,8 @@ def validate(profile: dict, root: Path | None = None) -> dict:
         raise WorkflowError("Choose trusted or restricted execution")
     if profile.get("tracking", {}).get("provider") not in {"none", "github", "linear", "notion", "custom"}:
         raise WorkflowError("Unsupported tracker; use custom with a connector")
+    if type(profile.get("planning", {}).get("commit_plans", True)) is not bool:
+        raise WorkflowError("planning.commit_plans must be boolean")
     for key in ("directory", "evidence_directory"):
         value = profile.get("planning", {}).get(key)
         if not isinstance(value, str) or Path(value).is_absolute() or ".." in Path(value).parts:
@@ -84,7 +88,7 @@ def defaults(root: Path, repositories: list[dict]) -> dict:
         "package": {"version": __version__},
         "agents": ["claude", "codex", "cursor"],
         "repositories": repositories,
-        "planning": {"directory": "ai-plans", "evidence_directory": ".plovi/local/evidence"},
+        "planning": {"commit_plans": True, "directory": "ai-plans", "evidence_directory": ".plovi/local/evidence"},
         "git": {"branch_template": "feature/{task}", "commit_style": "imperative", "worktree_directory": ".plovi/local/worktrees"},
         "delivery": {"pull_requests": "draft", "publish": "plan-selected", "merge_to_base": "explicit"},
         "tracking": {"provider": "none"},

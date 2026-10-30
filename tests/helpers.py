@@ -58,6 +58,40 @@ class WorkspaceTest(unittest.TestCase):
 
     def cli(self, *args, cwd=None, check=True):
         return subprocess.run([sys.executable, str(PACKAGE / "bin/plovi"), *map(str, args)],
-                              cwd=cwd or PACKAGE, env=self.env, text=True, capture_output=True, check=check)
+                              cwd=cwd or PACKAGE, env=self.env, stdin=subprocess.DEVNULL,
+                              text=True, capture_output=True, check=check)
 
 import unittest.mock
+
+
+class HardeningTest(WorkspaceTest):
+    """Reuse the runner fixture without inheriting its test methods."""
+
+    def fixture(self, steps, *, stages=None):
+        from tests.test_runner import RunnerTests
+        return RunnerTests.fixture(self, steps, stages=stages or ["implement"])
+
+    def calls(self):
+        path = self.scenario.with_suffix(".calls.json")
+        return json.loads(path.read_text()) if path.exists() else []
+
+    def save_plan(self):
+        from plovi.util import write_json
+        write_json(self.manifest_path, {k: v for k, v in self.plan.items() if not k.startswith("_")})
+
+    def task_cli(self, *args, check=False):
+        return self.cli("--project", self.project.root, *args, check=check)
+
+    def install_gh_double(self):
+        import shutil
+        binary = self.root / "bin"
+        binary.mkdir(exist_ok=True)
+        if os.name == "nt":
+            (binary / "gh.cmd").write_text(f'@"{sys.executable}" "{PACKAGE / "tests/fixtures/gh_double.py"}" %*\r\n')
+        else:
+            shutil.copy(PACKAGE / "tests/fixtures/gh_double.py", binary / "gh")
+            (binary / "gh").chmod(0o755)
+        path = self.root / "gh-state.json"
+        self.env["PLOVI_TEST_GH_STATE"] = str(path)
+        os.environ["PLOVI_TEST_GH_STATE"] = str(path)
+        return path

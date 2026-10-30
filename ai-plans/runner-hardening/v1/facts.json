@@ -1,0 +1,37 @@
+{
+  "stages": [
+    "implement-tests",
+    "implement",
+    "review"
+  ],
+  "kind": "code",
+  "size": "large",
+  "risk": "high",
+  "uncertain": true,
+  "repository_count": 1,
+  "test_files": 7,
+  "test_lines": 1000,
+  "routes": {
+    "implement-tests": [
+      {
+        "provider": "codex",
+        "model": "gpt-6.1-sol",
+        "reasoning": "medium"
+      }
+    ],
+    "implement": [
+      {
+        "provider": "codex",
+        "model": "gpt-6.1-sol",
+        "reasoning": "medium"
+      }
+    ],
+    "review": [
+      {
+        "provider": "codex",
+        "model": "gpt-6.1-sol",
+        "reasoning": "medium"
+      }
+    ]
+  }
+}

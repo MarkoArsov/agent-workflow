@@ -12,11 +12,15 @@ permissions, checks, and saved evidence. Run `plovi --help` for the complete lis
 
 <div class="cli-commands">
 <div class="cli-command"><code>plovi setup [path]</code><p>Preview project setup. Apply the reviewed proposal with its approval digest.</p></div>
+<div class="cli-command"><code>plovi policy show [--json]</code><p>Read effective policy and each value's source.</p></div>
+<div class="cli-command"><code>plovi policy set SECTION.KEY VALUE [--yes]</code><p>Review and save a validated TOML edit.</p></div>
+<div class="cli-command"><code>plovi retry TASK [--note FILE]</code><p>Resolve an escalation in a fresh session, retaining history.</p></div>
+<div class="cli-command"><code>plovi approve TASK --size|--paths [--actor NAME] [--reason TEXT]</code><p>Approve the current diff gate and verify retained output.</p></div>
 <div class="cli-command"><code>plovi inspect</code><p>Show the project profile and effective skill sources.</p></div>
 <div class="cli-command"><code>plovi skill list</code><p>List the skills available in this project.</p></div>
 <div class="cli-command"><code>plovi validate-plan PLAN</code><p>Check a full pipeline's requirements, paths, stages and routes.</p></div>
 <div class="cli-command"><code>plovi preflight PLAN</code><p>Check readiness before starting a full pipeline.</p></div>
-<div class="cli-command"><code>plovi run PLAN</code><p>Run the approved pipeline. Add <code>--detach</code> to run it in the background.</p></div>
+<div class="cli-command"><code>plovi run PLAN</code><p>Run the approved pipeline. Add <code>--detach</code> to run it in the background, <code>--no-wait</code> to refuse claim conflicts, or <code>--trusted</code> for explicit trusted execution.</p></div>
 <div class="cli-command"><code>plovi status TASK</code><p>Read the saved status and evidence for a task.</p></div>
 <div class="cli-command"><code>plovi answer TASK --file FILE</code><p>Answer the question saved by a paused task.</p></div>
 <div class="cli-command"><code>plovi resume TASK</code><p>Resume a stopped task. Use <code>--rebind</code> only for an approved plan revision.</p></div>
@@ -91,7 +95,7 @@ plovi task start followup --base feature/dependency
 plovi task start fix-validation --resume
 ~~~
 
-Every new task receives a distinct owned branch/worktree. The output gives checkout,
+New tasks default to an owned branch/worktree; explicit setup checkout choices are honored. The output gives checkout,
 branch, plan paths and canonical project root. Use those paths for all subsequent
 work; the command does not switch or copy edits from the shared source checkout.
 Explicit resume validates the same task's ownership. An existing unowned branch or

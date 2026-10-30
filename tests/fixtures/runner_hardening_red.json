@@ -1,0 +1,41 @@
+{
+  "revision": "3bc42c754456e7bd07860ced728faea93374dd99",
+  "path_redaction": "Absolute checkout paths replaced with <checkout>.",
+  "checks": [
+    {
+      "argv": [
+        "python3",
+        "-m",
+        "unittest",
+        "-v",
+        "tests.test_runner_outcomes.RunnerOutcomeTests.test_blocked_stops_after_one_attempt",
+        "tests.test_runner_outcomes.RunnerOutcomeTests.test_spec_conflict_stops_after_one_attempt",
+        "tests.test_runner_outcomes.RunnerOutcomeTests.test_impossible_stops_after_one_attempt"
+      ],
+      "exit_code": 1,
+      "output": "test_blocked_stops_after_one_attempt (tests.test_runner_outcomes.RunnerOutcomeTests.test_blocked_stops_after_one_attempt) ... FAIL\ntest_spec_conflict_stops_after_one_attempt (tests.test_runner_outcomes.RunnerOutcomeTests.test_spec_conflict_stops_after_one_attempt) ... FAIL\ntest_impossible_stops_after_one_attempt (tests.test_runner_outcomes.RunnerOutcomeTests.test_impossible_stops_after_one_attempt) ... FAIL\n\n======================================================================\nFAIL: test_blocked_stops_after_one_attempt (tests.test_runner_outcomes.RunnerOutcomeTests.test_blocked_stops_after_one_attempt)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"<checkout>/tests/test_runner_outcomes.py\", line 29, in test_blocked_stops_after_one_attempt\n    self.stop(\"blocked\")\n    ~~~~~~~~~^^^^^^^^^^^\n  File \"<checkout>/tests/test_runner_outcomes.py\", line 17, in stop\n    self.assertEqual(len(self.calls()), 1, f\"{kind} must not retry or use a fallback\")\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: 2 != 1 : blocked must not retry or use a fallback\n\n======================================================================\nFAIL: test_spec_conflict_stops_after_one_attempt (tests.test_runner_outcomes.RunnerOutcomeTests.test_spec_conflict_stops_after_one_attempt)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"<checkout>/tests/test_runner_outcomes.py\", line 32, in test_spec_conflict_stops_after_one_attempt\n    self.stop(\"spec_conflict\")\n    ~~~~~~~~~^^^^^^^^^^^^^^^^^\n  File \"<checkout>/tests/test_runner_outcomes.py\", line 17, in stop\n    self.assertEqual(len(self.calls()), 1, f\"{kind} must not retry or use a fallback\")\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: 2 != 1 : spec_conflict must not retry or use a fallback\n\n======================================================================\nFAIL: test_impossible_stops_after_one_attempt (tests.test_runner_outcomes.RunnerOutcomeTests.test_impossible_stops_after_one_attempt)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"<checkout>/tests/test_runner_outcomes.py\", line 35, in test_impossible_stops_after_one_attempt\n    self.stop(\"impossible\")\n    ~~~~~~~~~^^^^^^^^^^^^^^\n  File \"<checkout>/tests/test_runner_outcomes.py\", line 17, in stop\n    self.assertEqual(len(self.calls()), 1, f\"{kind} must not retry or use a fallback\")\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: 2 != 1 : impossible must not retry or use a fallback\n\n----------------------------------------------------------------------\nRan 3 tests in 3.517s\n\nFAILED (failures=3)\n"
+    },
+    {
+      "argv": [
+        "python3",
+        "-m",
+        "unittest",
+        "-v",
+        "tests.test_limits.LimitTests.test_41_files_need_approval"
+      ],
+      "exit_code": 1,
+      "output": "test_41_files_need_approval (tests.test_limits.LimitTests.test_41_files_need_approval) ... FAIL\n\n======================================================================\nFAIL: test_41_files_need_approval (tests.test_limits.LimitTests.test_41_files_need_approval)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"<checkout>/tests/test_limits.py\", line 12, in test_41_files_need_approval\n    self.assertEqual(result[\"status\"], \"needs_approval\")\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: 'complete' != 'needs_approval'\n- complete\n+ needs_approval\n\n\n----------------------------------------------------------------------\nRan 1 test in 1.085s\n\nFAILED (failures=1)\n"
+    },
+    {
+      "argv": [
+        "python3",
+        "-m",
+        "unittest",
+        "-v",
+        "tests.test_task_planning.TaskPlanningTests.test_new_project_defaults_to_worktree"
+      ],
+      "exit_code": 1,
+      "output": "test_new_project_defaults_to_worktree (tests.test_task_planning.TaskPlanningTests.test_new_project_defaults_to_worktree) ... FAIL\n\n======================================================================\nFAIL: test_new_project_defaults_to_worktree (tests.test_task_planning.TaskPlanningTests.test_new_project_defaults_to_worktree)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"<checkout>/tests/test_task_planning.py\", line 13, in test_new_project_defaults_to_worktree\n    self.assertEqual(proposal[\"profile\"][\"repositories\"][0][\"checkout_strategy\"], \"worktree\")\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: 'current-checkout' != 'worktree'\n- current-checkout\n+ worktree\n\n\n----------------------------------------------------------------------\nRan 1 test in 0.163s\n\nFAILED (failures=1)\n"
+    }
+  ]
+}

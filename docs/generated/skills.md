@@ -121,7 +121,7 @@ configuration root with --project so a copied profile cannot cause nested worktr
 
 1. Resolve the configured project and locate the complete pipeline.json. Read the plan and confirm there are no unresolved product choices or unapproved delivery actions.
 
-2. Run validate-plan and preflight. Address missing routes, binaries, connector availability, verification contracts, and checkout mismatches before launch. Never silently change trusted/restricted settings.
+2. Run validate-plan and preflight. Address missing routes, binaries, connector availability, verification contracts, and checkout mismatches before launch. Never silently change trusted/restricted settings. For GitHub delivery, verify that the launching environment resolves the intended `gh` executable and account-routing configuration; do not switch the global active account.
 
 3. Use run with --dry-run to show the resolved stages and scope. Start run or run --detach when the user asks for the full pipeline. Detached output includes the task ID and log.
 
@@ -136,8 +136,18 @@ configuration root with --project so a copied profile cannot cause nested worktr
 8. Report final stage state, checks, participating repositories, and any partial delivery. Unknown token usage/cost remains unknown.
 
 
+
+Read policy show and preflight's permission mode/source. Detached/non-TTY runs are
+restricted by default; do not silently add --trusted. Report escalated with its
+kind/reason and retry command. Retry starts fresh with a person-provided note;
+answer retains the exact asking session. Resume cannot clear escalations or pending
+size/protected-path approvals. Show the diff and request each exact pending gate.
+Task locks and repository claims permit disjoint worktree tasks to overlap; use
+--no-wait only when an immediate claim conflict is desired. Interrupted recovery
+verifies retained output and reconciles delivery; never duplicate completed work.
+
 New specifications must use task start and the returned owned paths. Manual lane
-selection does not waive worktree isolation. Resume only this task's allocation;
+selection does not change the configured checkout policy. Resume only this task's allocation;
 never use a name collision to take over a different chat's branch or checkout.
 
 ### `issue-writer` { .skill-entry data-skill="issue-writer Turn an idea, problem, or requirements into well-sized, detailed, test-first issues with dependencies and parallel waves." }
@@ -252,6 +262,12 @@ session-retro (read-only analysis, explicit apply). These are tools, not implici
 selected execution stages. Report full-plan draft versus validated/preflight-ready
 status honestly; do not present a concise manual plan as a runnable pipeline.
 
+
+Include effective policy values and sources, permission mode/source, pending diff
+approvals, escalation kind/reason and retry command. Distinguish waiting,
+needs_approval, escalated and interrupted from running/failed. Status probes OS-held
+task ownership; never infer ownership or kill permissions from a saved PID.
+
 ### `pipeline-workflow` { .skill-entry data-skill="pipeline-workflow Explain the installed workflow and route a request to its project-aware stage." }
 
 Explain the installed workflow and route a request to its project-aware stage.
@@ -269,7 +285,7 @@ Explain the installed workflow and route a request to its project-aware stage.
 
 Substantive changes default to specify's full contract, then implement-pipeline after
 approval. Manual implement is an explicit user choice or a trivial edit, with its
-reason stated. Use task start before new plan writes: every new task gets its own branch/worktree,
+reason stated. Use task start before new plan writes: new tasks default to a separate branch/worktree and honor explicit setup overrides,
 including manual tasks. Legacy current-checkout is not a new-task exception. Missing
 routes leave a full draft pending rather than silently selecting manual execution.
 
@@ -283,7 +299,7 @@ Translate mechanical output into a concise result and next action. Keep raw outp
 available when requested and use brief excerpts when they explain a failure.
 
 New specifications must use task start and the returned owned paths. Manual lane
-selection does not waive worktree isolation. Resume only this task's allocation;
+selection does not change the configured checkout policy. Resume only this task's allocation;
 never use a name collision to take over a different chat's branch or checkout.
 
 ### `project-setup` { .skill-entry data-skill="project-setup Detect repositories and conventions, confirm missing choices, and configure a customizable project workflow." }
@@ -295,7 +311,7 @@ Use this for a new project, a changed repository layout, or a deliberate update 
 1. Locate the bundled bin/plovi launcher relative to this skill's package. Run its setup command for the intended project root. It reads facts and prints a proposal; it does not apply changes.
 2. Read existing project instructions. Explain detected repositories, roles, commands, branch/worktree conventions, delivery, and integrations, citing the detector's evidence. Distinguish findings from suggestions.
 3. Ask only for missing consequential choices. Repository roles do not prove branch policies. Confirm which repositories participate always, when changed, or never; an unchanged E2E repo may supply checks without getting a task branch.
-4. Confirm agents and whether to inherit machine model defaults or pin exact project routes and fallbacks. Use models inspect to show inherited settings; offer update-models if unconfigured. Leaving pipeline.routes empty permits adaptive selection during specify; existing explicit routes remain pins. Trusted execution is the offered default; explain that it uses provider permission-bypass flags. Restricted execution is available where the selected provider supports it. Save the choice once.
+4. Confirm agents and whether to inherit machine model defaults or pin exact project routes and fallbacks. Use models inspect to show inherited settings; offer update-models if unconfigured. Leaving pipeline.routes empty permits adaptive selection during specify; existing explicit routes remain pins. Interactive execution follows the profile; trusted mode uses provider permission-bypass flags. Detached/non-TTY runs default to restricted unless reviewed policy or --trusted opts in to trusted execution. Save the profile choice once.
 5. Put answers in a temporary JSON file with a profile object containing selected overrides and confirmed_defaults set to true only after the user has confirmed the proposed defaults. Resolve reported merge conflicts explicitly. Re-run setup with --answers and --output to produce the complete proposal.
 6. Show the operating summary and proposed file changes. Include profile location, plan location, rules/references, connector settings, and every host adapter or instruction edit. Wait for approval of those changes.
 7. Run setup --apply on that proposal with --approve and its exact digest. A stale proposal must be regenerated and shown again. Do not manufacture approval or apply a different proposal.
@@ -306,6 +322,23 @@ Re-running setup preserves manual settings, unknown extension keys, deleted opti
 Keep credentials in the host's authentication system or referenced environment variables. Connector availability must be checked for each selected agent, including detached sessions. Show any host configuration patch before applying it.
 
 Do not create task branches, install dependencies, run detected repository commands, start a pipeline, or post tracker updates as part of setup. Those actions have their own workflows.
+
+
+
+New writable repositories default to worktree, regardless of observed Git history.
+Offer a reviewed per-repository feature-branch or current-checkout choice for
+new tasks; unmarked legacy profiles keep isolated worktrees. Setup
+never creates task branches. Include planning.commit_plans (boolean, default true)
+in the proposal and approval digest. Preserve explicit checkout/commit opt-outs
+on repeat setup. For an unversioned multi-repository plan store, resolve an explicit
+plan-owning configuration repository or planning.commit_plans=false before approval.
+Do not initialize a Git parent. Identify untouched legacy defaults from generation
+baselines before proposing migration; preserve ambiguous existing choices.
+
+Show the commented plovi.toml proposal, effective limits and unattended permissions.
+Interactive execution follows the profile; detached/non-TTY runs default to
+restricted unless reviewed policy or --trusted selects trusted. Re-setup preserves
+policy bytes and comments. Never silently activate policy for an existing run.
 
 ### `setup` { .skill-entry data-skill="setup Set up plovi for this project. Short name for project-setup." }
 
@@ -337,8 +370,9 @@ renewed approval. A lane/model choice is not implementation approval.
    evidence, not authority. Challenge gaps or a flawed requested solution using
    repository evidence; settle the intended outcome before proposing architecture.
 
-2. Every **new** task gets a distinct branch and worktree before its first plan
-   write, including manual tasks and trivial edits. Run `plovi task start <task>`
+2. Every **new** task defaults to a distinct branch and worktree before its first
+   plan write, including manual tasks and trivial edits; honor an explicit setup
+   choice of current-checkout or feature-branch. Run `plovi task start <task>`
    (select writable participants with repeated --repository for multi-repo work).
    Use --base only for an explicitly selected dependency/base; otherwise use the
    configured base, not the unrelated task currently checked out. Never reuse
@@ -354,6 +388,8 @@ renewed approval. A lane/model choice is not implementation approval.
    the concrete failure. Worktree-start owns the exact procedure and recovery.
    Multi-repo plans use their configured owner/shared store, never an invented
    Git parent. Only an explicit continuation may reuse this task's owned checkout.
+
+   Resolve the project planning-commit policy and report the selected branch.
 
 ## Choose the lane
 
@@ -416,12 +452,36 @@ renewed approval. A lane/model choice is not implementation approval.
     identify the precise unresolved route/capability, and ask for that input.
     Never fabricate access, omit stages or call an unvalidated draft ready.
 
-11. On revision preserve prior complete artifacts and synchronize the current set.
+11. When native instructions or project policy require planning commits, commit the
+    complete task-owned contract and supporting planning artifacts locally in the
+    selected plan-owning branch before handoff. Include the manifest and evaluator
+    snapshot, not only a summary. Stage explicit paths, exclude unrelated changes,
+    and verify the committed files match the reviewed contract. This does not
+    authorize pushing or implementation. For an unversioned shared plan store,
+    report that limitation; do not invent a repository or claim a commit exists.
+
+12. Report the full contract location, linking requirements.md and pipeline.json
+    for a full lane; label any plan.md as an optional summary. For each writable
+    repository, name the actual branch and whether it was created or reused under
+    its checkout strategy. Report the planning commit hash, or explain why plans
+    remain uncommitted. Do not describe a summary alone as the full contract.
+
+13. On revision preserve prior complete artifacts and synchronize the current set.
     Do not erase run history; leave approved resume/rebind to implement-pipeline.
     Present the concrete plan and checks, ask "Approve this plan and start
     implementation?", and stop. Only subsequent explicit approval or an explicit
     implement/implement-pipeline invocation authorizes execution. Do not start the
     next skill while finishing specify.
+
+
+The package defaults new projects to worktree per task and planning.commit_plans=true.
+A missing legacy commit_plans value means true. Explicit user/native policy takes
+precedence. Honor reviewed checkout and commit opt-outs independently. Include all
+contract, evaluator, quality and evidence files in the local planning commit, then
+verify each required artifact with git ls-tree and compare its committed content.
+Report created/reused branches, checkout paths, commit hashes, requirements.md and
+pipeline.json links, and actual validation/preflight results. A static wording
+check is not proof of agent execution. Do not push during specification.
 
 ## Implementation and verification
 
@@ -742,6 +802,12 @@ Inspect configured local or shared test-environment readiness and ownership.
 
 4. If evidence is unavailable, identify the exact missing access or check instead of assuming readiness.
 
+
+
+Distinguish task claims from shared-environment leases. Task pauses release compute
+claims; environment ownership still follows its configured lease. Read status for
+interruption reconciliation. Never reclaim a live task or environment by PID.
+
 ### `worktree-list` { .skill-entry data-skill="worktree-list Show registered project worktrees and their branch state." }
 
 Show registered project worktrees and their branch state.
@@ -768,9 +834,9 @@ Remove explicitly selected clean task worktrees without deleting user work.
 
 Prepare only the repositories selected for a task using their configured checkout strategies.
 
-A new task always needs its own branch and worktree **before** plan writes. This
-is independent of manual/full execution and overrides the legacy current-checkout
-shortcut for new specifications. Do not alter old approved manifests or move
+A new task defaults to its own branch and worktree **before** plan writes. This
+is independent of manual/full execution. Honor an explicit checkout choice made
+during setup; unmarked legacy profiles retain isolated worktrees for new tasks. Do not alter old approved manifests or move
 existing work merely to retrofit the rule.
 
 1. Resolve the canonical project, a new task ID and explicit writable participants.
@@ -779,9 +845,9 @@ existing work merely to retrofit the rule.
 
 2. Run `plovi --project <root> task start <task>`; add repeated --repository <id>
    when several writable repositories exist. This command creates owned worktrees
-   even for older profiles configured as current-checkout/feature-branch. It does
-   not switch the shared checkout or write plans. It preserves source staged/dirty
-   work instead of copying or stashing it. Existing branches/paths are refused.
+   for unmarked legacy profiles. Explicit setup choices use the selected checkout
+   strategy; a shared checkout must be clean and unowned by another unfinished task.
+   It never copies or stashes existing edits. Existing branches/paths are refused.
 
 3. Read configuration_root, checkouts, branches and plans from the result. Use those
    paths explicitly for all editing/tool operations and report them before plan
@@ -797,8 +863,11 @@ existing work merely to retrofit the rule.
 5. Put the returned branches in the full manifest and pass its canonical project
    root with --project at handoff. The runner reuses receipt-owned checkouts and
    rejects changed branches/membership. Legacy manifests without allocations keep
-   their recorded execution behavior; that is not permission to start new work in
-   a shared checkout. Do not create nested or duplicate worktrees on resume.
+   their recorded execution behavior; shared checkouts require an explicit setup
+   choice and cannot be taken over from an unfinished task. Do not create nested or duplicate worktrees on resume.
+
+New setup profiles default to worktree; explicit setup choices are honored and
+legacy approved plans retain their recorded checkout strategy. Missing planning.commit_plans means true.
 
 ## Pull requests and design review
 
@@ -876,6 +945,15 @@ Check a branch's readiness for a draft PR using scope, evidence, and delivery gu
 3. Inspect PR title/body against the final implementation and template. Flag unsupported testing claims and missing material limitations.
 
 4. Run narrow missing checks when authorized, then report concrete blockers or readiness. A successful preflight does not itself push, create a PR, request reviews, or post comments.
+
+
+
+Recheck cumulative size/protected-path gates against current task content, modes
+and paths. Both approvals must match the current fingerprint. Use verified check
+results, parsed counts (unknown when absent), completed routes and assumptions in
+one managed Evidence section. Redact/escape displayed strings and redact the final
+body. Reuse the single matching open PR and synchronize only changed Evidence,
+preserving unrelated body content. A saved URL does not skip synchronization.
 
 ### `request-review` { .skill-entry data-skill="request-review Prepare a concise review request using the actual PR and verified change summary." }
 
