@@ -167,3 +167,12 @@ or failed remote queries stop recovery. Never force push to repair recovery.
 !!! note "What changes for your workflow"
     Use retry for an escalation, answer for a question, and resume for an
     interruption. Inspect the recorded reason and diff before continuing.
+
+## Delivery after workflow changes
+
+A task may update plovi's own skills or shared references. If delivery stops after
+the task's verified commit was pushed, resume can retain the original frozen
+inputs when those changes are part of that exact verified commit. Changes to the
+plan or project settings, a different commit, or uncommitted edits still require
+review. Configure the intended `gh` executable in the launching environment's
+`PATH`; plovi does not select a GitHub account from a repository owner.

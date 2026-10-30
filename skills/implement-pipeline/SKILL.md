@@ -17,7 +17,7 @@ configuration root with --project so a copied profile cannot cause nested worktr
 
 1. Resolve the configured project and locate the complete pipeline.json. Read the plan and confirm there are no unresolved product choices or unapproved delivery actions.
 
-2. Run validate-plan and preflight. Address missing routes, binaries, connector availability, verification contracts, and checkout mismatches before launch. Never silently change trusted/restricted settings.
+2. Run validate-plan and preflight. Address missing routes, binaries, connector availability, verification contracts, and checkout mismatches before launch. Never silently change trusted/restricted settings. For GitHub delivery, verify that the launching environment resolves the intended `gh` executable and account-routing configuration; do not switch the global active account.
 
 3. Use run with --dry-run to show the resolved stages and scope. Start run or run --detach when the user asks for the full pipeline. Detached output includes the task ID and log.
 

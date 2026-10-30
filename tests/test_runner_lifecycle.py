@@ -123,3 +123,39 @@ class RunnerLifecycleTests(WorkspaceTest):
         with self.assertRaisesRegex(WorkflowError, "passing verification"):
             runner.run(self.project, self.plan)
         self.assertEqual(state.read(self.project, "sample")["status"], "failed")
+
+class DeliveryBindingRecoveryTests(WorkspaceTest):
+    def test_completed_delivery_accepts_only_verified_task_owned_reference_changes(self):
+        root = self.repo('app')
+        project = self.setup_project(root, {'repositories': [{'id': 'app', 'path': '.', 'checkout_strategy': 'current-checkout'}]})
+        (root / 'references').mkdir()
+        (root / 'references' / 'pipeline-contract.md').write_text('old')
+        self.git(root, 'add', '.')
+        self.git(root, 'commit', '-m', 'Configure')
+        from plovi import git_ops
+        before = git_ops.snapshot(project, {'app': str(root)})
+        (root / 'references' / 'pipeline-contract.md').write_text('new')
+        self.git(root, 'add', 'references/pipeline-contract.md')
+        self.git(root, 'commit', '-m', 'Change approved task output')
+        head = self.git(root, 'rev-parse', 'HEAD')
+        current = git_ops.snapshot(project, {'app': str(root)})
+        manifest = {'repositories': [{'id': 'app', 'access': 'write', 'branch': 'main', 'paths': ['references/**']}],
+                    'stages': ['implement', 'review', 'commit-and-push', 'draft-pr']}
+        saved = {'stage': 'draft-pr', 'completed': ['implement', 'review', 'commit-and-push'],
+                 'baseline': before, 'checkouts': {'app': str(root)},
+                 'delivery': {'app': {'commit': head, 'pushed': True}},
+                 'green': {'fingerprint': git_ops.fingerprint(current)}}
+        old = {'profile': {'x': 1}, 'package_references': {'pipeline-contract.md': 'old'}, 'skills': {}}
+        new = {'profile': {'x': 1}, 'package_references': {'pipeline-contract.md': 'new'}, 'skills': {}}
+        with patch.object(runner, 'package_root', return_value=root):
+            self.assertTrue(runner.owned_delivery_binding(project, manifest, saved, old, new))
+            changed = dict(new, profile={'x': 2})
+            self.assertFalse(runner.owned_delivery_binding(project, manifest, saved, old, changed))
+            unverified = dict(saved, green={'fingerprint': 'wrong'})
+            self.assertFalse(runner.owned_delivery_binding(project, manifest, unverified, old, new))
+            incomplete = dict(saved, completed=['implement'])
+            self.assertFalse(runner.owned_delivery_binding(project, manifest, incomplete, old, new))
+            foreign = dict(saved, delivery={'app': {'commit': 'wrong', 'pushed': True}})
+            self.assertFalse(runner.owned_delivery_binding(project, manifest, foreign, old, new))
+            (root / 'references' / 'pipeline-contract.md').write_text('foreign edit')
+            self.assertFalse(runner.owned_delivery_binding(project, manifest, saved, old, new))

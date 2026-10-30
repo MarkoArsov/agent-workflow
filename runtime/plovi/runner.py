@@ -91,6 +91,54 @@ def invalidate_from(old, new, stages, custom):
             return index
     return len(stages)
 
+def owned_delivery_binding(project, manifest, state, old, new):
+    """Keep verified task output from invalidating its own delivery retry."""
+    if state.get("stage") not in contracts.PUBLISH or state.get("stage") not in manifest["stages"]:
+        return False
+    pending = manifest["stages"].index(state["stage"])
+    if state.get("completed") != manifest["stages"][:pending]:
+        return False
+    keys = set(old) | set(new)
+    if any(old.get(k) != new.get(k) for k in keys - {"skills", "package_references"}):
+        return False
+    paths = set()
+    for name in set(old.get("package_references", {})) | set(new.get("package_references", {})):
+        if old.get("package_references", {}).get(name) != new.get("package_references", {}).get(name):
+            paths.add("references/" + name)
+    for name in set(old.get("skills", {})) | set(new.get("skills", {})):
+        left, right = old.get("skills", {}).get(name), new.get("skills", {}).get(name)
+        if left == right:
+            continue
+        if not left or not right or left.get("origin") != "package" or right.get("origin") != "package":
+            return False
+        if left.get("content") != right.get("content"):
+            paths.add(f"skills/{name}/SKILL.md")
+        for asset in set(left.get("assets", {})) | set(right.get("assets", {})):
+            if left.get("assets", {}).get(asset) != right.get("assets", {}).get(asset):
+                paths.add(f"skills/{name}/{asset}")
+    if not paths:
+        return False
+    try:
+        current = git_ops.snapshot(project, state["checkouts"])
+        if state.get("green", {}).get("fingerprint") != git_ops.fingerprint(current):
+            return False
+        changed = git_ops.guard(state["baseline"], current, manifest, "publish", allow_commits=True)
+        for row in manifest["repositories"]:
+            if row["access"] != "write":
+                continue
+            name = row["id"]
+            checkout = Path(state["checkouts"][name])
+            progress = state.get("delivery", {}).get(name, {})
+            if not progress.get("pushed") or git_ops.git(checkout, "rev-parse", "HEAD") != progress.get("commit"):
+                return False
+            if git_ops.dirty_paths(checkout):
+                return False
+            if paths <= set(changed.get(name, [])) and checkout.resolve() == package_root().resolve():
+                return True
+    except (KeyError, WorkflowError, OSError):
+        return False
+    return False
+
 def adopt_rebound_inputs(project, manifest, state, old, new):
     """Preserve explicitly revised configuration as user-owned input, not task output."""
     exact = {project.config / name for name in ("project.json", "package-lock.json", "overrides.lock.json")}
@@ -270,6 +318,11 @@ def run(project, manifest, *, resume=False, answer=None, rebind=False, trusted=F
                 state["retry_note"] = redact(note or "")
             elif retry:
                 raise WorkflowError("Only an escalated task can be retried")
+            if state["binding_sha256"] != bound_hash and not rebind and owned_delivery_binding(project, manifest, state, old_bound, bound):
+                # Continue with the original frozen instructions; never rebind to
+                # a task's own generated package changes during delivery.
+                bound = old_bound
+                bound_hash = state["binding_sha256"]
             if state["binding_sha256"] != bound_hash:
                 if not rebind:
                     raise WorkflowError("Plan/profile/skills changed; inspect the revision and resume --rebind")

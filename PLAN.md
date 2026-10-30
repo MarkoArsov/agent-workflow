@@ -17,6 +17,15 @@ setup/default changes remain part of the revised #16 contract awaiting approval.
 Include all these fixes in the user-requested #16 PR after verification. Do not
 modify other installed projects, user-agent configuration or remote state here.
 
+## Approved follow-up: delivery recovery and account routing (30 October 2026)
+
+The user requested including safe self-updating workflow recovery in issue #16 and
+using existing account routing for delivery, while deferring configurable GitHub
+account selection to a separate feature. Preserve the frozen binding only for
+verified, clean, committed task-owned skill/reference changes at delivery; all
+other binding changes still require review. Document scoped CLI path selection.
+Do not introduce personal paths, credentials, or machine-specific defaults.
+
 ## Approved extension: workflow practices and model evidence (29 October 2026)
 
 The user approved implementation in the manual lane using Codex only for this
