@@ -130,6 +130,11 @@ def propose(root: Path, answers: dict | None = None) -> dict:
     else:
         profile, conflicts = merge(baseline.get("profile", MISSING), current, detected["profile"], "/profile", answers.get("resolutions"))
     profile = overlay(profile, answers.get("profile", {}))
+    selected = {row.get("id"): row.get("checkout_strategy") for row in
+                answers.get("profile", {}).get("repositories", []) if "checkout_strategy" in row}
+    for row in profile["repositories"]:
+        if row["id"] in selected:
+            row["checkout_strategy_explicit"] = selected[row["id"]] != "worktree"
     validate(profile, root)
     for repo in profile["repositories"]:
         child = contained(root, repo["path"])

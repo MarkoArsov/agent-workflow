@@ -44,6 +44,10 @@ def binding(project, manifest, *, execution=None):
 
 def preflight(project, manifest, *, check_providers=True, execution=None):
     contracts.validate(manifest, project)
+    from .tasks import owned_checkout
+    for row in manifest['repositories']:
+        if row['access'] == 'write':
+            owned_checkout(project, manifest['task'], row['id'], row.get('branch'))
     execution = execution or policy.execution(project, manifest, unattended=not sys.stdin.isatty())
     bound = binding(project, manifest, execution=execution)
     custom = contracts.custom_stages(project)

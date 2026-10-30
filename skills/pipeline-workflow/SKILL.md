@@ -22,8 +22,8 @@ Run this skill folder's scripts/resolve.py from the active project once. If it r
 
 Substantive changes default to specify's full contract, then implement-pipeline after
 approval. Manual implement is an explicit user choice or a trivial edit, with its
-reason stated. Prepare/reuse the configured task checkout before plan writes; use
-separate worktrees for concurrent tasks and honor current-checkout policy. Missing
+reason stated. Use task start before new plan writes: new tasks default to a separate branch/worktree and honor explicit setup overrides,
+including manual tasks. Legacy current-checkout is not a new-task exception. Missing
 routes leave a full draft pending rather than silently selecting manual execution.
 
 Load project quality guidance consistently for implementation, test authoring and
@@ -34,3 +34,7 @@ Use session-retro for read-only learning from selected sessions, with optional P
 threads and explicit apply; add-rule/prune-context own the resulting maintenance.
 Translate mechanical output into a concise result and next action. Keep raw output
 available when requested and use brief excerpts when they explain a failure.
+
+New specifications must use task start and the returned owned paths. Manual lane
+selection does not change the configured checkout policy. Resume only this task's allocation;
+never use a name collision to take over a different chat's branch or checkout.

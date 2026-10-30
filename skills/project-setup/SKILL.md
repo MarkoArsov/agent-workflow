@@ -29,7 +29,8 @@ Do not create task branches, install dependencies, run detected repository comma
 
 
 New writable repositories default to worktree, regardless of observed Git history.
-Offer a reviewed per-repository feature-branch or current-checkout override; setup
+Offer a reviewed per-repository feature-branch or current-checkout choice for
+new tasks; unmarked legacy profiles keep isolated worktrees. Setup
 never creates task branches. Include planning.commit_plans (boolean, default true)
 in the proposal and approval digest. Preserve explicit checkout/commit opt-outs
 on repeat setup. For an unversioned multi-repository plan store, resolve an explicit

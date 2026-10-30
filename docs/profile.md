@@ -41,7 +41,8 @@ Use setup for reviewable configuration changes; do not edit installed defaults.
 [Schema reference](generated/schemas.md) · [Project layout](projects.md)
 
 New writable repositories default to `checkout_strategy: worktree`. Setup can
-review an explicit `feature-branch` or `current-checkout` override per repository.
+review an explicit `feature-branch` or `current-checkout` choice for new tasks.
+Unmarked legacy profiles continue to allocate an owned worktree.
 Re-setup preserves explicit choices. Missing legacy `planning.commit_plans` means
 true; native instructions and explicit user decisions retain precedence. Existing
 saved run bindings are not rewritten by this profile default.

@@ -27,10 +27,11 @@ plovi-specify Add CSV export to the reports endpoint.
 It reads the project workflow, repository instructions, and the nearest working examples, then asks only what it can't find out.
 For this task it might ask whether the export must match the on-screen column order, and whether the existing JSON endpoint stays unchanged.
 
-Before writing plans it prepares or reuses the configured task checkout, preserving
-existing edits and read-only companions. Plans and implementation share that task
-branch. Concurrent tasks need separate worktrees; current-checkout policies and
-configured multi-repository plan ownership remain authoritative.
+Before writing a new plan it allocates a task checkout with task start,
+preserving existing edits and read-only companions. Plans and implementation share that task
+branch. The default is an isolated worktree, including for manual execution.
+Explicit setup overrides are honored; unmarked legacy current-checkout is not
+a new-task shortcut; configured multi-repository plan ownership remains authoritative.
 
 CSV export changes behavior, so the default is a full contract. It writes:
 
@@ -246,7 +247,7 @@ Each attempt also records `usage` and `cost_usd` exactly as the provider reporte
 
 !!! note "What changes for your workflow"
     New projects default to a branch and worktree per task. Setup offers reviewed
-    `feature-branch` and `current-checkout` overrides per repository, and
+    explicit `feature-branch` and `current-checkout` choices, and
     `planning.commit_plans: false` for local-only planning. Specify prepares the
     task checkout before plan writes, commits the complete contract by default,
     and reports requirements, manifest, branch, checkout and commit links. An

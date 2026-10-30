@@ -70,7 +70,7 @@ Conflicting changes are shown for a decision. An identical run leaves file bytes
 
 !!! note "What changes for your workflow"
     New projects default to a branch and worktree per task. Setup offers reviewed
-    `feature-branch` and `current-checkout` overrides per repository, and
+    explicit `feature-branch` and `current-checkout` choices, and
     `planning.commit_plans: false` for local-only planning. Specify prepares the
     task checkout before plan writes, commits the complete contract by default,
     and reports requirements, manifest, branch, checkout and commit links. An

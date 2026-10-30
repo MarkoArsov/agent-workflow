@@ -26,6 +26,18 @@ verified, clean, committed task-owned skill/reference changes at delivery; all
 other binding changes still require review. Document scoped CLI path selection.
 Do not introduce personal paths, credentials, or machine-specific defaults.
 
+## Approved correction: isolate new specifications (29 October 2026)
+
+The user found two chats sharing one branch/checkout and explicitly required new
+specifications to always get separate branches/worktrees. Add a standard-library
+`task start` allocator with owned local receipts, explicit resume and partial-start
+recovery. Runner preparation must reuse those allocations and reject changed
+ownership, while preserving legacy approved manifests. Remove current-checkout
+as a new-task shortcut, including manual tasks. Preserve source edits and existing
+published history; do not retroactively split or rewrite the shared PR. This fix
+is developed in its own managed worktree. Verification is recorded in
+ai-plans/task-isolation/progress.md.
+
 ## Approved extension: workflow practices and model evidence (29 October 2026)
 
 The user approved implementation in the manual lane using Codex only for this

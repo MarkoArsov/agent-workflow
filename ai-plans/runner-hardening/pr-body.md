@@ -12,8 +12,8 @@ PR evidence.
 New project setup defaults to a branch
 and worktree per issue/task; specify prepares/reuses that checkout before writing,
 commits the complete contract when planning commits are enabled, and reports its
-requirements/manifest links, branches, checkout paths and planning commit. Setup
-retains explicit overrides. Detection findings and generated profiles agree.
+requirements/manifest links, branches, checkout paths and planning commit. Setup retains explicit checkout overrides for new specifications.
+Detection findings and generated profiles agree.
 
 Delivery retries preserve the original frozen inputs when changes to bundled
 workflow guidance are verified, committed task output; unrelated changes still
@@ -30,6 +30,10 @@ existing account-routing wrapper can be used for delivery.
 - Generated references are current; strict MkDocs passed; 4,135 internal links/assets passed; public source/history scan had zero findings. Private denylist was not supplied.
 - Tests use isolated child configuration, provider/GitHub doubles and local remotes. Hosted cross-platform CI and real-account provider inference were not run.
 
+- Merge and checkout override verification: 260 tests passed locally; the additional
+  unrelated-branch safety case passed separately. Strict documentation build and
+  4,141 links/assets passed. Explicit setup selections are honored for new tasks;
+  unmarked legacy profiles retain isolated worktrees.
 - Follow-up recovery check: 250 tests passed locally, including verified task-owned
   workflow changes and rejection of altered configuration, evidence, commit and
   dirty files. Strict documentation build and 4,137 links/assets passed. The
@@ -40,8 +44,7 @@ Detailed acceptance mappings and observed commands: `ai-plans/runner-hardening/i
 ## What changes for your workflow
 
 Each task gets a new branch and worktree by default. Specify writes and commits the
-full contract there, then asks for implementation approval. Setup lets you choose
-another checkout strategy or disable planning commits. Explicit agent stops retain
+full contract there, then asks for implementation approval. Setup lets you explicitly choose another checkout strategy or disable planning commits. Explicit agent stops retain
 their reasons, oversized/protected diffs request approval, unattended execution
 starts restricted, disjoint worktree tasks run together, interrupted delivery
 resumes safely, and PRs show observed evidence.

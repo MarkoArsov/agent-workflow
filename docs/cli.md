@@ -84,3 +84,20 @@ missing keys or failed fetches preserve the previous snapshot. Unmatched aliases
 stay unknown and displayed figures include attribution/date. Review the evidence
 through update-models, then approve the exact settings proposal before applying it.
 See [models and cost](models.md).
+
+
+## Start an isolated task before planning
+
+~~~sh
+plovi task start fix-validation
+plovi task start backend-change --repository app --repository checks
+plovi task start followup --base feature/dependency
+plovi task start fix-validation --resume
+~~~
+
+New tasks default to an owned branch/worktree; explicit setup checkout choices are honored. The output gives checkout,
+branch, plan paths and canonical project root. Use those paths for all subsequent
+work; the command does not switch or copy edits from the shared source checkout.
+Explicit resume validates the same task's ownership. An existing unowned branch or
+path is refused, and partial multi-repository progress can be resumed safely.
+Manual tasks use this command too; no full manifest or model call is required.

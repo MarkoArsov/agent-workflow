@@ -10,20 +10,20 @@ the full contract a draft; it is not a reason to silently select manual executio
 Run validate-plan and preflight before reporting a contract ready, distinguishing
 their actual results from planned checks. Specification still ends at approval.
 
-Prepare/reuse the configured task checkout before writing the plan; task/repository
+Allocate the configured task checkout with task start before writing a new plan; task/repository
 and branch/base selection does not require an existing manifest. Keep single-repo
 plans inside that checkout, or use the configured multi-repository plan owner/shared
 store. Record the chosen branch for execution handoff and reuse that worktree.
-Honor current-checkout policy and never move dirty/staged work automatically.
+Unmarked legacy current-checkout does not bypass new-task isolation. Only resume the same
+task with its receipt; never move dirty/staged work automatically.
 
-Checkout strategy and planning commits are separate decisions. Feature-branch and
-worktree policies create/reuse the configured task branch before plan writes;
-current-checkout reuses the actual branch and does not create one merely because
-plans must be committed. When native instructions or project policy require
-planning commits, commit the complete contract and its task-owned supporting
-artifacts in the selected plan-owning branch before handoff. Do not include
-unrelated changes or push. An unversioned shared plan store remains unversioned
-unless the user selects a configuration repository.
+Planning commits and checkout allocation are separate decisions. New tasks default to
+the owned task worktree above and honor explicit setup overrides; legacy approved manifests retain their checkout
+strategy. When native instructions or project policy require planning commits,
+commit the complete contract and task-owned supporting artifacts in the plan-owning
+branch before handoff. Do not include unrelated changes or push. An unversioned
+shared plan store remains unversioned unless the user selects a configuration
+repository.
 
 The handoff links requirements.md and pipeline.json, names each actual branch as
 created or reused with its checkout strategy, and gives the planning commit hash
@@ -113,7 +113,7 @@ Policy and permission provenance are saved with the binding; changes require reb
 Legacy bindings without policy retain their legacy inputs until explicit rebind.
 
 New setup profiles default to worktree and planning.commit_plans=true. Setup can
-review per-repository checkout opt-outs and local-only plan commits. Unversioned
+review explicit checkout choices and local-only plan commits. Unversioned
 shared plan stores require an explicit plan-owning repository or reviewed opt-out.
 The complete contract, evaluator, quality and evidence artifacts are committed
 locally on the task branch before approval handoff. Verify each artifact in the
@@ -124,3 +124,8 @@ mutations and claims. Only disjoint worktree tasks share a repository. Claims ar
 released at pauses and completion; stale ownership uses OS locks, never PIDs.
 Recovery persists delivery intent, adopts exact commits, reconciles remote branches,
 and synchronizes one managed PR Evidence section from verified runner state.
+
+The task-start result records branch, checkout, plan path and canonical configuration
+root without needing a manifest first. Include the allocated branch for each writable
+repository; runner preparation uses the owned receipt and rejects changed ownership.
+Read-only companions remain untouched. Old manifests retain legacy execution semantics.

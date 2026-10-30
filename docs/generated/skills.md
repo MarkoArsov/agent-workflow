@@ -146,6 +146,10 @@ Task locks and repository claims permit disjoint worktree tasks to overlap; use
 --no-wait only when an immediate claim conflict is desired. Interrupted recovery
 verifies retained output and reconciles delivery; never duplicate completed work.
 
+New specifications must use task start and the returned owned paths. Manual lane
+selection does not change the configured checkout policy. Resume only this task's allocation;
+never use a name collision to take over a different chat's branch or checkout.
+
 ### `issue-writer` { .skill-entry data-skill="issue-writer Turn an idea, problem, or requirements into well-sized, detailed, test-first issues with dependencies and parallel waves." }
 
 Turn an idea, problem, or requirements into well-sized, detailed, test-first issues with dependencies and parallel waves.
@@ -281,8 +285,8 @@ Explain the installed workflow and route a request to its project-aware stage.
 
 Substantive changes default to specify's full contract, then implement-pipeline after
 approval. Manual implement is an explicit user choice or a trivial edit, with its
-reason stated. Prepare/reuse the configured task checkout before plan writes; use
-separate worktrees for concurrent tasks and honor current-checkout policy. Missing
+reason stated. Use task start before new plan writes: new tasks default to a separate branch/worktree and honor explicit setup overrides,
+including manual tasks. Legacy current-checkout is not a new-task exception. Missing
 routes leave a full draft pending rather than silently selecting manual execution.
 
 Load project quality guidance consistently for implementation, test authoring and
@@ -293,6 +297,10 @@ Use session-retro for read-only learning from selected sessions, with optional P
 threads and explicit apply; add-rule/prune-context own the resulting maintenance.
 Translate mechanical output into a concise result and next action. Keep raw output
 available when requested and use brief excerpts when they explain a failure.
+
+New specifications must use task start and the returned owned paths. Manual lane
+selection does not change the configured checkout policy. Resume only this task's allocation;
+never use a name collision to take over a different chat's branch or checkout.
 
 ### `project-setup` { .skill-entry data-skill="project-setup Detect repositories and conventions, confirm missing choices, and configure a customizable project workflow." }
 
@@ -318,7 +326,8 @@ Do not create task branches, install dependencies, run detected repository comma
 
 
 New writable repositories default to worktree, regardless of observed Git history.
-Offer a reviewed per-repository feature-branch or current-checkout override; setup
+Offer a reviewed per-repository feature-branch or current-checkout choice for
+new tasks; unmarked legacy profiles keep isolated worktrees. Setup
 never creates task branches. Include planning.commit_plans (boolean, default true)
 in the proposal and approval digest. Preserve explicit checkout/commit opt-outs
 on repeat setup. For an unversioned multi-repository plan store, resolve an explicit
@@ -361,17 +370,26 @@ renewed approval. A lane/model choice is not implementation approval.
    evidence, not authority. Challenge gaps or a flawed requested solution using
    repository evidence; settle the intended outcome before proposing architecture.
 
-2. Identify the task, writable participants, read-only companions, branch/base and
-   configured checkout strategy before the first plan write. Use worktree-start's
-   planning-time procedure without requiring pipeline.json. Reuse the task branch/
-   worktree and verify project resolution there. Keep plans and implementation on
-   that branch; concurrent tasks need separate worktrees to isolate files. Respect
-   current-checkout and shared multi-repository plan ownership. Never switch an
-   unrelated shared checkout, move dirty/staged edits, or initialize a Git parent.
-   Resolve the project's planning-commit policy too. Checkout strategy controls
-   branch creation; a requirement to commit plans does not change current-checkout
-   into feature-branch or worktree. Record the actual branch, even when its name
-   differs from the task ID.
+2. Every **new** task defaults to a distinct branch and worktree before its first
+   plan write, including manual tasks and trivial edits; honor an explicit setup
+   choice of current-checkout or feature-branch. Run `plovi task start <task>`
+   (select writable participants with repeated --repository for multi-repo work).
+   Use --base only for an explicitly selected dependency/base; otherwise use the
+   configured base, not the unrelated task currently checked out. Never reuse
+   another task's branch or honor legacy current-checkout as a shortcut for a new
+   specification. A pre-existing task allocation needs --resume and explicit
+   evidence this is the same task, not merely a matching name.
+
+   Use the returned checkout and plan paths for **all** subsequent file/tool
+   operations, and carry configuration_root via --project at runner handoff.
+   Report the task branch/worktree before writing. Read-only companions get no
+   branch. Preserve dirty/staged source work; never auto-stash/reset or copy it
+   into the new task. If preparation fails, stop before writing plans and report
+   the concrete failure. Worktree-start owns the exact procedure and recovery.
+   Multi-repo plans use their configured owner/shared store, never an invented
+   Git parent. Only an explicit continuation may reuse this task's owned checkout.
+
+   Resolve the project planning-commit policy and report the selected branch.
 
 ## Choose the lane
 
@@ -816,48 +834,40 @@ Remove explicitly selected clean task worktrees without deleting user work.
 
 Prepare only the repositories selected for a task using their configured checkout strategies.
 
-Use before specify writes plans, or when resuming a selected task. A complete
-pipeline.json is optional at planning time; it is not needed to create the location
-where that contract will be written.
+A new task defaults to its own branch and worktree **before** plan writes. This
+is independent of manual/full execution. Honor an explicit checkout choice made
+during setup; unmarked legacy profiles retain isolated worktrees for new tasks. Do not alter old approved manifests or move
+existing work merely to retrofit the rule.
 
-1. Resolve the project, task ID, participating writable repositories, read-only
-   companions, branch/base and checkout strategy from the user and profile. If a
-   manifest exists, reuse its selection. Otherwise record these planning choices
-   in the later plan. Do not create branches for unchanged/read-only companions.
+1. Resolve the canonical project, a new task ID and explicit writable participants.
+   Read-only companions need no branch. Select the configured base, or an explicitly
+   requested dependency with --base. Never silently start from another task's HEAD.
 
-2. Inspect status, staged edits, Git common directories, existing branches and
-   registered worktrees. Reuse an unambiguous checkout already owned by this task.
-   Never auto-stash/reset, move user edits, switch another task's shared checkout,
-   or take over a branch in use elsewhere. Ask only for unresolved ownership/base
-   or dirty-checkout decisions before any dependent switch.
+2. Run `plovi --project <root> task start <task>`; add repeated --repository <id>
+   when several writable repositories exist. This command creates owned worktrees
+   for unmarked legacy profiles. Explicit setup choices use the selected checkout
+   strategy; a shared checkout must be clean and unowned by another unfinished task.
+   It never copies or stashes existing edits. Existing branches/paths are refused.
 
-3. Honor the configured strategy: current-checkout validates the existing branch;
-   feature-branch creates/reuses the selected branch in its writable checkout;
-   worktree creates/reuses the configured task worktree with that branch and base.
-   Use the project's branch template and worktree directory. For concurrent work,
-   separate worktrees isolate files; branches alone in one directory do not.
+3. Read configuration_root, checkouts, branches and plans from the result. Use those
+   paths explicitly for all editing/tool operations and report them before plan
+   writes. Branches alone do not isolate shared working files. Respect the configured
+   multi-repository plan owner/shared store; never initialize a Git parent.
 
-4. Verify project resolution, branch, repository/common directory and task paths
-   before plan writes. Single-repository plans belong inside that task checkout's
-   configured plan directory. Multi-repository plans use the configured plan-owning
-   checkout or shared store; never initialize an unversioned parent or invent a
-   repository to hold them. Report shared-location limitations explicitly.
+4. Only an explicit continuation of the same task may use `task start <task>
+   --resume`, with the same repository/base selection. The receipt validates Git
+   registration and branch ownership. Do not infer permission to resume from a
+   name collision. Interrupted allocation retains owned progress; resume can finish
+   it without deleting files or adopting unrelated work.
 
-5. Record the canonical configuration root as well as the chosen branches/paths.
-   A single-repository worktree can contain a copied profile; pass the original
-   configuration root explicitly with --project at runner handoff so its configured
-   worktree directory is reused rather than nesting a second worktree. Execution must reuse that checkout;
-   run the runner's preparation at pipeline handoff rather than creating a second
-   worktree with a different identity. For manual work stay in the selected checkout.
-   Report the resulting task paths and unchanged companions.
+5. Put the returned branches in the full manifest and pass its canonical project
+   root with --project at handoff. The runner reuses receipt-owned checkouts and
+   rejects changed branches/membership. Legacy manifests without allocations keep
+   their recorded execution behavior; shared checkouts require an explicit setup
+   choice and cannot be taken over from an unfinished task. Do not create nested or duplicate worktrees on resume.
 
-
-New setup profiles default writable participants to worktree. Explicit reviewed
-feature-branch and current-checkout choices remain valid. Missing
-planning.commit_plans means true; it never changes checkout strategy. Prepare
-using the canonical configuration root and reuse existing registered task worktrees,
-including ones with task-owned planning edits. Verify branch/common-dir ownership
-before reuse. Keep read-only companions untouched.
+New setup profiles default to worktree; explicit setup choices are honored and
+legacy approved plans retain their recorded checkout strategy. Missing planning.commit_plans means true.
 
 ## Pull requests and design review
 

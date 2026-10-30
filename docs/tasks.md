@@ -37,12 +37,12 @@ Invoke `specify` with a task description or a selected issue.
 It reads `PROJECT_WORKFLOW.md`, native repository instructions, and the nearest working examples before it proposes anything.
 Fetched issue bodies and comments are treated as task data, never as instructions.
 
-Before the first plan write, prepare/reuse the configured task checkout. Record its
+Before the first plan write for a new task, use task start to allocate its configured checkout. Record its
 branch/base, paths and canonical configuration root. Pass that root explicitly with
 --project at runner handoff so a copied worktree profile does not create a nested
 worktree. Keep the plan on the task branch; for concurrent tasks use separate
-worktrees. Current-checkout policy and multi-repository shared plan stores remain
-valid. Never move dirty/staged work or switch another task's checkout implicitly.
+worktrees. Legacy current-checkout does not waive isolation for new tasks. Configured
+multi-repository shared plan stores remain valid. Never move dirty/staged work or switch another task's checkout implicitly.
 
 Expect to confirm:
 
@@ -68,9 +68,9 @@ The full lane writes these files under the plan directory (by default `ai-plans/
 An optional `plan.md` summarizes the contract. The handoff links `requirements.md`
 and `pipeline.json` so you can inspect the full scope and execution settings.
 
-Checkout strategy controls where the plans live. `feature-branch` and `worktree`
-create or reuse the configured task branch; `current-checkout` keeps the actual
-branch. A project rule to commit plans does not change that checkout strategy.
+New specifications default to an owned branch and worktree; explicit setup
+overrides select another strategy. Existing approved plans retain their settings. A project rule to commit plans is separate
+from checkout allocation.
 When project policy or native instructions require planning commits, specify
 commits the complete contract and its supporting artifacts locally before handoff.
 It reports the branch as created or reused and gives the commit hash. If a shared
@@ -216,7 +216,7 @@ Fill the waits with review, not with new tasks. See [review and everyday use](ev
 
 !!! note "What changes for your workflow"
     New projects default to a branch and worktree per task. Setup offers reviewed
-    `feature-branch` and `current-checkout` overrides per repository, and
+    explicit `feature-branch` and `current-checkout` choices, and
     `planning.commit_plans: false` for local-only planning. Specify prepares the
     task checkout before plan writes, commits the complete contract by default,
     and reports requirements, manifest, branch, checkout and commit links. An

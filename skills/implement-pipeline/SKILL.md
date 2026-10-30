@@ -41,3 +41,7 @@ size/protected-path approvals. Show the diff and request each exact pending gate
 Task locks and repository claims permit disjoint worktree tasks to overlap; use
 --no-wait only when an immediate claim conflict is desired. Interrupted recovery
 verifies retained output and reconciles delivery; never duplicate completed work.
+
+New specifications must use task start and the returned owned paths. Manual lane
+selection does not change the configured checkout policy. Resume only this task's allocation;
+never use a name collision to take over a different chat's branch or checkout.
