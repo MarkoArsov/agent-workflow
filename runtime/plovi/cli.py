@@ -188,12 +188,13 @@ def execute(args):
             previous = None
             while time.monotonic() < deadline:
                 result = state.read(project, args.task)
-                current = {k: result.get(k) for k in ("status", "stage", "completed", "pending_input", "error")}
+                current = {k: result.get(k) for k in ("status", "stage", "completed", "pending_input", "escalation", "pending_approvals", "error")}
                 if current != previous:
                     print(json.dumps(current), flush=True); previous = current
                 if result["status"] not in {"starting", "running", "waiting"}:
                     break
                 time.sleep(1)
+            return current
         return result
     if args.command == "sync-base":
         from .git_ops import sync_base
@@ -262,8 +263,9 @@ def execute(args):
 
 def main(argv=None):
     try:
-        result = execute(parser().parse_args(argv))
-        if result is not None:
+        args = parser().parse_args(argv)
+        result = execute(args)
+        if result is not None and args.command != "watch":
             print(json_text(result), end="")
         return 1 if isinstance(result, dict) and result.get("status") in {"failed", "cancelled", "escalated"} else 0
     except (WorkflowError, ValueError, KeyError) as exc:

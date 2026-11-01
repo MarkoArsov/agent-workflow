@@ -106,3 +106,15 @@ class RunnerOutcomeTests(HardeningTest):
         self.assertEqual(result["status"], "complete")
         self.assertIn("question-session", self.calls()[1]["argv"])
         self.assertEqual(self.calls()[1]["prompt"], "Yes")
+
+    def test_watch_prints_only_compact_progress_and_stop_reason(self):
+        self.stop("blocked")
+        response = self.task_cli("watch", "sample", "--seconds", "1")
+        self.assertEqual(response.returncode, 1)
+        lines = response.stdout.strip().splitlines()
+        self.assertEqual(len(lines), 1)
+        progress = json.loads(lines[0])
+        self.assertEqual(progress["status"], "escalated")
+        self.assertEqual(progress["escalation"]["reason"], "A person must resolve the fixture constraint")
+        self.assertNotIn("baseline", progress)
+        self.assertNotIn("attempts", progress)
