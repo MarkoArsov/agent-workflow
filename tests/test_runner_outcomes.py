@@ -51,9 +51,14 @@ class RunnerOutcomeTests(HardeningTest):
                     self.assertIsNone(events.report(), bad)
 
     def test_malformed_report_cannot_complete_stage(self):
-        self.fixture([{"report": {"status": "complete", "assumptions": [42]}}])
+        self.fixture([{"report": {"status": "complete", "assumptions": [42]}}, {}])
+        self.plan["limits"]["attempts_per_route"] = 2
+        self.plan["routes"] = {"default": [{"provider": "codex", "model": "primary"},
+                                           {"provider": "codex", "model": "fallback"}]}
         result = runner.run(self.project, self.plan)
-        self.assertEqual(result["status"], "failed")
+        self.assertEqual(result["status"], "escalated")
+        self.assertEqual(result["escalation"]["kind"], "invalid_report")
+        self.assertEqual(len(self.calls()), 1)
         self.assertNotIn("implement", result["completed"])
 
     def test_transient_error_retries_in_fresh_session(self):

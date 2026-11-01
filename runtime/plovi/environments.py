@@ -59,7 +59,10 @@ def lease(project, name, checkouts, cancel=None):
                     raise WorkflowError("Environment services must use a participating repository")
                 command = service["command"]
                 cwd = contained(Path(checkouts[service["repository"]]), command.get("cwd", "."))
-                process = spawn(command["argv"], cwd=cwd, env=command_environment(command, exported),
+                from .providers import claude_environment
+                env = command_environment(command, exported)
+                env = claude_environment(project, cwd, inherited=env) or env
+                process = spawn(command["argv"], cwd=cwd, env=env,
                                 stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
                 services.append(process)
                 reader = Reader(process.stdout)

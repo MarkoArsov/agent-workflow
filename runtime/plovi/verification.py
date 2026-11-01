@@ -73,7 +73,10 @@ def check(project, definition, checkouts, *, phase="green", cancel=None, environ
     command = command_for(project, definition)
     root = Path(checkouts[definition["repository"]])
     cwd = contained(root, command.get("cwd", "."))
-    result = execute(command["argv"], cwd, env=command_environment(command, environment),
+    from .providers import claude_environment
+    env = command_environment(command, environment)
+    env = claude_environment(project, cwd, inherited=env) or env
+    result = execute(command["argv"], cwd, env=env,
                      timeout=command.get("timeout_seconds", 300),
                      inactivity=command.get("inactivity_seconds", command.get("timeout_seconds", 300)),
                      cancel=cancel)

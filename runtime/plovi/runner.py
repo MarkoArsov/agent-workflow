@@ -61,7 +61,7 @@ def preflight(project, manifest, *, check_providers=True, execution=None):
         for route in contracts.route_for(project, manifest, stage):
             key = json_text(route)
             if key not in seen and check_providers:
-                routes.append(providers.preflight(route, execution, project.root))
+                routes.append(providers.preflight(route, execution, project.root, project=project))
                 seen.add(key)
     for row in manifest["repositories"]:
         root = project.repo_path(row["id"])
@@ -359,6 +359,7 @@ def run(project, manifest, *, resume=False, answer=None, rebind=False, trusted=F
         state["manifest_path"] = manifest.get("_path", state["manifest_path"])
         state["execution"] = execution
         state["policy"] = bound.get("policy", {"values": policy.defaults(), "sources": {}, "legacy": True})
+        state.pop("error", None)
         state["pid"] = os.getpid()
         state["bound_rules"] = [json.loads(value) for name, value in bound.get("rules", {}).items() if name.endswith(".json")]
         write_json(root / "binding.json", bound)
@@ -425,8 +426,11 @@ def run(project, manifest, *, resume=False, answer=None, rebind=False, trusted=F
                         if definition and definition.get("command"):
                             command = definition["command"]
                             main_repo = next(r["id"] for r in manifest["repositories"] if r["access"] == "write")
-                            result = execute_process(command["argv"], contained(Path(state["checkouts"][main_repo]), command.get("cwd", ".")),
-                                                     env=verification.command_environment(command),
+                            command_cwd = contained(Path(state["checkouts"][main_repo]), command.get("cwd", "."))
+                            command_env = verification.command_environment(command)
+                            command_env = providers.claude_environment(project, command_cwd, inherited=command_env) or command_env
+                            result = execute_process(command["argv"], command_cwd,
+                                                     env=command_env,
                                                      timeout=command.get("timeout_seconds", 300), cancel=cancelled)
                             events = providers.Events()
                             report = {"status": "complete"} if result["exit_code"] == 0 and not result["reason"] else None
@@ -439,7 +443,9 @@ def run(project, manifest, *, resume=False, answer=None, rebind=False, trusted=F
                             argv = providers.command(route, execution, session=session, prompt=prompt)
                             events = providers.Events()
                             primary = next(r["id"] for r in manifest["repositories"] if r["access"] == "write")
-                            result = execute_process(argv, Path(state["checkouts"][primary]),
+                            provider_cwd = Path(state["checkouts"][primary])
+                            provider_env = providers.claude_environment(project, provider_cwd)
+                            result = execute_process(argv, provider_cwd, env=provider_env,
                                                      input_text=None if route["provider"] == "cursor" else prompt,
                                                      timeout=limits.get("timeout_seconds", 1800),
                                                      inactivity=limits.get("inactivity_seconds", 300),
@@ -458,6 +464,11 @@ def run(project, manifest, *, resume=False, answer=None, rebind=False, trusted=F
                             state["retained_output"] = {"stage": stage, "fingerprint": git_ops.fingerprint(current)}
                         state["attempts"].append(entry)
                         write_json(root / "attempts" / f"{index:04d}.json", entry | {"output": result["output"]})
+                        if classification == "complete" and not report:
+                            state["escalation"] = {"stage": stage, "kind": "invalid_report",
+                                                   "reason": "Provider finished without a valid completion report; inspect retained output before retrying",
+                                                   "route": route, "session": events.session, "at": time.time()}
+                            state["retry_command"] = "plovi retry " + manifest["task"]
                         if report and report["status"] in {"blocked", "spec_conflict", "impossible"}:
                             state["escalation"] = {"stage": stage, "kind": report["status"], "reason": redact(report["reason"]),
                                                    "route": route, "session": events.session, "at": time.time()}
