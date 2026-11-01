@@ -26,7 +26,7 @@ class RecoveryTests(HardeningTest):
         self.fixture([{}]); directory = state.directory(self.project, "sample")
         state.save(directory, {"schema_version": 1, "task": "sample", "status": "running",
                                "pid": os.getpid(), "completed": ["implement-tests"]})
-        response = self.task_cli("status", "sample")
+        response = self.task_cli("status", "sample", "--json")
         self.assertEqual(response.returncode, 0, response.stderr)
         self.assertEqual(json.loads(response.stdout)["status"], "interrupted")
         self.assertEqual(state.read(self.project, "sample")["status"], "interrupted")
@@ -46,7 +46,7 @@ class RecoveryTests(HardeningTest):
         crashed = self.task_cli("run", self.manifest_path)
         self.assertNotEqual(crashed.returncode, 0, "Testing fault hook must abruptly stop the child")
         self.env.pop("PLOVI_TEST_CRASH_AFTER")
-        status = self.task_cli("status", "sample")
+        status = self.task_cli("status", "sample", "--json")
         self.assertEqual(json.loads(status.stdout)["status"], "interrupted")
         resumed = self.task_cli("resume", "sample")
         self.assertEqual(resumed.returncode, 0, resumed.stdout + resumed.stderr)
@@ -155,3 +155,57 @@ class RecoveryTests(HardeningTest):
         self.env.pop("PLOVI_TEST_CRASH_AFTER")
         self.assertNotEqual(self.task_cli("resume", "sample").returncode, 0)
         self.assertEqual(self.git(root, "ls-files", "--stage", "-z"), expected)
+
+    def repair_fixture(self):
+        root = self.fixture([{}])
+        saved = runner.run(self.project, self.plan)
+        saved.update(completed=[], status="failed", active_stage="implement", stage_before=saved["baseline"], stage_evidence={})
+        saved.pop("retained_output", None)
+        saved["attempts"][0]["report"] = None
+        state.save(state.directory(self.project, "sample"), saved)
+        return root
+
+    def test_resume_replays_saved_output_without_provider(self):
+        self.repair_fixture()
+        result = runner.run(self.project, self.plan, resume=True)
+        self.assertEqual(result["status"], "complete")
+        self.assertEqual(len(self.calls()), 1)
+
+    def test_resume_adopts_only_approved_repair_commits(self):
+        root = self.repair_fixture()
+        (root / "README.md").write_text("Approved runtime repair fixture\n")
+        self.git(root, "add", "README.md"); self.git(root, "commit", "-m", "Approved repair")
+        sha = self.git(root, "rev-parse", "HEAD")
+        self.plan["recovery"] = {"approved_commits": {"app": [sha]}}
+        result = runner.run(self.project, self.plan, resume=True, rebind=True)
+        self.assertEqual(result["status"], "complete")
+        self.assertEqual(result["baseline"]["app"]["head"], sha)
+        self.assertEqual(len(self.calls()), 1)
+
+    def test_resume_refuses_unknown_repair_commit(self):
+        from plovi.util import WorkflowError
+        root = self.repair_fixture()
+        (root / "README.md").write_text("Unknown repair\n")
+        self.git(root, "add", "README.md"); self.git(root, "commit", "-m", "Unknown repair")
+        with self.assertRaisesRegex(WorkflowError, "repair"):
+            runner.run(self.project, self.plan, resume=True)
+        self.assertEqual(len(self.calls()), 1)
+
+    def test_dirty_repair_is_preserved_and_refused(self):
+        from plovi.util import WorkflowError
+        root = self.repair_fixture()
+        (root / "README.md").write_text("Approved repair\n")
+        self.git(root, "add", "README.md"); self.git(root, "commit", "-m", "Approved repair")
+        sha = self.git(root, "rev-parse", "HEAD")
+        self.plan["recovery"] = {"approved_commits": {"app": [sha]}}
+        (root / "README.md").write_text("Uncommitted work\n")
+        with self.assertRaisesRegex(WorkflowError, "uncommitted"):
+            runner.run(self.project, self.plan, resume=True, rebind=True)
+        self.assertEqual((root / "README.md").read_text(), "Uncommitted work\n")
+        self.assertEqual(len(self.calls()), 1)
+
+    def test_recovered_resume_is_idempotent(self):
+        self.repair_fixture()
+        for _ in range(2):
+            self.assertEqual(runner.run(self.project, self.plan, resume=True)["status"], "complete")
+        self.assertEqual(len(self.calls()), 1)

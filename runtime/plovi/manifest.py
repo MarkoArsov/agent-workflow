@@ -1,11 +1,14 @@
 """A small, explicit task contract; no implicit repository or delivery selection."""
 from __future__ import annotations
+import re
+import math
 import fnmatch
 from pathlib import Path
 from .profile import BASE_STAGES, PROVIDERS, validate_command
 from .util import WorkflowError, contained, digest, identifier, json_text, read_json
 
 PUBLISH = {"commit-and-push", "draft-pr"}
+PHASES = {"setup", "red", "green"}
 PARSERS = {"unittest", "pytest", "dotnet", "jest", "tap", "generic"}
 
 def load(path, project):
@@ -99,7 +102,7 @@ def validate(value, project):
         if check.get("parser", "generic") == "generic" and not check.get("success_pattern", command.get("success_pattern")):
             raise WorkflowError(f"{name}: generic checks need an explicit success_pattern")
         phases = check.get("phases", ["green"])
-        if set(phases) - {"red", "green"} or not phases:
+        if set(phases) - PHASES or not phases:
             raise WorkflowError("Checks require red and/or green phases")
         if "red" in phases and not check.get("identities"):
             raise WorkflowError(f"{name}: red proof needs expected test identities")
@@ -161,6 +164,25 @@ def validate(value, project):
         val = value.get("limits", {}).get(key, default)
         if type(val) is not int or not 1 <= val <= maximum:
             raise WorkflowError(f"Invalid runner limit: {key}")
+    recovery = value.get("recovery", {})
+    if not isinstance(recovery, dict) or set(recovery) - {"approved_commits"}:
+        raise WorkflowError("Invalid recovery settings")
+    approved = recovery.get("approved_commits", {})
+    if not isinstance(approved, dict):
+        raise WorkflowError("Recovery approved_commits must map repositories to exact commit IDs")
+    for repository, commits in approved.items():
+        if repository not in {row["id"] for row in repositories} or not isinstance(commits, list) or any(
+                not isinstance(commit, str) or not re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", commit) for commit in commits):
+            raise WorkflowError("Recovery requires registered repositories and full commit IDs")
+    corrections = value.get("corrections", {})
+    if not isinstance(corrections, dict) or set(corrections) - {"fixture_rounds", "max_known_cost_usd"}:
+        raise WorkflowError("Invalid correction limits")
+    rounds = corrections.get("fixture_rounds", 2)
+    if type(rounds) is not int or not 0 <= rounds <= 5:
+        raise WorkflowError("fixture_rounds must be between zero and five")
+    cost = corrections.get("max_known_cost_usd")
+    if cost is not None and (type(cost) not in (int, float) or not math.isfinite(cost) or cost <= 0):
+        raise WorkflowError("max_known_cost_usd must be positive and finite")
     return value
 
 def command_for(project, check):

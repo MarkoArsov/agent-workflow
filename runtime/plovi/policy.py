@@ -15,7 +15,7 @@ _DEFAULTS = {
                'max_changed_files': 40, 'max_changed_lines': 1500,
                'size_exempt': ['**/package-lock.json', '**/*.lock']},
     'paths': {'protected': ['.github/workflows/**', '**/migrations/**']},
-    'execution': {'unattended_permission_mode': 'restricted'},
+    'execution': {'unattended_permission_mode': 'restricted', 'tracking_mode': 'auto'},
     'autonomy': {'level': 'assisted'}, 'grants': {}}
 
 def defaults():
@@ -43,6 +43,8 @@ def validate(value):
                     if (not isinstance(item, str) or not item or Path(item).is_absolute()
                             or PureWindowsPath(item).drive or '\\' in item or '..' in item.split('/')):
                         raise WorkflowError(f'{path}: repository-relative string globs required')
+            if key == 'tracking_mode' and val not in {'auto', 'current-terminal', 'app-terminal', 'command-only', 'off'}:
+                raise WorkflowError(f'{path}: unsupported tracking mode')
             if key == 'level' and val not in {'assisted', 'ready', 'auto'}:
                 raise WorkflowError(f'{path}: choose assisted, ready or auto')
             if key == 'unattended_permission_mode' and val not in {'restricted', 'trusted'}:

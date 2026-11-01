@@ -50,6 +50,26 @@ existing contracts; provider tool restrictions do not restrict those commands.
 These providers offer different controls; restricted mode is not an identical cross-provider sandbox.
 Trusted mode relies on configured access and post-stage outcome checks. It is not operating-system containment.
 
+## Select a Claude account
+
+To keep a project's Claude usage on a specific personal login, create the ignored
+project-local file `.plovi/local/claude-account.json` with `config_dir` set to the
+absolute path of that Claude configuration directory and `email` set to the login
+email. Create `.plovi/local/claude-account.required` alongside it to make a missing
+account file stop the run. Keep both local; they do not belong in a repository.
+
+Before managed stages, checks and environment services, plovi checks `claude auth
+status` with that configuration and requires a matching first-party Claude login.
+It passes the selected configuration to subprocesses. Credential or backend
+overrides stop execution instead of silently choosing another account. Account
+verification requires a signed-in Claude CLI; it does not change native logins.
+This is an account-selection guard for managed processes, not a containment
+boundary against a program deliberately changing its own environment.
+
+A provider completion without a valid final report stops for inspection rather
+than automatically repeating the attempt. Use the reported retry command only
+after inspecting the retained output.
+
 ## Routes
 
 A route names the provider, model, and optional reasoning setting. A stage can have an ordered fallback list.
@@ -77,3 +97,22 @@ Cursor effort belongs in its supported model expression.
     Unattended runs use restricted controls by default. Review policy or pass
     `--trusted` for a deliberate exception. Extend Claude's explicit allowlist
     when a configured check cannot be encoded safely.
+
+## Private provider selection
+
+Optional `.plovi/local/provider-identities.json` stores host-local selectors and
+verification policy. It is ignored and must never be exported with public profiles.
+Each provider entry accepts `config_env` and `verification` (`allow-unverified` or
+`required`). Supported selectors are `CODEX_HOME` for Codex and `CLAUDE_CONFIG_DIR`
+for Claude; Cursor has no assumed configuration selector. Use absolute local paths.
+
+Claude required verification uses the account guard above. For providers without
+a supported account verifier, required verification stops preflight; selecting a
+config directory alone is not proof of account identity. Preflight reports this
+limitation explicitly. plovi does not switch global accounts or run paid health
+probes. Model availability is checked by the provider on the actual request.
+
+An opaque selector fingerprint is bound to the task. Changing selectors requires
+reviewed rebind; changes during a managed run stop before its next subprocess.
+Claude identity is checked again before managed stages, checks and services.
+Public task evidence contains no expected email or private config directory.

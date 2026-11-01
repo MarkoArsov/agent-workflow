@@ -89,10 +89,10 @@ class ConcurrencyTests(HardeningTest):
         path = state.directory(self.project, "sample")
         state.save(path, {"schema_version": 1, "task": "sample", "status": "running", "completed": [], "pid": 99999999})
         with state.lock(path / "runner.lock"):
-            response = self.task_cli("status", "sample")
+            response = self.task_cli("status", "sample", "--json")
             self.assertEqual(response.returncode, 0, response.stderr)
             self.assertEqual(json.loads(response.stdout)["status"], "running")
-        response = self.task_cli("status", "sample")
+        response = self.task_cli("status", "sample", "--json")
         self.assertEqual(json.loads(response.stdout)["status"], "interrupted")
 
     def test_legacy_project_lock_retains_ownership_meaning(self):

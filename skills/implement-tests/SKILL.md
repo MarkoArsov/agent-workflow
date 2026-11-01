@@ -17,9 +17,9 @@ missing source rather than silently substituting unrelated guidance.
 
 1. Read the approved requirements and test contract. Locate existing fixtures and same-domain tests. Write tests for required behavior, boundary cases, and expected failures using the repository's established style.
 
-2. In an orchestrator stage, change only declared test_paths. Do not implement product behavior, commit, push, switch branches, or add unrelated test infrastructure.
+2. In direct use, honor the task allocation and project checkout policy; manual test authoring does not waive an owned worktree. In an orchestrator stage, change only declared test_paths. Do not implement product behavior, commit, push, switch branches, or add unrelated test infrastructure.
 
-3. Run the precise named checks. A meaningful red result identifies the expected test and an assertion against existing behavior. Import errors, syntax errors, missing dependencies, broken startup, and compilation errors are setup failures to repair before claiming red.
+3. Run declared setup-phase fixture-health checks first. These must exercise helpers independently of missing product APIs and pass before assertion-red proof. Run the precise named checks. A meaningful red result identifies the expected test and an assertion against existing behavior. Import errors, syntax errors, missing dependencies, broken startup, and compilation errors are setup failures to repair before claiming red.
 
 4. Keep assertions specific to the behavior rather than mirroring implementation details. Do not add sleeps, disable assertions, skip tests, or broaden fixtures to hide failures.
 
@@ -31,3 +31,9 @@ missing source rather than silently substituting unrelated guidance.
 
 7. Return the orchestrator's requested JSON status. In a direct invocation, explain the observed red evidence and the next implementation boundary.
 
+
+When invoked for a runner-owned fixture repair, change only the requested existing
+test/helper paths. Preserve assertions, test identities, cases, skips and expected
+behavior. Return complete with the setup correction; do not commit, unfreeze tests
+or update their fingerprints. A separate review context must approve the diff and
+the runner reruns setup and applicable red/green checks before accepting it.

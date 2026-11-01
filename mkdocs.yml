@@ -53,6 +53,7 @@ nav:
       - Lanes and bugfixes: lanes.md
       - Review and everyday use: everyday.md
       - When a task stops: recovery.md
+      - Tracking a task: tracking.md
       - Skills: generated/skills.md
   - Inside:
       - CLI: cli.md

@@ -4,6 +4,7 @@ from pathlib import Path
 import os
 import re
 import time
+import uuid
 from . import state
 from .migration import lock_held
 from .util import WorkflowError, git, read_json, write_json
@@ -53,6 +54,7 @@ def acquire(project, manifest, *, no_wait=False):
             for r in manifest['repositories'] if r['access'] == 'write']
     deadline = time.monotonic() + manifest.get('limits', {}).get('timeout_seconds', 1800)
     registered = False
+    waiting_reporter = None
     try:
         while not registered:
             if lock_held(local / 'runner.lock'):
@@ -89,7 +91,15 @@ def acquire(project, manifest, *, no_wait=False):
                     raise WorkflowError('Repository claim conflict with tasks: ' + ', '.join(sorted(set(conflicts))))
                 root = state.directory(project, task)
                 saved = read_json(root / 'state.json', {})
-                state.save(root, saved | {'task': task, 'status': 'waiting', 'waiting_for': sorted(set(conflicts))})
+                from .progress import Reporter
+                if waiting_reporter is None:
+                    launch = read_json(root / 'launch.json', {})
+                    run_id = launch.get('run_id') if not launch.get('claimed_at') else None
+                    waiting_reporter = Reporter(root, run_id or uuid.uuid4().hex)
+                    waiting_reporter.emit('waiting', task=task, status='waiting', reason='Waiting for repository claims')
+                waiting = saved | {'task': task, 'run_id': waiting_reporter.run_id, 'status': 'waiting', 'waiting_for': sorted(set(conflicts))}
+                if waiting != saved: state.save(root, waiting)
+                waiting_reporter.pulse()
                 if (root / 'cancel.json').exists():
                     state.save(root, saved | {'task': task, 'status': 'cancelled'})
                     raise WorkflowError('Task cancelled while waiting for repository claims')

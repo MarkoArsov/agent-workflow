@@ -116,3 +116,25 @@ For deployed behavior, use the separate `test-on-staging` skill and its configur
 ## See also
 
 [Principles](principles.md#stop-or-flag) · [When a task stops](recovery.md) · [Rules and references](rules.md)
+
+## Fixture health and independent correction
+
+A check can declare `phases: ["setup"]` or `["setup", "green"]`. Setup has green
+semantics and runs before assertion-red proof in test authoring. Exercise the
+helpers directly so broken setup is visible even before a new product API exists.
+
+During implementation/review, a provider can return `test_fixture_repair` with a
+reason, explicit repository/path test files, and declared setup check IDs. The
+runner reproduces the failure, invokes a fresh approved test-author route, guards
+paths and test/assertion identities, and obtains a separate review decision. It
+saves original files, diff, review and command evidence under `test-repairs/`.
+After accepted review and passing setup it renews red proof before product edits,
+or runs green checks against existing implementation, then refreezes test hashes.
+A green failure feeds the implementation correction loop; it cannot prove success.
+
+The default budget is two fixture rounds per implementation/review stage. Set
+`corrections.fixture_rounds` to 0–5 in the manifest. Rejected mechanical corrections
+are saved and only their owned files are restored before reauthoring. Changes to
+assertions/cases, foreign edits or product requirements stop for inspection.
+Optional `corrections.max_known_cost_usd` stops another request once reported usage
+reaches the limit. Unknown costs remain unknown, so this is not a total-spend cap.
