@@ -284,6 +284,73 @@ def publish_guard(project, manifest, state, cancel):
     if state.get("green") is None:
         raise WorkflowError("Publication requires current green evidence")
 
+def recover_resume(project, manifest, state, root, *, rebind=False, replay=True):
+    """Reconcile explicitly approved repairs and replay retained output without inference."""
+    stage = state.get("active_stage")
+    if not stage or stage in contracts.PUBLISH:
+        return
+    current = git_ops.snapshot(project, state["checkouts"])
+    approvals = manifest.get("recovery", {}).get("approved_commits", {})
+    repairs = []
+    for row in manifest["repositories"]:
+        if row["access"] != "write":
+            continue
+        name = row["id"]; checkout = Path(state["checkouts"][name])
+        before, after = state["baseline"][name], current[name]
+        if before["head"] == after["head"]:
+            continue
+        if before["branch"] != after["branch"] or git_ops.git(checkout, "diff", "--cached", "--name-only"):
+            raise WorkflowError("Recovery repair requires the same branch and an unstaged index")
+        if git_ops.git(checkout, "merge-base", before["head"], after["head"]) != before["head"]:
+            raise WorkflowError("Recovery repair history diverged; inspect it before continuing")
+        commits = git_ops.git(checkout, "rev-list", "--reverse", before["head"] + ".." + after["head"]).splitlines()
+        plan_dir = Path(manifest["_directory"]).resolve()
+        permitted = set(approvals.get(name, []))
+        paths = set()
+        for commit in commits:
+            parents = git_ops.git(checkout, "rev-list", "--parents", "-n", "1", commit).split()
+            changed = set(git_ops.git(checkout, "diff-tree", "--no-commit-id", "--name-only", "-r", "-z", commit).split("\0")) - {""}
+            plan_only = bool(changed) and all((checkout / path).resolve().is_relative_to(plan_dir) for path in changed)
+            if len(parents) != 2 or (commit not in permitted and not (rebind and permitted and plan_only)):
+                raise WorkflowError("Unapproved recovery repair commit; review exact commits before resuming")
+            paths.update(changed)
+        if paths & set(git_ops.dirty_paths(checkout)):
+            raise WorkflowError("Recovery repair paths have uncommitted edits; preserve and review them")
+        repairs.append((name, commits, paths))
+    if repairs:
+        history = state.setdefault("recovery_history", [])
+        write_json(root / "recoveries" / (f"{len(history):04d}.json"), state)
+        for name, commits, paths in repairs:
+            old_head = state["baseline"][name]["head"]
+            for observed in (state["baseline"], state.get("stage_before", {})):
+                if name not in observed:
+                    continue
+                for path in paths:
+                    if path in current[name]["files"]:
+                        observed[name]["files"][path] = current[name]["files"][path]
+                    else:
+                        observed[name]["files"].pop(path, None)
+                for key in ("head", "branch", "index"):
+                    observed[name][key] = current[name][key]
+            history.append({"repository": name, "previous_head": old_head, "head": current[name]["head"],
+                            "commits": commits, "paths": sorted(paths), "at": time.time()})
+    if not replay or stage in state.get("completed", []) or state.get("retained_output") or state.get("pending_input"):
+        return
+    for index in reversed(range(len(state.get("attempts", [])))):
+        attempt = state["attempts"][index]
+        if attempt.get("stage") != stage or attempt.get("classification") != "complete" or attempt.get("exit_code") != 0:
+            continue
+        saved = read_json(root / "attempts" / f"{index:04d}.json", {})
+        events = providers.Events()
+        for line in saved.get("output", "").splitlines():
+            events.line(line)
+        report = events.report()
+        if report and report["status"] == "complete":
+            state["retained_output"] = {"stage": stage, "fingerprint": git_ops.fingerprint(current)}
+            state["recovered_output_attempt"] = index
+            break
+
+
 def run(project, manifest, *, resume=False, answer=None, rebind=False, trusted=False, unattended=None, no_wait=False, retry=False, note=None, approval=None):
     root = journal.directory(project, manifest["task"])
     root.mkdir(parents=True, exist_ok=True)
@@ -331,7 +398,8 @@ def run(project, manifest, *, resume=False, answer=None, rebind=False, trusted=F
                 if not rebind:
                     raise WorkflowError("Plan/profile/skills changed; inspect the revision and resume --rebind")
                 old = read_json(root / "binding.json")
-                if old["manifest"]["repositories"] != bound["manifest"]["repositories"]:
+                identity = lambda rows: [{k: v for k, v in row.items() if k not in {"paths", "test_paths"}} for row in rows]
+                if identity(old["manifest"]["repositories"]) != identity(bound["manifest"]["repositories"]):
                     raise WorkflowError("Repository membership/checkout changes require a new task ID")
                 start = invalidate_from(old, bound, manifest["stages"], custom)
                 state.setdefault("revisions", []).append({"binding_sha256": state["binding_sha256"], "at": time.time(),
@@ -356,6 +424,9 @@ def run(project, manifest, *, resume=False, answer=None, rebind=False, trusted=F
                      "baseline": git_ops.snapshot(project, checkouts), "binding_sha256": bound_hash,
                      "initial_dirty": {name: git_ops.dirty_paths(Path(path)) for name, path in checkouts.items()},
                      "started_at": time.time(), "delivery": {}}
+        if resume:
+            recover_resume(project, manifest, state, root, rebind=rebind,
+                           replay=not retry and answer is None and prior.get("active_stage") not in prior.get("completed", []))
         state["manifest_path"] = manifest.get("_path", state["manifest_path"])
         state["execution"] = execution
         state["policy"] = bound.get("policy", {"values": policy.defaults(), "sources": {}, "legacy": True})

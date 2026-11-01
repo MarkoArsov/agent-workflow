@@ -1,5 +1,6 @@
 """A small, explicit task contract; no implicit repository or delivery selection."""
 from __future__ import annotations
+import re
 import fnmatch
 from pathlib import Path
 from .profile import BASE_STAGES, PROVIDERS, validate_command
@@ -161,6 +162,16 @@ def validate(value, project):
         val = value.get("limits", {}).get(key, default)
         if type(val) is not int or not 1 <= val <= maximum:
             raise WorkflowError(f"Invalid runner limit: {key}")
+    recovery = value.get("recovery", {})
+    if not isinstance(recovery, dict) or set(recovery) - {"approved_commits"}:
+        raise WorkflowError("Invalid recovery settings")
+    approved = recovery.get("approved_commits", {})
+    if not isinstance(approved, dict):
+        raise WorkflowError("Recovery approved_commits must map repositories to exact commit IDs")
+    for repository, commits in approved.items():
+        if repository not in {row["id"] for row in repositories} or not isinstance(commits, list) or any(
+                not isinstance(commit, str) or not re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", commit) for commit in commits):
+            raise WorkflowError("Recovery requires registered repositories and full commit IDs")
     return value
 
 def command_for(project, check):

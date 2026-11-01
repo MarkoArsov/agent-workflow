@@ -176,3 +176,19 @@ inputs when those changes are part of that exact verified commit. Changes to the
 plan or project settings, a different commit, or uncommitted edits still require
 review. Configure the intended `gh` executable in the launching environment's
 `PATH`; plovi does not select a GitHub account from a repository owner.
+
+## Resume retained work after a repair
+
+`resume` checks the current task worktree and revalidates successful saved provider
+output before invoking another agent. A valid completion report alone does not
+complete a stage: current scope guards and named checks must pass.
+
+When a person has approved local repair commits, a reviewed plan revision can list
+full commit IDs under `recovery.approved_commits`, keyed by repository ID. Resume
+with `--rebind` adopts only those linear descendant commits and task-plan-only
+follow-up commits. Unknown commits, branch changes, staged content and uncommitted
+changes to repair paths stop recovery. Prior baselines are saved in local recovery
+journals. The runner preserves uncommitted stage output and verifies it; it never
+resets or stashes that work. Existing escalations and diff approvals still require
+their explicit retry or approval commands. Recovered stages consume no new model
+request. An explicit retry starts a fresh attempt.

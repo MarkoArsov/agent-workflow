@@ -59,7 +59,10 @@
         "tests/test_model_routing_revision.py",
         "tests/test_model_policy.py",
         "tests/test_workflow_practices.py",
-        "AGENTS.md"
+        "AGENTS.md",
+        "tests/test_recovery.py",
+        "schemas/pipeline.schema.json",
+        "runtime/plovi/manifest.py"
       ],
       "test_paths": [
         "tests/test_factory_checkouts.py",
@@ -68,7 +71,8 @@
         "tests/fixtures/**",
         "tests/test_model_routing_revision.py",
         "tests/test_model_policy.py",
-        "tests/test_workflow_practices.py"
+        "tests/test_workflow_practices.py",
+        "tests/test_recovery.py"
       ]
     }
   ],
@@ -381,6 +385,25 @@
         "green"
       ],
       "success_pattern": "Scanned [1-9]\\d* items; 0 findings;"
+    },
+    {
+      "id": "resume-recovery",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "-m",
+          "unittest",
+          "-v",
+          "tests.test_recovery"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 300
+      },
+      "parser": "unittest",
+      "phases": [
+        "green"
+      ]
     }
   ],
   "outcomes": [
@@ -491,6 +514,13 @@
         "docs-build",
         "links",
         "public-content"
+      ]
+    },
+    {
+      "id": "automatic-safe-resume",
+      "checks": [
+        "resume-recovery",
+        "full-suite"
       ]
     }
   ],

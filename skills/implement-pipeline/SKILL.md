@@ -45,3 +45,12 @@ verifies retained output and reconciles delivery; never duplicate completed work
 New specifications must use task start and the returned owned paths. Manual lane
 selection does not change the configured checkout policy. Resume only this task's allocation;
 never use a name collision to take over a different chat's branch or checkout.
+
+For an existing stopped task, use the saved task worktree and resume rather than
+starting another run. Resume replays retained successful output through checks
+before asking a provider to repeat work. A reviewed plan revision uses --rebind;
+repository IDs/access/branches must remain unchanged. Only exact repair hashes in
+recovery.approved_commits may advance a baseline, plus task-plan-only follow-up
+commits during reviewed rebind. Unknown or dirty repairs stop for inspection.
+Report recovered checks and stages separately from new provider work. Use the
+launcher containing the approved fixes and verify the configured account first.

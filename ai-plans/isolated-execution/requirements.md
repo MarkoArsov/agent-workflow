@@ -237,3 +237,27 @@ Clarify in generic planning guidance that referring to a repository or source
 checkout does not itself prohibit configured task worktrees. Honor explicit
 checkout restrictions and project setup choices. Verify the guidance and existing
 task allocation behavior using isolated fixtures.
+
+## Automatic resume recovery (user-approved addition)
+
+Resume checks account and checkout ownership under the existing task lock, then
+reconciles retained results before invoking another provider. Reparse successful
+saved provider output with the current parser and rerun its named checks on the
+current files. Only verified evidence can advance a stage. Preserve attempts and
+prior state in an atomic recovery journal; never invent completion or cost data.
+
+A reviewed recovery.approved_commits map names exact local repair commit IDs by
+repository. Adopt only a linear descendant chain made of those commits or commits
+limited to this task's plan directory when explicitly rebinding an approved plan.
+Reject unknown commits, changed branches, staged content and uncommitted changes
+to committed repair paths. Update Git/index baselines only for those approved
+repairs; preserve uncommitted stage output as output to verify. Keep account,
+permissions, frozen tests and delivery guards. Resume alone never clears an
+escalation or diff approval. Reviewed rebind may revise allowed paths while keeping
+repository IDs/access/branches fixed. Requests that change those identities stop.
+
+The implement-pipeline skill detects existing state, uses the saved worktree and
+resume recovery, and reports recovered stages before starting providers. Reviewed
+plan revisions use rebind; no blind retries. Status removes stale errors on resume.
+Cover retained-output replay without new provider calls, approved repair adoption,
+unknown/dirty repair rejection and idempotent repeated resume in isolated fixtures.

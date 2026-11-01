@@ -89,3 +89,12 @@ arguments, frozen by the 1.1 evaluator. New algorithm semantics cannot safely ch
 the models for their own implementation before they exist. Missing catalogue and
 below-band/diversity advisories remain visible. Do not represent this transitional
 route selection as output from the improved evaluator.
+
+## Recovery before continuing this run
+
+Implement exact-commit repair adoption and saved-output replay in runner.resume.
+Keep an on-disk prior-state snapshot before changing baselines. Verify the retained
+red tests; reuse them without another test-authoring attempt. Use this worktree's
+bin/plovi with the original canonical project root and its private personal-account
+guard. Record the exact repair hashes after committing the recovery implementation;
+plan-only follow-up commits are admissible only during this explicit reviewed rebind.
