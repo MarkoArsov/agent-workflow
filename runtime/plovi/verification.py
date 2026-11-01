@@ -70,16 +70,22 @@ def command_environment(command, inherited=None):
     return env
 
 def check(project, definition, checkouts, *, phase="green", cancel=None, environment=None):
+    from .progress import active
+    reporter = active.get()
+    if reporter: reporter.emit("check_started", check=definition["id"], kind=phase)
     command = command_for(project, definition)
     root = Path(checkouts[definition["repository"]])
     cwd = contained(root, command.get("cwd", "."))
-    from .providers import claude_environment
+    from .identity import environment as identity_environment
     env = command_environment(command, environment)
-    env = claude_environment(project, cwd, inherited=env) or env
+    env = identity_environment(project, cwd, inherited=env) or env
     result = execute(command["argv"], cwd, env=env,
                      timeout=command.get("timeout_seconds", 300),
                      inactivity=command.get("inactivity_seconds", command.get("timeout_seconds", 300)),
                      cancel=cancel)
+    if result["reason"] == "cancellation_failure":
+        from .process import CleanupFailure
+        raise CleanupFailure(result.get("child_pid"))
     spec = dict(definition)
     if spec.get("parser", "generic") == "generic":
         spec.setdefault("success_pattern", command.get("success_pattern"))
@@ -87,6 +93,7 @@ def check(project, definition, checkouts, *, phase="green", cancel=None, environ
     if result["reason"]:
         evidence["passed"] = False
         evidence["problems"].append(result["reason"])
+    if reporter: reporter.emit("check_finished", check=definition["id"], passed=evidence["passed"], kind=phase)
     return evidence | result | {"id": definition["id"], "repository": definition["repository"],
                                 "command": redact(" ".join(command["argv"]))}
 

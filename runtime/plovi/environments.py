@@ -59,7 +59,7 @@ def lease(project, name, checkouts, cancel=None):
                     raise WorkflowError("Environment services must use a participating repository")
                 command = service["command"]
                 cwd = contained(Path(checkouts[service["repository"]]), command.get("cwd", "."))
-                from .providers import claude_environment
+                from .identity import environment as claude_environment
                 env = command_environment(command, exported)
                 env = claude_environment(project, cwd, inherited=env) or env
                 process = spawn(command["argv"], cwd=cwd, env=env,
@@ -98,8 +98,15 @@ def lease(project, name, checkouts, cancel=None):
             record["status"] = "active"; write_json(root / "status.json", record)
             yield exported, cancelled
         finally:
+            failures = []
             for process in reversed(services):
-                stop(process)
-                process.stdout.close()
+                try: stop(process)
+                except (OSError, subprocess.SubprocessError): failures.append(process.pid)
+                finally: process.stdout.close()
+            if failures:
+                record.update(status="cleanup_failed", unconfirmed_children=failures)
+                write_json(root / "status.json", record)
+                from .process import CleanupFailure
+                raise CleanupFailure(failures[0])
             record["status"] = "released"; record["released_at"] = time.time()
             write_json(root / "status.json", record)

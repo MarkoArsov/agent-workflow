@@ -10,7 +10,13 @@ import sys
 import threading
 import time
 from pathlib import Path
-from .util import redact
+from .util import redact, WorkflowError
+
+class CleanupFailure(WorkflowError):
+    def __init__(self, pid):
+        super().__init__("Owned child cleanup could not be confirmed; inspect the retained process before retrying")
+        self.pid = pid
+
 
 WINDOWS = os.name == "nt"
 
@@ -139,22 +145,24 @@ def signal_group(process, sig):
 def stop(process):
     if getattr(process, "_workflow_stopped", False):
         return
-    process._workflow_stopped = True
     if WINDOWS:
         # Ends the child and every descendant, even after the child itself exited.
         job = getattr(process, "_workflow_job", None)
         if job:
-            _kernel32.TerminateJobObject(job, 1)
+            if not _kernel32.TerminateJobObject(job, 1):
+                raise ctypes.WinError(ctypes.get_last_error())
             _kernel32.CloseHandle(job)
             process._workflow_job = None
         elif process.poll() is None:
             process.kill()
         process.wait()
+        process._workflow_stopped = True
         return
     # The session leader can exit while descendants still hold stdout or ignore TERM.
     # Every caller created this process with spawn().
     if not signal_group(process, signal.SIGTERM):
         process.wait()
+        process._workflow_stopped = True
         return
     deadline = time.monotonic() + 3
     while time.monotonic() < deadline:
@@ -164,9 +172,12 @@ def stop(process):
     else:
         signal_group(process, signal.SIGKILL)
     process.wait()
+    process._workflow_stopped = True
 
 def execute(argv, cwd, *, input_text=None, env=None, timeout=1800, inactivity=300,
             tool_timeout=600, cancel=None, on_line=None, on_start=None):
+    from .progress import active
+    reporter = active.get()
     started = last_output = time.monotonic()
     process = spawn(argv, cwd=cwd, env=env,
                     stdin=subprocess.PIPE if input_text is not None else subprocess.DEVNULL,
@@ -183,9 +194,11 @@ def execute(argv, cwd, *, input_text=None, env=None, timeout=1800, inactivity=30
     reader = Reader(process.stdout)
     buffer = b""
     output, reason, tool_started, output_size = [], None, None, 0
+    inactivity_warned = False
     try:
         while reader.open:
             now = time.monotonic()
+            if reporter: reporter.pulse()
             if cancel and cancel():
                 reason = "cancelled"
             elif now - started > timeout:
@@ -194,11 +207,19 @@ def execute(argv, cwd, *, input_text=None, env=None, timeout=1800, inactivity=30
                 reason = "inactive"
             elif tool_started is not None and now - tool_started > tool_timeout:
                 reason = "tool-stalled"
+            if reporter and not inactivity_warned and now - last_output >= max(1, inactivity * 0.8):
+                reporter.emit("inactivity_warning", reason="Provider output has been quiet; the inactivity watchdog remains active")
+                inactivity_warned = True
             if reason:
-                stop(process)
+                try:
+                    stop(process)
+                except (OSError, subprocess.SubprocessError):
+                    reason = "cancellation_failure"
                 break
             for chunk in reader.read(0.1):
                 last_output = time.monotonic()
+                inactivity_warned = False
+                if reporter: reporter.activity("provider_output" if on_line else "command_output")
                 buffer += chunk
                 output_size += len(chunk)
                 while b"\n" in buffer:
@@ -207,25 +228,39 @@ def execute(argv, cwd, *, input_text=None, env=None, timeout=1800, inactivity=30
                     output.append(line)
                     if on_line:
                         event = on_line(line)
+                        if reporter and event in {"tool-start", "tool-end"}: reporter.activity(event)
                         if event == "tool-start" and tool_started is None:
                             tool_started = time.monotonic()
                         elif event == "tool-end":
                             tool_started = None
             if output_size > 16_000_000:
                 reason = "output-limit"
-                stop(process)
+                try: stop(process)
+                except (OSError, subprocess.SubprocessError): reason = "cancellation_failure"
                 break
         if buffer:
             line = buffer.decode(errors="replace").removesuffix("\r"); output.append(line)
             if on_line:
                 on_line(line)
-        try:
-            code = process.wait(timeout=max(0.1, timeout - (time.monotonic() - started)))
-        except subprocess.TimeoutExpired:
-            reason = "timeout"; stop(process); code = process.returncode
-        return {"exit_code": code, "reason": reason, "output": redact("\n".join(output)),
+        if reason == "cancellation_failure":
+            code = process.poll()
+        else:
+            try:
+                code = process.wait(timeout=max(0.1, timeout - (time.monotonic() - started)))
+            except subprocess.TimeoutExpired:
+                reason = "timeout"
+                try: stop(process)
+                except (OSError, subprocess.SubprocessError): reason = "cancellation_failure"
+                code = process.returncode
+        if reason != "cancellation_failure":
+            try: stop(process)
+            except (OSError, subprocess.SubprocessError): reason = "cancellation_failure"
+        if reporter and tool_started is not None and reason != "cancellation_failure":reporter.activity("tool-end")
+        return {"exit_code": code, "reason": reason, "child_pid": process.pid if reason == "cancellation_failure" else None, "output": redact("\n".join(output)),
                 "duration_seconds": round(time.monotonic() - started, 3)}
     finally:
-        stop(process)
-        reader.close()
+        try:
+            if reason != "cancellation_failure": stop(process)
+        finally:
+            reader.close()
         process.stdout.close()

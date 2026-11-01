@@ -18,7 +18,7 @@ class PolicyTests(WorkspaceTest):
                        "max_changed_files": 40, "max_changed_lines": 1500,
                        "size_exempt": ["**/package-lock.json", "**/*.lock"]},
             "paths": {"protected": [".github/workflows/**", "**/migrations/**"]},
-            "execution": {"unattended_permission_mode": "restricted"},
+            "execution": {"unattended_permission_mode": "restricted", "tracking_mode": "auto"},
             "autonomy": {"level": "assisted"}, "grants": {}})
         value["limits"]["size_exempt"].append("other")
         self.assertNotIn("other", policy.defaults()["limits"]["size_exempt"])

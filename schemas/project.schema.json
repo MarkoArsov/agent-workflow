@@ -157,6 +157,17 @@
         },
         "provider_settings": {
           "type": "object"
+        },
+        "tracking_mode": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "current-terminal",
+            "app-terminal",
+            "command-only",
+            "off"
+          ],
+          "default": "auto"
         }
       }
     },

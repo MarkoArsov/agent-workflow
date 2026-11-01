@@ -31,6 +31,7 @@ bytes. `doctor` reports missing policy and values duplicated in the profile.
 | `limits.size_exempt` | `["**/package-lock.json", "**/*.lock"]` |
 | `paths.protected` | `[".github/workflows/**", "**/migrations/**"]` |
 | `execution.unattended_permission_mode` | `"restricted"` |
+| `execution.tracking_mode` | `"auto"` |
 | `autonomy.level` | `"assisted"` |
 | `grants` | Empty reserved table |
 
@@ -68,3 +69,11 @@ receive no automatic path approval.
     Review policy during setup. When a run pauses for size or protected paths,
     inspect its diff and approve each pending gate. Changes to that diff need a
     fresh approval.
+
+## Tracking preference
+
+Setup profiles include `execution.tracking_mode`. Review it in `plovi.toml` or the
+profile: `auto`, `current-terminal`, `app-terminal`, `command-only`, or `off`.
+Auto uses the launching host's demonstrated capabilities. App-terminal falls back
+to a command when no supported app terminal tool exists. This preference does not
+change worker permissions or authorize additional model requests.

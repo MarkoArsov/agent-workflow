@@ -99,7 +99,7 @@ exact repository-relative files; outputs may use declared path patterns.
 
 ## Runner outcomes and policy
 
-Provider reports accept complete, needs_input, blocked, spec_conflict and impossible.
+Provider reports accept complete, needs_input, blocked, spec_conflict, impossible and test_fixture_repair.
 needs_input requires a nonempty question; escalations require a nonempty reason.
 Optional assumptions are strings in an array. Malformed reports are not evidence.
 Escalations stop attempts/fallbacks immediately; retry retains history and starts
@@ -129,3 +129,27 @@ The task-start result records branch, checkout, plan path and canonical configur
 root without needing a manifest first. Include the allocated branch for each writable
 repository; runner preparation uses the owned receipt and rejects changed ownership.
 Read-only companions remain untouched. Old manifests retain legacy execution semantics.
+
+## Fixture setup and bounded correction
+
+Checks may declare setup with green semantics. Fixture-health commands must exercise
+helpers before product APIs exist; imports/startup are not assertion-red evidence.
+Test authoring must pass setup before tests freeze. A later test_fixture_repair
+report requires reason, test_paths=[{repository,path}] and checks=[setup-check-id].
+It authorizes only a fresh approved test-author route and independent review within
+declared test paths; it never permits implementation to edit frozen tests directly.
+The runner guards test identities/assertions/deletions/skips, saves originals and
+diffs, and accepts new fingerprints only after review, setup and applicable proof.
+Mechanical rejection can reauthor within the bounded budget; weakening or changed
+requirements stop. Failed requests without file edits may use approved fallback
+routes once each; identity mismatch stops before requests.
+
+Optional corrections.fixture_rounds is 0–5 (default 2), per implementation/review
+stage. Optional corrections.max_known_cost_usd bounds reported usage before another
+request. Missing usage stays unknown, so this is not a guaranteed total-spend cap.
+
+The pipeline entry point starts or recovers a task with an immutable runtime receipt.
+Runtime changes require --upgrade-runtime --rebind; originals and recovery journals
+remain available. Trackers use structured argv/cwd from that runtime. Host UI runs
+only in the foreground adapter, with truthful capability/liveness acknowledgements.
+Status/watch defaults to human output; --json emits versioned summary/event objects.

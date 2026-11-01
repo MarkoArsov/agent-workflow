@@ -26,7 +26,7 @@ class RecoveryTests(HardeningTest):
         self.fixture([{}]); directory = state.directory(self.project, "sample")
         state.save(directory, {"schema_version": 1, "task": "sample", "status": "running",
                                "pid": os.getpid(), "completed": ["implement-tests"]})
-        response = self.task_cli("status", "sample")
+        response = self.task_cli("status", "sample", "--json")
         self.assertEqual(response.returncode, 0, response.stderr)
         self.assertEqual(json.loads(response.stdout)["status"], "interrupted")
         self.assertEqual(state.read(self.project, "sample")["status"], "interrupted")
@@ -46,7 +46,7 @@ class RecoveryTests(HardeningTest):
         crashed = self.task_cli("run", self.manifest_path)
         self.assertNotEqual(crashed.returncode, 0, "Testing fault hook must abruptly stop the child")
         self.env.pop("PLOVI_TEST_CRASH_AFTER")
-        status = self.task_cli("status", "sample")
+        status = self.task_cli("status", "sample", "--json")
         self.assertEqual(json.loads(status.stdout)["status"], "interrupted")
         resumed = self.task_cli("resume", "sample")
         self.assertEqual(resumed.returncode, 0, resumed.stdout + resumed.stderr)

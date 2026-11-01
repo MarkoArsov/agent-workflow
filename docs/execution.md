@@ -97,3 +97,22 @@ Cursor effort belongs in its supported model expression.
     Unattended runs use restricted controls by default. Review policy or pass
     `--trusted` for a deliberate exception. Extend Claude's explicit allowlist
     when a configured check cannot be encoded safely.
+
+## Private provider selection
+
+Optional `.plovi/local/provider-identities.json` stores host-local selectors and
+verification policy. It is ignored and must never be exported with public profiles.
+Each provider entry accepts `config_env` and `verification` (`allow-unverified` or
+`required`). Supported selectors are `CODEX_HOME` for Codex and `CLAUDE_CONFIG_DIR`
+for Claude; Cursor has no assumed configuration selector. Use absolute local paths.
+
+Claude required verification uses the account guard above. For providers without
+a supported account verifier, required verification stops preflight; selecting a
+config directory alone is not proof of account identity. Preflight reports this
+limitation explicitly. plovi does not switch global accounts or run paid health
+probes. Model availability is checked by the provider on the actual request.
+
+An opaque selector fingerprint is bound to the task. Changing selectors requires
+reviewed rebind; changes during a managed run stop before its next subprocess.
+Claude identity is checked again before managed stages, checks and services.
+Public task evidence contains no expected email or private config directory.

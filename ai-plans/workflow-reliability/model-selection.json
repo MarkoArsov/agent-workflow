@@ -1,0 +1,78 @@
+{
+  "advisories": [
+    {
+      "reason": "explicit-route-below-recommended-band",
+      "stage": "implement"
+    },
+    {
+      "reason": "explicit-route-below-recommended-band",
+      "stage": "implement-tests"
+    },
+    {
+      "reason": "single-lineage",
+      "stage": "review"
+    }
+  ],
+  "evaluator_version": "1.1.0",
+  "notice": "No model catalogue; retaining configured routes. Run update-models when convenient.",
+  "provenance": {
+    "catalogue": "9aecf438c3f923ce02f488be25cae648068d632535d5ec4d38b0fa6abb6b055f",
+    "facts": {
+      "kind": "code",
+      "repository_count": 1,
+      "risk": "high",
+      "size": "large",
+      "stages": [
+        "implement-tests",
+        "implement",
+        "review"
+      ],
+      "test_files": 5,
+      "test_lines": 1000,
+      "uncertain": true
+    },
+    "policy": "3c7d03f86602c435d0771f98e34a76bebfd100cc00bbd8ea18722b2b0ce10aa7",
+    "registry": "906caf9f74c729ddf882cba34d3fdf9b45082cc375ca45bca1882dcb955622e2",
+    "settings": "ab76e6a25034383fd5e45c5be0f459404b9f246598bfbe79d45bd6a87b59121c"
+  },
+  "reasons": {
+    "implement": "explicit-route",
+    "implement-tests": "explicit-route",
+    "review": "explicit-route"
+  },
+  "routes": {
+    "implement": [
+      {
+        "model": "gpt-6.1-sol",
+        "provider": "codex"
+      },
+      {
+        "model": "opus",
+        "provider": "claude"
+      }
+    ],
+    "implement-tests": [
+      {
+        "model": "sonnet",
+        "provider": "claude"
+      },
+      {
+        "model": "gpt-6.1-sol",
+        "provider": "codex"
+      }
+    ],
+    "review": [
+      {
+        "model": "opus",
+        "provider": "claude"
+      },
+      {
+        "model": "gpt-6.1-sol",
+        "provider": "codex"
+      }
+    ]
+  },
+  "schema_version": 1,
+  "snapshot_hash": "44285d4ff8549197d4b405d99bc0e749b728fcd9f70535e0e7bf5ddb85330931",
+  "unresolved": []
+}

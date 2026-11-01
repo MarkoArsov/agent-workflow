@@ -1,6 +1,7 @@
 """Provider commands and event normalization; no fabricated usage or cost."""
 from __future__ import annotations
 import json
+import math
 import os
 from pathlib import Path
 import re
@@ -57,6 +58,8 @@ def command(route, execution, *, session=None, prompt=None):
 
 def claude_environment(project, cwd, *, inherited=None):
     """Honor an optional project-local, private Claude identity guard."""
+    from ..identity import assert_unchanged
+    assert_unchanged(project)
     path = project.config / "local" / "claude-account.json"
     if not path.exists():
         if (project.config / "local" / "claude-account.required").exists():
@@ -93,7 +96,8 @@ def preflight(route, execution, cwd, *, project=None):
     if not binary:
         raise WorkflowError(f"Install/authenticate {argv[0]} or choose another configured route")
     args = [binary, "exec", "--help"] if route["provider"] == "codex" else [binary, "--help"]
-    env = claude_environment(project, cwd) if project is not None else None
+    from ..identity import environment
+    env = environment(project, cwd) if project is not None else None
     result = run(args, cwd, env=env)
     flags = [a for a in argv[1:] if a.startswith("--")]
     if any(flag not in result.stdout for flag in flags):
@@ -146,7 +150,7 @@ class Events:
         if kind in {"turn.completed", "result"}:
             if isinstance(event.get("usage"), dict):
                 self.usage = event["usage"]
-            if isinstance(event.get("total_cost_usd"), (int, float)):
+            if type(event.get("total_cost_usd")) in (int, float) and math.isfinite(event["total_cost_usd"]) and event["total_cost_usd"] >= 0:
                 self.cost_usd = event["total_cost_usd"]
         return None
 
@@ -159,12 +163,14 @@ class Events:
                 stripped = terminal.group(1)
             try:
                 value = json.loads(stripped)
-                if isinstance(value, dict) and "status" in value and (not isinstance(value["status"], str) or value["status"] not in {"complete", "needs_input", "blocked", "spec_conflict", "impossible"}):
+                if isinstance(value, dict) and "status" in value and (not isinstance(value["status"], str) or value["status"] not in {"complete", "needs_input", "blocked", "spec_conflict", "impossible", "test_fixture_repair"}):
                     return None
-                if isinstance(value, dict) and value.get("status") in {"complete", "needs_input", "blocked", "spec_conflict", "impossible"}:
+                if isinstance(value, dict) and value.get("status") in {"complete", "needs_input", "blocked", "spec_conflict", "impossible", "test_fixture_repair"}:
                     status = value["status"]
                     required = "question" if status == "needs_input" else "reason" if status != "complete" else None
                     if required and (not isinstance(value.get(required), str) or not value[required].strip()):
+                        return None
+                    if status == "test_fixture_repair" and (not isinstance(value.get("test_paths"), list) or not isinstance(value.get("checks"), list) or not all(isinstance(x, str) for x in value.get("checks", []))):
                         return None
                     if "assumptions" in value and (not isinstance(value["assumptions"], list) or not all(isinstance(x, str) for x in value["assumptions"])):
                         return None
@@ -187,3 +193,11 @@ def classify(result, events):
         return "transient"
     return "complete"
 
+
+
+def failure_kind(classification):
+    return {'authentication':'provider_authentication','quota':'provider_quota',
+            'model':'unsupported_model','transient':'transient_transport',
+            'cancelled':'cancelled','cancellation_failure':'cancellation_failure',
+            'inactive':'provider_inactive','tool-stalled':'tool_stalled',
+            'timeout':'timeout'}.get(classification, classification)

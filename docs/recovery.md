@@ -36,7 +36,7 @@ See [stop or flag](principles.md#stop-or-flag).
 
 | Status | What it means | What to do |
 |---|---|---|
-| `starting`, `running` | The run is making progress. | Keep watching, or `watch` if you left. Don't start a duplicate; the task lock would refuse it anyway. |
+| `starting`, `running` | A worker owns the task; inspect its last activity. | Keep watching, or `watch` if you left. Don't start a duplicate; the task lock would refuse it anyway. |
 | `needs_input` | A stage needs a decision only you can make. | Answer the saved question with `answer --file`. |
 | `failed` | A safety, verification, or delivery check failed, or attempts ran out. | Read `error` and the latest evidence. Fix the cause, then `resume`. |
 | `cancelled` | You asked the orchestrator to stop. | `resume` when ready. |
@@ -192,3 +192,32 @@ journals. The runner preserves uncommitted stage output and verifies it; it neve
 resets or stashes that work. Existing escalations and diff approvals still require
 their explicit retry or approval commands. Recovered stages consume no new model
 request. An explicit retry starts a fresh attempt.
+
+## Start or continue through one entry point
+
+Use `implement-pipeline` again, or `plovi pipeline TASK`. It reuses an active worker
+and safely resumes interrupted/failed work with the saved runtime. Retained output
+is checked before new inference. Pending questions, explicit cancellation,
+escalations and diff approvals stay visible; use their named answer, resume, retry
+or approval action after review. Runtime upgrades require explicit
+`--upgrade-runtime --rebind`, preserving the old receipt.
+
+Mechanical fixture failures can enter the independent correction path described in
+[verification](verification.md#fixture-health-and-independent-correction).
+Requirements decisions and identity mismatch remain stops. The worker records
+structured provider failures, approved fallback attempts and bounded exhaustion.
+No normal recovery requires hand-editing `state.json`.
+
+Status separates worker heartbeat from provider/tool activity. A heartbeat confirms
+the worker is alive; it does not prove product progress. Waiting on a repository
+claim remains observable. An unowned running/waiting journal becomes interrupted.
+An inability to terminate owned children is recorded as `cancellation_failure`,
+with cleanup unconfirmed, and stops further requests. Inspect it before retrying;
+never signal a process based only on a saved PID.
+
+New retained-output receipts include the artifact changes observed at completion.
+If those files change before recovery, plovi refuses to adopt the report. Inspect
+foreign edits or approve exact repair commits first. Legacy receipts without these
+hashes still require complete deterministic verification; they do not gain stronger
+provenance retroactively. A runtime receipt cannot be replaced while a worker or
+launch owns the task.

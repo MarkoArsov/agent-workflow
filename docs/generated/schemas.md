@@ -57,6 +57,7 @@ An approved plan with explicit repository access, executable outcomes, ordered s
 | connectors | no | array |
 | model_selection | no | object |
 | recovery | no | object |
+| corrections | no | object |
 
 ## Reviewed plovi policy
 

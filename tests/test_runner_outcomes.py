@@ -109,7 +109,7 @@ class RunnerOutcomeTests(HardeningTest):
 
     def test_watch_prints_only_compact_progress_and_stop_reason(self):
         self.stop("blocked")
-        response = self.task_cli("watch", "sample", "--seconds", "1")
+        response = self.task_cli("watch", "sample", "--seconds", "1", "--json")
         self.assertEqual(response.returncode, 1)
         lines = response.stdout.strip().splitlines()
         self.assertEqual(len(lines), 1)
