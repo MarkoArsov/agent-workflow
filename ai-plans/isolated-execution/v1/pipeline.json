@@ -1,0 +1,474 @@
+{
+  "schema_version": 1,
+  "task": "isolated-execution",
+  "plan_status": "proposed-awaiting-approval",
+  "plan_files": [
+    "prompt.md",
+    "requirements.md",
+    "implementation.md",
+    "deferred.md",
+    "project-quality.md"
+  ],
+  "repositories": [
+    {
+      "id": "agent-workflow",
+      "access": "write",
+      "branch": "codex/isolated-execution",
+      "paths": [
+        "runtime/plovi/factory.py",
+        "runtime/plovi/isolation.py",
+        "runtime/plovi/git_ops.py",
+        "runtime/plovi/tasks.py",
+        "runtime/plovi/project.py",
+        "runtime/plovi/claims.py",
+        "runtime/plovi/runner.py",
+        "runtime/plovi/cli.py",
+        "runtime/plovi/policy.py",
+        "runtime/plovi/profile.py",
+        "runtime/plovi/setup.py",
+        "runtime/plovi/detect.py",
+        "runtime/plovi/process.py",
+        "runtime/plovi/state.py",
+        "runtime/plovi/verification.py",
+        "runtime/plovi/environments.py",
+        "runtime/plovi/providers/**",
+        "schemas/project.schema.json",
+        "schemas/policy.schema.json",
+        "tests/test_factory_checkouts.py",
+        "tests/test_container.py",
+        "tests/helpers.py",
+        "tests/fixtures/**",
+        "templates/isolation/Dockerfile",
+        "docs/**",
+        "mkdocs.yml",
+        "references/pipeline-contract.md",
+        "skills/worktree-start/SKILL.md",
+        "skills/project-setup/SKILL.md",
+        "skills/implement-pipeline/SKILL.md",
+        "PLAN.md",
+        "ai-plans/isolated-execution/**"
+      ],
+      "test_paths": [
+        "tests/test_factory_checkouts.py",
+        "tests/test_container.py",
+        "tests/helpers.py",
+        "tests/fixtures/**"
+      ]
+    }
+  ],
+  "stages": [
+    "implement-tests",
+    "implement",
+    "review"
+  ],
+  "checks": [
+    {
+      "id": "factory-red",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "-m",
+          "unittest",
+          "-v",
+          "tests.test_factory_checkouts.FactoryCheckoutTests.test_unattended_ignores_dirty_user_clone"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 300
+      },
+      "parser": "unittest",
+      "phases": [
+        "red",
+        "green"
+      ],
+      "identities": [
+        "test_unattended_ignores_dirty_user_clone"
+      ]
+    },
+    {
+      "id": "container-red",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "-m",
+          "unittest",
+          "-v",
+          "tests.test_container.ContainerTests.test_isolation_policy_is_accepted"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 300
+      },
+      "parser": "unittest",
+      "phases": [
+        "red",
+        "green"
+      ],
+      "identities": [
+        "test_isolation_policy_is_accepted"
+      ]
+    },
+    {
+      "id": "factory",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "-m",
+          "unittest",
+          "-v",
+          "tests.test_factory_checkouts"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 300
+      },
+      "parser": "unittest",
+      "phases": [
+        "green"
+      ],
+      "identities": [
+        "test_unattended_ignores_dirty_user_clone",
+        "test_user_clone_can_change_mid_run",
+        "test_next_task_refreshes_remote_base",
+        "test_factory_pushes_real_remote",
+        "test_read_companion_uses_factory_base",
+        "test_clean_keeps_active_dirty_and_unfinished",
+        "test_clean_removes_owned_terminal_worktrees",
+        "test_remote_identity_mismatch_refused",
+        "test_refresh_preserves_active_task_branch",
+        "test_resume_reuses_factory_allocation",
+        "test_interactive_preserves_profile_strategy"
+      ]
+    },
+    {
+      "id": "container",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "-m",
+          "unittest",
+          "-v",
+          "tests.test_container"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 300
+      },
+      "parser": "unittest",
+      "phases": [
+        "green"
+      ],
+      "identities": [
+        "test_docker_and_podman_argv",
+        "test_fake_runtime_runs_stages_and_checks",
+        "test_missing_runtime_refuses_trusted_unattended",
+        "test_missing_runtime_reports_restricted_fallback",
+        "test_no_implicit_pull",
+        "test_explicit_pull_consent",
+        "test_container_environment_does_not_leak_keys",
+        "test_check_services_stay_contained",
+        "test_cancel_removes_only_owned_container",
+        "test_windows_container_diagnostic"
+      ],
+      "approved_skip_reason": "Only the PLOVI_TEST_DOCKER=1 real-engine smoke is optional; fake runtime, argv and failure-path tests must always run."
+    },
+    {
+      "id": "full-suite",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "-m",
+          "unittest",
+          "discover",
+          "-s",
+          "tests",
+          "-v"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 600
+      },
+      "parser": "unittest",
+      "phases": [
+        "green"
+      ],
+      "approved_skip_reason": "Only explicitly opt-in real-engine smoke needs PLOVI_TEST_DOCKER=1 and a local prebuilt image; existing platform-specific tests retain their current conditions."
+    },
+    {
+      "id": "generated-docs",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "scripts/generate_docs.py",
+          "--check"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 300
+      },
+      "parser": "generic",
+      "phases": [
+        "green"
+      ],
+      "success_pattern": "^$"
+    },
+    {
+      "id": "docs-build",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "-m",
+          "mkdocs",
+          "build",
+          "--strict"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 300
+      },
+      "parser": "generic",
+      "phases": [
+        "green"
+      ],
+      "success_pattern": "Documentation built in"
+    },
+    {
+      "id": "links",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "scripts/check_links.py",
+          "site"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 300
+      },
+      "parser": "generic",
+      "phases": [
+        "green"
+      ],
+      "success_pattern": "Checked [1-9]\\d* internal links/assets; 0 failures\\."
+    },
+    {
+      "id": "public-content",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "scripts/check_public_content.py",
+          "--history"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 300
+      },
+      "parser": "generic",
+      "phases": [
+        "green"
+      ],
+      "success_pattern": "Scanned [1-9]\\d* items; 0 findings;"
+    }
+  ],
+  "outcomes": [
+    {
+      "id": "f1-f4-owned-independent-factory",
+      "checks": [
+        "factory-red",
+        "factory",
+        "full-suite"
+      ]
+    },
+    {
+      "id": "f5-host-only-delivery-and-resume",
+      "checks": [
+        "factory",
+        "container",
+        "full-suite"
+      ]
+    },
+    {
+      "id": "f6-safe-cleanup",
+      "checks": [
+        "factory"
+      ]
+    },
+    {
+      "id": "c1-policy",
+      "checks": [
+        "container-red",
+        "container",
+        "full-suite"
+      ]
+    },
+    {
+      "id": "c2-c3-execution-mounts-environment",
+      "checks": [
+        "container",
+        "full-suite"
+      ]
+    },
+    {
+      "id": "c4-preflight-fallback-platforms",
+      "checks": [
+        "container"
+      ]
+    },
+    {
+      "id": "c5-contained-service-and-cancellation",
+      "checks": [
+        "container",
+        "full-suite"
+      ]
+    },
+    {
+      "id": "d1-docs-design",
+      "checks": [
+        "generated-docs",
+        "docs-build",
+        "links"
+      ]
+    },
+    {
+      "id": "d2-d3-portable-isolated-acceptance",
+      "checks": [
+        "factory",
+        "container",
+        "full-suite",
+        "public-content"
+      ]
+    }
+  ],
+  "routes": {
+    "implement": [
+      {
+        "model": "gpt-6.1-sol",
+        "provider": "codex",
+        "reasoning": "high"
+      }
+    ],
+    "implement-tests": [
+      {
+        "model": "gpt-6.1-sol",
+        "provider": "codex",
+        "reasoning": "high"
+      }
+    ],
+    "review": [
+      {
+        "model": "gpt-6.1-sol",
+        "provider": "codex",
+        "reasoning": "high"
+      }
+    ]
+  },
+  "model_selection": {
+    "advisories": [
+      {
+        "reason": "explicit-route-below-recommended-band",
+        "stage": "implement"
+      },
+      {
+        "reason": "explicit-route-below-recommended-band",
+        "stage": "implement-tests"
+      },
+      {
+        "reason": "single-lineage",
+        "stage": "implement-tests"
+      },
+      {
+        "reason": "explicit-route-below-recommended-band",
+        "stage": "review"
+      },
+      {
+        "reason": "single-lineage",
+        "stage": "review"
+      }
+    ],
+    "evaluator_version": "1.1.0",
+    "notice": "No model catalogue; retaining configured routes. Run update-models when convenient.",
+    "provenance": {
+      "catalogue": "9aecf438c3f923ce02f488be25cae648068d632535d5ec4d38b0fa6abb6b055f",
+      "facts": {
+        "kind": "code",
+        "repository_count": 1,
+        "risk": "high",
+        "routes": {
+          "implement": [
+            {
+              "model": "gpt-6.1-sol",
+              "provider": "codex",
+              "reasoning": "high"
+            }
+          ],
+          "implement-tests": [
+            {
+              "model": "gpt-6.1-sol",
+              "provider": "codex",
+              "reasoning": "high"
+            }
+          ],
+          "review": [
+            {
+              "model": "gpt-6.1-sol",
+              "provider": "codex",
+              "reasoning": "high"
+            }
+          ]
+        },
+        "size": "large",
+        "stages": [
+          "implement-tests",
+          "implement",
+          "review"
+        ],
+        "test_files": 2,
+        "test_lines": 650,
+        "uncertain": true
+      },
+      "policy": "3c7d03f86602c435d0771f98e34a76bebfd100cc00bbd8ea18722b2b0ce10aa7",
+      "registry": "906caf9f74c729ddf882cba34d3fdf9b45082cc375ca45bca1882dcb955622e2",
+      "settings": "b69809844138629bec4edc593e872aa2dba5466f15585079f01a11a5977b4844"
+    },
+    "reasons": {
+      "implement": "explicit-route",
+      "implement-tests": "explicit-route",
+      "review": "explicit-route"
+    },
+    "routes": {
+      "implement": [
+        {
+          "model": "gpt-6.1-sol",
+          "provider": "codex",
+          "reasoning": "high"
+        }
+      ],
+      "implement-tests": [
+        {
+          "model": "gpt-6.1-sol",
+          "provider": "codex",
+          "reasoning": "high"
+        }
+      ],
+      "review": [
+        {
+          "model": "gpt-6.1-sol",
+          "provider": "codex",
+          "reasoning": "high"
+        }
+      ]
+    },
+    "schema_version": 1,
+    "snapshot_hash": "1c4413b5bcaf769b841882c3b2c5b15727400367211c0988fbb7a02c22a76f63",
+    "unresolved": []
+  },
+  "limits": {
+    "attempts_per_route": 2,
+    "timeout_seconds": 7200,
+    "inactivity_seconds": 300,
+    "tool_timeout_seconds": 600
+  },
+  "references": [
+    "quality-guidance.md"
+  ],
+  "connectors": []
+}

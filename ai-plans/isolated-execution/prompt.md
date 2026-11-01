@@ -19,3 +19,11 @@ is preserved. Paths in tracked artifacts are repository-relative.
 
 Full lane: implement-tests, implement, independent review. No publish stages,
 remote updates, tracker edits, real agent installation or model generation now.
+
+## User-requested combined scope
+
+The user requested that evaluator improvements and the Codex/Claude setup ship on
+the same #17 branch. Include them in this full contract, retaining all factory and
+container requirements. The existing dual-provider profile is restored locally;
+evaluator/runtime implementation still awaits approval of this revised plan.
+The previous complete proposal is preserved under v1/.

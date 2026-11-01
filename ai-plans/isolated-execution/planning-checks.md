@@ -1,30 +1,53 @@
-# Observed planning checks (2026-11-01)
+# Revised planning evidence
 
-- Read issue #17 anonymously through the GitHub API after authenticated gh refused
-  to use an unavailable account. No account switching or credentials were changed.
-- Read issue #16 status: closed/completed; fetched origin/main and fast-forwarded
-  the new task branch to bd6b824. No remote ref was written.
-- Read effective local specify skill, pipeline/model/quality references, native
-  instructions, profile, design guidance and runtime/tests around checkout,
-  execution, claims, policy, verification and state.
-- Offline models evaluate: passed once, no unresolved routes; exact snapshot saved
-  as model-selection.json and embedded in pipeline.json. No provider generation.
-- validate-plan: passed (valid=true, task=isolated-execution). An initial outcome
-  identifier spelling was corrected to lowercase before the successful result.
-- preflight: passed. Codex executable --help capability found; restricted permissions,
-  unattended default, no connectors and no delivery stages. This does not prove
-  model entitlement, future test success, container availability or checkout reuse.
-- Product acceptance tests and docs build are named future implementation checks;
-  they were not run as evidence for a planning-only change.
+Prior proposal and evidence are preserved under v1/. User requested evaluator
+improvements and Codex/Claude setup on the #17 branch, superseding the earlier
+suggestion to deliver evaluator changes separately.
 
-All tracked paths and examples are portable and repository-relative. No credentials
-or machine paths from CLI preflight output are copied into artifacts. Complete
-contract files, model facts/snapshot, frozen project quality sources and this log
-are delivered together in the local planning commit. See implementation.md for
-the explicit current-checkout handoff constraint.
+Research confirmed that the starting branch's dual-provider configuration was
+absent from main and this task branch, and the planner inserted facts.routes
+forcing Sol/high. Those task pins are now removed. Restored only agents and route
+arrays from the earlier project configuration; harness prose now names both hosts.
+The project-only configuration change does not alter native or global settings.
 
-Public-content audit: the full working-directory/history command found seven
-pre-existing personal-path findings in ignored runner-hardening evidence. Those
-files are outside this task and are preserved. Separate checks of this task's ten
-planning files and reachable Git history found zero findings. No private denylist
-was supplied. git diff --check passed. Do not report the broad audit as clean.
+Both CLIs are installed. Read-only discovery during the diagnostic turn reported
+Claude aliases opus/sonnet/haiku with needs-confirmation, no local restrictions flag;
+Codex model listing failed. No successful account inference or model entitlement is
+claimed. No discovery catalogue or confirmation was invented or persisted.
+
+One offline 1.1 evaluation for this revision saved the exact model-selection.json
+and embedded it in pipeline.json. It inherits Sonnet tests / Sol implementation /
+Opus review with their prior fallbacks and no added effort. No facts.routes.
+Advisories: tests and implementation below recommended band, review same lineage
+as tests, no model catalogue. There are no unresolved routes. These are inherited
+project pins, not output from the proposed evaluator improvements.
+
+Product tests named in the manifest are acceptance contracts to be authored after
+approval; their names do not claim those cases already exist or have run.
+Validation/build/check results for this revision are recorded below as observed.
+
+## Observed revision checks
+
+- validate-plan passed after the complete contract and routing scenarios were saved.
+- preflight passed for Sonnet, Sol and Opus CLI help/capability checks, restricted
+  unattended defaults, no connectors and no selected delivery stages. Model account
+  access still requires the first actual request.
+- Strict MkDocs build passed using the existing .venv interpreter. The default
+  python3 lacked MkDocs; no dependencies or user installations were changed.
+- Generated-documentation check passed; 4,141 internal links/assets, zero failures.
+- Full existing suite: 261 tests ran; one failure and four errors were local socket
+  or disposable service startup failures in the restricted test environment.
+  The environment/fixture suites were rerun with local-service permission: all
+  five tests passed. Concurrency rerun evidence follows. This is not a single
+  successful full-suite invocation and is not evidence for the future product tests.
+- Task artifact scan: 21 files, zero findings; reachable history: 2,102 items, zero
+  findings before this revision's commit. No private denylist supplied. The known
+  pre-existing ignored runner-hardening evidence findings remain outside delivery.
+- git diff --check passed. Project profile contains both providers, facts.routes is
+  absent, manifest routes exactly match the saved snapshot and no route adds a
+  reasoning argument. No evaluator/isolation product source or tests were edited.
+
+Concurrency rerun with temporary-socket permission: all six tests passed in
+7.143 seconds. All five failures/errors in the initial full-suite invocation are
+covered by the passing environment/fixture and concurrency reruns (11 tests).
+No source change or test weakening was used to obtain these results.

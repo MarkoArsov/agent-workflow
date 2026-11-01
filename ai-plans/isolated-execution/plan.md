@@ -1,38 +1,56 @@
-# Proposed plan for issue #17
+# Revised combined plan for issue #17
 
-Implement factory-owned Git checkouts for new unattended runs, preserving interactive
-profile choices, with safe refresh, companions, delivery, ownership and cleanup.
-Add experimental opt-in Docker/Podman execution for stages and checks with explicit
-mount/environment limits, local image preflight, consent before pulls, restricted
-fallback diagnostics and owned-container cleanup. Update the isolation/security/
-policy/projects/CLI docs and provide a minimal Dockerfile.
+Proposed, awaiting renewed approval. Keep factory checkouts, optional container
+execution, evaluator improvements and project Codex/Claude setup on the same branch:
+codex/isolated-execution. The previous complete proposal is preserved under v1/.
 
-Author regression tests first, implement, then review independently. Requirements
-and executable outcome mappings are in requirements.md and pipeline.json. Green
-checks include both new suites, the full unittest suite, generated docs, strict
-MkDocs, links and public-content/history scans. Only a separately opted-in real
-container smoke may be skipped by default; fake runtime coverage is mandatory.
-No product code or product tests have been written during planning.
+## Scope
 
-Branch codex/isolated-execution was created from main then fast-forwarded to
-origin/main bd6b824, incorporating completed dependency #16. Per the explicit user
-checkout instruction, plans stay in the current checkout. The configured worktree
-strategy is unchanged. Automatic runner handoff would allocate another checkout;
-execute the full contract stages directly here after approval, or first obtain a
-user choice permitting allocation. Do not claim pipeline launch is prepared for
-the current path merely because validation/preflight succeeds.
+- Factory-owned checkouts for new unattended runs, safe mirror refresh, independent
+  companions, host delivery, ownership and terminal cleanup.
+- Experimental Docker/Podman stages/checks with explicit mounts/environment,
+  image-pull consent, restricted fallback diagnostics and owned-container cleanup.
+- Stage-specific model facts; routine test size becomes an advisory; capability
+  and effort are separate. Planner suggestions cannot become pins. Every decision
+  explains source, requirements, eligibility, effort, restrictions and fallbacks.
+- Restore Codex/Claude project setup. Keep genuine user/project pins compatible;
+  migrate this project's restored preferences to adaptive defaults after evaluator
+  implementation. No global or native settings writes.
+- Required isolated tests and docs for all four parts; logical commits on this one
+  branch. No push, PR, tracker change, deployment or image publication selected.
 
-Model routes: implement-tests, implement and review each use codex:gpt-6.1-sol,
-high effort, no fallbacks. These plan-specific routes respect this base profile's
-Codex-only provider set and do not alter global or project model settings. Offline
-evaluation completed once. Advisories: selected routes below the evaluator's
-recommended deep band; test/review share model lineage; no model catalogue present.
-Review is a separate context, with requirements and tests first, not authorship
-reasoning. Model account entitlement remains verified only on first actual request.
+## Current routes for implementing this plan
 
-Permission mode observed during noninteractive preflight: restricted, from the
-unattended default. The issue's opt-in container mode does not exist yet. No delivery
-stage is selected. Only local logical commits are authorized; no push, PR, tracker
-message, deployment or image publication is included.
+These inherit the restored existing project configuration; they are not planner
+pins or recommendations from the future evaluator. No high-effort argument is set.
+
+| Stage | Primary | Fallback |
+| --- | --- | --- |
+| Tests | Claude Sonnet | Codex Sol |
+| Implementation | Codex Sol | Claude Opus |
+| Review | Claude Opus | Codex Sol |
+
+The 1.1 evaluator was run once with no facts.routes. No unresolved routes. It warns
+that tests/implementation pins are below its current recommended deep band, review
+shares lineage with test authoring, and no catalogue is saved. This is a capability
+check of inherited configuration, not proof of subscription entitlement or cost.
+A later task will use the improved evaluator/adaptive project defaults; do not
+re-evaluate the frozen routes mid-implementation.
+
+Full lane: implement-tests, implement, independent review. The three new regression
+suites cover factory checkouts, container execution and evaluator changes. Existing
+model-policy/watch/workflow tests, portable policy selftest, full unittest suite,
+generated docs, strict MkDocs, links and public-content checks remain required.
+All outcomes map to named executable checks in pipeline.json. Only the explicit
+opt-in real-container smoke may be skipped in default automated coverage.
+
+The explicit user instruction keeps work in this checkout. The profile still uses
+worktrees; automatic runner launch would allocate another checkout. Execute the
+contract stages directly here after approval, or obtain a user choice allowing
+allocation. This restriction is not concealed by a passing preflight.
+
+requirements.md and pipeline.json contain the complete revised contract. Existing
+project setup edits are included now as requested; no evaluator/isolation product
+code or product tests have been implemented during this planning revision.
 
 Approve this plan and start implementation?

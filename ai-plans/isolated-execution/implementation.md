@@ -54,3 +54,42 @@ merely to make preflight appear to promise same-checkout pipeline execution.
 - https://docs.docker.com/reference/cli/docker/container/run/ (mounts, env, pull policy).
 - https://docs.podman.io/en/latest/markdown/podman-run.1.html (runtime flags/rootless mapping).
 These inform the proposed design; fake-runtime tests alone cannot prove containment.
+
+## Combined evaluator work
+
+The user added evaluator improvements and Claude setup to #17; implement these on
+the same branch after renewed approval. This deliberately expands the original
+isolation scope; do not split into a separately published branch or issue.
+
+Author tests/test_model_routing_revision.py before product changes. Existing pure
+core.evaluate/requirement entry points can demonstrate assertion red without import
+errors: a 650-line routine test scope currently chooses deep/high; expect strong/
+balanced. A mixed-stage fixture proves routine tests are not escalated by complex
+implementation. Suggestions must never bypass pins or availability. Keep real
+lineage values distinct from provider IDs in the fixtures.
+
+Extend model_policy.core fact validation and requirement derivation, then candidate
+selection and stage explanation output. Extend resolve_settings/Store only enough
+to retain accurate source metadata across layers without changing precedence.
+Keep source metadata separate from route objects so provider argv validation still
+accepts the existing provider/model/reasoning shape. Update version, summary and
+portable selftest/export expectations together. Preserve old snapshots under their
+recorded hashes instead of re-deriving requirements from new rules.
+
+Size thresholds become explainable warnings. Capability requirements still guard
+security-sensitive work; effort is derived separately from complexity/uncertainty.
+Do not add a speculative dollar-cost formula or fetch benchmarks during evaluate.
+
+The current project setup is restored from its existing dual-agent configuration
+now, using only the agents and route arrays, and correcting the harness prose.
+The implementation will migrate those arrays to adaptable project defaults using
+the existing adaptive_stages mechanism. Review the exact project-only configuration
+diff; no global or native settings apply is included. A fixture must load the
+repository project files through normal settings resolution and verify the intended
+provider/default/pin behavior, without requiring this machine's catalogue.
+
+Current execution uses the restored existing project pins with no added effort
+arguments, frozen by the 1.1 evaluator. New algorithm semantics cannot safely choose
+the models for their own implementation before they exist. Missing catalogue and
+below-band/diversity advisories remain visible. Do not represent this transitional
+route selection as output from the improved evaluator.

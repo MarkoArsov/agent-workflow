@@ -143,3 +143,90 @@ capability assertions so missing APIs produce FAIL/AssertionError, never import
 errors as red. Future test names are contractual, not claims they exist or ran.
 Local logical implementation commits follow verification; publication and external
 communication require a separate explicit request.
+
+## Evaluator and project setup (same branch, same delivery)
+
+E1. Restore this project's intended provider subset to Codex and Claude in
+.plovi/project.json and PROJECT_WORKFLOW.md, preserving every unrelated profile
+field. The restored initial stage routes match the pre-existing dual-agent branch:
+Sonnet tests with Sol fallback; Sol implementation with Opus fallback; Opus review
+with Sol fallback; default Sol with Opus fallback. Remove planner-added Sol/high
+facts.routes. No native agent preferences, user/global model settings, credentials
+or other workflow installations may be changed. CLI installation and discovery
+are evidence only; never manufacture account-access confirmations.
+
+E2. Introduce validated stage_facts for selected executable AI stages: optional
+kind, size, risk, uncertain, complexity (simple, routine, complex), test_files and
+test_lines. Fields inherit task facts when absent; reject unknown stages/fields,
+invalid enums/types and nonfinite or negative counts. Stage-specific values replace
+the inherited values per key, never spread one stage's difficulty into another.
+Existing demanding_stages remains supported. Explicit complex/uncertain/high-risk
+work can still require a deep model for that affected stage. Four files or 300
+estimated test lines alone becomes an advisory, not automatic deep/high selection.
+Keep these numbers as reviewable size evidence; never relabel a difficult task as
+routine merely to force a cheaper route. Update boundary tests for the new expected
+behavior and preserve all other model-policy coverage.
+
+E3. Separate capability band from effort selection. Use the smallest reviewed,
+supported effort for the effective stage difficulty: simple -> simple mapping,
+routine -> balanced mapping, complex/uncertain -> demanding mapping. High risk
+alone can require the deep capability band while retaining balanced effort when
+complexity is routine and uncertainty is false. Unknown effort metadata omits the
+argument with an explanation; never invent supported values or automatically select
+xhigh/max/ultra. Automatic candidate selection still prefers the lowest adequate
+band, obeys capabilities/provider restrictions and preserves the lineage preference
+and fallback bounds. Describe this as a resource-use policy, not a measured price
+optimization: actual subscription usage/cost remains unknown without evidence.
+
+E4. Add suggested_routes as optional per-stage preferences in task facts. Suggestions
+are validated like routes but cannot pin a route, promote unavailable/unreviewed
+models, lower the required band, defeat diversity, or override user/project pins.
+A suitable suggestion may break remaining ties only after capability, provider,
+lineage and reviewed rank decisions. Existing facts.routes and configured pins stay
+backward-compatible explicit overrides. Freeze provenance for every stage as
+user-task-route, project-pin, global-pin, retained-default or adaptive-selection;
+when legacy data cannot distinguish an origin, say legacy-explicit-route rather
+than invent user authorization. The specify skill must put planner ideas in
+suggested_routes and reserve routes for attributable user/project instructions.
+Reference origin in plans; metadata documents the origin and does not prove approval.
+
+E5. Explain each stage in machine-readable snapshot details and compact CLI output:
+effective stage facts and their source, required band, effort mode/mapping,
+selected route source, eligibility/exclusion reasons, unresolved conditions,
+provider/lineage constraints and ordered fallbacks. Do not claim a retained pin or
+default is an adaptive recommendation. Missing catalogue output must say whether
+routes were retained or no route could be resolved. Bound explanation detail for
+large catalogues and keep default CLI output short; verbose output can show more.
+Do not include private paths, environment values or credentials. Evaluation remains
+deterministic and offline, without provider/network/model calls.
+
+E6. Version the evaluator for changed semantics; preserve valid 1.0/1.1 snapshot
+hashes and exact frozen routes, including the plan running these improvements.
+Do not re-evaluate or rewrite an approved running task during implementation.
+Update independent export/selftest behavior and document downstream compatibility.
+Do not copy package changes into any installed external workflow.
+
+E7. After the improved evaluator exists, this project's routine selection should
+be adaptive rather than permanently pinned to restored stage routes. Move the
+restored preference arrays into .plovi/models.json defaults and use explicit
+adaptive_stages for implement-tests, implement, review and default to release
+legacy profile pins. Keep profile route arrays for compatibility if appropriate;
+prove the effective settings have both providers and no pins for those stages.
+Use medium as a routine preference only where reviewed model/host evidence supports
+it; otherwise omit effort. Do not invent catalogue data to make the migration green.
+A missing catalogue retains valid defaults with a precise warning; a newly required
+capability with no eligible route remains unresolved. The current implementation
+plan keeps its frozen inherited routes; project adaptation affects later tasks.
+
+E8. Add tests/test_model_routing_revision.py using WorkspaceTest plus existing
+fixture helpers. Cover stage isolation, file/line threshold advisories, independent
+band/effort decisions, planner suggestion vs genuine pins, origin explanations,
+provider exclusions, unsupported effort, empty/invalid/stale catalogues, old snapshot
+validation, deterministic no-IO evaluation and dual-provider project defaults.
+Use synthetic model names and catalogues; native discovery smoke is read-only and
+separate from tests. No inference or entitlement is implied by fixture results.
+
+E9. Update references/model-routing.md, specify/update-models skill guidance and
+model docs/generated references. Show adaptive vs pinned vs retained routes clearly,
+explain usage uncertainty, and give stage-specific examples including a large but
+routine test suite. All earlier package/docs/public-content checks still apply.

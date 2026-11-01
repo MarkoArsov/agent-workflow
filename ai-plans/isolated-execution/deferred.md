@@ -13,3 +13,9 @@ PR synchronization is future work, not an implicit API action in clean.
 No implementation or new product tests are written during specify. Planning checks
 validate the contract and installed CLI capability only. Restricted fallback is
 explicitly reported; an executed-container failure never triggers host rerun.
+
+Evaluator improvements and the project-only Codex/Claude configuration are now in
+scope. Real paid inference, automatic entitlement confirmation, machine/global
+model-policy updates, native app settings changes, live price-based optimization
+and external workflow updates remain deferred. No hosted image or package release
+is authorized by the request to ship these changes together.
