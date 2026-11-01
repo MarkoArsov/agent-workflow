@@ -116,6 +116,9 @@ class Events:
     def report(self):
         for text in reversed(self.text):
             stripped = re.sub(r"^" + re.escape(chr(96) * 3) + r"(?:json)?\s*|\s*" + re.escape(chr(96) * 3) + r"$", "", text.strip())
+            terminal = re.search(r"(?:^|\n)```json[ \t]*\r?\n([\s\S]*?)\r?\n```[ \t]*$", text.strip(), re.IGNORECASE)
+            if terminal:
+                stripped = terminal.group(1)
             try:
                 value = json.loads(stripped)
                 if isinstance(value, dict) and "status" in value and (not isinstance(value["status"], str) or value["status"] not in {"complete", "needs_input", "blocked", "spec_conflict", "impossible"}):

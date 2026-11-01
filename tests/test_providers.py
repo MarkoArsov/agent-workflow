@@ -31,3 +31,17 @@ class ProviderTests(WorkspaceTest):
         self.assertIsNone(events.cost_usd)
         self.assertIsNone(events.usage)
 
+
+    def test_result_accepts_terminal_fenced_json_after_prose(self):
+        events = Events()
+        events.line(json.dumps({"type": "result", "result": 'Completed the checks.\n\n```json\n{"status":"complete","summary":"done"}\n```'}))
+        self.assertEqual(events.report(), {"status": "complete", "summary": "done"})
+
+    def test_nonterminal_or_invalid_fenced_reports_are_not_accepted(self):
+        for text in ('```json\n{"status":"complete"}\n```\nAdditional text',
+                     'Summary\n```json\n{"status":"needs_input"}\n```',
+                     'Summary with {"status":"complete"} inline'):
+            with self.subTest(text=text):
+                events = Events()
+                events.line(json.dumps({"type": "result", "result": text}))
+                self.assertIsNone(events.report())
