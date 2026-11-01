@@ -1,6 +1,6 @@
 # Revised combined plan for issue #17
 
-Proposed, awaiting renewed approval. Keep factory checkouts, optional container
+Approved by the user; recovery added by explicit request. Keep factory checkouts, optional container
 execution, evaluator improvements and project Codex/Claude setup on the same branch:
 codex/isolated-execution. The previous complete proposal is preserved under v1/.
 
@@ -51,4 +51,7 @@ requirements.md and pipeline.json contain the complete revised contract. Existin
 project setup edits are included now as requested; no evaluator/isolation product
 code or product tests have been implemented during this planning revision.
 
-Approve this plan and start implementation?
+Resume this approved plan with automatic recovery and the verified personal account.
+
+Automatic recovery now rechecks saved output before invoking a provider. Exact repair
+commits are recorded in pipeline.json; unknown changes still stop for inspection.

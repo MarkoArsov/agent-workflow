@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "task": "isolated-execution",
-  "plan_status": "revised-proposed-awaiting-approval",
+  "plan_status": "approved",
   "plan_files": [
     "prompt.md",
     "requirements.md",
@@ -643,5 +643,14 @@
   "references": [
     "quality-guidance.md"
   ],
-  "connectors": []
+  "connectors": [],
+  "recovery": {
+    "approved_commits": {
+      "agent-workflow": [
+        "06a60d6ce4f36b4dce72f0bcef3dfba584d53b41",
+        "3ba1c174545c8d246f339e5a008082e2fb7f7206",
+        "fd211bb25ae9d91d5fdb76c81616ec234d430441"
+      ]
+    }
+  }
 }

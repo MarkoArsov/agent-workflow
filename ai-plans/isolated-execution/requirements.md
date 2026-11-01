@@ -1,6 +1,6 @@
 # Requirements
 
-Approval status: proposed, awaiting approval. Full lane; substantive runtime,
+Approval status: approved by the user, including recovery. Full lane; substantive runtime,
 security, compatibility and recovery changes require a complete contract.
 
 ## Factory checkouts
