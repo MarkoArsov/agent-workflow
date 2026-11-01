@@ -7,7 +7,7 @@ Native user instructions take precedence over checkout defaults. These repositor
 # plovi
 
 This repository is a standalone public package. PLAN.md defines the approved scope.
-Work in this checkout; do not route package development through an installed personal workflow.
+Develop this package from this repository and its task worktrees; do not route package development through an installed personal workflow. New tasks use separate worktrees.
 Keep skills generic and resolve project behavior from its profile and extensions.
 Use Python 3.11+ and the standard library for installation and runtime.
 Run: python3 -m unittest discover -s tests -v

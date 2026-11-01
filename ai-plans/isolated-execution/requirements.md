@@ -230,3 +230,10 @@ E9. Update references/model-routing.md, specify/update-models skill guidance and
 model docs/generated references. Show adaptive vs pinned vs retained routes clearly,
 explain usage uncertainty, and give stage-specific examples including a large but
 routine test suite. All earlier package/docs/public-content checks still apply.
+
+## Checkout interpretation safeguard
+
+Clarify in generic planning guidance that referring to a repository or source
+checkout does not itself prohibit configured task worktrees. Honor explicit
+checkout restrictions and project setup choices. Verify the guidance and existing
+task allocation behavior using isolated fixtures.

@@ -58,7 +58,8 @@
         "skills/update-models/SKILL.md",
         "tests/test_model_routing_revision.py",
         "tests/test_model_policy.py",
-        "tests/test_workflow_practices.py"
+        "tests/test_workflow_practices.py",
+        "AGENTS.md"
       ],
       "test_paths": [
         "tests/test_factory_checkouts.py",

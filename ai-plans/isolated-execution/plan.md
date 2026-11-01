@@ -44,10 +44,8 @@ generated docs, strict MkDocs, links and public-content checks remain required.
 All outcomes map to named executable checks in pipeline.json. Only the explicit
 opt-in real-container smoke may be skipped in default automated coverage.
 
-The explicit user instruction keeps work in this checkout. The profile still uses
-worktrees; automatic runner launch would allocate another checkout. Execute the
-contract stages directly here after approval, or obtain a user choice allowing
-allocation. This restriction is not concealed by a passing preflight.
+Use the task-owned worktree for this branch and the original configuration root
+for the pipeline. The previous current-checkout interpretation was incorrect.
 
 requirements.md and pipeline.json contain the complete revised contract. Existing
 project setup edits are included now as requested; no evaluator/isolation product

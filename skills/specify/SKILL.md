@@ -137,3 +137,5 @@ verify each required artifact with git ls-tree and compare its committed content
 Report created/reused branches, checkout paths, commit hashes, requirements.md and
 pipeline.json links, and actual validation/preflight results. A static wording
 check is not proof of agent execution. Do not push during specification.
+
+Repository or checkout references ordinarily identify the project source, not a ban on its configured task worktrees. Resolve explicit restrictions from their actual wording and project profile; do not invent a checkout constraint that conflicts with task isolation.

@@ -37,16 +37,12 @@ build output untracked. Run the matrix in pipeline.json, review requirements the
 tests then implementation/failure paths and design conventions. Make logical local
 commits; stop before any remote effect.
 
-## Current-checkout handoff constraint
+## Task checkout handoff
 
-The user explicitly requires this checkout for package development. This full
-contract stays on codex/isolated-execution here. The existing automated runner's
-profile still says worktree and would allocate a second checkout; do not launch it
-against this branch as-is. After approval, execute the named stages directly in
-this checkout, preserving independent review, or obtain an explicit user choice to
-use task-start allocation. Full lane describes contract/stage order, not permission
-to ignore the checkout constraint. No project profile or ownership receipt is changed
-merely to make preflight appear to promise same-checkout pipeline execution.
+The user clarified that this project always uses a separate task worktree. The earlier
+current-checkout interpretation was incorrect. Run the approved pipeline using the
+owned worktree for this task and the original project configuration root. Preserve
+the task branch and planning commits.
 
 ## Reviewed technical sources
 

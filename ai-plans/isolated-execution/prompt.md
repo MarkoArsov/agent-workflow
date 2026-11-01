@@ -27,3 +27,8 @@ the same #17 branch. Include them in this full contract, retaining all factory a
 container requirements. The existing dual-provider profile is restored locally;
 evaluator/runtime implementation still awaits approval of this revised plan.
 The previous complete proposal is preserved under v1/.
+
+User clarification: all implementation for this project uses a separate task
+worktree. The earlier current-checkout reading was incorrect. Correct project
+instructions and generic planning guidance so repository references are not
+misread as prohibitions on configured worktrees.
