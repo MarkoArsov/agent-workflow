@@ -8,7 +8,8 @@
     "implementation.md",
     "deferred.md",
     "project-quality.md",
-    "routing-scenarios.md"
+    "routing-scenarios.md",
+    "migration.md"
   ],
   "repositories": [
     {
@@ -62,7 +63,13 @@
         "AGENTS.md",
         "tests/test_recovery.py",
         "schemas/pipeline.schema.json",
-        "runtime/plovi/manifest.py"
+        "runtime/plovi/manifest.py",
+        "runtime/plovi/checkpoints.py",
+        "runtime/plovi/repairs.py",
+        "runtime/plovi/entrypoint.py",
+        "runtime/plovi/runtime_pin.py",
+        "tests/test_legacy_migration.py",
+        "tests/test_isolation_fixture_health.py"
       ],
       "test_paths": [
         "tests/test_factory_checkouts.py",
@@ -72,7 +79,9 @@
         "tests/test_model_routing_revision.py",
         "tests/test_model_policy.py",
         "tests/test_workflow_practices.py",
-        "tests/test_recovery.py"
+        "tests/test_recovery.py",
+        "tests/test_legacy_migration.py",
+        "tests/test_isolation_fixture_health.py"
       ]
     }
   ],
@@ -404,6 +413,32 @@
       "phases": [
         "green"
       ]
+    },
+    {
+      "id": "fixture-health",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "-m",
+          "unittest",
+          "-v",
+          "tests.test_isolation_fixture_health.FixtureHealthTests"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 300
+      },
+      "parser": "unittest",
+      "phases": [
+        "setup",
+        "green"
+      ],
+      "identities": [
+        "test_refresh_base_fixture_reaches_allocation",
+        "test_preserve_branch_fixture_reaches_refresh",
+        "test_missing_runtime_trusted_fixture_reaches_preflight",
+        "test_missing_runtime_restricted_fixture_reaches_preflight"
+      ]
     }
   ],
   "outcomes": [
@@ -521,6 +556,12 @@
       "checks": [
         "resume-recovery",
         "full-suite"
+      ]
+    },
+    {
+      "id": "fixture-setup-healthy",
+      "checks": [
+        "fixture-health"
       ]
     }
   ],
@@ -649,8 +690,44 @@
       "agent-workflow": [
         "06a60d6ce4f36b4dce72f0bcef3dfba584d53b41",
         "3ba1c174545c8d246f339e5a008082e2fb7f7206",
-        "fd211bb25ae9d91d5fdb76c81616ec234d430441"
+        "fd211bb25ae9d91d5fdb76c81616ec234d430441",
+        "5b2d2c3d60ff0b9224058b9c0b36a38bd136ddbb",
+        "e898cfc64537a1626cc82edfa36ec19d89fb49fb",
+        "1fd2cffbf5e5bc458435d4726665753dc0b0ba6f",
+        "814e8e1c7d7403911e35258b2b51475ddae7e333",
+        "df40c6a67a32d56fa261d33335faf24000c1149d",
+        "e5561f5d85390c2074b7a286d1446dae59b2b4a8"
       ]
+    },
+    "approved_merges": {
+      "agent-workflow": [
+        "814e8e1c7d7403911e35258b2b51475ddae7e333",
+        "df40c6a67a32d56fa261d33335faf24000c1149d"
+      ]
+    },
+    "test_checkpoint": {
+      "binding_sha256": "9cb8f5a82f87277fce46264c9916d456f68ed5cfbcca74917cc3cdd2d323342a",
+      "escalation_sha256": "420817d64eabd03c3286d77ffbdb4f79dc5c0fde48b4b964e35986c543e3c233",
+      "fixture_request": {
+        "status": "test_fixture_repair",
+        "reason": "Repair only independently reproduced setup defects: factory _setup_with_remote creates duplicate repository paths; two factory cases commit in a bare remote rather than advancing it through a writable clone; two container cases hide Git before constructing their project. Preserve all assertions, cases, test identities and expected product behavior. The new fixture-health stand-ins stop before product calls and must pass without factory/isolation implementation.",
+        "test_paths": [
+          {
+            "repository": "agent-workflow",
+            "path": "tests/test_factory_checkouts.py"
+          },
+          {
+            "repository": "agent-workflow",
+            "path": "tests/test_container.py"
+          }
+        ],
+        "checks": [
+          "fixture-health"
+        ]
+      }
     }
+  },
+  "corrections": {
+    "fixture_rounds": 2
   }
 }
