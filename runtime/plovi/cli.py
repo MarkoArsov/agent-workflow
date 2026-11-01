@@ -47,6 +47,9 @@ def parser():
             command.add_argument("--unattended", action="store_true", help=argparse.SUPPRESS)
             command.add_argument("--detach", action="store_true")
             command.add_argument("--dry-run", action="store_true")
+    migrate = sub.add_parser("migrate", help="Prepare a reviewed legacy test checkpoint without restarting implementation")
+    migrate.add_argument("task")
+    migrate.add_argument("--apply", action="store_true")
     pipeline = sub.add_parser("pipeline", help="Start or recover an approved task and attach tracking")
     pipeline.add_argument("target", help="Approved manifest path or saved task ID")
     pipeline.add_argument("--no-watch", action="store_true")
@@ -137,6 +140,9 @@ def watch(project, task, *, seconds=None, json_output=False):
 
 
 def execute(args):
+    if args.command == "migrate":
+        from .checkpoints import migrate
+        return migrate(context(args), args.task, apply=args.apply)
     if args.command == "pipeline":
         from .entrypoint import launch
         project = context(args)
@@ -303,7 +309,7 @@ def main(argv=None):
         args = parser().parse_args(argv)
         if getattr(args, "upgrade_runtime", False) and not getattr(args, "rebind", False):
             raise WorkflowError("Runtime upgrade requires an explicitly reviewed --rebind")
-        if args.command in {"run", "pipeline", "resume", "answer", "retry", "approve", "status", "watch", "cancel", "verify"}:
+        if args.command in {"run", "pipeline", "resume", "answer", "retry", "approve", "status", "watch", "cancel", "verify", "migrate"}:
             from . import runtime_pin, manifest
             from .util import package_root
             project = context(args)
@@ -315,7 +321,7 @@ def main(argv=None):
             # Do not forward the upgrade flag into the immutable target recursively.
             forwarded = [item for item in forwarded if item != "--upgrade-runtime"]
             code = runtime_pin.dispatch(project, task, forwarded, source=package_root(),
-                                        create=args.command in {"pipeline", "resume", "answer", "retry", "approve"} or (args.command == "run" and not args.dry_run),
+                                        create=(args.command == "migrate" and args.apply) or args.command in {"pipeline", "resume", "answer", "retry", "approve"} or (args.command == "run" and not args.dry_run),
                                         upgrade=getattr(args, "upgrade_runtime", False))
             if code is not None: return code
         result = execute(args)

@@ -337,9 +337,12 @@ def recover_resume(project, manifest, state, root, *, rebind=False, replay=True)
         paths = set()
         for commit in commits:
             parents = git_ops.git(checkout, "rev-list", "--parents", "-n", "1", commit).split()
-            changed = set(git_ops.git(checkout, "diff-tree", "--no-commit-id", "--name-only", "-r", "-z", commit).split("\0")) - {""}
+            if len(parents) < 2:
+                raise WorkflowError("Recovery repair commit must have a recorded parent")
+            changed = set(git_ops.git(checkout, "diff", "--name-only", "-z", parents[1], commit).split("\0")) - {""}
             plan_only = bool(changed) and all((checkout / path).resolve().is_relative_to(plan_dir) for path in changed)
-            if len(parents) != 2 or (commit not in permitted and not (rebind and permitted and plan_only)):
+            reviewed_merge = rebind and commit in permitted and commit in manifest.get("recovery", {}).get("approved_merges", {}).get(name, [])
+            if (len(parents) != 2 and not reviewed_merge) or (commit not in permitted and not (rebind and permitted and plan_only)):
                 raise WorkflowError("Unapproved recovery repair commit; review exact commits before resuming")
             paths.update(changed)
         if paths & set(git_ops.dirty_paths(checkout)):

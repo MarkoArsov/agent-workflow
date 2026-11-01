@@ -153,3 +153,19 @@ Runtime changes require --upgrade-runtime --rebind; originals and recovery journ
 remain available. Trackers use structured argv/cwd from that runtime. Host UI runs
 only in the foreground adapter, with truthful capability/liveness acknowledgements.
 Status/watch defaults to human output; --json emits versioned summary/event objects.
+
+## Explicit legacy checkpoint handoff
+
+`recovery.test_checkpoint` requires original binding_sha256 and escalation_sha256
+values, with an optional test_fixture_repair fixture_request. This is explicit
+migration authorization, not evidence that a requirements decision is mechanical.
+Migrate validates unchanged requirements/checks/outcomes/routes/ownership, frozen
+hashes and passing old stage evidence, then renews fixture setup and red proof.
+It preserves the completed test stage and stops at implementation. Original state
+and binding are archived. Repeated identical handoff does not repeat inference.
+
+An exact merge in approved_commits must also appear in approved_merges and is
+admissible only during reviewed rebind/migration. All ancestors introduced by the
+merge still need exact approval or the existing task-plan-only exception. Baselines
+adopt the first-parent tree differences; unrelated edits and frozen-test changes
+remain guarded. Linear recovery behavior remains unchanged by default.

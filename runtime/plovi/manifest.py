@@ -165,7 +165,7 @@ def validate(value, project):
         if type(val) is not int or not 1 <= val <= maximum:
             raise WorkflowError(f"Invalid runner limit: {key}")
     recovery = value.get("recovery", {})
-    if not isinstance(recovery, dict) or set(recovery) - {"approved_commits"}:
+    if not isinstance(recovery, dict) or set(recovery) - {"approved_commits", "approved_merges", "test_checkpoint"}:
         raise WorkflowError("Invalid recovery settings")
     approved = recovery.get("approved_commits", {})
     if not isinstance(approved, dict):
@@ -174,6 +174,17 @@ def validate(value, project):
         if repository not in {row["id"] for row in repositories} or not isinstance(commits, list) or any(
                 not isinstance(commit, str) or not re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", commit) for commit in commits):
             raise WorkflowError("Recovery requires registered repositories and full commit IDs")
+    merges = recovery.get("approved_merges", {})
+    if not isinstance(merges, dict) or any(name not in approved or not isinstance(rows, list) or any(c not in approved[name] for c in rows) for name, rows in merges.items()):
+        raise WorkflowError("Reviewed merges must also appear in exact approved_commits")
+    checkpoint = recovery.get("test_checkpoint")
+    if checkpoint is not None:
+        if (not isinstance(checkpoint, dict) or set(checkpoint) - {"binding_sha256", "escalation_sha256", "fixture_request"}
+                or any(not isinstance(checkpoint.get(k), str) or not re.fullmatch(r"[0-9a-f]{64}", checkpoint[k]) for k in ("binding_sha256", "escalation_sha256"))):
+            raise WorkflowError("Test checkpoint requires exact binding and escalation SHA256 values")
+        request = checkpoint.get("fixture_request")
+        if request is not None and (not isinstance(request, dict) or request.get("status") != "test_fixture_repair" or not request.get("reason") or not isinstance(request.get("test_paths"), list) or not isinstance(request.get("checks"), list)):
+            raise WorkflowError("Checkpoint fixture repair requires explicit reason, test paths and setup checks")
     corrections = value.get("corrections", {})
     if not isinstance(corrections, dict) or set(corrections) - {"fixture_rounds", "max_known_cost_usd"}:
         raise WorkflowError("Invalid correction limits")

@@ -20,6 +20,7 @@ permissions, checks, and saved evidence. Run `plovi --help` for the complete lis
 <div class="cli-command"><code>plovi skill list</code><p>List the skills available in this project.</p></div>
 <div class="cli-command"><code>plovi validate-plan PLAN</code><p>Check a full pipeline's requirements, paths, stages and routes.</p></div>
 <div class="cli-command"><code>plovi preflight PLAN</code><p>Check readiness before starting a full pipeline.</p></div>
+<div class="cli-command"><code>plovi migrate TASK [--apply]</code><p>Preview or apply a reviewed legacy test checkpoint, renew its proof, and leave implementation stopped.</p></div>
 <div class="cli-command"><code>plovi pipeline PLAN|TASK</code><p>Start or safely resume an approved task with a pinned runtime. Reuse an active worker and attach tracking in the current terminal. Add <code>--no-watch</code> for a tracking descriptor.</p></div>
 <div class="cli-command"><code>plovi run PLAN</code><p>Run the approved pipeline. Add <code>--detach</code> to run it in the background, <code>--no-wait</code> to refuse claim conflicts, or <code>--trusted</code> for explicit trusted execution.</p></div>
 <div class="cli-command"><code>plovi status TASK</code><p>Read the saved status and evidence for a task.</p></div>
