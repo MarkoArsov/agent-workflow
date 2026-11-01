@@ -155,6 +155,7 @@
             "type": "array",
             "items": {
               "enum": [
+                "setup",
                 "red",
                 "green"
               ]
@@ -293,6 +294,38 @@
     "model_selection": {
       "type": "object",
       "description": "Immutable versioned evaluator snapshot, bound to routes and original task facts; validated without current defaults."
+    },
+    "recovery": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "approved_commits": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^([0-9a-f]{40}|[0-9a-f]{64})$"
+            }
+          }
+        }
+      }
+    },
+    "corrections": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "fixture_rounds": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5,
+          "default": 2
+        },
+        "max_known_cost_usd": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        }
+      }
     }
   },
   "additionalProperties": true

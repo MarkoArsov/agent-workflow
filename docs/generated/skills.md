@@ -123,13 +123,13 @@ configuration root with --project so a copied profile cannot cause nested worktr
 
 2. Run validate-plan and preflight. Address missing routes, binaries, connector availability, verification contracts, and checkout mismatches before launch. Never silently change trusted/restricted settings. For GitHub delivery, verify that the launching environment resolves the intended `gh` executable and account-routing configuration; do not switch the global active account.
 
-3. Use run with --dry-run to show the resolved stages and scope. Start run or run --detach when the user asks for the full pipeline. Detached output includes the task ID and log.
+3. Use run with --dry-run to show the resolved stages and scope. Use pipeline MANIFEST for a new approved task, or pipeline TASK for its continuation. This entry point pins the runtime outside mutable source, reuses an active worker, and performs safe resume/recovery before new inference. Pass the canonical --project root and preserve reviewed permission settings. Pending decisions, escalation, explicit cancellation and approvals remain visible stops. Do not retry or answer them on the person's behalf.
 
-4. Observe status or bounded watch. The orchestrator owns one project lock, fresh stage sessions, verification, and delivery. Do not start competing agents against its files.
+4. Attach tracking from the foreground host using the returned descriptor's argv/cwd and the selected execution.tracking_mode. In a terminal, pipeline detaches the worker and follows watch automatically. In Codex, Claude/VS Code or Cursor, inspect the actual available host tools: use open_and_run only with a verified session/running acknowledgement; open_only opens the panel and provides the exact command, without claiming it is running. Reuse a verified task/run terminal; probe a saved handle before reusing it and do not open duplicate panels if liveness is unknown. Unsupported/headless hosts get the safe command. Never use keyboard automation, invent a terminal API, or open UI from detached stages. Viewer failure/closure leaves the worker running. Human status/watch is concise; use --json for summary/event records and --verbose deliberately for full status. Do not start competing agents against the task's files.
 
 5. For needs_input, show the exact saved question. Write the user's answer to a local file and use answer --file; this resumes the asking session. Do not answer on the user's behalf.
 
-6. For failure, inspect the recorded attempt/evidence and repair the concrete cause. Use resume for an unchanged contract; use resume --rebind for a reviewed complete revision.
+6. For an interruption, pipeline TASK revalidates retained output and continues without repeating successful inference. For failure, inspect saved attempts/checks and repair the cause. Mechanical fixture defects use the bounded independent test-author/reviewer path; implementation must never unfreeze tests directly. Use --rebind only for a reviewed complete revision. Missing or tampered pinned runtimes require restoration or an explicit --upgrade-runtime --rebind; changing the linked package does not upgrade an active task.
 
 7. Use cancel to request termination of owned child processes. Never kill a process merely because a stale journal contains its PID.
 
@@ -149,6 +149,16 @@ verifies retained output and reconciles delivery; never duplicate completed work
 New specifications must use task start and the returned owned paths. Manual lane
 selection does not change the configured checkout policy. Resume only this task's allocation;
 never use a name collision to take over a different chat's branch or checkout.
+
+For an existing stopped task, use pipeline TASK with its saved task allocation.
+An explicitly cancelled task requires the person to request continuation via resume;
+pipeline TASK preserves the cancellation. Resume replays retained successful output through checks
+before asking a provider to repeat work. A reviewed plan revision uses --rebind;
+repository IDs/access/branches must remain unchanged. Only exact repair hashes in
+recovery.approved_commits may advance a baseline, plus task-plan-only follow-up
+commits during reviewed rebind. Unknown or dirty repairs stop for inspection.
+Report recovered checks and stages separately from new provider work. Use the
+launcher containing the approved fixes and verify the configured account first.
 
 ### `issue-writer` { .skill-entry data-skill="issue-writer Turn an idea, problem, or requirements into well-sized, detailed, test-first issues with dependencies and parallel waves." }
 
@@ -340,6 +350,13 @@ Interactive execution follows the profile; detached/non-TTY runs default to
 restricted unless reviewed policy or --trusted selects trusted. Re-setup preserves
 policy bytes and comments. Never silently activate policy for an existing run.
 
+Include execution.tracking_mode in the reviewed profile/policy: auto (default),
+current-terminal, app-terminal, command-only or off. Resolve actual host terminal
+capabilities separately from the provider/model. Keep account selectors/config
+paths in ignored local identity files; never write them into the public profile.
+Verify available account identity before managed requests and state unavailable
+verification honestly. Do not switch global provider or GitHub accounts.
+
 ### `setup` { .skill-entry data-skill="setup Set up plovi for this project. Short name for project-setup." }
 
 Set up plovi for this project. Short name for project-setup.
@@ -483,6 +500,8 @@ Report created/reused branches, checkout paths, commit hashes, requirements.md a
 pipeline.json links, and actual validation/preflight results. A static wording
 check is not proof of agent execution. Do not push during specification.
 
+Repository or checkout references ordinarily identify the project source, not a ban on its configured task worktrees. Resolve explicit restrictions from their actual wording and project profile; do not invent a checkout constraint that conflicts with task isolation.
+
 ## Implementation and verification
 
 ### `implement` { .skill-entry data-skill="implement Implement an approved change and complete the named verification and correction loop." }
@@ -497,7 +516,7 @@ missing source rather than silently substituting unrelated guidance.
 
 1. Read the complete plan, project workflow, native instructions, and nearest established implementation. Follow the planned repository membership and path boundaries.
 
-2. Use the current checkout or prepared task worktree. Read-only companion repositories supply context and checks; do not branch or edit them.
+2. Resolve the approved task allocation and configured checkout strategy. Reuse its prepared task worktree. For a new task with worktree policy, run task start before source edits; manual execution does not waive isolation. Use current-checkout only when explicitly configured or continuing an approved legacy allocation. Never switch a shared checkout belonging to another chat. Read-only companion repositories supply context and checks; do not branch or edit them.
 
 3. For a manual bugfix, reproduce the defect, add a regression check, observe its
    behavioral failure, make the minimal fix, rerun it green and run focused checks.
@@ -505,7 +524,7 @@ missing source rather than silently substituting unrelated guidance.
    why and use the strongest repeatable alternative. Never call an import/build
    failure behavioral red. Implement the smallest complete change that satisfies the requirements. Handle authorization, data boundaries, failure modes, compatibility, and migrations where the project requires them. Avoid opportunistic refactors.
 
-4. Preserve independent tests. Do not weaken, skip, remove, or rewrite assertion-proven tests to make results green. A wrong test or changed requirement needs a complete plan revision and renewed red evidence.
+4. If a declared setup check proves a mechanical fixture defect during implementation, request the runner-owned correction with status=test_fixture_repair, reason, test_paths (repository/path objects), and checks (declared setup IDs). Preserve expected behavior and leave frozen tests untouched. The runner invokes fresh approved test-author and review routes, guards assertions/cases, verifies setup and renews applicable red/green evidence within the correction budget. A requirement change still needs spec_conflict and a reviewed decision. Preserve independent tests. Do not weaken, skip, remove, or rewrite assertion-proven tests to make results green. A wrong test or changed requirement needs a complete plan revision and renewed red evidence.
 
 5. Run each named check in its configured working directory. Diagnose failures, fix the cause, and repeat only relevant checks. Finish with all acceptance mappings evidenced against the current diff.
 
@@ -529,9 +548,9 @@ missing source rather than silently substituting unrelated guidance.
 
 1. Read the approved requirements and test contract. Locate existing fixtures and same-domain tests. Write tests for required behavior, boundary cases, and expected failures using the repository's established style.
 
-2. In an orchestrator stage, change only declared test_paths. Do not implement product behavior, commit, push, switch branches, or add unrelated test infrastructure.
+2. In direct use, honor the task allocation and project checkout policy; manual test authoring does not waive an owned worktree. In an orchestrator stage, change only declared test_paths. Do not implement product behavior, commit, push, switch branches, or add unrelated test infrastructure.
 
-3. Run the precise named checks. A meaningful red result identifies the expected test and an assertion against existing behavior. Import errors, syntax errors, missing dependencies, broken startup, and compilation errors are setup failures to repair before claiming red.
+3. Run declared setup-phase fixture-health checks first. These must exercise helpers independently of missing product APIs and pass before assertion-red proof. Run the precise named checks. A meaningful red result identifies the expected test and an assertion against existing behavior. Import errors, syntax errors, missing dependencies, broken startup, and compilation errors are setup failures to repair before claiming red.
 
 4. Keep assertions specific to the behavior rather than mirroring implementation details. Do not add sleeps, disable assertions, skip tests, or broaden fixtures to hide failures.
 
@@ -542,6 +561,13 @@ missing source rather than silently substituting unrelated guidance.
 6. Report test identities, command results, affected paths, and genuine missing information. The orchestrator executes the checks independently and freezes the test files for implementation.
 
 7. Return the orchestrator's requested JSON status. In a direct invocation, explain the observed red evidence and the next implementation boundary.
+
+
+When invoked for a runner-owned fixture repair, change only the requested existing
+test/helper paths. Preserve assertions, test identities, cases, skips and expected
+behavior. Return complete with the setup correction; do not commit, unfreeze tests
+or update their fingerprints. A separate review context must approve the diff and
+the runner reruns setup and applicable red/green checks before accepting it.
 
 ### `review` { .skill-entry data-skill="review Review requirements against the actual diff, with independent evidence and bounded in-scope correction." }
 
@@ -572,6 +598,14 @@ missing source rather than silently substituting unrelated guidance.
 7. Do not commit, push, post comments, resolve threads, or request reviews. Draft external feedback when useful; sending requires explicit authorization.
 
 8. Return the requested JSON status and concise factual findings. Report an empty actionable finding set honestly.
+
+
+For a fixture-repair review, compare the saved original/repaired tests, requirements
+and independently reproduced setup failure. Do not edit files. Return complete with
+repair_approved=true only if the correction is justified and preserves assertions,
+cases and expected behavior; otherwise return repair_approved=false with findings.
+A syntactic assertion comparison supplements this review; it cannot prove semantic
+preservation. Review only the supplied frozen sources, without the author's narrative.
 
 ### `review-guide` { .skill-entry data-skill="review-guide Walk a reviewer through a completed change in a useful reading and verification order." }
 

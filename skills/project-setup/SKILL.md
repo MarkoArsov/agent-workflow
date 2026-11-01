@@ -42,3 +42,10 @@ Show the commented plovi.toml proposal, effective limits and unattended permissi
 Interactive execution follows the profile; detached/non-TTY runs default to
 restricted unless reviewed policy or --trusted selects trusted. Re-setup preserves
 policy bytes and comments. Never silently activate policy for an existing run.
+
+Include execution.tracking_mode in the reviewed profile/policy: auto (default),
+current-terminal, app-terminal, command-only or off. Resolve actual host terminal
+capabilities separately from the provider/model. Keep account selectors/config
+paths in ignored local identity files; never write them into the public profile.
+Verify available account identity before managed requests and state unavailable
+verification honestly. Do not switch global provider or GitHub accounts.

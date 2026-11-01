@@ -20,6 +20,7 @@ permissions, checks, and saved evidence. Run `plovi --help` for the complete lis
 <div class="cli-command"><code>plovi skill list</code><p>List the skills available in this project.</p></div>
 <div class="cli-command"><code>plovi validate-plan PLAN</code><p>Check a full pipeline's requirements, paths, stages and routes.</p></div>
 <div class="cli-command"><code>plovi preflight PLAN</code><p>Check readiness before starting a full pipeline.</p></div>
+<div class="cli-command"><code>plovi pipeline PLAN|TASK</code><p>Start or safely resume an approved task with a pinned runtime. Reuse an active worker and attach tracking in the current terminal. Add <code>--no-watch</code> for a tracking descriptor.</p></div>
 <div class="cli-command"><code>plovi run PLAN</code><p>Run the approved pipeline. Add <code>--detach</code> to run it in the background, <code>--no-wait</code> to refuse claim conflicts, or <code>--trusted</code> for explicit trusted execution.</p></div>
 <div class="cli-command"><code>plovi status TASK</code><p>Read the saved status and evidence for a task.</p></div>
 <div class="cli-command"><code>plovi answer TASK --file FILE</code><p>Answer the question saved by a paused task.</p></div>
@@ -35,7 +36,7 @@ Validate the approved full plan and check readiness before running it.
 ```sh
 plovi validate-plan ai-plans/example/pipeline.json
 plovi preflight ai-plans/example/pipeline.json
-plovi run ai-plans/example/pipeline.json
+plovi pipeline ai-plans/example/pipeline.json
 ```
 
 For a smaller change, use `plovi-specify`, then `plovi-implement` in your agent.
@@ -46,7 +47,7 @@ A full manifest is optional in that lane. See [lanes and bugfixes](lanes.md).
 ```sh
 plovi status example
 plovi watch example
-plovi resume example
+plovi pipeline example
 ```
 
 Read the saved question before using `answer`, and the failed check before using
@@ -101,3 +102,34 @@ work; the command does not switch or copy edits from the shared source checkout.
 Explicit resume validates the same task's ownership. An existing unowned branch or
 path is refused, and partial multi-repository progress can be resumed safely.
 Manual tasks use this command too; no full manifest or model call is required.
+
+## Runtime and tracking
+
+`pipeline` starts the worker separately and follows it in an interactive terminal.
+`--no-watch` returns its task, log, process and tracking descriptor instead. Calling
+it again for the same active task reuses that worker. In an agent app, the foreground
+skill uses available host tools to attach a tracker; unavailable tools fall back to
+the exact command. See [tracking capabilities](tracking.md).
+
+Each managed task saves a content-addressed runtime outside its mutable source.
+Commands continue through that runtime even if an installed link or task code
+changes. Use an absolute launcher with `--project` from any working directory, or
+use the tracking descriptor's `argv` and `cwd`. Do not copy shell fragments from
+issue titles into commands. To adopt a reviewed runtime and plan revision:
+
+```sh
+plovi pipeline example --upgrade-runtime --rebind
+```
+
+Ordinary status/watch never upgrades a runtime. A missing or changed runtime stops
+with a restoration/upgrade action. Keep task evidence and runtime receipts together
+when relocating a project; update the reviewed project allocation before resuming.
+
+`status` and `watch` default to concise human output. `status --json` returns a
+versioned summary; `status --verbose --json` deliberately returns detailed state.
+`watch --json` emits summary and event objects as JSON Lines. Default watch follows
+to completion or a stop; `--seconds 60` bounds observation without cancelling work.
+Watch/pipeline exit status is 0 for completion or a still-active bounded observation,
+1 for a stopped run requiring action, 2 for a command error, and 130 for interruption
+of the viewer. Existing run/answer/approval inspection contracts remain compatible;
+a question or pending gate is a successful command with a paused task. Closing a viewer leaves the detached worker running.

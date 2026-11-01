@@ -10,25 +10,62 @@ def directory(project, task):
     return contained(project.root, project.profile["planning"]["evidence_directory"]) / identifier(task)
 
 def read(project, task):
-    value = read_json(directory(project, task) / "state.json")
+    root = directory(project, task)
+    value = read_json(root / "state.json")
+    launch = read_json(root / "launch.json", {})
+    from .migration import lock_held
+    if (launch.get("run_id") and launch.get("at", 0) > (value or {}).get("updated_at", 0)
+            and launch.get("run_id") != (value or {}).get("run_id")
+            and (lock_held(root / "launch.lock") or lock_held(root / "runner.lock"))):
+        return {"task": task, "run_id": launch["run_id"], "status": "starting",
+                "completed": (value or {}).get("completed", []), "started_at": launch["at"]}
     if value is None:
         raise WorkflowError("No run state exists for this task")
-    if value.get("status") in {"starting", "running"}:
+    if value.get("status") in {"starting", "running", "waiting"}:
         from .migration import lock_held
         if not lock_held(project.config / "local/runner.lock"):
             try:
                 with lock(directory(project, task) / "runner.lock"):
                     value = read_json(directory(project, task) / "state.json")
-                    if value.get("status") in {"starting", "running"}:
+                    if value.get("status") in {"starting", "running", "waiting"}:
                         value["status"] = "interrupted"
                         save(directory(project, task), value)
             except WorkflowError:
                 pass
+    live = read_json(directory(project, task) / "live.json", {})
+    if live.get("run_id") and live.get("run_id") == value.get("run_id"):
+        for key in ("activity", "activity_at", "heartbeat_at", "provider", "model", "repair_round", "tool_active", "tool_started_at", "check", "passed"):
+            if key in live: value[key] = live[key]
     return value
 
+def observe(project, task):
+    """Read the compact observer receipt, falling back once for legacy journals."""
+    from .migration import lock_held
+    from .progress import summary
+    root = directory(project, task)
+    value = read_json(root / "status.json")
+    launch = read_json(root / "launch.json", {})
+    if (launch.get("run_id") and launch.get("at", 0) > (value or {}).get("updated_at", 0)
+            and launch.get("run_id") != (value or {}).get("run_id")
+            and (lock_held(root / "launch.lock") or lock_held(root / "runner.lock"))):
+        return summary({"task": task, "run_id": launch["run_id"], "status": "starting",
+                        "started_at": launch["at"], "completed": (value or {}).get("completed", [])})
+    if value is None or (value.get("status") in {"starting", "running", "waiting"}
+                         and not lock_held(root / "runner.lock")
+                         and not lock_held(project.config / "local/runner.lock")):
+        return summary(read(project, task))
+    live = read_json(root / "live.json", {})
+    if live.get("run_id") and live.get("run_id") == value.get("run_id"):
+        for key in ("activity", "activity_at", "heartbeat_at", "provider", "model", "repair_round", "tool_active", "tool_started_at", "check", "passed"):
+            if key in live: value[key] = live[key]
+    return value
+
+
 def save(root, state):
+    from .progress import summary
     state["updated_at"] = time.time()
     write_json(root / "state.json", state)
+    write_json(root / "status.json", summary(state))
 
 if os.name == "nt":
     import msvcrt
@@ -76,3 +113,5 @@ def cancel(project, task):
     return {"task": task, "status": value["status"], "cancel_requested": True,
             "detail": "The owning runner terminates its own child process group."}
 
+
+from .progress import Reporter, read_events

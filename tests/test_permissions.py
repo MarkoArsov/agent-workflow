@@ -94,3 +94,44 @@ class PermissionTests(HardeningTest):
         self.assertEqual(response.returncode, 0, response.stdout + response.stderr)
         self.assertEqual(len(self.calls()), 2)
         self.assertIn("--dangerously-bypass-approvals-and-sandbox", self.calls()[1]["argv"])
+
+    def test_wrong_claude_account_stops_before_provider_runs(self):
+        from types import SimpleNamespace
+        from plovi import providers
+        from plovi.util import WorkflowError
+        root = self.fixture([{}])
+        self.plan["routes"] = {"default": [{"provider": "claude", "model": "fixture"}]}
+        self.project.profile["agents"] = ["claude"]
+        config = self.project.config / "local" / "claude-account.json"
+        account = self.root / "personal"; account.mkdir()
+        config.write_text(json.dumps({"config_dir": str(account), "email": "personal@example.invalid"}))
+        status = {"loggedIn": True, "authMethod": "claude.ai", "apiProvider": "firstParty", "email": "company@example.invalid"}
+        with patch.object(providers, "run", return_value=SimpleNamespace(returncode=0, stdout=json.dumps(status))):
+            with self.assertRaisesRegex(WorkflowError, "does not match"):
+                runner.run(self.project, self.plan)
+        self.assertEqual(self.calls(), [])
+
+    def test_wrong_claude_account_blocks_codex_stage_too(self):
+        from types import SimpleNamespace
+        from plovi import providers
+        from plovi.util import WorkflowError
+        self.fixture([{}])
+        config = self.project.config / "local" / "claude-account.json"
+        account = self.root / "personal"; account.mkdir()
+        config.write_text(json.dumps({"config_dir": str(account), "email": "personal@example.invalid"}))
+        status = {"loggedIn": True, "authMethod": "claude.ai", "apiProvider": "firstParty", "email": "company@example.invalid"}
+        with patch.object(providers, "run", return_value=SimpleNamespace(returncode=0, stdout=json.dumps(status))):
+            with self.assertRaisesRegex(WorkflowError, "does not match"):
+                runner.run(self.project, self.plan)
+        self.assertEqual(self.calls(), [])
+
+    def test_personal_claude_configuration_reaches_codex_stage(self):
+        import os
+        from plovi import providers
+        self.fixture([{}])
+        selected = dict(os.environ, CLAUDE_CONFIG_DIR=str(self.root / "personal"))
+        with patch.object(providers, "claude_environment", return_value=selected), \
+             patch.object(runner, "execute_process", wraps=runner.execute_process) as execute:
+            result = runner.run(self.project, self.plan)
+        self.assertEqual(result["status"], "complete")
+        self.assertEqual(execute.call_args.kwargs["env"]["CLAUDE_CONFIG_DIR"], selected["CLAUDE_CONFIG_DIR"])

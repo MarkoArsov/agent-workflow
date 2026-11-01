@@ -35,3 +35,10 @@ missing source rather than silently substituting unrelated guidance.
 
 8. Return the requested JSON status and concise factual findings. Report an empty actionable finding set honestly.
 
+
+For a fixture-repair review, compare the saved original/repaired tests, requirements
+and independently reproduced setup failure. Do not edit files. Return complete with
+repair_approved=true only if the correction is justified and preserves assertions,
+cases and expected behavior; otherwise return repair_approved=false with findings.
+A syntactic assertion comparison supplements this review; it cannot prove semantic
+preservation. Review only the supplied frozen sources, without the author's narrative.

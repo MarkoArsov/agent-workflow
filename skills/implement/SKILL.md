@@ -17,7 +17,7 @@ missing source rather than silently substituting unrelated guidance.
 
 1. Read the complete plan, project workflow, native instructions, and nearest established implementation. Follow the planned repository membership and path boundaries.
 
-2. Use the current checkout or prepared task worktree. Read-only companion repositories supply context and checks; do not branch or edit them.
+2. Resolve the approved task allocation and configured checkout strategy. Reuse its prepared task worktree. For a new task with worktree policy, run task start before source edits; manual execution does not waive isolation. Use current-checkout only when explicitly configured or continuing an approved legacy allocation. Never switch a shared checkout belonging to another chat. Read-only companion repositories supply context and checks; do not branch or edit them.
 
 3. For a manual bugfix, reproduce the defect, add a regression check, observe its
    behavioral failure, make the minimal fix, rerun it green and run focused checks.
@@ -25,7 +25,7 @@ missing source rather than silently substituting unrelated guidance.
    why and use the strongest repeatable alternative. Never call an import/build
    failure behavioral red. Implement the smallest complete change that satisfies the requirements. Handle authorization, data boundaries, failure modes, compatibility, and migrations where the project requires them. Avoid opportunistic refactors.
 
-4. Preserve independent tests. Do not weaken, skip, remove, or rewrite assertion-proven tests to make results green. A wrong test or changed requirement needs a complete plan revision and renewed red evidence.
+4. If a declared setup check proves a mechanical fixture defect during implementation, request the runner-owned correction with status=test_fixture_repair, reason, test_paths (repository/path objects), and checks (declared setup IDs). Preserve expected behavior and leave frozen tests untouched. The runner invokes fresh approved test-author and review routes, guards assertions/cases, verifies setup and renews applicable red/green evidence within the correction budget. A requirement change still needs spec_conflict and a reviewed decision. Preserve independent tests. Do not weaken, skip, remove, or rewrite assertion-proven tests to make results green. A wrong test or changed requirement needs a complete plan revision and renewed red evidence.
 
 5. Run each named check in its configured working directory. Diagnose failures, fix the cause, and repeat only relevant checks. Finish with all acceptance mappings evidenced against the current diff.
 

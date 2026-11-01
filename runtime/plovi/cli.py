@@ -47,11 +47,20 @@ def parser():
             command.add_argument("--unattended", action="store_true", help=argparse.SUPPRESS)
             command.add_argument("--detach", action="store_true")
             command.add_argument("--dry-run", action="store_true")
+    pipeline = sub.add_parser("pipeline", help="Start or recover an approved task and attach tracking")
+    pipeline.add_argument("target", help="Approved manifest path or saved task ID")
+    pipeline.add_argument("--no-watch", action="store_true")
+    pipeline.add_argument("--rebind", action="store_true")
+    pipeline.add_argument("--upgrade-runtime", action="store_true")
+    pipeline.add_argument("--trusted", action="store_true")
+    pipeline.add_argument("--no-wait", action="store_true")
+    pipeline.add_argument("--json", action="store_true")
     for name in ("status", "watch", "resume", "answer", "cancel", "retry", "approve"):
         command = sub.add_parser(name)
         command.add_argument("task")
         if name in ("resume", "answer", "retry", "approve"):
             command.add_argument("--rebind", action="store_true")
+            command.add_argument("--upgrade-runtime", action="store_true")
         if name == "retry":
             command.add_argument("--note", type=Path)
         if name == "approve":
@@ -60,8 +69,11 @@ def parser():
             command.add_argument("--actor"); command.add_argument("--reason")
         if name == "answer":
             command.add_argument("--file", type=Path, required=True)
+        if name in {"status", "watch"}:
+            command.add_argument("--json", action="store_true")
+            command.add_argument("--verbose", action="store_true")
         if name == "watch":
-            command.add_argument("--seconds", type=int, default=60)
+            command.add_argument("--seconds", type=int, default=None)
     command = sub.add_parser("sync-base")
     command.add_argument("repositories", nargs="+")
     sub.add_parser("worktrees")
@@ -99,7 +111,40 @@ def parser():
             command.add_argument("--local-source", type=Path)
     return p
 
+def watch(project, task, *, seconds=None, json_output=False):
+    import time
+    from . import state
+    from .progress import summary, human, read_events, event_text
+    deadline = None if seconds is None else time.monotonic() + min(max(seconds, 1), 3600)
+    previous = None; last_print = 0
+    _, cursor = read_events(state.directory(project, task))
+    while True:
+        result = state.observe(project, task)
+        current = summary(result)
+        events, cursor = read_events(state.directory(project, task), cursor)
+        for event in events:
+            if event.get("run_id") == current.get("run_id"):
+                if json_output or event.get("event") != "heartbeat":
+                    print(json.dumps(event) if json_output else event_text(dict(event, task=task)), flush=True)
+        signature = {k: v for k, v in current.items() if k not in {"heartbeat_at", "activity_at"}}
+        now = time.monotonic()
+        if signature != previous or now - last_print >= 15:
+            print(json.dumps(current) if json_output else human(current), flush=True)
+            previous = signature; last_print = now
+        if result.get("status") not in {"starting", "running", "waiting"} or (deadline is not None and now >= deadline):
+            return current
+        time.sleep(.2)
+
+
 def execute(args):
+    if args.command == "pipeline":
+        from .entrypoint import launch
+        project = context(args)
+        result = launch(project, args.target, rebind=args.rebind, trusted=args.trusted, no_wait=args.no_wait)
+        if not args.no_watch and result.get("tracking", {}).get("mode") in {"auto", "current-terminal"} and sys.stdout.isatty() and result.get("status") in {"starting", "running", "waiting"}:
+            args._watched = True
+            return watch(project, result["task"], json_output=args.json)
+        return result
     if args.command == "policy":
         from . import policy
         project = context(args)
@@ -167,7 +212,7 @@ def execute(args):
         project = context(args)
         if args.command == "cancel":
             return state.cancel(project, args.task)
-        result = state.read(project, args.task)
+        result = state.observe(project, args.task) if args.command == "watch" or (args.command == "status" and not args.verbose) else state.read(project, args.task)
         if args.command in {"resume", "answer", "retry", "approve"}:
             approval = None
             if args.command == "approve":
@@ -183,17 +228,10 @@ def execute(args):
                               retry=args.command == "retry", note=args.note.read_text() if args.command == "retry" and args.note else None,
                               approval=approval)
         if args.command == "watch":
-            import time
-            deadline = time.monotonic() + min(max(args.seconds, 1), 3600)
-            previous = None
-            while time.monotonic() < deadline:
-                result = state.read(project, args.task)
-                current = {k: result.get(k) for k in ("status", "stage", "completed", "pending_input", "error")}
-                if current != previous:
-                    print(json.dumps(current), flush=True); previous = current
-                if result["status"] not in {"starting", "running", "waiting"}:
-                    break
-                time.sleep(1)
+            return watch(project, args.task, seconds=args.seconds, json_output=args.json)
+        if args.command == "status" and not args.verbose:
+            from .progress import summary
+            return summary(result)
         return result
     if args.command == "sync-base":
         from .git_ops import sync_base
@@ -262,10 +300,34 @@ def execute(args):
 
 def main(argv=None):
     try:
-        result = execute(parser().parse_args(argv))
-        if result is not None:
-            print(json_text(result), end="")
-        return 1 if isinstance(result, dict) and result.get("status") in {"failed", "cancelled", "escalated"} else 0
+        args = parser().parse_args(argv)
+        if getattr(args, "upgrade_runtime", False) and not getattr(args, "rebind", False):
+            raise WorkflowError("Runtime upgrade requires an explicitly reviewed --rebind")
+        if args.command in {"run", "pipeline", "resume", "answer", "retry", "approve", "status", "watch", "cancel", "verify"}:
+            from . import runtime_pin, manifest
+            from .util import package_root
+            project = context(args)
+            if args.command in {"run", "verify"}: task = manifest.load(args.manifest, project)["task"]
+            elif args.command == "pipeline":
+                task = manifest.load(Path(args.target), project)["task"] if Path(args.target).is_file() else args.target
+            else: task = args.task
+            forwarded = list(sys.argv[1:] if argv is None else argv)
+            # Do not forward the upgrade flag into the immutable target recursively.
+            forwarded = [item for item in forwarded if item != "--upgrade-runtime"]
+            code = runtime_pin.dispatch(project, task, forwarded, source=package_root(),
+                                        create=args.command in {"pipeline", "resume", "answer", "retry", "approve"} or (args.command == "run" and not args.dry_run),
+                                        upgrade=getattr(args, "upgrade_runtime", False))
+            if code is not None: return code
+        result = execute(args)
+        if result is not None and args.command != "watch" and not getattr(args, "_watched", False):
+            if args.command == "status" and not args.json and not args.verbose:
+                from .progress import human
+                print(human(result))
+            else:
+                print(json_text(result), end="")
+        stopped = {"failed", "cancelled", "escalated"}
+        if args.command in {"watch", "pipeline"}: stopped |= {"needs_input", "needs_approval", "interrupted"}
+        return 1 if isinstance(result, dict) and result.get("status") in stopped else 0
     except (WorkflowError, ValueError, KeyError) as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 2

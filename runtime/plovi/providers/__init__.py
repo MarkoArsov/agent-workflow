@@ -1,9 +1,12 @@
 """Provider commands and event normalization; no fabricated usage or cost."""
 from __future__ import annotations
 import json
+import math
+import os
+from pathlib import Path
 import re
 import shutil
-from ..util import WorkflowError, run
+from ..util import WorkflowError, read_json, run
 
 BINARIES = {"codex": "codex", "claude": "claude", "cursor": "agent"}
 
@@ -53,13 +56,49 @@ def command(route, execution, *, session=None, prompt=None):
             argv += [prompt]
     return argv
 
-def preflight(route, execution, cwd):
+def claude_environment(project, cwd, *, inherited=None):
+    """Honor an optional project-local, private Claude identity guard."""
+    from ..identity import assert_unchanged
+    assert_unchanged(project)
+    path = project.config / "local" / "claude-account.json"
+    if not path.exists():
+        if (project.config / "local" / "claude-account.required").exists():
+            raise WorkflowError("Claude account guard is required but its local configuration is missing")
+        return None
+    config = read_json(path)
+    if not isinstance(config, dict) or set(config) != {"config_dir", "email"}:
+        raise WorkflowError("Invalid local Claude account configuration")
+    directory, email = config["config_dir"], config["email"]
+    if (not isinstance(directory, str) or not Path(directory).is_absolute() or not Path(directory).is_dir()
+            or not isinstance(email, str) or not email.strip()):
+        raise WorkflowError("Invalid local Claude account configuration")
+    env = dict(os.environ if inherited is None else inherited)
+    overrides = ("ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN", "ANTHROPIC_BASE_URL",
+                 "CLAUDE_CODE_OAUTH_TOKEN", "CLAUDE_CODE_USE_BEDROCK",
+                 "CLAUDE_CODE_USE_VERTEX", "CLAUDE_CODE_USE_FOUNDRY")
+    if any(env.get(name) for name in overrides):
+        raise WorkflowError("Claude account verification cannot use credential or backend overrides; remove them and retry")
+    env["CLAUDE_CONFIG_DIR"] = directory
+    try:
+        result = run([BINARIES["claude"], "auth", "status"], cwd, timeout=15, env=env, check=False)
+        status = json.loads(result.stdout) if result.returncode == 0 else {}
+    except (WorkflowError, ValueError):
+        raise WorkflowError("Cannot verify the configured Claude account; check its login and retry") from None
+    if (not isinstance(status, dict) or status.get("loggedIn") is not True
+            or status.get("authMethod") != "claude.ai" or status.get("apiProvider") != "firstParty"
+            or not isinstance(status.get("email"), str) or status["email"].casefold() != email.strip().casefold()):
+        raise WorkflowError("Claude login does not match the configured personal account; sign in to that account and retry")
+    return env
+
+def preflight(route, execution, cwd, *, project=None):
     argv = command(route, execution)
     binary = shutil.which(argv[0])
     if not binary:
         raise WorkflowError(f"Install/authenticate {argv[0]} or choose another configured route")
     args = [binary, "exec", "--help"] if route["provider"] == "codex" else [binary, "--help"]
-    result = run(args, cwd)
+    from ..identity import environment
+    env = environment(project, cwd) if project is not None else None
+    result = run(args, cwd, env=env)
     flags = [a for a in argv[1:] if a.startswith("--")]
     if any(flag not in result.stdout for flag in flags):
         missing = [flag for flag in flags if flag not in result.stdout]
@@ -72,6 +111,7 @@ class Events:
     def __init__(self):
         self.session = None
         self.text = []
+        self.terminal_result = None
         self.usage = None
         self.cost_usd = None
         self.error = None
@@ -105,25 +145,32 @@ class Events:
         if kind == "tool_call":
             return "tool-end" if event.get("subtype") == "completed" else "tool-start"
         if kind == "result" and isinstance(event.get("result"), str):
+            self.terminal_result = event["result"]
             self.text.append(event["result"])
         if kind in {"turn.completed", "result"}:
             if isinstance(event.get("usage"), dict):
                 self.usage = event["usage"]
-            if isinstance(event.get("total_cost_usd"), (int, float)):
+            if type(event.get("total_cost_usd")) in (int, float) and math.isfinite(event["total_cost_usd"]) and event["total_cost_usd"] >= 0:
                 self.cost_usd = event["total_cost_usd"]
         return None
 
     def report(self):
-        for text in reversed(self.text):
+        texts = [self.terminal_result] if self.terminal_result is not None else reversed(self.text)
+        for text in texts:
             stripped = re.sub(r"^" + re.escape(chr(96) * 3) + r"(?:json)?\s*|\s*" + re.escape(chr(96) * 3) + r"$", "", text.strip())
+            terminal = re.search(r"(?:^|\n)```json[ \t]*\r?\n((?:(?!\r?\n```)[\s\S])*?)\r?\n```[ \t]*\Z", text.strip(), re.IGNORECASE)
+            if terminal:
+                stripped = terminal.group(1)
             try:
                 value = json.loads(stripped)
-                if isinstance(value, dict) and "status" in value and (not isinstance(value["status"], str) or value["status"] not in {"complete", "needs_input", "blocked", "spec_conflict", "impossible"}):
+                if isinstance(value, dict) and "status" in value and (not isinstance(value["status"], str) or value["status"] not in {"complete", "needs_input", "blocked", "spec_conflict", "impossible", "test_fixture_repair"}):
                     return None
-                if isinstance(value, dict) and value.get("status") in {"complete", "needs_input", "blocked", "spec_conflict", "impossible"}:
+                if isinstance(value, dict) and value.get("status") in {"complete", "needs_input", "blocked", "spec_conflict", "impossible", "test_fixture_repair"}:
                     status = value["status"]
                     required = "question" if status == "needs_input" else "reason" if status != "complete" else None
                     if required and (not isinstance(value.get(required), str) or not value[required].strip()):
+                        return None
+                    if status == "test_fixture_repair" and (not isinstance(value.get("test_paths"), list) or not isinstance(value.get("checks"), list) or not all(isinstance(x, str) for x in value.get("checks", []))):
                         return None
                     if "assumptions" in value and (not isinstance(value["assumptions"], list) or not all(isinstance(x, str) for x in value["assumptions"])):
                         return None
@@ -146,3 +193,11 @@ def classify(result, events):
         return "transient"
     return "complete"
 
+
+
+def failure_kind(classification):
+    return {'authentication':'provider_authentication','quota':'provider_quota',
+            'model':'unsupported_model','transient':'transient_transport',
+            'cancelled':'cancelled','cancellation_failure':'cancellation_failure',
+            'inactive':'provider_inactive','tool-stalled':'tool_stalled',
+            'timeout':'timeout'}.get(classification, classification)

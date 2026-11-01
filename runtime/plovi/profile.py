@@ -59,6 +59,8 @@ def validate(profile: dict, root: Path | None = None) -> dict:
             validate_command(command)
     if set(profile.get("agents", [])) - PROVIDERS:
         raise WorkflowError("Unsupported agent in profile")
+    if profile.get("execution", {}).get("tracking_mode", "auto") not in {"auto", "current-terminal", "app-terminal", "command-only", "off"}:
+        raise WorkflowError("Unsupported tracking mode")
     if profile.get("execution", {}).get("permission_mode") not in {"trusted", "restricted"}:
         raise WorkflowError("Choose trusted or restricted execution")
     if profile.get("tracking", {}).get("provider") not in {"none", "github", "linear", "notion", "custom"}:
@@ -92,7 +94,7 @@ def defaults(root: Path, repositories: list[dict]) -> dict:
         "git": {"branch_template": "feature/{task}", "commit_style": "imperative", "worktree_directory": ".plovi/local/worktrees"},
         "delivery": {"pull_requests": "draft", "publish": "plan-selected", "merge_to_base": "explicit"},
         "tracking": {"provider": "none"},
-        "execution": {"permission_mode": "trusted", "provider_settings": {}},
+        "execution": {"permission_mode": "trusted", "provider_settings": {}, "tracking_mode": "auto"},
         "pipeline": {"enabled": True, "default_stages": BASE_STAGES, "routes": {}},
         "extensions": {name: ".plovi/" + name for name in ("skills", "rules", "references", "connectors")} | {"stages": ".plovi/stages.json"}
     }
