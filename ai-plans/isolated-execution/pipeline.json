@@ -12,7 +12,8 @@
     "migration.md",
     "companion-recovery.md",
     "test-contract-revision.md",
-    "automatic-contract-recovery.md"
+    "automatic-contract-recovery.md",
+    "compatibility-completion.md"
   ],
   "repositories": [
     {
@@ -76,7 +77,20 @@
         "tests/test_companion_fixture_health.py",
         "tests/test_pipeline_resume.py",
         "skills/implement-tests/SKILL.md",
-        "tests/test_contract_recovery.py"
+        "tests/test_contract_recovery.py",
+        "tests/test_runner.py",
+        "tests/test_runner_lifecycle.py",
+        "tests/test_runner_outcomes.py",
+        "tests/test_limits.py",
+        "tests/test_autonomous_repairs.py",
+        "tests/test_permissions.py",
+        "tests/test_policy.py",
+        "tests/test_concurrency.py",
+        "tests/test_evidence.py",
+        "tests/test_progress_events.py",
+        "tests/test_resume_recovery_v2.py",
+        "tests/test_factory_journey.py",
+        "tests/test_fake_runtime_identity.py"
       ],
       "test_paths": [
         "tests/test_factory_checkouts.py",
@@ -91,12 +105,24 @@
         "tests/test_isolation_fixture_health.py",
         "tests/test_companion_fixture_health.py",
         "tests/test_pipeline_resume.py",
-        "tests/test_contract_recovery.py"
+        "tests/test_contract_recovery.py",
+        "tests/test_runner.py",
+        "tests/test_runner_lifecycle.py",
+        "tests/test_runner_outcomes.py",
+        "tests/test_limits.py",
+        "tests/test_autonomous_repairs.py",
+        "tests/test_permissions.py",
+        "tests/test_policy.py",
+        "tests/test_concurrency.py",
+        "tests/test_evidence.py",
+        "tests/test_progress_events.py",
+        "tests/test_resume_recovery_v2.py",
+        "tests/test_factory_journey.py",
+        "tests/test_fake_runtime_identity.py"
       ]
     }
   ],
   "stages": [
-    "implement-tests",
     "implement",
     "review"
   ],
@@ -718,7 +744,9 @@
     "attempts_per_route": 2,
     "timeout_seconds": 7200,
     "inactivity_seconds": 300,
-    "tool_timeout_seconds": 600
+    "tool_timeout_seconds": 600,
+    "max_changed_files": 80,
+    "max_changed_lines": 5000
   },
   "references": [
     "quality-guidance.md"
