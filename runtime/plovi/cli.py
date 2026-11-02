@@ -220,6 +220,9 @@ def execute(args):
             return state.cancel(project, args.task)
         result = state.observe(project, args.task) if args.command == "watch" or (args.command == "status" and not args.verbose) else state.read(project, args.task)
         if args.command in {"resume", "answer", "retry", "approve"}:
+            # Observer startup summaries intentionally omit control-plane fields.
+            result = read_json(state.directory(project, args.task) / "state.json")
+            if not result: raise WorkflowError("No saved task to continue")
             approval = None
             if args.command == "approve":
                 from .util import git

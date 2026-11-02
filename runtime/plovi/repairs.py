@@ -85,7 +85,9 @@ def repair(project, manifest, state, bound, root, stage, request, save, cancel):
     from .progress import active
     records=state.setdefault('test_repairs',[])
     maximum=manifest.get('corrections',{}).get('fixture_rounds',2)
-    if sum(r['stage']==stage for r in records)>=maximum:
+    epoch=state.get('fixture_repair_epoch',0)
+    def rounds():return sum(r['stage']==stage and r.get('at',0)>=epoch for r in records)
+    if rounds()>=maximum:
         raise WorkflowError('Fixture repair budget exhausted; inspect the attempted corrections')
     specs=request.get('test_paths',[]); checks=request.get('checks',[])
     if not specs or not checks:raise WorkflowError('Fixture repair requires explicit test paths and setup check IDs')
@@ -115,10 +117,10 @@ def repair(project, manifest, state, bound, root, stage, request, save, cancel):
         except UnicodeError:raise WorkflowError('Fixture repair requires UTF-8 text test/helper files') from None
         modes[(item['repository'],item['path'])]=path.stat().st_mode & 0o777
     feedback=None; reporter=active.get()
-    while sum(r['stage']==stage for r in records)<maximum:
+    while rounds()<maximum:
         if cancel():raise WorkflowError('Fixture correction cancelled; explicitly resume when ready')
         before=git_ops.snapshot(project,state['checkouts'])
-        number=sum(r['stage']==stage for r in records)+1
+        number=rounds()+1
         record={'stage':stage,'round':number,'status':'repairing','request':request,'reproduction':reproduced,'at':time.time()}
         records.append(record); index=len(records)-1
         write_json(root/'test-repairs'/f'{index:04d}-before.json',{'files':{r+'/'+p:t for (r,p),t in originals.items()},'snapshot':before});save()

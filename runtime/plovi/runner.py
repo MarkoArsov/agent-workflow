@@ -452,6 +452,7 @@ def run(project, manifest, *, resume=False, answer=None, rebind=False, trusted=F
                 if identity(old["manifest"]["repositories"]) != identity(bound["manifest"]["repositories"]):
                     raise WorkflowError("Repository membership/checkout changes require a new task ID")
                 start = invalidate_from(old, bound, manifest["stages"], custom)
+                state["fixture_repair_epoch"] = time.time()
                 state.setdefault("revisions", []).append({"binding_sha256": state["binding_sha256"], "at": time.time(),
                                                           "completed": state["completed"], "invalidate_from": start})
                 state["revisions"][-1]["preserved_inputs"] = adopt_rebound_inputs(project, manifest, state, old, bound)
