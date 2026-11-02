@@ -1,0 +1,65 @@
+{
+  "stages": [
+    "implement-tests",
+    "implement",
+    "review"
+  ],
+  "kind": "code",
+  "size": "large",
+  "risk": "high",
+  "uncertain": true,
+  "repository_count": 1,
+  "test_files": 5,
+  "test_lines": 1300,
+  "stage_facts": {
+    "implement-tests": {
+      "complexity": "routine",
+      "uncertain": false
+    },
+    "implement": {
+      "complexity": "complex"
+    },
+    "review": {
+      "risk": "high",
+      "complexity": "routine",
+      "uncertain": false
+    }
+  },
+  "routes": {
+    "implement": [
+      {
+        "provider": "codex",
+        "model": "gpt-6.1-sol"
+      },
+      {
+        "provider": "claude",
+        "model": "opus"
+      }
+    ],
+    "implement-tests": [
+      {
+        "provider": "claude",
+        "model": "sonnet"
+      },
+      {
+        "provider": "codex",
+        "model": "gpt-6.1-sol"
+      }
+    ],
+    "review": [
+      {
+        "provider": "claude",
+        "model": "opus"
+      },
+      {
+        "provider": "codex",
+        "model": "gpt-6.1-sol"
+      }
+    ]
+  },
+  "route_origins": {
+    "implement": "user-task-route",
+    "implement-tests": "user-task-route",
+    "review": "user-task-route"
+  }
+}
