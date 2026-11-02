@@ -9,8 +9,8 @@
   "risk": "high",
   "uncertain": true,
   "repository_count": 1,
-  "test_files": 5,
-  "test_lines": 1300,
+  "test_files": 7,
+  "test_lines": 1800,
   "stage_facts": {
     "implement-tests": {
       "complexity": "routine",

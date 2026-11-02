@@ -21,3 +21,13 @@ by the person during specification and are binding:
 
 Dependencies #15, #16 and #17 are merged; the package lives at `runtime/plovi`.
 The approved scope excludes the app, schedules, the PR shepherd and MCP.
+
+## Revision 2
+
+The first run implemented sections L–T and escalated only on two contract
+defects. The person then asked to fold five workflow gaps found while running
+this task into this issue: background runs dropping the plan commits (G1),
+preflight creating factory allocations (G2), restricted mode blocking named
+commands such as generators (G3), usage limits misclassified as authentication
+and wasting fallbacks (G4), and prose-then-JSON completion reports rejected (G5).
+Keep the existing implementation; add C1–C2 and G1–G5 with their tests.

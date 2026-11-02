@@ -1,0 +1,288 @@
+{
+  "advisories": [
+    {
+      "reason": "large-test-scope",
+      "stage": "implement-tests"
+    },
+    {
+      "reason": "single-lineage",
+      "stage": "implement-tests"
+    },
+    {
+      "reason": "single-lineage",
+      "stage": "review"
+    }
+  ],
+  "details": {
+    "implement": {
+      "configured_default_source": "project-default",
+      "effort_mapping": {
+        "reason": "explicit-route",
+        "reviewed": "high",
+        "selected": null
+      },
+      "effort_mode": "demanding",
+      "eligibility": [],
+      "eligibility_truncated": 0,
+      "fact_sources": {
+        "complexity": "stage",
+        "kind": "task",
+        "risk": "task",
+        "size": "task",
+        "test_files": "task",
+        "test_lines": "task",
+        "uncertain": "task"
+      },
+      "facts": {
+        "complexity": "complex",
+        "kind": "code",
+        "risk": "high",
+        "size": "large",
+        "test_files": 5,
+        "test_lines": 1300,
+        "uncertain": true
+      },
+      "lineage_slack": 1,
+      "ordered_routes": [
+        {
+          "model": "opus",
+          "provider": "claude"
+        },
+        {
+          "model": "sonnet",
+          "provider": "claude"
+        }
+      ],
+      "prior_lineages": [],
+      "providers": [
+        "claude",
+        "codex"
+      ],
+      "required_band": "deep",
+      "required_capabilities": [],
+      "requirement_reason": "consequential-or-complex",
+      "route_source": "user-task-route",
+      "suggestions": [],
+      "unresolved": []
+    },
+    "implement-tests": {
+      "configured_default_source": "project-default",
+      "effort_mapping": {
+        "reason": "explicit-route",
+        "reviewed": "medium",
+        "selected": null
+      },
+      "effort_mode": "balanced",
+      "eligibility": [],
+      "eligibility_truncated": 0,
+      "fact_sources": {
+        "complexity": "stage",
+        "kind": "task",
+        "risk": "task",
+        "size": "task",
+        "test_files": "task",
+        "test_lines": "task",
+        "uncertain": "stage"
+      },
+      "facts": {
+        "complexity": "routine",
+        "kind": "code",
+        "risk": "high",
+        "size": "large",
+        "test_files": 5,
+        "test_lines": 1300,
+        "uncertain": false
+      },
+      "lineage_slack": 1,
+      "ordered_routes": [
+        {
+          "model": "opus",
+          "provider": "claude"
+        },
+        {
+          "model": "sonnet",
+          "provider": "claude"
+        }
+      ],
+      "prior_lineages": [
+        "anthropic"
+      ],
+      "providers": [
+        "claude",
+        "codex"
+      ],
+      "required_band": "deep",
+      "required_capabilities": [],
+      "requirement_reason": "consequential-or-complex",
+      "route_source": "user-task-route",
+      "suggestions": [],
+      "unresolved": []
+    },
+    "review": {
+      "configured_default_source": "project-default",
+      "effort_mapping": {
+        "reason": "explicit-route",
+        "reviewed": "medium",
+        "selected": null
+      },
+      "effort_mode": "balanced",
+      "eligibility": [],
+      "eligibility_truncated": 0,
+      "fact_sources": {
+        "complexity": "stage",
+        "kind": "task",
+        "risk": "stage",
+        "size": "task",
+        "test_files": "task",
+        "test_lines": "task",
+        "uncertain": "stage"
+      },
+      "facts": {
+        "complexity": "routine",
+        "kind": "code",
+        "risk": "high",
+        "size": "large",
+        "test_files": 5,
+        "test_lines": 1300,
+        "uncertain": false
+      },
+      "lineage_slack": 1,
+      "ordered_routes": [
+        {
+          "model": "opus",
+          "provider": "claude"
+        },
+        {
+          "model": "sonnet",
+          "provider": "claude"
+        }
+      ],
+      "prior_lineages": [
+        "anthropic"
+      ],
+      "providers": [
+        "claude",
+        "codex"
+      ],
+      "required_band": "deep",
+      "required_capabilities": [],
+      "requirement_reason": "consequential-or-complex",
+      "route_source": "user-task-route",
+      "suggestions": [],
+      "unresolved": []
+    }
+  },
+  "evaluator_version": "1.2.0",
+  "notice": "No model catalogue; retaining configured routes. Run update-models when convenient.",
+  "provenance": {
+    "catalogue": "9aecf438c3f923ce02f488be25cae648068d632535d5ec4d38b0fa6abb6b055f",
+    "facts": {
+      "kind": "code",
+      "repository_count": 1,
+      "risk": "high",
+      "route_origins": {
+        "implement": "user-task-route",
+        "implement-tests": "user-task-route",
+        "review": "user-task-route"
+      },
+      "routes": {
+        "implement": [
+          {
+            "model": "opus",
+            "provider": "claude"
+          },
+          {
+            "model": "sonnet",
+            "provider": "claude"
+          }
+        ],
+        "implement-tests": [
+          {
+            "model": "opus",
+            "provider": "claude"
+          },
+          {
+            "model": "sonnet",
+            "provider": "claude"
+          }
+        ],
+        "review": [
+          {
+            "model": "opus",
+            "provider": "claude"
+          },
+          {
+            "model": "sonnet",
+            "provider": "claude"
+          }
+        ]
+      },
+      "size": "large",
+      "stage_facts": {
+        "implement": {
+          "complexity": "complex"
+        },
+        "implement-tests": {
+          "complexity": "routine",
+          "uncertain": false
+        },
+        "review": {
+          "complexity": "routine",
+          "risk": "high",
+          "uncertain": false
+        }
+      },
+      "stages": [
+        "implement-tests",
+        "implement",
+        "review"
+      ],
+      "test_files": 5,
+      "test_lines": 1300,
+      "uncertain": true
+    },
+    "policy": "3c7d03f86602c435d0771f98e34a76bebfd100cc00bbd8ea18722b2b0ce10aa7",
+    "registry": "906caf9f74c729ddf882cba34d3fdf9b45082cc375ca45bca1882dcb955622e2",
+    "settings": "5bda7607fc3f050d3622ca32a9aa5520da3a3abdca8f3dc463a9a19284aff0b2"
+  },
+  "reasons": {
+    "implement": "explicit-route",
+    "implement-tests": "explicit-route",
+    "review": "explicit-route"
+  },
+  "routes": {
+    "implement": [
+      {
+        "model": "opus",
+        "provider": "claude"
+      },
+      {
+        "model": "sonnet",
+        "provider": "claude"
+      }
+    ],
+    "implement-tests": [
+      {
+        "model": "opus",
+        "provider": "claude"
+      },
+      {
+        "model": "sonnet",
+        "provider": "claude"
+      }
+    ],
+    "review": [
+      {
+        "model": "opus",
+        "provider": "claude"
+      },
+      {
+        "model": "sonnet",
+        "provider": "claude"
+      }
+    ]
+  },
+  "schema_version": 1,
+  "snapshot_hash": "4fad5003cce84f81fed79f5db90309ab4db47c2fa8e05dc9c995f0ef4ae47b03",
+  "unresolved": []
+}

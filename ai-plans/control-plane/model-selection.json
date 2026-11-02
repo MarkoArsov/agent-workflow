@@ -38,8 +38,8 @@
         "kind": "code",
         "risk": "high",
         "size": "large",
-        "test_files": 5,
-        "test_lines": 1300,
+        "test_files": 7,
+        "test_lines": 1800,
         "uncertain": true
       },
       "lineage_slack": 1,
@@ -89,8 +89,8 @@
         "kind": "code",
         "risk": "high",
         "size": "large",
-        "test_files": 5,
-        "test_lines": 1300,
+        "test_files": 7,
+        "test_lines": 1800,
         "uncertain": false
       },
       "lineage_slack": 1,
@@ -142,8 +142,8 @@
         "kind": "code",
         "risk": "high",
         "size": "large",
-        "test_files": 5,
-        "test_lines": 1300,
+        "test_files": 7,
+        "test_lines": 1800,
         "uncertain": false
       },
       "lineage_slack": 1,
@@ -237,8 +237,8 @@
         "implement",
         "review"
       ],
-      "test_files": 5,
-      "test_lines": 1300,
+      "test_files": 7,
+      "test_lines": 1800,
       "uncertain": true
     },
     "policy": "3c7d03f86602c435d0771f98e34a76bebfd100cc00bbd8ea18722b2b0ce10aa7",
@@ -283,6 +283,6 @@
     ]
   },
   "schema_version": 1,
-  "snapshot_hash": "4fad5003cce84f81fed79f5db90309ab4db47c2fa8e05dc9c995f0ef4ae47b03",
+  "snapshot_hash": "cd86bac10d102ce9281d92671b7cd011819616803d86701a9c4f411e2c67f32d",
   "unresolved": []
 }

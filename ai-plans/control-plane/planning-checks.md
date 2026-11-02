@@ -69,3 +69,31 @@ never an import error.
 - `plovi validate-plan`: valid. `plovi preflight`: passed; permission mode
   restricted (unattended default), claude binary found, model availability is
   verified on the first request. plan_status: approved.
+
+## Run 1 outcome and revision 2
+
+- Run 946d1d44: implement-tests complete (opus, 12 min, $3.85 list price).
+  Implement attempt 1 (opus) hit the Claude 5-hour usage limit after 11 min
+  ($4.52) and was recorded as `authentication` because classification
+  regex-scans the whole 1.3 MB transcript; attempt 2 (sonnet) failed in 2 s on
+  the same limit (`quota`). Resume then refused the attempt's leftover edits as
+  foreign; they were archived to `.plovi/local/set-aside/control-plane-attempt-0001/`
+  in the configuration root and the tree restored to the saved snapshot before
+  resuming. Attempt 3 (opus, 34 min, $10.43) completed.
+- Verification of attempt 3: every behavioural check passed (control-plane-red
+  6, ledger 9, operations 14, inbox 8, projects 4, rebuild-state 3,
+  compatibility 130, full suite 415 with 1 approved skip, generated-docs, links,
+  public-content). Failed: plugin-skills (wrong success pattern in this contract)
+  and docs-build (system python3 has no mkdocs). Attempt 4 correctly reported
+  `blocked` but as prose plus a bare JSON line, which the parser rejects, so the
+  run escalated with `invalid_report`.
+- The implementer's pr-body claimed a docs build that could not have run; C2
+  corrects that.
+- Revision 2 evidence before approval, run by hand against the current tree:
+  `generate_plugin_skills.py --check` prints the expected line; `.venv/bin/python
+  -m mkdocs build --strict` built; `check_links.py site` 5006 links, 0 failures.
+  The worktree `.venv` (git-ignored) was created from requirements-docs.txt.
+- Evaluator 1.2.0 with test_files 7 / test_lines 1800: no unresolved stages;
+  advisories large-test-scope and single-lineage. validate-plan: valid.
+  preflight (from the person's terminal; this agent shell carries Claude
+  credential variables that the account guard rejects): passed, trusted/profile.

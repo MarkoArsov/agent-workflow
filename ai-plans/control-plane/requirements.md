@@ -1,6 +1,8 @@
 # Requirements
 
-Approval status: approved by the person on 2 November 2026 with Claude-only routes. Full lane: substantive runtime,
+Approval status: revision 2 proposed, awaiting approval. Revision 1 (sections L–T)
+was approved on 2 November 2026 with Claude-only routes and is implemented in the
+worktree; v1/ preserves that contract. Full lane: substantive runtime,
 CLI, compatibility and concurrency changes across many components.
 
 Ground rules from the issue apply throughout: Python 3.11+ standard library only;
@@ -307,3 +309,88 @@ setup valid, never to change an assertion.
 - Background workers require a recorded plan approval matching the plan hash;
   explicit launches record it (O6, O7).
 - The plovi-factory skill is installed and documented (F1–F3).
+
+## Revision 2 (person-requested scope addition)
+
+The first run implemented L–T and passed every behavioural check, then escalated
+on two contract defects. The person asked to fold the workflow gaps found while
+running this task into this issue. Sections L–T stay as approved; existing
+implementation is kept and only corrected where these requirements demand.
+
+### C. Contract and evidence corrections
+
+C1. The `plugin-skills` check expects the script's success line
+(`Native discovery wrappers are current.`), and `docs-build`/`links` use the
+repository's documented docs interpreter `.venv/bin/python` (CONTRIBUTING.md).
+These are plan changes only.
+
+C2. pr-body.md states only commands whose results exist in the runner's evidence
+or were actually run in the stage; it must not claim a docs build that did not
+run. The "What changes for your workflow" section gains the G1–G5 changes.
+
+### G. Workflow gaps found while running this task
+
+G1. Background runs keep the plan branch. When an unattended run selects the
+factory strategy and the task has an owned `task start` allocation for the same
+repository and branch, `factory.allocate` creates the factory task branch from
+that local branch's committed head instead of `origin/<base>`: fetch the head
+from the source clone into a task-owned mirror ref, require it to descend from
+the verified remote base commit (refuse with the fix otherwise), and record both
+`base_commit` and `task_head` in the receipt. Uncommitted or untracked files in
+the local worktree are never copied; if the plan directory has uncommitted
+changes the run refuses with "commit the plan first". Delivery then pushes a
+branch that contains the planning commits. Without a local allocation, behavior
+is unchanged.
+
+G2. Preflight and `run --dry-run` never allocate. They report the checkout
+strategy a run would use and validate it read-only; no receipt, mirror branch or
+worktree is created. A factory receipt whose `configuration_root` differs from
+the resolved project names both roots and the fix (`--project <recorded root>`).
+
+G3. Named commands in restricted mode. The manifest gains optional
+`allowed_commands`: an array of `{argv, cwd?}` objects using the same safe-argv
+rules as checks (no shell, arguments matching the existing encodable pattern).
+They are part of the binding, so the plan approval covers them, and are added to
+Claude's restricted `allowed_tools` as exact `Bash(<argv>)` entries. Schema,
+validation errors and docs (docs/execution.md, references/pipeline-contract.md)
+are updated. Trusted mode is unchanged.
+
+G4. Usage limits stop cleanly. `providers.classify` derives provider failures
+from structured provider events (for Claude: the final `result` event's
+`api_error_status`, `api_error` and `rate_limit_info`, or error events), and only
+falls back to text matching on error messages, never on the whole transcript.
+`usage_limit_reached`/429 rate limits classify as `usage_limit`. On
+`usage_limit` the runner skips remaining routes of the same provider, tries a
+route of another provider if one exists, and otherwise stops with status
+`paused`, `pause_reason: "usage_limit"` and `resets_at` when known, appending
+`run.paused` with that reason. The stopped attempt's own file changes are
+recorded as its `artifact_changes`, so `resume` accepts them and starts a fresh
+attempt on top of them instead of refusing them as foreign edits. The inbox
+shows a `usage_limit` item with a resume action. `progress.summary` gives the
+next action and reset time.
+
+G5. Report parsing. A terminal result whose last non-empty line is one JSON
+object with a valid status (after any prose) is accepted, in addition to the
+existing whole-JSON and fenced-JSON forms. Invalid JSON or invalid fields still
+fail as before.
+
+### TR. Tests for revision 2
+
+New modules, importing new product functions inside tests:
+- tests/test_background_runs.py: `BackgroundRunTests` —
+  `test_factory_branch_includes_task_branch_plan_commits`,
+  `test_factory_refuses_task_branch_not_descending_from_base`,
+  `test_factory_refuses_uncommitted_plan`,
+  `test_preflight_and_dry_run_never_allocate`,
+  `test_receipt_root_mismatch_names_recorded_root`,
+  `test_restricted_mode_allows_plan_named_commands`,
+  `test_allowed_commands_rejects_unsafe_argv`.
+- tests/test_provider_outcomes.py: `UsageLimitTests` —
+  `test_usage_limit_classified_from_structured_result_not_transcript`,
+  `test_usage_limit_skips_same_provider_fallback_and_pauses`,
+  `test_resume_after_usage_limit_keeps_partial_edits`,
+  `test_usage_limit_appears_in_inbox_with_resume_action`; `ReportParsingTests` —
+  `test_prose_then_bare_json_report_is_accepted`,
+  `test_invalid_trailing_json_is_still_rejected`.
+The provider double may gain a step that emits a Claude-style usage-limit result
+(tests/fixtures/**). All L–T tests and existing suites keep passing unchanged.

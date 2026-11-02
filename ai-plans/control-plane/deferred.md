@@ -18,6 +18,9 @@
 - `plan.proposed` is recorded by `validate-plan`, which specify already runs.
 - Issue titles come from `task start --issue/--title`; no network fetch.
 
+- Revision 2 (person): workflow gaps G1–G5 found while running this task are
+  part of this issue rather than a separate task.
+
 ## Out of scope (from the issue)
 
 - The app, schedules, the PR shepherd, MCP.

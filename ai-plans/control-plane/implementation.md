@@ -79,3 +79,20 @@ points at existing code to reuse.
 Run the named checks in pipeline.json. The full suite and docs checks are the
 issue's pre-PR command list: unittest discover, mkdocs build --strict,
 check_links site, generate_docs --check, check_public_content --history.
+
+## Revision 2 anchors
+
+- G1: `factory.allocate` (base selection before `git worktree add`), with the
+  local receipt from `tasks.receipt_path`/`tasks.owned_checkout`. Fetch from the
+  source clone into `refs/plovi/tasks/<task>/<repo>` in the mirror; check
+  ancestry with `git merge-base --is-ancestor`. Keep task heads outside the
+  mirror's fetch destinations (requirements F3 of the isolated-execution plan).
+- G2: `cli.py` preflight / `--dry-run` branch currently calls `git_ops.prepare`
+  for factory strategies; replace with a read-only feasibility report.
+  `factory.receipt` raises the ownership error.
+- G3: `manifest.validate`, `schemas/pipeline.schema.json`,
+  `policy.execution` (where restricted `allowed_tools` are built from checks).
+- G4: `providers.Events.line` / `classify` / `failure_kind`; runner route loop
+  (`if classification in {"authentication", "quota", "model"}: break`); pause
+  status from O8; `recover_resume.validate_artifacts`; inbox kinds.
+- G5: `providers.Events.report`.

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "task": "control-plane",
-  "plan_status": "approved",
+  "plan_status": "revision-2-proposed-awaiting-approval",
   "plan_files": [
     "prompt.md",
     "requirements.md",
@@ -35,7 +35,10 @@
         "tests/test_projects.py",
         "tests/test_rebuild_state.py",
         "tests/helpers.py",
-        "tests/fixtures/**"
+        "tests/fixtures/**",
+        "schemas/pipeline.schema.json",
+        "tests/test_background_runs.py",
+        "tests/test_provider_outcomes.py"
       ],
       "test_paths": [
         "tests/test_ledger.py",
@@ -44,7 +47,9 @@
         "tests/test_projects.py",
         "tests/test_rebuild_state.py",
         "tests/helpers.py",
-        "tests/fixtures/**"
+        "tests/fixtures/**",
+        "tests/test_background_runs.py",
+        "tests/test_provider_outcomes.py"
       ]
     }
   ],
@@ -77,7 +82,6 @@
       },
       "parser": "unittest",
       "phases": [
-        "red",
         "green"
       ],
       "identities": [
@@ -233,6 +237,90 @@
       ]
     },
     {
+      "id": "revision-red",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "-m",
+          "unittest",
+          "-v",
+          "tests.test_background_runs.BackgroundRunTests.test_factory_branch_includes_task_branch_plan_commits",
+          "tests.test_background_runs.BackgroundRunTests.test_preflight_and_dry_run_never_allocate",
+          "tests.test_provider_outcomes.UsageLimitTests.test_usage_limit_classified_from_structured_result_not_transcript",
+          "tests.test_provider_outcomes.ReportParsingTests.test_prose_then_bare_json_report_is_accepted"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 300
+      },
+      "parser": "unittest",
+      "phases": [
+        "red",
+        "green"
+      ],
+      "identities": [
+        "test_factory_branch_includes_task_branch_plan_commits",
+        "test_preflight_and_dry_run_never_allocate",
+        "test_usage_limit_classified_from_structured_result_not_transcript",
+        "test_prose_then_bare_json_report_is_accepted"
+      ]
+    },
+    {
+      "id": "background-runs",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "-m",
+          "unittest",
+          "-v",
+          "tests.test_background_runs"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 300
+      },
+      "parser": "unittest",
+      "phases": [
+        "green"
+      ],
+      "identities": [
+        "test_factory_branch_includes_task_branch_plan_commits",
+        "test_factory_refuses_task_branch_not_descending_from_base",
+        "test_factory_refuses_uncommitted_plan",
+        "test_preflight_and_dry_run_never_allocate",
+        "test_receipt_root_mismatch_names_recorded_root",
+        "test_restricted_mode_allows_plan_named_commands",
+        "test_allowed_commands_rejects_unsafe_argv"
+      ]
+    },
+    {
+      "id": "provider-outcomes",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "-m",
+          "unittest",
+          "-v",
+          "tests.test_provider_outcomes"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 300
+      },
+      "parser": "unittest",
+      "phases": [
+        "green"
+      ],
+      "identities": [
+        "test_usage_limit_classified_from_structured_result_not_transcript",
+        "test_usage_limit_skips_same_provider_fallback_and_pauses",
+        "test_resume_after_usage_limit_keeps_partial_edits",
+        "test_usage_limit_appears_in_inbox_with_resume_action",
+        "test_prose_then_bare_json_report_is_accepted",
+        "test_invalid_trailing_json_is_still_rejected"
+      ]
+    },
+    {
       "id": "compatibility-regressions",
       "repository": "agent-workflow",
       "command": {
@@ -253,10 +341,14 @@
           "tests.test_runner_outcomes",
           "tests.test_runner_lifecycle",
           "tests.test_resume_recovery_v2",
-          "tests.test_factory_checkouts"
+          "tests.test_factory_checkouts",
+          "tests.test_providers",
+          "tests.test_container",
+          "tests.test_factory_journey",
+          "tests.test_permissions"
         ],
         "cwd": ".",
-        "timeout_seconds": 600
+        "timeout_seconds": 900
       },
       "parser": "unittest",
       "phases": [
@@ -319,14 +411,14 @@
       "phases": [
         "green"
       ],
-      "success_pattern": "^$"
+      "success_pattern": "^Native discovery wrappers are current\\.$"
     },
     {
       "id": "docs-build",
       "repository": "agent-workflow",
       "command": {
         "argv": [
-          "python3",
+          ".venv/bin/python",
           "-m",
           "mkdocs",
           "build",
@@ -346,7 +438,7 @@
       "repository": "agent-workflow",
       "command": {
         "argv": [
-          "python3",
+          ".venv/bin/python",
           "scripts/check_links.py",
           "site"
         ],
@@ -441,6 +533,30 @@
         "compatibility-regressions",
         "full-suite"
       ]
+    },
+    {
+      "id": "c-contract-and-evidence-corrections",
+      "checks": [
+        "plugin-skills",
+        "docs-build",
+        "links"
+      ]
+    },
+    {
+      "id": "g1-g3-background-runs",
+      "checks": [
+        "revision-red",
+        "background-runs",
+        "compatibility-regressions"
+      ]
+    },
+    {
+      "id": "g4-g5-provider-outcomes",
+      "checks": [
+        "revision-red",
+        "provider-outcomes",
+        "compatibility-regressions"
+      ]
     }
   ],
   "routes": {
@@ -515,8 +631,8 @@
           "kind": "code",
           "risk": "high",
           "size": "large",
-          "test_files": 5,
-          "test_lines": 1300,
+          "test_files": 7,
+          "test_lines": 1800,
           "uncertain": true
         },
         "lineage_slack": 1,
@@ -566,8 +682,8 @@
           "kind": "code",
           "risk": "high",
           "size": "large",
-          "test_files": 5,
-          "test_lines": 1300,
+          "test_files": 7,
+          "test_lines": 1800,
           "uncertain": false
         },
         "lineage_slack": 1,
@@ -619,8 +735,8 @@
           "kind": "code",
           "risk": "high",
           "size": "large",
-          "test_files": 5,
-          "test_lines": 1300,
+          "test_files": 7,
+          "test_lines": 1800,
           "uncertain": false
         },
         "lineage_slack": 1,
@@ -714,8 +830,8 @@
           "implement",
           "review"
         ],
-        "test_files": 5,
-        "test_lines": 1300,
+        "test_files": 7,
+        "test_lines": 1800,
         "uncertain": true
       },
       "policy": "3c7d03f86602c435d0771f98e34a76bebfd100cc00bbd8ea18722b2b0ce10aa7",
@@ -760,7 +876,7 @@
       ]
     },
     "schema_version": 1,
-    "snapshot_hash": "4fad5003cce84f81fed79f5db90309ab4db47c2fa8e05dc9c995f0ef4ae47b03",
+    "snapshot_hash": "cd86bac10d102ce9281d92671b7cd011819616803d86701a9c4f411e2c67f32d",
     "unresolved": []
   },
   "limits": {
@@ -768,8 +884,8 @@
     "timeout_seconds": 7200,
     "inactivity_seconds": 300,
     "tool_timeout_seconds": 900,
-    "max_changed_files": 80,
-    "max_changed_lines": 7000
+    "max_changed_files": 100,
+    "max_changed_lines": 10000
   },
   "references": [
     "quality-guidance.md"
