@@ -174,3 +174,59 @@ def repair(project, manifest, state, bound, root, stage, request, save, cancel):
         if reporter:reporter.emit('repair_accepted',stage=stage,repair_round=number)
         return {'fixture_repair':record['diff'],'checks':proof}
     raise WorkflowError('Fixture repair budget exhausted; inspect rejected corrections and approve a specific revision before retrying')
+
+
+def reconcile(project, manifest, state, bound, root, stage, request, save, cancel):
+    """Review a reported conflict; only unchanged-contract test corrections proceed."""
+    from .runner import prompt_for, test_files
+    limit=manifest.get('corrections',{}).get('contract_review_rounds',0)
+    records=state.setdefault('contract_reviews',[])
+    epoch=state.get('fixture_repair_epoch',0)
+    if sum(r['stage']==stage and r['at']>=epoch for r in records)>=limit:return None
+    record={'stage':stage,'at':time.time(),'status':'reviewing','request':request}
+    records.append(record);save()
+    reviewers=route_for(project,manifest,'review')
+    prompt=prompt_for(bound,manifest,'review',state['checkouts'],state['baseline'])+'\n\nIndependently classify this reported conflict against approved requirements. Do not edit files. A correctable test-input/setup mistake with unchanged assertions and product behavior may return status=complete, repairable=true, reason, and test_paths=[{repository,path}]. Genuine requirement/account/authorization decisions or necessary assertion changes must return repairable=false. Do not guess missing user decisions.\n'+json_text(request)
+    decision=invoke_routes(project,manifest,state,root,save,cancel,'contract-review',prompt,reviewers,[])
+    record['decision']=decision;save()
+    if decision.get('repairable') is not True:
+        record['status']='requires_decision';save();return None
+    specs=decision.get('test_paths',[])
+    selected={r['id']:r for r in manifest['repositories']}
+    if not specs:raise WorkflowError('Contract review supplied no correction paths')
+    before=git_ops.snapshot(project,state['checkouts']);originals={}
+    for item in specs:
+        if not isinstance(item,dict) or set(item)!={'repository','path'}:raise WorkflowError('Invalid contract correction path')
+        row=selected.get(item['repository'],{})
+        if row.get('access')!='write' or not matches(item['path'],row.get('test_paths',[])):
+            raise WorkflowError('Contract correction is outside declared test paths')
+        if item['path'] in state['initial_dirty'].get(item['repository'],[]):raise WorkflowError('Contract correction touches pre-existing edits')
+        path=contained(Path(state['checkouts'][item['repository']]),item['path'])
+        originals[(item['repository'],item['path'])]=path.read_text(encoding='utf-8')
+    write_json(root/'contract-reviews'/f'{len(records)-1:04d}-before.json',{'files':{r+'/'+p:t for (r,p),t in originals.items()},'review':decision})
+    prompt=prompt_for(bound,manifest,'implement-tests',state['checkouts'],state['baseline'])+'\n\nCorrect ONLY the independently reviewed test inputs/setup below. Preserve every assertion, test identity, skip and expected product behavior. Do not implement product code or change requirements. Return complete.\n'+json_text({'conflict':request,'review':decision})
+    invoke_routes(project,manifest,state,root,save,cancel,'contract-correction',prompt,route_for(project,manifest,'implement-tests'),specs)
+    after=git_ops.snapshot(project,state['checkouts']);git_ops.guard(before,after,manifest,'implement-tests',custom={'outputs':specs})
+    differences=[]
+    for (repo,name),old in originals.items():
+        path=contained(Path(state['checkouts'][repo]),name);new=path.read_text(encoding='utf-8')
+        differences.append(''.join(difflib.unified_diff(old.splitlines(True),new.splitlines(True),fromfile=name,tofile=name)))
+        if contract(old,path.suffix)!=contract(new,path.suffix):raise WorkflowError('Contract correction changed protected assertions or cases')
+    record['diff']='\n'.join(differences);save()
+    review=prompt_for(bound,manifest,'review',state['checkouts'],state['baseline'])+'\n\nIndependently verify this correction implements the existing approved behavior and preserves assertions/cases. Do not edit. Return complete with repair_approved=true only when justified.\n'+json_text({'conflict':request,'classification':decision,'diff':record['diff']})
+    final_decision=invoke_routes(project,manifest,state,root,save,cancel,'contract-correction-review',review,reviewers,[])
+    if final_decision.get('repair_approved') is not True:raise WorkflowError('Independent contract correction review did not approve')
+    checks=[]
+    if any('setup' in c.get('phases',[]) for c in manifest['checks']):checks+=verification.run_checks(project,manifest,state['checkouts'],phase='setup',cancel=cancel)
+    product_changed=any(not matches(p,row.get('test_paths',[])) for row in manifest['repositories'] for p in git_ops.changes(state['baseline'],after).get(row['id'],[]))
+    phase='green' if product_changed else 'red'
+    checks+=verification.run_checks(project,manifest,state['checkouts'],phase=phase,cancel=cancel)
+    final=git_ops.snapshot(project,state['checkouts']);git_ops.guard(after,final,manifest,'review',custom={'outputs':[]})
+    if any(not c['passed'] for c in checks if c.get('phase')=='setup') or (phase=='red' and not all(c['passed'] for c in checks)):
+        raise WorkflowError('Contract correction lacks passing setup and renewed red proof')
+    state['red_test_files']=test_files(manifest,final);state.pop('green',None)
+    for repo,name in originals:state['stage_before'][repo]['files'][name]=final[repo]['files'][name]
+    record.update(status='accepted',checks=checks,review=final_decision)
+    state.setdefault('test_repairs',[]).append({'stage':stage,'at':time.time(),'status':'accepted','kind':'contract-input-correction'})
+    write_json(root/'contract-reviews'/f'{len(records)-1:04d}-accepted.json',record);save()
+    return {'contract_correction':record['diff'],'checks':checks}

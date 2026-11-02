@@ -645,6 +645,13 @@ def run(project, manifest, *, resume=False, answer=None, rebind=False, trusted=F
                                                    "reason": "Provider finished without a valid completion report; inspect retained output before retrying",
                                                    "route": route, "session": events.session, "at": time.time()}
                             state["retry_command"] = "plovi retry " + manifest["task"]
+                        if classification == "complete" and report and report["status"] == "spec_conflict" and stage in {"implement", "review"}:
+                            git_ops.guard(before, current, manifest, stage, custom=definition)
+                            if state.get("red_test_files") and test_files(manifest,current)!=state["red_test_files"]:
+                                raise WorkflowError("Implementation changed frozen tests before contract review")
+                            from .repairs import reconcile
+                            feedback = reconcile(project,manifest,state,bound,root,stage,report,save,cancelled)
+                            if feedback is not None: continue
                         if report and report["status"] in {"blocked", "spec_conflict", "impossible"}:
                             state["escalation"] = {"stage": stage, "kind": report["status"], "reason": redact(report["reason"]),
                                                    "route": route, "session": events.session, "at": time.time()}

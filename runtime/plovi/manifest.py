@@ -186,8 +186,11 @@ def validate(value, project):
         if request is not None and (not isinstance(request, dict) or request.get("status") != "test_fixture_repair" or not request.get("reason") or not isinstance(request.get("test_paths"), list) or not isinstance(request.get("checks"), list)):
             raise WorkflowError("Checkpoint fixture repair requires explicit reason, test paths and setup checks")
     corrections = value.get("corrections", {})
-    if not isinstance(corrections, dict) or set(corrections) - {"fixture_rounds", "max_known_cost_usd"}:
+    if not isinstance(corrections, dict) or set(corrections) - {"fixture_rounds", "max_known_cost_usd", "contract_review_rounds"}:
         raise WorkflowError("Invalid correction limits")
+    contract_rounds = corrections.get("contract_review_rounds", 0)
+    if type(contract_rounds) is not int or not 0 <= contract_rounds <= 2:
+        raise WorkflowError("contract_review_rounds must be between zero and two")
     rounds = corrections.get("fixture_rounds", 2)
     if type(rounds) is not int or not 0 <= rounds <= 5:
         raise WorkflowError("fixture_rounds must be between zero and five")

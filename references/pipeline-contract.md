@@ -169,3 +169,15 @@ admissible only during reviewed rebind/migration. All ancestors introduced by th
 merge still need exact approval or the existing task-plan-only exception. Baselines
 adopt the first-parent tree differences; unrelated edits and frozen-test changes
 remain guarded. Linear recovery behavior remains unchanged by default.
+
+## Bounded contract reconciliation
+
+Optional corrections.contract_review_rounds (0–2; legacy default 0) lets a fresh
+review route classify spec_conflict reports before escalation. Only independently
+confirmed test-input/setup mistakes within unchanged approved requirements proceed.
+A fresh test author receives declared test paths; assertions, cases and skips remain
+protected. A second independent review and setup/red proof precede renewed hashes.
+When product work already exists, failed green checks feed implementation correction;
+final verification is still mandatory. Requirements/account/authorization decisions,
+assertion changes, foreign edits and exhausted budgets remain stops. Save original
+files, classifications, diffs and review/check evidence in contract-reviews.

@@ -397,6 +397,11 @@
         "max_known_cost_usd": {
           "type": "number",
           "exclusiveMinimum": 0
+        },
+        "contract_review_rounds": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2
         }
       }
     }

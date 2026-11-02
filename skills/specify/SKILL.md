@@ -139,3 +139,9 @@ pipeline.json links, and actual validation/preflight results. A static wording
 check is not proof of agent execution. Do not push during specification.
 
 Repository or checkout references ordinarily identify the project source, not a ban on its configured task worktrees. Resolve explicit restrictions from their actual wording and project profile; do not invent a checkout constraint that conflicts with task isolation.
+
+For user-approved autonomous implementation, include corrections.contract_review_rounds
+(up to 2) in new manifests. This enables independent reconciliation of reported
+spec conflicts that are test-input/setup mistakes with unchanged requirements and
+assertions. Genuine decisions still stop. Do not enable it against explicit user
+preferences or present a syntactic guard as proof of semantic correctness.
