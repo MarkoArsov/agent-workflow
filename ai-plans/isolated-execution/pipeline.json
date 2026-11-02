@@ -10,7 +10,8 @@
     "project-quality.md",
     "routing-scenarios.md",
     "migration.md",
-    "companion-recovery.md"
+    "companion-recovery.md",
+    "test-contract-revision.md"
   ],
   "repositories": [
     {
@@ -71,7 +72,9 @@
         "runtime/plovi/runtime_pin.py",
         "tests/test_legacy_migration.py",
         "tests/test_isolation_fixture_health.py",
-        "tests/test_companion_fixture_health.py"
+        "tests/test_companion_fixture_health.py",
+        "tests/test_pipeline_resume.py",
+        "skills/implement-tests/SKILL.md"
       ],
       "test_paths": [
         "tests/test_factory_checkouts.py",
@@ -84,7 +87,8 @@
         "tests/test_recovery.py",
         "tests/test_legacy_migration.py",
         "tests/test_isolation_fixture_health.py",
-        "tests/test_companion_fixture_health.py"
+        "tests/test_companion_fixture_health.py",
+        "tests/test_pipeline_resume.py"
       ]
     }
   ],
@@ -729,7 +733,8 @@
         "814e8e1c7d7403911e35258b2b51475ddae7e333",
         "df40c6a67a32d56fa261d33335faf24000c1149d",
         "e5561f5d85390c2074b7a286d1446dae59b2b4a8",
-        "e8b643c576330f30d1c5d01223572ce13cb6c44d"
+        "e8b643c576330f30d1c5d01223572ce13cb6c44d",
+        "22a83466d893e66ade570615ade9c9137399c099"
       ]
     },
     "approved_merges": {
