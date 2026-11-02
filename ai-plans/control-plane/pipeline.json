@@ -290,7 +290,8 @@
         "test_preflight_and_dry_run_never_allocate",
         "test_receipt_root_mismatch_names_recorded_root",
         "test_restricted_mode_allows_plan_named_commands",
-        "test_allowed_commands_rejects_unsafe_argv"
+        "test_allowed_commands_rejects_unsafe_argv",
+        "test_resumed_worker_never_republishes_previous_stop"
       ]
     },
     {

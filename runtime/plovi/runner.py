@@ -573,6 +573,10 @@ def _run_locked(project, manifest, root, *, resume, answer, rebind, trusted, una
             if fields != previous_summary or reason:
                 reporter.emit("state_changed", **fields, reason=reason)
                 previous_summary.update(fields)
+        # This worker now owns the run. Without this, the first save would publish the
+        # new run ID beside the previous stop status, and a launcher waiting for that
+        # run ID would report the old stop as the new run's result.
+        state["status"] = "starting"
         recorder.started(state)
         save()
         if state.get("recovered_output_attempt") != prior.get("recovered_output_attempt"):

@@ -118,3 +118,11 @@ first run, including full-suite 428 tests (1 approved skip). compatibility-regre
 failed only because this revision added tests.test_container (opt-in Docker smoke
 skip) without an approved skip reason; the plan now carries the same reason as
 full-suite, and the rerun passed: 169 tests, 0 failures, 1 approved skip.
+
+## CI on PR #45, run 41473755145 (head 54fbe42)
+
+core (ubuntu-latest, 3.11) failed: test_pipeline_resume returned `interrupted`
+(exit 1), then temp cleanup failed because the detached worker was still writing.
+Cause: launcher/worker race on the first save (see requirements C3). Regression
+test red without the fix ('interrupted' == 'interrupted'), green with it;
+tests.test_pipeline_resume passes locally.

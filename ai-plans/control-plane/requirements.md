@@ -329,6 +329,12 @@ C2. pr-body.md states only commands whose results exist in the runner's evidence
 or were actually run in the stage; it must not claim a docs build that did not
 run. The "What changes for your workflow" section gains the G1–G5 changes.
 
+C3. CI on PR #45 (ubuntu, Python 3.11) showed `plovi pipeline <task>` reporting a
+resumed run as `interrupted`: the worker's first save published the new run ID
+beside the previous stop status, and the ledger writes added in this change widened
+that window. A worker sets `status: starting` before its first save. Regression:
+`BackgroundRunTests.test_resumed_worker_never_republishes_previous_stop`.
+
 ### G. Workflow gaps found while running this task
 
 G1. Background runs keep the plan branch. When an unattended run selects the

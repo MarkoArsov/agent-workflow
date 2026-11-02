@@ -129,3 +129,23 @@ class BackgroundRunTests(HardeningTest):
                 plan["allowed_commands"] = value
                 with self.assertRaises(WorkflowError):
                     manifest.validate(plan, self.project)
+
+    def test_resumed_worker_never_republishes_previous_stop(self):
+        """A launcher waits for the new run ID; the first save carrying it must not show the old stop."""
+        from unittest import mock
+        from plovi import runner, state
+        self.fixture([{}], stages=["implement"])
+        saved = runner.run(self.project, self.plan, unattended=False)
+        saved.update(status="interrupted", completed=[], active_stage="implement",
+                     stage_before=saved["baseline"], stage_evidence={}, run_id="previous-run")
+        state.save(state.directory(self.project, "sample"), saved)
+        seen = []
+        original = state.save
+        def record(root, value):
+            seen.append((value.get("run_id"), value.get("status")))
+            return original(root, value)
+        with mock.patch.object(state, "save", record):
+            result = runner.run(self.project, self.plan, resume=True, unattended=False)
+        self.assertEqual(result["status"], "complete")
+        first = next(status for run_id, status in seen if run_id != "previous-run")
+        self.assertNotEqual(first, "interrupted")
