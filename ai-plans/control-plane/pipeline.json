@@ -899,5 +899,12 @@
     "commit_message": "Add the control plane: ledger, operations, inbox, projects registry and plovi-factory skill",
     "title": "Add the control plane: ledger, operations, inbox and projects registry",
     "body_file": "pr-body.md"
+  },
+  "recovery": {
+    "approved_commits": {
+      "agent-workflow": [
+        "aecd1e12185cd6a6d46db8427379d67583b8d54e"
+      ]
+    }
   }
 }
