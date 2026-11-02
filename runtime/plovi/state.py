@@ -71,11 +71,17 @@ def observe(project, task):
     return value
 
 
-def save(root, state):
-    from .progress import summary
+def save(root, state, *, before_publish=None):
     state["updated_at"] = time.time()
     if state.get('status') in {'cancelled', 'merged', 'closed'}:
         state.setdefault('terminal_at', state['updated_at'])
+    if before_publish:
+        before_publish()
+    publish(root, state)
+
+
+def publish(root, state):
+    from .progress import summary
     write_json(root / "state.json", state)
     write_json(root / "status.json", summary(state))
 

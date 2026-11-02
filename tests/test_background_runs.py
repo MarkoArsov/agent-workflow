@@ -141,11 +141,29 @@ class BackgroundRunTests(HardeningTest):
         state.save(state.directory(self.project, "sample"), saved)
         seen = []
         original = state.save
-        def record(root, value):
+        def record(root, value, **kwargs):
             seen.append((value.get("run_id"), value.get("status")))
-            return original(root, value)
+            return original(root, value, **kwargs)
         with mock.patch.object(state, "save", record):
             result = runner.run(self.project, self.plan, resume=True, unattended=False)
         self.assertEqual(result["status"], "complete")
         first = next(status for run_id, status in seen if run_id != "previous-run")
         self.assertNotEqual(first, "interrupted")
+
+    def test_stop_status_is_published_after_the_ledger(self):
+        """state.json is the last write of a run: anyone who sees its stop status sees the whole run."""
+        from unittest import mock
+        from plovi import ledger, runner, state
+        self.fixture([{}], stages=["implement"])
+        seen = []
+        original = state.publish
+        def record(root, value):
+            seen.append((value.get("status"), [e["type"] for e in ledger.events(self.project)]))
+            return original(root, value)
+        with mock.patch.object(state, "publish", record):
+            result = runner.run(self.project, self.plan, unattended=False)
+        self.assertEqual(result["status"], "complete")
+        status, recorded = seen[-1]
+        self.assertEqual(status, "complete")
+        self.assertIn("run.finished", recorded, "the ledger records the stop before state.json shows it")
+        self.assertEqual(recorded[-1], "state.checkpoint", "the final checkpoint precedes state.json")

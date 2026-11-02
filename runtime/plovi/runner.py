@@ -566,8 +566,9 @@ def _run_locked(project, manifest, root, *, resume, answer, rebind, trusted, una
         from . import ledger
         recorder = ledger.Recorder(project, manifest)
         def save():
-            journal.save(root, state)
-            recorder.saved(state)
+            # Observers treat a stop status in state.json as the end of the run, so the
+            # ledger is written first and state.json is the last write under the lock.
+            journal.save(root, state, before_publish=lambda: recorder.saved(state))
             fields = {key: state.get(key) for key in ("stage", "status", "completed")}
             reason = (state.get("escalation") or {}).get("reason") or state.get("error")
             if fields != previous_summary or reason:

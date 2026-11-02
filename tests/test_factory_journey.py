@@ -32,8 +32,8 @@ class FactoryJourneyTests(HardeningTest):
         stream = output.open('w')
         self.addCleanup(stream.close)
         original_save = state.save
-        def observe(root, value):
-            original_save(root, value)
+        def observe(root, value, **kwargs):
+            original_save(root, value, **kwargs)
             if value.get('status') == 'running' and not watchers:
                 watchers.append(subprocess.Popen([sys.executable, str(PACKAGE/'bin/plovi'), '--project',str(self.project.root),
                                                   'watch','sample','--json','--seconds','30'],env=self.env,
