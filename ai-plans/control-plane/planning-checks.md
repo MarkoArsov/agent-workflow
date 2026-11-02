@@ -58,3 +58,14 @@ Planned, not executed: the `control-plane-red` check names six CLI-level tests
 that fail on assertions before product changes (unknown commands or an
 unenforced gate). New test modules import new product modules lazily so red is
 never an import error.
+
+## Revision: Claude-only routes (approved)
+
+- The person approved the plan with Claude-only routes. facts.json now records
+  explicit user-task routes: opus then sonnet for implement-tests, implement
+  and review. Evaluator 1.2.0: no unresolved stages; advisories large-test-scope
+  (implement-tests) and single-lineage (implement-tests, review). Opus meets the
+  deep band, so the earlier below-band advisories are gone.
+- `plovi validate-plan`: valid. `plovi preflight`: passed; permission mode
+  restricted (unattended default), claude binary found, model availability is
+  verified on the first request. plan_status: approved.

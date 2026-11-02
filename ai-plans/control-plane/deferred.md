@@ -6,6 +6,8 @@
   and later schedules enforce a prior approval. A stricter gate that makes
   `pipeline` require a separate `approve --plan` was offered and declined.
 - Delivery (person): commit-and-push and draft-pr are selected.
+- Routes (person): Claude only, opus then sonnet for every AI stage. The codex
+  CLI is not installed; the earlier configured-route choice was superseded.
 - `status` keeps its existing human default and `--json`; the issue's "JSON by
   default" is applied to new commands only, so skills and people see no change.
 - Existing `approve --size|--paths` and `policy set --yes` remain person

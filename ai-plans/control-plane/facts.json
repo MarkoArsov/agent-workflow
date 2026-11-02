@@ -28,22 +28,22 @@
   "routes": {
     "implement": [
       {
-        "provider": "codex",
-        "model": "gpt-6.1-sol"
+        "provider": "claude",
+        "model": "opus"
       },
       {
         "provider": "claude",
-        "model": "opus"
+        "model": "sonnet"
       }
     ],
     "implement-tests": [
       {
         "provider": "claude",
-        "model": "sonnet"
+        "model": "opus"
       },
       {
-        "provider": "codex",
-        "model": "gpt-6.1-sol"
+        "provider": "claude",
+        "model": "sonnet"
       }
     ],
     "review": [
@@ -52,8 +52,8 @@
         "model": "opus"
       },
       {
-        "provider": "codex",
-        "model": "gpt-6.1-sol"
+        "provider": "claude",
+        "model": "sonnet"
       }
     ]
   },

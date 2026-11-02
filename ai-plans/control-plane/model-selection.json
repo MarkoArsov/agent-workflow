@@ -1,15 +1,11 @@
 {
   "advisories": [
     {
-      "reason": "explicit-route-below-recommended-band",
-      "stage": "implement"
-    },
-    {
       "reason": "large-test-scope",
       "stage": "implement-tests"
     },
     {
-      "reason": "explicit-route-below-recommended-band",
+      "reason": "single-lineage",
       "stage": "implement-tests"
     },
     {
@@ -49,11 +45,11 @@
       "lineage_slack": 1,
       "ordered_routes": [
         {
-          "model": "gpt-6.1-sol",
-          "provider": "codex"
+          "model": "opus",
+          "provider": "claude"
         },
         {
-          "model": "opus",
+          "model": "sonnet",
           "provider": "claude"
         }
       ],
@@ -100,16 +96,16 @@
       "lineage_slack": 1,
       "ordered_routes": [
         {
-          "model": "sonnet",
+          "model": "opus",
           "provider": "claude"
         },
         {
-          "model": "gpt-6.1-sol",
-          "provider": "codex"
+          "model": "sonnet",
+          "provider": "claude"
         }
       ],
       "prior_lineages": [
-        "openai"
+        "anthropic"
       ],
       "providers": [
         "claude",
@@ -157,13 +153,12 @@
           "provider": "claude"
         },
         {
-          "model": "gpt-6.1-sol",
-          "provider": "codex"
+          "model": "sonnet",
+          "provider": "claude"
         }
       ],
       "prior_lineages": [
-        "anthropic",
-        "openai"
+        "anthropic"
       ],
       "providers": [
         "claude",
@@ -193,22 +188,22 @@
       "routes": {
         "implement": [
           {
-            "model": "gpt-6.1-sol",
-            "provider": "codex"
+            "model": "opus",
+            "provider": "claude"
           },
           {
-            "model": "opus",
+            "model": "sonnet",
             "provider": "claude"
           }
         ],
         "implement-tests": [
           {
-            "model": "sonnet",
+            "model": "opus",
             "provider": "claude"
           },
           {
-            "model": "gpt-6.1-sol",
-            "provider": "codex"
+            "model": "sonnet",
+            "provider": "claude"
           }
         ],
         "review": [
@@ -217,8 +212,8 @@
             "provider": "claude"
           },
           {
-            "model": "gpt-6.1-sol",
-            "provider": "codex"
+            "model": "sonnet",
+            "provider": "claude"
           }
         ]
       },
@@ -258,22 +253,22 @@
   "routes": {
     "implement": [
       {
-        "model": "gpt-6.1-sol",
-        "provider": "codex"
+        "model": "opus",
+        "provider": "claude"
       },
       {
-        "model": "opus",
+        "model": "sonnet",
         "provider": "claude"
       }
     ],
     "implement-tests": [
       {
-        "model": "sonnet",
+        "model": "opus",
         "provider": "claude"
       },
       {
-        "model": "gpt-6.1-sol",
-        "provider": "codex"
+        "model": "sonnet",
+        "provider": "claude"
       }
     ],
     "review": [
@@ -282,12 +277,12 @@
         "provider": "claude"
       },
       {
-        "model": "gpt-6.1-sol",
-        "provider": "codex"
+        "model": "sonnet",
+        "provider": "claude"
       }
     ]
   },
   "schema_version": 1,
-  "snapshot_hash": "f45db69671efeb38a84eb71ee5b49175280d0f8ac3f53e25f2ff45f4b4d32e98",
+  "snapshot_hash": "4fad5003cce84f81fed79f5db90309ab4db47c2fa8e05dc9c995f0ef4ae47b03",
   "unresolved": []
 }

@@ -1,6 +1,6 @@
 # Requirements
 
-Approval status: proposed, awaiting approval. Full lane: substantive runtime,
+Approval status: approved by the person on 2 November 2026 with Claude-only routes. Full lane: substantive runtime,
 CLI, compatibility and concurrency changes across many components.
 
 Ground rules from the issue apply throughout: Python 3.11+ standard library only;
