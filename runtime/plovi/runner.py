@@ -11,9 +11,11 @@ import uuid
 from pathlib import Path
 from . import __version__
 from . import policy, limits as diff_limits, claims, git_ops, manifest as contracts, providers, rules, state as journal, verification
-from .identity import environment as identity_environment, capabilities as identity_capabilities
+from .identity import capabilities as identity_capabilities
 from .extensions import snapshot
-from .process import detached, execute as execute_process, CleanupFailure
+from .process import detached, CleanupFailure
+from .isolation import execute as execute_process, environment as identity_environment
+from . import isolation, factory
 from .util import WorkflowError, contained, digest, json_text, package_root, read_json, redact, write_json
 
 def redact_report(value):
@@ -46,13 +48,31 @@ def binding(project, manifest, *, execution=None):
         result["execution"] = copy.deepcopy(execution)
     return result
 
-def preflight(project, manifest, *, check_providers=True, execution=None):
+def preflight(project, manifest, *, check_providers=True, execution=None, pull_isolation_image=False, recover_isolation=False):
     contracts.validate(manifest, project)
     from .tasks import owned_checkout
     for row in manifest['repositories']:
         if row['access'] == 'write':
             owned_checkout(project, manifest['task'], row['id'], row.get('branch'))
     execution = execution or policy.execution(project, manifest, unattended=not sys.stdin.isatty())
+    values = policy.effective(project, manifest)
+    requested_isolation = isolation.configuration(values)
+    context = None
+    if requested_isolation['mode'] == 'container':
+        saved_state = read_json(journal.directory(project, manifest['task']) / 'state.json', {})
+        context = isolation.build_execution_context(project, values, task=manifest['task'],
+                    checkouts=saved_state.get('checkouts'), trusted=execution['permission_mode'] == 'trusted',
+                    frozen=execution.get('isolation'), pull=pull_isolation_image)
+        if recover_isolation and context.get('mode') == 'container':
+            isolation.recover(project, manifest['task'], context)
+        if context.get('mode') == 'container':
+            isolation.verify_account(project, context)
+        if requested_isolation['network'] == 'off' and any(c.get('environment') for c in manifest['checks']):
+            raise WorkflowError('Container check services require network=on; network=off forbids cross-container services')
+        execution['isolation'] = {k: context[k] for k in requested_isolation if k in context}
+        execution['isolation'].update({k: context[k] for k in ('image_id', 'degraded', 'diagnostic', 'boundary', 'requested_mode') if k in context})
+    elif execution.get('isolation', {}).get('mode') == 'container':
+        raise WorkflowError('Existing container policy changed; review and rebind before resuming')
     bound = binding(project, manifest, execution=execution)
     custom = contracts.custom_stages(project)
     routes, seen = [], set()
@@ -65,7 +85,7 @@ def preflight(project, manifest, *, check_providers=True, execution=None):
         for route in contracts.route_for(project, manifest, stage):
             key = json_text(route)
             if key not in seen and check_providers:
-                routes.append(providers.preflight(route, execution, project.root, project=project))
+                routes.append(providers.preflight(route, execution, project.root, project=project, context=context))
                 seen.add(key)
     repair_routes = {name: contracts.route_for(project, manifest, name) for name in ("implement-tests", "review")}
     repair_enabled = manifest.get("corrections", {}).get("fixture_rounds", 2) > 0
@@ -76,7 +96,7 @@ def preflight(project, manifest, *, check_providers=True, execution=None):
         for choices in repair_routes.values():
             for route in choices:
                 if json_text(route) not in seen:
-                    routes.append(providers.preflight(route, execution, project.root, project=project))
+                    routes.append(providers.preflight(route, execution, project.root, project=project, context=context))
                     seen.add(json_text(route))
     runtime = read_json(journal.directory(project, manifest["task"]) / "runtime.json")
     if runtime:
@@ -106,7 +126,8 @@ def preflight(project, manifest, *, check_providers=True, execution=None):
                          "capability": "foreground-negotiation", "fallback": "command_only"},
             "routes": routes, "connectors": connectors, "binding_sha256": digest(json_text(bound)),
             "permission_mode": execution["permission_mode"], "permission_source": execution.get("permission_source", "profile"),
-            "boundary": "Provider controls plus post-stage path/evidence guards; trusted mode is not an OS sandbox.",
+            "boundary": (context.get('boundary') or 'Experimental container boundary; delivery and guards run on host') if context else 'Provider controls plus post-stage path/evidence guards; trusted mode is not an OS sandbox.',
+            "isolation": execution.get('isolation', {'mode': 'none'}),
             "side_effects": "Stage selection authorizes only the named delivery actions."}
 
 def invalidate_from(old, new, stages, custom):
@@ -401,18 +422,40 @@ def recover_resume(project, manifest, state, root, *, rebind=False, replay=True)
             break
 
 
-def run(project, manifest, *, resume=False, answer=None, rebind=False, trusted=False, unattended=None, no_wait=False, retry=False, note=None, approval=None):
+def run(project, manifest, *, resume=False, answer=None, rebind=False, trusted=False, unattended=None, no_wait=False, retry=False, note=None, approval=None, pull_isolation_image=False):
     root = journal.directory(project, manifest["task"])
     root.mkdir(parents=True, exist_ok=True)
-    with journal.lock(root / "runner.lock"), claims.acquire(project, manifest, no_wait=no_wait):
+    with journal.lock(root / "runner.lock"):
+        return _run_locked(project, manifest, root, resume=resume, answer=answer, rebind=rebind, trusted=trusted,
+                           unattended=unattended, no_wait=no_wait, retry=retry, note=note, approval=approval,
+                           pull_isolation_image=pull_isolation_image)
+
+
+def _run_locked(project, manifest, root, *, resume, answer, rebind, trusted, unattended, no_wait, retry, note, approval, pull_isolation_image):
+    contracts.validate(manifest, project)
+    prior = read_json(root / 'state.json', {})
+    checkout_strategies = factory.strategies(project, manifest, unattended=not sys.stdin.isatty() if unattended is None else unattended, prior=prior)
+    with claims.acquire(project, manifest, no_wait=no_wait, strategies=checkout_strategies):
         prior = read_json(root / "state.json", {})
         execution = prior.get("execution") or policy.execution(project, manifest, trusted=trusted,
                             unattended=not sys.stdin.isatty() if unattended is None else unattended)
         if rebind:
             execution = policy.execution(project, manifest, trusted=trusted,
                             unattended=not sys.stdin.isatty() if unattended is None else unattended)
+        if not prior:
+            execution['checkout_strategies'] = checkout_strategies
+        elif 'checkout_strategies' in prior.get('execution', {}):
+            execution['checkout_strategies'] = prior['execution']['checkout_strategies']
+        # Allocation precedes containment preflight; failed preflight never starts a stage.
+        prepared = None
+        if not prior and 'factory' in checkout_strategies.values():
+            prepared = git_ops.prepare(project, manifest, strategies=checkout_strategies)
         bound = binding(project, manifest)
         old_bound = read_json(root / "binding.json", {})
+        if (prior and old_bound.get('policy') and 'isolation' not in old_bound['policy'].get('values', {})
+                and not policy.load(project).get('isolation') and not rebind):
+            for kind in ('values', 'sources'):
+                bound['policy'][kind].pop('isolation', None)
         legacy_policy = bool(prior and old_bound and "policy" not in old_bound)
         if legacy_policy and not rebind:
             if any(policy.load(project).values()):
@@ -421,7 +464,9 @@ def run(project, manifest, *, resume=False, answer=None, rebind=False, trusted=F
             execution = prior.get("execution", copy.deepcopy(old_bound["profile"]["execution"]))
         if not legacy_policy and (not old_bound or "execution" in old_bound or rebind):
             bound["execution"] = copy.deepcopy(execution)
-        preflight(project, manifest, execution=execution)
+        preflight(project, manifest, execution=execution, pull_isolation_image=pull_isolation_image, recover_isolation=True)
+        if 'execution' in bound:
+            bound['execution'] = copy.deepcopy(execution)
         bound_hash = digest(json_text(bound))
         state = read_json(root / "state.json")
         if state and not state.get("binding_sha256"):
@@ -469,12 +514,17 @@ def run(project, manifest, *, resume=False, answer=None, rebind=False, trusted=F
             if answer is not None and not state.get("pending_input"):
                 raise WorkflowError("There is no pending input session to answer")
         else:
-            checkouts = git_ops.prepare(project, manifest)
+            checkouts = prepared or git_ops.prepare(project, manifest, strategies=checkout_strategies)
             state = {"schema_version": 1, "task": manifest["task"], "manifest_path": str(Path(manifest["_directory"]) / "pipeline.json"),
                      "status": "starting", "completed": [], "attempts": [], "checkouts": checkouts,
                      "baseline": git_ops.snapshot(project, checkouts), "binding_sha256": bound_hash,
                      "initial_dirty": {name: git_ops.dirty_paths(Path(path)) for name, path in checkouts.items()},
-                     "started_at": time.time(), "delivery": {}}
+                     "started_at": time.time(), "delivery": {}, "checkout_strategies": checkout_strategies}
+        execution_context = isolation.build_execution_context(project, bound.get('policy', policy.effective(project, manifest)),
+                task=manifest['task'], checkouts=state['checkouts'], trusted=execution['permission_mode'] == 'trusted',
+                frozen=execution.get('isolation')) if execution.get('isolation', {}).get('mode') == 'container' else None
+        if execution_context:
+            isolation.recover(project, manifest['task'], execution_context)
         if resume:
             recover_resume(project, manifest, state, root, rebind=rebind,
                            replay=not retry and answer is None and prior.get("active_stage") not in prior.get("completed", []))
@@ -495,6 +545,10 @@ def run(project, manifest, *, resume=False, answer=None, rebind=False, trusted=F
         reporter = Reporter(root, state["run_id"])
         reporter.live["task"] = manifest["task"]
         token = active.set(reporter)
+        isolation_token = isolation.active.set(execution_context)
+        if execution.get('isolation', {}).get('degraded'):
+            print(execution['isolation']['boundary'] + ': ' + execution['isolation']['diagnostic'], file=sys.stderr)
+            reporter.emit('boundary_degraded', reason=execution['isolation']['diagnostic'])
         from .identity import expected, fingerprint
         identity_token = expected.set(fingerprint(project))
         previous_summary = {}
@@ -597,7 +651,7 @@ def run(project, manifest, *, resume=False, answer=None, rebind=False, trusted=F
                             provider_cwd = Path(state["checkouts"][primary])
                             provider_env = identity_environment(project, provider_cwd)
                             result = execute_process(argv, provider_cwd, env=provider_env,
-                                                     input_text=None if route["provider"] == "cursor" else prompt,
+                                                     input_text=None if route["provider"] == "cursor" and not execution_context else prompt,
                                                      timeout=limits.get("timeout_seconds", 1800),
                                                      inactivity=limits.get("inactivity_seconds", 300),
                                                      tool_timeout=limits.get("tool_timeout_seconds", 600),
@@ -699,8 +753,10 @@ def run(project, manifest, *, resume=False, answer=None, rebind=False, trusted=F
             return state
         except (WorkflowError, OSError, KeyboardInterrupt) as exc:
             state["status"] = "cancelled" if isinstance(exc, KeyboardInterrupt) else "failed"
-            if isinstance(exc, CleanupFailure):
-                state["cleanup"] = {"status": "unconfirmed", "child_pid": exc.pid, "stage": state.get("stage")}
+            if isinstance(exc, (CleanupFailure, isolation.CleanupFailure)):
+                state["cleanup"] = {"status": "unconfirmed", "child_pid": getattr(exc, "pid", None), "stage": state.get("stage"),
+                                    "containers": list((execution_context or {}).get("containers", [])),
+                                    "network": (execution_context or {}).get("network_name")}
                 state["escalation"] = {"kind": "cancellation_failure", "reason": str(exc), "stage": state.get("stage"), "at": time.time()}
                 state["status"] = "escalated"
             state["error"] = redact(str(exc)); save()
@@ -708,12 +764,27 @@ def run(project, manifest, *, resume=False, answer=None, rebind=False, trusted=F
                 return state
             raise
         finally:
-            active.reset(token)
-            expected.reset(identity_token)
+            try:
+                isolation.cancel_containers(execution_context)
+            except WorkflowError as exc:
+                state['cleanup'] = {'status': 'unconfirmed', 'containers': list((execution_context or {}).get('containers', [])),
+                                    'network': (execution_context or {}).get('network_name')}
+                state['escalation'] = {'kind': 'cancellation_failure', 'reason': str(exc), 'stage': state.get('stage'), 'at': time.time()}
+                state['status'] = 'escalated'; state['error'] = str(exc); save()
+                raise
+            finally:
+                isolation.active.reset(isolation_token)
+                active.reset(token)
+                expected.reset(identity_token)
 
-def detach(project, manifest_path, *, trusted=False, no_wait=False):
+def detach(project, manifest_path, *, trusted=False, no_wait=False, pull_isolation_image=False):
     manifest = contracts.load(manifest_path, project)
-    preflight(project, manifest, execution=policy.execution(project, manifest, trusted=trusted, unattended=True))
+    execution = policy.execution(project, manifest, trusted=trusted, unattended=True)
+    prior = read_json(journal.directory(project, manifest['task']) / 'state.json', {})
+    strategies = factory.strategies(project, manifest, unattended=True, prior=prior)
+    if not prior and 'factory' in strategies.values():
+        git_ops.prepare(project, manifest, strategies=strategies)
+    preflight(project, manifest, execution=execution, pull_isolation_image=pull_isolation_image)
     root = journal.directory(project, manifest["task"])
     root.mkdir(parents=True, exist_ok=True)
     with (root / "runner.log").open("a") as output:

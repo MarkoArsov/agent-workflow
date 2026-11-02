@@ -19,13 +19,17 @@ def files(root):
 def snapshot(project, checkouts=None):
     checkouts = checkouts or {}
     result = {}
+    from .factory import owns
+    factory_run = any(owns(project, name, path) for name, path in checkouts.items())
     for repo in project.profile["repositories"]:
+        if factory_run and repo['id'] not in checkouts:
+            continue
         root = Path(checkouts.get(repo["id"], project.repo_path(repo["id"])))
         result[repo["id"]] = {"head": git(root, "rev-parse", "HEAD"), "branch": git(root, "branch", "--show-current"),
                               "index": digest(git(root, "ls-files", "--stage", "-z")),
                               "files": files(root)}
         parked = project.repo_path(repo["id"])
-        if root.resolve() != parked.resolve():
+        if root.resolve() != parked.resolve() and not owns(project, repo['id'], root):
             result[repo["id"] + ":parked"] = {"head": git(parked, "rev-parse", "HEAD"),
                                                "index": digest(git(parked, "ls-files", "--stage", "-z")),
                                                "branch": git(parked, "branch", "--show-current"), "files": files(parked)}
@@ -59,10 +63,20 @@ def guard(before, after, manifest, stage, *, allow_commits=False, custom=None):
         raise WorkflowError("Scope violation; changes retained for inspection:\n" + "\n".join(failures))
     return changed
 
-def prepare(project, manifest):
+def prepare(project, manifest, *, strategies=None):
     from .state import lock
-    with lock(project.config / "local/repo-ops.lock", wait=True):
-        return _prepare(project, manifest)
+    strategies = strategies or {r['id']: project.repository(r['id'])['checkout_strategy'] for r in manifest['repositories']}
+    factory_rows = [r for r in manifest['repositories'] if strategies[r['id']] == 'factory']
+    result = {}
+    if factory_rows:
+        from .factory import allocate
+        result.update(allocate(project, manifest['task'], unattended=True, manifest=dict(manifest, repositories=factory_rows)))
+    local_rows = [r for r in manifest['repositories'] if strategies[r['id']] != 'factory']
+    if local_rows:
+        with lock(project.config / 'local/repo-ops.lock', wait=True):
+            result.update(_prepare(project, dict(manifest, repositories=local_rows)))
+    return result
+
 
 def _prepare(project, manifest):
     result = {}
@@ -142,6 +156,12 @@ def deliver(project, manifest, state, save, *, pull_requests=False):
         with __import__('contextlib').ExitStack() as stack:
             from .state import lock
             stack.enter_context(lock(project.config / "local/repo-ops.lock", wait=True))
+            from . import factory
+            factory_owned = factory.owns(project, name, root)
+            remote_url = repo['remote']
+            if factory_owned:
+                stack.enter_context(lock(factory.safe(factory.root(project), 'repo-ops.lock'), wait=True))
+                remote_url = factory._register(project, [name])[name]['push']
             head = git(root, "rev-parse", "HEAD")
             intent = progress.get("intent")
             if not progress.get("commit") and intent and head != intent["baseline_head"]:
@@ -191,12 +211,12 @@ def deliver(project, manifest, state, save, *, pull_requests=False):
             if git(root, "diff", "--cached", "--name-only"):
                 raise WorkflowError(f"{name}: foreign index changes prevent delivery")
             # Query failure is an error, never proof of a missing remote branch.
-            remote = git(root, "ls-remote", "--heads", repo["remote"], f"refs/heads/{branch}")
+            remote = git(root, "ls-remote", "--heads", remote_url, f"refs/heads/{branch}")
             remote_head = remote.split()[0] if remote else None
             if remote_head != progress["commit"]:
                 if progress.get("pushed"):
                     raise WorkflowError(f"{name}: remote branch diverged after push")
-                git(root, "push", repo["remote"], f"HEAD:refs/heads/{branch}")
+                git(root, '-c', 'remote.origin.mirror=false', "push", remote_url, f"HEAD:refs/heads/{branch}")
                 crash_after("push")
             progress["pushed"] = True; save()
         if pull_requests:
@@ -209,7 +229,9 @@ def deliver(project, manifest, state, save, *, pull_requests=False):
     return state.get("delivery", {})
 
 def worktrees(project):
-    return {r["id"]: git(project.repo_path(r["id"]), "worktree", "list", "--porcelain") for r in project.profile["repositories"]}
+    from .factory import worktrees as allocations
+    return {'local': {r['id']: git(project.repo_path(r['id']), 'worktree', 'list', '--porcelain') for r in project.profile['repositories']},
+            'allocations': allocations(project)}
 
 def sync_base(project, names):
     from .state import lock

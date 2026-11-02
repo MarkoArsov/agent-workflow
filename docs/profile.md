@@ -51,3 +51,8 @@ saved run bindings are not rewritten by this profile default.
     Each task gets its own branch and worktree by default. Specify commits the
     complete planning contract there before asking for implementation approval.
     Setup can explicitly disable plan commits or select another checkout strategy.
+
+Repository `checkout_strategy` also accepts `factory`. Interactive use preserves
+this choice; new unattended CLI runs select factory for all participating
+repositories. Read-only companions get detached factory checkouts. Existing run
+allocations stay frozen. See [isolated execution](isolation.md).

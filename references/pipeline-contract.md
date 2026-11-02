@@ -181,3 +181,15 @@ When product work already exists, failed green checks feed implementation correc
 final verification is still mandatory. Requirements/account/authorization decisions,
 assertion changes, foreign edits and exhausted budgets remain stops. Save original
 files, classifications, diffs and review/check evidence in contract-reviews.
+
+## Factory and execution boundary
+
+New unattended tasks select factory checkouts; interactive strategies remain
+configurable. Effective strategies are bound into claims and state. Resume keeps
+its recorded allocation, including legacy local semantics. Factory snapshots guard
+the task-owned writable and detached companion trees, independent of user clones.
+Container mode requires those factory receipts and a preflight-pinned image ID.
+It covers AI attempts, independent repair/review attempts, custom commands, named
+checks, verify and environment services. Runtime guards and selected delivery stay
+host-side. Policy/bindings contain API variable names, never their values. See
+[isolated execution](../docs/isolation.md) for mounts, failure and cleanup semantics.

@@ -76,15 +76,37 @@ Write a small facts JSON using the task analysis already performed:
 
 Use only selected AI stages, plus `specify` for an informational planning recommendation.
 Size is `small|medium|large`; risk is `low|standard|high`. Missing facts retain balanced
-choices. `demanding_stages` optionally narrows stage-specific escalation. `routes`
-optionally records explicit user route arrays. Mechanical stages are ignored.
+choices. `demanding_stages` optionally narrows stage-specific capability escalation.
+`complexity` accepts `simple`, `routine` (default) or `complex`. `stage_facts` maps
+selected executable AI stages to overrides of kind, size, risk, uncertainty,
+complexity and test counts. Absent keys inherit task facts; one stage's overrides
+never affect another. Unknown stages/fields, invalid types/enums and negative or
+nonfinite counts are rejected. Mechanical stages are ignored.
+
+`routes` records attributable user/project overrides, not planner preferences.
+`route_origins` can attribute each explicit stage as `user-task-route`, `project-pin`
+or `global-pin`; absent legacy attribution is `legacy-explicit-route`. Metadata
+records an origin, not proof of approval. Put planner ideas in `suggested_routes`,
+validated route arrays that never pin, bypass availability, change capability,
+provider or lineage constraints, or override pins. A suitable suggestion breaks
+remaining ties after reviewed rank decisions.
 
 Run `models evaluate --input facts.json --output model-selection.json` once. The
-normal output is concise; `--verbose` shows provenance. There are no network,
+normal output is concise; `--verbose` shows provenance and bounded per-stage
+`details`: effective facts/sources, band, effort mode/mapping, route source,
+eligibility/exclusions, unresolved conditions, provider/lineage constraints and
+ordered fallbacks. Route sources distinguish user-task-route, project-pin,
+global-pin, legacy-explicit-route, retained-default and adaptive-selection. A pin
+or retained default is never presented as a new adaptive recommendation. There are no network,
 provider or extra model calls. No effort question or extra approval gate is added.
 Small low-risk docs/config use the fast band; routine work uses strong; uncertainty,
-high risk and large multi-repository work use deep for affected stages. Four planned
-test files or 300 expected test lines escalate test authoring. Numeric facts must be
+high risk and large multi-repository work use deep for affected stages.
+Capability and effort are independent: routine high-risk review can require deep
+capability with balanced effort. Simple maps to simple effort, routine to balanced,
+and complex/uncertain to demanding. Missing or unsupported reviewed effort mappings
+omit the argument with an explanation; automatic routes never add xhigh/max/ultra. Four planned
+test files or 300 expected test lines produce a size advisory; they do not by
+themselves escalate capability or effort. Numeric facts must be
 estimates from the plan, not invented certainty. Higher effort is not always better;
 use reviewed model-specific mappings. Maximum levels are never selected automatically.
 
@@ -98,7 +120,9 @@ Legacy custom entries without lineage remain valid: an exact reviewed registry
 match can supply lineage, otherwise it stays unknown with `unknown-lineage` when
 independence cannot be established. Hosting the same lab through another CLI does
 not make it independent. Advisories do not block execution or rewrite explicit
-pins. Old 1.0 snapshots remain validated against their own recorded routes/hash.
+pins. Old 1.0 and 1.1 snapshots remain validated against their own recorded routes/hash.
+Evaluator 1.2 changes selection semantics only for new evaluations; approved tasks
+are never re-evaluated or rewritten during a package upgrade.
 
 For a full plan, evaluate the executable AI stages and copy the saved result into
 `pipeline.json.model_selection` and its `routes` into `pipeline.json.routes`.
@@ -113,6 +137,37 @@ missing effort metadata uses a valid host default; it does not block work. Saved
 snapshots validate against their own recorded routes, not today's defaults. Changed
 facts or routes require a new snapshot and normal plan revision. Runtime never re-runs
 selection on approved plans. Aliases remain mutable; inspect actual execution reports.
+
+## Stage-specific example
+
+A large but routine test suite stays strong/balanced even beside uncertain work:
+
+```json
+{
+  "stages": ["implement-tests", "implement", "review"],
+  "kind": "code",
+  "uncertain": true,
+  "test_lines": 650,
+  "stage_facts": {
+    "implement-tests": {"complexity": "routine", "uncertain": false},
+    "implement": {"complexity": "complex"},
+    "review": {"risk": "high", "complexity": "routine", "uncertain": false}
+  }
+}
+```
+
+Implementation uses deep/demanding; tests use strong/balanced with a size advisory;
+review requires deep capability but balanced effort. Exact models and argument
+values still require reviewed suitability and host effort evidence. This is a
+resource-use policy, not measured subscription or price optimization. Actual usage
+and cost remain unknown without provider evidence.
+
+To release profile route pins for later tasks, move their preference arrays into
+project `defaults` and explicitly list the released stages (including `default` if
+used) in project `adaptive_stages`. Keep the chosen provider subset. A missing
+catalogue retains valid defaults with a warning; no configured route is unresolved,
+and newly required capabilities still need evidence. Do not manufacture catalogue
+access or add effort arguments without reviewed support.
 
 ## Independent distribution
 

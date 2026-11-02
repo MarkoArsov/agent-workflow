@@ -18,6 +18,10 @@ class RunnerTests(WorkspaceTest):
             "repositories": [{"id": "app", "checkout_strategy": "current-checkout"}],
             "pipeline": {"routes": {"default": [{"provider": "codex", "model": "fixture-model"}]}}})
         self.git(root, "add", "."); self.git(root, "commit", "-m", "Configure fixture")
+        # Non-TTY CLI runs use factory checkouts and therefore need a real base.
+        remote = self.bare_remote("runner-base")
+        self.git(root, "remote", "add", "origin", str(remote))
+        self.git(root, "push", "origin", "main")
         self.scenario = self.root / "scenario.json"
         write_json(self.scenario, steps)
         os.environ["WORKFLOW_TEST_SCENARIO"] = str(self.scenario)
@@ -54,7 +58,7 @@ class RunnerTests(WorkspaceTest):
         root = self.fixture([
             {"writes": {"test_app.py": "import unittest\nfrom app import VALUE\nclass Behavior(unittest.TestCase):\n def test_behavior(self): self.assertEqual(VALUE, 2)\n"}},
             {"writes": {"app.py": "VALUE = 2\n"}}, {}])
-        result = runner.run(self.project, self.plan)
+        result = runner.run(self.project, self.plan, unattended=False)
         self.assertEqual(result["status"], "complete")
         self.assertEqual(result["completed"], self.plan["stages"])
         self.assertEqual(len({c["pid"] for c in self.calls()}), 3)
@@ -67,11 +71,11 @@ class RunnerTests(WorkspaceTest):
     def test_exact_session_input_resume(self):
         self.fixture([{"session": "asking-session", "report": {"status": "needs_input", "question": "Keep the existing behavior?"}}, {}],
                      stages=["implement"])
-        result = runner.run(self.project, self.plan)
+        result = runner.run(self.project, self.plan, unattended=False)
         self.assertEqual(result["status"], "needs_input")
         with self.assertRaisesRegex(WorkflowError, "needs input"):
-            runner.run(self.project, self.plan, resume=True)
-        result = runner.run(self.project, self.plan, resume=True, answer="Yes, keep it.")
+            runner.run(self.project, self.plan, resume=True, unattended=False)
+        result = runner.run(self.project, self.plan, resume=True, answer="Yes, keep it.", unattended=False)
         self.assertEqual(result["status"], "complete")
         self.assertIn("asking-session", self.calls()[1]["argv"])
         self.assertIn("resume", self.calls()[1]["argv"])
@@ -81,7 +85,7 @@ class RunnerTests(WorkspaceTest):
         self.fixture([{"error": "model not available"}, {}], stages=["implement"])
         self.plan["routes"] = {"default": [{"provider": "codex", "model": "unavailable"},
                                            {"provider": "codex", "model": "fallback"}]}
-        result = runner.run(self.project, self.plan)
+        result = runner.run(self.project, self.plan, unattended=False)
         self.assertEqual(result["status"], "complete")
         self.assertEqual(result["attempts"][0]["classification"], "model")
         self.assertIn("fallback", self.calls()[1]["argv"])
@@ -90,7 +94,7 @@ class RunnerTests(WorkspaceTest):
     def test_out_of_scope_write_blocks_and_retains_evidence(self):
         root = self.fixture([{"writes": {"unapproved.txt": "retained"}}], stages=["implement"])
         with self.assertRaisesRegex(WorkflowError, "Scope violation"):
-            runner.run(self.project, self.plan)
+            runner.run(self.project, self.plan, unattended=False)
         self.assertEqual((root / "unapproved.txt").read_text(), "retained")
         self.assertEqual(state.read(self.project, "sample")["status"], "failed")
 
@@ -98,16 +102,16 @@ class RunnerTests(WorkspaceTest):
         self.fixture([{"writes": {"test_app.py": "import unittest\nfrom app import VALUE\nclass Behavior(unittest.TestCase):\n def test_behavior(self): self.assertEqual(VALUE, 2)\n"}},
                       {"writes": {"test_app.py": "import unittest\nclass Behavior(unittest.TestCase):\n def test_behavior(self): self.assertTrue(True)\n"}}])
         with self.assertRaisesRegex(WorkflowError, "frozen by implement-tests"):
-            runner.run(self.project, self.plan)
+            runner.run(self.project, self.plan, unattended=False)
 
     def test_profile_change_requires_explicit_rebind(self):
         self.fixture([{"error": "temporary fixture failure"}, {}], stages=["implement"])
-        self.assertEqual(runner.run(self.project, self.plan)["status"], "failed")
+        self.assertEqual(runner.run(self.project, self.plan, unattended=False)["status"], "failed")
         self.project.profile["tracking"] = {"provider": "github"}
         write_json(self.project.config / "project.json", self.project.profile)
         with self.assertRaisesRegex(WorkflowError, "rebind"):
-            runner.run(self.project, self.plan, resume=True)
-        result = runner.run(self.project, self.plan, resume=True, rebind=True)
+            runner.run(self.project, self.plan, resume=True, unattended=False)
+        result = runner.run(self.project, self.plan, resume=True, rebind=True, unattended=False)
         self.assertEqual(result["status"], "complete")
         self.assertEqual(len(result["revisions"]), 1)
         self.assertIn(".plovi/project.json", result["initial_dirty"]["app"])
@@ -116,7 +120,7 @@ class RunnerTests(WorkspaceTest):
         self.fixture([{"writes": {"test_app.py": "import unittest\nfrom app import VALUE\nclass Behavior(unittest.TestCase):\n def test_behavior(self): self.assertEqual(VALUE, 2)\n"}},
                       {"writes": {"app.py": "VALUE = 2\n", "test_extra.py": "# Unverified new test\n"}}])
         with self.assertRaisesRegex(WorkflowError, "frozen by implement-tests"):
-            runner.run(self.project, self.plan)
+            runner.run(self.project, self.plan, unattended=False)
 
     def green_only(self, steps):
         root = self.fixture(steps)
@@ -128,8 +132,8 @@ class RunnerTests(WorkspaceTest):
         passing = "import unittest\nfrom app import VALUE\nclass Behavior(unittest.TestCase):\n def test_behavior(self): self.assertEqual(VALUE, 1)\n def test_moved(self): self.assertTrue(VALUE)\n"
         self.green_only([{"session": "asking-session", "writes": {"test_app.py": passing},
                           "report": {"status": "needs_input", "question": "Keep retrying the local stack?"}}, {}, {}, {}])
-        self.assertEqual(runner.run(self.project, self.plan)["status"], "needs_input")
-        result = runner.run(self.project, self.plan, resume=True, answer="Yes.")
+        self.assertEqual(runner.run(self.project, self.plan, unattended=False)["status"], "needs_input")
+        result = runner.run(self.project, self.plan, resume=True, answer="Yes.", unattended=False)
         self.assertEqual(result["status"], "complete")
         evidence = result["stage_evidence"]["implement-tests"]
         self.assertEqual((evidence["problems"], evidence["checks"][0]["phase"]), ([], "green"))
@@ -137,7 +141,7 @@ class RunnerTests(WorkspaceTest):
 
     def test_green_only_test_stage_must_change_test_paths(self):
         self.green_only([{}])
-        result = runner.run(self.project, self.plan)
+        result = runner.run(self.project, self.plan, unattended=False)
         self.assertEqual(result["status"], "failed")
         self.assertIn("implement-tests changed no declared test_paths", result["stage_evidence"]["implement-tests"]["problems"])
 
@@ -166,7 +170,7 @@ class RunnerTests(WorkspaceTest):
                 write_json(self.scenario, [behavior])
             self.plan["limits"]["inactivity_seconds"] = 1
             self.plan["limits"]["tool_timeout_seconds"] = 1
-            result = runner.run(self.project, self.plan)
+            result = runner.run(self.project, self.plan, unattended=False)
             self.assertEqual(result["status"], "failed")
             self.assertEqual(result["attempts"][0]["classification"], expected)
 
@@ -180,7 +184,7 @@ class RunnerTests(WorkspaceTest):
             "command": {"argv": [sys.executable, "-c", "from pathlib import Path; Path('receipt.py').write_text('DONE = True\\n')"]},
             "checks": ["behavior"]}])
         self.plan["stages"].append("receipt")
-        self.assertEqual(runner.run(self.project, self.plan)["status"], "complete")
+        self.assertEqual(runner.run(self.project, self.plan, unattended=False)["status"], "complete")
         self.assertIn("CUSTOM_PROJECT_SKILL", self.calls()[0]["prompt"])
 
     def test_manifest_rejects_missing_outcome_check_and_stage_order(self):

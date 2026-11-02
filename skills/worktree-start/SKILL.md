@@ -43,3 +43,9 @@ existing work merely to retrofit the rule.
 
 New setup profiles default to worktree; explicit setup choices are honored and
 legacy approved plans retain their recorded checkout strategy. Missing planning.commit_plans means true.
+
+Explicit factory strategy allocates from independent user-data mirrors at the
+verified remote base, with receipt-owned paths and branches. Selected read-only
+companions use detached factory checkouts during unattended execution. Never
+adopt a mirror common directory without its validated allocation receipt. Ordinary
+interactive strategies and existing saved allocations keep their original rules.

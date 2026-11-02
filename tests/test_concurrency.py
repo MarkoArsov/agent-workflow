@@ -47,7 +47,8 @@ class ConcurrencyTests(HardeningTest):
             plan["repositories"][0].update(branch=f"feature/{task}", paths=[pattern])
             path = self.manifest_path.parent / f"{task}.json"; write_json(path, plan); plans.append(path)
             scenario = self.root / f"{task}-scenario.json"; write_json(scenario, [{"barrier_port": port}])
-            checkout = root / self.project.profile["git"]["worktree_directory"] / task / "app"
+            from plovi.factory import root as factory_root
+            checkout = factory_root(self.project) / "worktrees" / task / "app"
             scenarios[str(checkout)] = str(scenario)
         self.env["WORKFLOW_TEST_SCENARIOS"] = json.dumps(scenarios)
         # Exercise the actual detach path with separate provider journals.
@@ -71,12 +72,12 @@ class ConcurrencyTests(HardeningTest):
 
     def test_same_task_and_current_checkout_conflicts_fail_without_waiting(self):
         server = self.barrier()
-        self.fixture([{"barrier_port": server.getsockname()[1]}]); self.save_plan()
+        self.fixture([{"barrier_port": server.getsockname()[1]}]); self.plan["repositories"][0]["branch"]="feature/sample"; self.save_plan()
         first = self.launch(self.manifest_path); connection = self.accept(server)
         same = self.task_cli("run", self.manifest_path, "--no-wait")
         self.assertNotEqual(same.returncode, 0)
         self.assertRegex(same.stdout + same.stderr, r"lock|owns|active|conflict")
-        other = json.loads(self.manifest_path.read_text()); other["task"] = "other"
+        other = json.loads(self.manifest_path.read_text()); other["task"] = "other"; other["repositories"][0]["branch"] = "feature/other"
         path = self.manifest_path.parent / "other.json"; write_json(path, other)
         conflict = self.task_cli("run", path, "--no-wait")
         self.assertNotEqual(conflict.returncode, 0)
@@ -106,7 +107,7 @@ class ConcurrencyTests(HardeningTest):
     def test_input_pause_releases_task_lock(self):
         from plovi import runner
         self.fixture([{"session": "pause", "report": {"status": "needs_input", "question": "Proceed?"}}])
-        self.assertEqual(runner.run(self.project, self.plan)["status"], "needs_input")
+        self.assertEqual(runner.run(self.project, self.plan, unattended=False)["status"], "needs_input")
         with state.lock(state.directory(self.project, "sample") / "runner.lock"):
             pass
 

@@ -82,7 +82,7 @@ class Store:
         return [read(self.global_file, EMPTY), read(self.project, EMPTY) if self.project else EMPTY]
 
     def effective(self, layers=None):
-        return resolve_settings([self.baseline, *(layers if layers is not None else self.layers())], self.providers, self.legacy)
+        return resolve_settings([self.baseline, *(layers if layers is not None else self.layers())], self.providers, self.legacy, origins=["built-in", "global", "project"])
 
     def evaluate(self, facts, overrides=None):
         directory = Path(__file__).parent
@@ -99,7 +99,7 @@ class Store:
                 observed = datetime.fromisoformat(row.get("observed_at", ""))
                 if observed.tzinfo is None or (datetime.now(timezone.utc) - observed).days > policy["stale_days"] or row.get("refresh_failed"):
                     notice = "Model catalogue is stale or incomplete; run update-models when convenient."
-            if not catalogue:
+            if not catalogue or not catalogue.get('providers'):
                 notice = "No model catalogue; retaining configured routes. Run update-models when convenient."
         except (ValueError, TypeError, KeyError, OSError):
             catalogue = {}
@@ -118,6 +118,8 @@ class Store:
                     layers[idx] = validate_settings(overrides[scope])
         result = evaluate(registry, policy, catalogue, self.effective(layers), facts)
         if notice:
+            if not any(result['routes'].values()):
+                notice = notice.split(';')[0] + '; no route could be resolved. Run update-models and configure a reviewed route.'
             result["notice"] = notice
             result["snapshot_hash"] = fingerprint({k: v for k, v in result.items() if k != "snapshot_hash"})
         return result
@@ -210,5 +212,6 @@ def summary(result):
     rows = []
     for stage, routes in result["routes"].items():
         route = routes[0] if routes else {}
-        rows.append({"stage": stage, "route": route, "fallbacks": routes[1:], "reason": result["reasons"][stage]})
+        rows.append({"stage": stage, "route": route, "fallbacks": routes[1:], "reason": result["reasons"][stage],
+                     **{k: result.get('details', {}).get(stage, {}).get(k) for k in ('required_band', 'effort_mode', 'route_source')}})
     return {"stages": rows, "unresolved": result["unresolved"], "advisories": result["advisories"], **({"notice": result["notice"]} if result.get("notice") else {})}

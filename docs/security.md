@@ -10,7 +10,7 @@ question: What does plovi protect, and what must your environment protect?
     - The orchestrator guards outcomes: writable paths, frozen tests, secrets and blocking rules, and delivery.
     - Every external action beyond the selected delivery stages needs its own authorization.
     - Interactive trusted mode relies on configured access and post-stage checks. It is not operating-system containment.
-    - Isolation, network egress, scoped credentials, branch protection, and central telemetry are your environment's job.
+    - Container isolation is optional and experimental. Egress filtering, scoped credentials, branch protection and central telemetry remain external controls.
 
 ## What the orchestrator enforces
 
@@ -53,9 +53,9 @@ These are gaps or external controls on the [scorecard](scorecard.md). plovi docu
 
 | Control | Why | Checkpoint |
 |---|---|---|
-| Operating-system isolation | Run unattended trusted stages inside a container or VM, so a misbehaving agent can't reach beyond the project. | EXE-1 |
+| Operating-system isolation | Review the experimental container boundary or supply your own VM; engine/image trust and writable workspace risks remain. | EXE-1 |
 | Network egress allowlisting | Restrict provider, package, and source-control hosts. The orchestrator does not control network access. | EXE-2 |
-| Scoped, short-lived credentials | Agents inherit host logins today. Issue per-task or per-stage credentials where you can, and audit their use. | ORG-3 |
+| Scoped, short-lived credentials | Mode none uses host access. Container mode mounts only opted-in configs and named API keys; those remain readable by the agent. | ORG-3 |
 | Branch protection and named approvers | The orchestrator never approves or merges, but only source control can require that a named human does. | REV-1 |
 | Production access in layers | Identity, database, network, and audit controls around anything beyond staging. | ORG-4 |
 | Central telemetry | Run journals stay local. Export them if you need organization-wide monitoring. | PST-2 |
@@ -71,3 +71,6 @@ These are gaps or external controls on the [scorecard](scorecard.md). plovi docu
     trusted execution. Size and protected-path approvals bind the exact task diff.
     Distinct worktree tasks can run concurrently with non-overlapping claims;
     shared current-checkout tasks wait for ownership to be released.
+
+See [isolated execution](isolation.md) for factory ownership, container mounts,
+explicit degraded fallback and the limits of network off. Mode none adds no OS boundary.

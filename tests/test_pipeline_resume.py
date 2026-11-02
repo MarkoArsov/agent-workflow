@@ -6,7 +6,7 @@ from plovi import runner, state
 class PipelineResumeTests(HardeningTest):
     def test_pipeline_resumes_saved_output_without_losing_manifest(self):
         self.fixture([{}]);self.save_plan()
-        saved=runner.run(self.project,self.plan)
+        saved=runner.run(self.project,self.plan, unattended=False)
         saved.update(status='interrupted',completed=[],active_stage='implement',stage_before=saved['baseline'],stage_evidence={})
         state.save(state.directory(self.project,'sample'),saved)
         result=self.task_cli('pipeline','sample','--no-watch','--json')

@@ -46,6 +46,7 @@ class LaunchRecoveryTests(HardeningTest):
     def test_repeated_pipeline_start_reuses_worker_and_observer_is_read_only(self):
         from plovi import state
         self.fixture([{'sleep':3}])
+        self.plan['repositories'][0]['branch']='feature/sample'
         self.save_plan()
         first=self.task_cli('pipeline',self.manifest_path,'--no-watch','--json',check=True)
         result=json.loads(first.stdout)
@@ -70,7 +71,7 @@ class LaunchRecoveryTests(HardeningTest):
         local=self.project.config/'local';local.mkdir(exist_ok=True)
         (local/'provider-identities.json').write_text(json.dumps({'codex':{'config_env':{'CODEX_HOME':str(self.home/'codex')}}}))
         with self.assertRaisesRegex(WorkflowError,'identity configuration changed'):
-            runner.run(self.project,self.plan)
+            runner.run(self.project,self.plan, unattended=False)
         self.assertEqual(len(self.calls()),1)
 
     def test_required_unavailable_identity_stops_before_inference(self):
@@ -79,7 +80,7 @@ class LaunchRecoveryTests(HardeningTest):
         local=self.project.config/'local';local.mkdir(exist_ok=True)
         (local/'provider-identities.json').write_text(json.dumps({'codex':{'verification':'required'}}))
         with self.assertRaisesRegex(WorkflowError,'cannot expose a verified account'):
-            runner.run(self.project,self.plan)
+            runner.run(self.project,self.plan, unattended=False)
         self.assertEqual(self.calls(),[])
 
     def test_status_reports_new_launch_instead_of_stale_terminal_state(self):
@@ -102,7 +103,7 @@ class LaunchRecoveryTests(HardeningTest):
         from plovi import state
         from plovi.util import write_json
         self.fixture([{'sleep':1}])
-        runner.run(self.project,self.plan)
+        runner.run(self.project,self.plan, unattended=False)
         root=state.directory(self.project,'sample')
         value=json.loads((root/'state.json').read_text());value['status']='cancelled'
         write_json(root/'state.json',value)
@@ -128,12 +129,12 @@ class LaunchRecoveryTests(HardeningTest):
     def test_foreign_edit_to_saved_output_stops_before_another_request(self):
         from plovi import runner,state
         root=self.fixture([{'writes':{'owned.py':'VALUE = 1\n'}}])
-        value=runner.run(self.project,self.plan)
+        value=runner.run(self.project,self.plan, unattended=False)
         value.update(completed=[],status='failed',active_stage='implement',stage_before=value['baseline'],stage_evidence={})
         state.save(state.directory(self.project,'sample'),value)
         (root/'owned.py').write_text('VALUE = 999\n')
         with self.assertRaisesRegex(WorkflowError,'artifacts changed'):
-            runner.run(self.project,self.plan,resume=True)
+            runner.run(self.project,self.plan,resume=True, unattended=False)
         self.assertEqual(len(self.calls()),1)
         self.assertEqual((root/'owned.py').read_text(),'VALUE = 999\n')
 
@@ -151,6 +152,7 @@ class LaunchRecoveryTests(HardeningTest):
 
     def test_watch_returns_action_exit_for_question_without_changing_run_exit_contract(self):
         self.fixture([{'report':{'status':'needs_input','question':'Proceed?'}}])
+        self.plan['repositories'][0]['branch']='feature/sample'
         self.save_plan()
         started=self.task_cli('run',self.manifest_path,check=True)
         self.assertEqual(json.loads(started.stdout)['status'],'needs_input')

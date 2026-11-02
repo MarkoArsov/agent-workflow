@@ -48,6 +48,10 @@ def lease(project, name, checkouts, cancel=None):
     root.mkdir(parents=True, exist_ok=True)
     lock_id = config.get("lock_id", project.profile["project"]["id"] + "-" + name)
     services, exported = [], {}
+    from . import isolation
+    context = isolation.active.get()
+    if context and context.get('mode') == 'container':
+        isolation.ensure_network(context)
     with lock(user_data() / "environment-locks" / (lock_id + ".lock")):
         (root / "release.json").unlink(missing_ok=True)
         cancelled = lambda: (root / "release.json").exists() or bool(cancel and cancel())
@@ -59,12 +63,13 @@ def lease(project, name, checkouts, cancel=None):
                     raise WorkflowError("Environment services must use a participating repository")
                 command = service["command"]
                 cwd = contained(Path(checkouts[service["repository"]]), command.get("cwd", "."))
-                from .identity import environment as claude_environment
+                from .isolation import environment as claude_environment
                 env = command_environment(command, exported)
                 env = claude_environment(project, cwd, inherited=env) or env
-                process = spawn(command["argv"], cwd=cwd, env=env,
+                argv, env, owned_container = isolation.wrap(context, command['argv'], cwd, env, network_alias=service['id']) if context else (command['argv'], env, None)
+                process = spawn(argv, cwd=cwd, env=env,
                                 stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-                services.append(process)
+                services.append((process, owned_container))
                 reader = Reader(process.stdout)
                 deadline = time.monotonic() + service.get("startup_timeout_seconds", 30)
                 buffer = b""; observed = []
@@ -76,7 +81,7 @@ def lease(project, name, checkouts, cancel=None):
                             while b"\n" in buffer:
                                 line, buffer = buffer.split(b"\n", 1)
                                 text = line.decode(errors="replace").removesuffix("\r")  # Windows programs end lines with \r\n
-                                observed.append(text)
+                                observed.append(isolation.redact_output(context, text, env))
                                 ready = re.search(service["ready_pattern"], text)
                                 if ready:
                                     break
@@ -89,7 +94,12 @@ def lease(project, name, checkouts, cancel=None):
                     if not ready:
                         raise WorkflowError(f"Environment service {service['id']} did not become ready within its bound")
                     for key, template in service.get("exports", {}).items():
+                        if context and context.get('mode') == 'container':
+                            from .policy import _isolation_field
+                            _isolation_field('api_key_env', [key])
                         exported[key] = template.format(**ready.groupdict())
+                    if context and context.get('mode') == 'container':
+                        context['service_names'] = sorted(exported)
                     record["services"].append({"id": service["id"], "pid": process.pid, "ready": True})
                     reader.discard()
                 finally:
@@ -99,9 +109,12 @@ def lease(project, name, checkouts, cancel=None):
             yield exported, cancelled
         finally:
             failures = []
-            for process in reversed(services):
-                try: stop(process)
-                except (OSError, subprocess.SubprocessError): failures.append(process.pid)
+            for process, owned_container in reversed(services):
+                try:
+                    stop(process)
+                    if owned_container:
+                        isolation.remove_container(context, owned_container)
+                except (OSError, subprocess.SubprocessError, WorkflowError): failures.append(process.pid)
                 finally: process.stdout.close()
             if failures:
                 record.update(status="cleanup_failed", unconfirmed_children=failures)

@@ -145,3 +145,13 @@ For user-approved autonomous implementation, include corrections.contract_review
 spec conflicts that are test-input/setup mistakes with unchanged requirements and
 assertions. Genuine decisions still stop. Do not enable it against explicit user
 preferences or present a syntactic guard as proof of semantic correctness.
+
+Model-policy 1.2: use stage_facts to distinguish complex/uncertain work from certain,
+routine tests. Missing fields inherit task facts, including uncertainty. Test file
+and line counts are size evidence/advisories, not automatic deep/high selection.
+Put planner route ideas in suggested_routes. Reserve routes for attributable user
+or project instructions, record route_origins and name that source in the plan.
+Origin metadata is not approval evidence. Preserve actual pins, provider/lineage
+constraints, reviewed model ranks and supported effort mappings. Show retained
+routes as retained, never as an adaptive recommendation. Do not re-evaluate an
+approved running plan when adopting a newer evaluator.

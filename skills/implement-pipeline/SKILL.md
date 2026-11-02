@@ -66,3 +66,10 @@ independent repair request. Apply migration only within existing user approval.
 It renews setup/red proof, preserves test authoring, and leaves implementation
 stopped. Continue with pipeline TASK only when implementation is requested. Do not
 hand-edit saved state or regenerate completed tests to bypass migration failures.
+
+New unattended tasks use factory allocations from the remote base; report the
+returned task map and preserve the user's source clone. Resume uses saved owned
+checkouts and never relocates existing work. Container policy requires factory
+receipts and a pinned local image; report degraded restricted fallback explicitly.
+Contain agent/custom/check/service execution, while the host owns guards and
+all delivery. Stop/remove only receipt-owned containers during locked recovery.

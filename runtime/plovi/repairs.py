@@ -5,9 +5,9 @@ from pathlib import Path
 import re
 import time
 from . import git_ops, providers, verification
-from .identity import environment as identity_environment
+from .isolation import environment as identity_environment
 from .manifest import matches, route_for
-from .process import execute
+from .isolation import execute
 from .util import WorkflowError, contained, json_text, read_json, write_json
 
 
@@ -49,7 +49,7 @@ def invoke(project, manifest, state, root, save, cancel, stage, prompt, route):
     events=providers.Events(); reporter=active.get()
     if reporter:reporter.emit('repair_attempt',stage=stage,provider=route['provider'],model=route['model'])
     result=execute(providers.command(route,state['execution'],prompt=prompt),cwd,env=env,
-                   input_text=None if route['provider']=='cursor' else prompt,
+                   input_text=None if route['provider']=='cursor' and state['execution'].get('isolation',{}).get('mode')!='container' else prompt,
                    timeout=manifest.get('limits',{}).get('timeout_seconds',1800),
                    inactivity=manifest.get('limits',{}).get('inactivity_seconds',300),
                    tool_timeout=manifest.get('limits',{}).get('tool_timeout_seconds',600),cancel=cancel,on_line=events.line,

@@ -522,6 +522,29 @@
       "phases": [
         "green"
       ]
+    },
+    {
+      "id": "container-protocol-health",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "-m",
+          "unittest",
+          "-v",
+          "tests.test_isolation_fixture_health.ContainerProtocolHealthTests"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 300
+      },
+      "parser": "unittest",
+      "phases": [
+        "green"
+      ],
+      "identities": [
+        "test_missing_image_reaches_runtime_inspect",
+        "test_fake_execution_is_portable_on_windows"
+      ]
     }
   ],
   "outcomes": [
@@ -565,7 +588,8 @@
     {
       "id": "c4-preflight-fallback-platforms",
       "checks": [
-        "container"
+        "container",
+        "container-protocol-health"
       ]
     },
     {

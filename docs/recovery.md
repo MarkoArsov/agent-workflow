@@ -246,3 +246,21 @@ TASK` to continue when requested. Repeating migrate with unchanged proof reuses 
 receipt without another provider request. Changed requirements, tests, identity,
 permissions, ownership, pending decisions or unconfirmed cleanup require review.
 No normal operation involves editing the saved state by hand.
+
+## Recover factory and container work
+
+Resume validates the saved factory receipt, branch and real remote identities. It
+never relocates existing local work or refreshes/rebases an active task. User-clone
+edits do not affect factory scope guards; task-owned writable and companion
+snapshots remain guarded. Changed ownership needs inspection, not automatic adoption.
+
+Container resume uses the frozen image ID and effective boundary. The task lock
+protects cleanup of retained owned containers and networks before provider replay.
+Restore an unavailable engine to complete pending cleanup; no unrelated resource
+is removed. A failed contained command never retries on the host. See
+[isolated execution](isolation.md) for fallback and safe terminal cleanup.
+
+!!! note "What changes for your workflow"
+    Inspect the saved task checkout when recovery reports ownership changes. Keep
+    its receipts, mirrors and evidence until the task is cancelled or confirmed
+    closed/merged and all work is safely retained.

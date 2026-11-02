@@ -13,7 +13,7 @@ class RunnerOutcomeTests(HardeningTest):
         self.plan["routes"] = {"default": [
             {"provider": "codex", "model": "primary"},
             {"provider": "codex", "model": "fallback"}]}
-        result = runner.run(self.project, self.plan)
+        result = runner.run(self.project, self.plan, unattended=False)
         self.assertEqual(len(self.calls()), 1, f"{kind} must not retry or use a fallback")
         self.assertEqual(result["status"], "escalated")
         escalation = result["escalation"]
@@ -55,7 +55,7 @@ class RunnerOutcomeTests(HardeningTest):
         self.plan["limits"]["attempts_per_route"] = 2
         self.plan["routes"] = {"default": [{"provider": "codex", "model": "primary"},
                                            {"provider": "codex", "model": "fallback"}]}
-        result = runner.run(self.project, self.plan)
+        result = runner.run(self.project, self.plan, unattended=False)
         self.assertEqual(result["status"], "escalated")
         self.assertEqual(result["escalation"]["kind"], "invalid_report")
         self.assertEqual(len(self.calls()), 1)
@@ -64,7 +64,7 @@ class RunnerOutcomeTests(HardeningTest):
     def test_transient_error_retries_in_fresh_session(self):
         self.fixture([{"error": "temporary transport failure"}, {}])
         self.plan["limits"]["attempts_per_route"] = 2
-        result = runner.run(self.project, self.plan)
+        result = runner.run(self.project, self.plan, unattended=False)
         self.assertEqual(result["status"], "complete")
         self.assertEqual(len(self.calls()), 2)
         self.assertNotIn("resume", self.calls()[1]["argv"])
@@ -96,13 +96,13 @@ class RunnerOutcomeTests(HardeningTest):
         self.fixture([{"writes": {"outside.txt": "retained"},
                        "report": {"status": "impossible", "reason": "Missing fixture capability"}}])
         with self.assertRaisesRegex(WorkflowError, "Scope violation"):
-            runner.run(self.project, self.plan)
+            runner.run(self.project, self.plan, unattended=False)
         self.assertEqual(state.read(self.project, "sample")["escalation"]["kind"], "impossible")
 
     def test_needs_input_resumes_exact_session(self):
         self.fixture([{"session": "question-session", "report": {"status": "needs_input", "question": "Keep one?"}}, {}])
-        self.assertEqual(runner.run(self.project, self.plan)["status"], "needs_input")
-        result = runner.run(self.project, self.plan, resume=True, answer="Yes")
+        self.assertEqual(runner.run(self.project, self.plan, unattended=False)["status"], "needs_input")
+        result = runner.run(self.project, self.plan, resume=True, answer="Yes", unattended=False)
         self.assertEqual(result["status"], "complete")
         self.assertIn("question-session", self.calls()[1]["argv"])
         self.assertEqual(self.calls()[1]["prompt"], "Yes")

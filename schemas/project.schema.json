@@ -74,7 +74,8 @@
             "enum": [
               "current-checkout",
               "feature-branch",
-              "worktree"
+              "worktree",
+              "factory"
             ]
           },
           "commands": {

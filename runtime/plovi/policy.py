@@ -16,10 +16,20 @@ _DEFAULTS = {
                'size_exempt': ['**/package-lock.json', '**/*.lock']},
     'paths': {'protected': ['.github/workflows/**', '**/migrations/**']},
     'execution': {'unattended_permission_mode': 'restricted', 'tracking_mode': 'auto'},
-    'autonomy': {'level': 'assisted'}, 'grants': {}}
+    'autonomy': {'level': 'assisted'}, 'grants': {},
+    'isolation': {'mode': 'none', 'runtime': 'auto', 'image': '', 'network': 'on',
+                  'mount_harness_config': [], 'api_key_env': []}}
 
-def defaults():
-    return copy.deepcopy(_DEFAULTS)
+def defaults(*, include_isolation=False):
+    # Preserve the original public defaults shape for older adapters.
+    result = copy.deepcopy(_DEFAULTS)
+    if not include_isolation:
+        result.pop('isolation')
+    return result
+
+
+def isolation_defaults():
+    return copy.deepcopy(_DEFAULTS['isolation'])
 
 def validate(value):
     if type(value) is not dict:
@@ -36,6 +46,9 @@ def validate(value):
             example = _DEFAULTS[section][key]
             if type(val) is not type(example):
                 raise WorkflowError(f'{path}: expected {type(example).__name__}')
+            if section == 'isolation':
+                _isolation_field(key, val)
+                continue
             if type(val) is int and not 1 <= val <= (5 if key == 'attempts_per_stage' else 10000000):
                 raise WorkflowError(f'{path}: positive bounded integer required')
             if type(val) is list:
@@ -49,7 +62,25 @@ def validate(value):
                 raise WorkflowError(f'{path}: choose assisted, ready or auto')
             if key == 'unattended_permission_mode' and val not in {'restricted', 'trusted'}:
                 raise WorkflowError(f'{path}: choose restricted or trusted')
+    isolation = dict(_DEFAULTS['isolation'], **value.get('isolation', {}))
+    if isolation['mode'] == 'container' and not isolation['image']:
+        raise WorkflowError('isolation.image is required for container mode; choose a local image')
     return value
+
+def _isolation_field(key, value):
+    enums = {'mode': {'none', 'container'}, 'runtime': {'auto', 'docker', 'podman'}, 'network': {'on', 'off'}}
+    if key in enums and value not in enums[key]:
+        raise WorkflowError(f'isolation.{key}: choose ' + ', '.join(sorted(enums[key])))
+    if key == 'image' and value and not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9._/@:+-]{0,511}', value):
+        raise WorkflowError('isolation.image: choose an image name or immutable image ID')
+    if key in {'mount_harness_config', 'api_key_env'}:
+        if any(not isinstance(v, str) for v in value) or len(value) != len(set(value)):
+            raise WorkflowError(f'isolation.{key}: unique string names required')
+        if key == 'mount_harness_config' and set(value) - {'codex', 'claude', 'cursor'}:
+            raise WorkflowError('isolation.mount_harness_config: use supported provider IDs')
+        if key == 'api_key_env' and any(not re.fullmatch(r'[A-Za-z_][A-Za-z0-9_]*', v) or v in {'HOME', 'PATH', 'LANG'}
+                or v.startswith(('GIT_', 'LD_', 'DYLD_', 'PYTHON', 'DOCKER_', 'CONTAINER_')) for v in value):
+            raise WorkflowError('isolation.api_key_env: explicit API key names required; controlled runtime variables cannot be overridden')
 
 def _unknown(path, choices):
     close = difflib.get_close_matches(path, choices, n=1)
@@ -64,7 +95,7 @@ def load(project):
     return validate(value)
 
 def effective(project, manifest=None):
-    values = defaults()
+    values = defaults(include_isolation=True)
     sources = {s: {k: 'built-in' for k in row} for s, row in values.items()}
     profile = project.profile
     for section in values:

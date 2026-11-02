@@ -66,6 +66,7 @@ nav:
       - Commands and permissions: execution.md
       - Test environments: environments.md
       - Project policy: policy.md
+      - Isolated execution: isolation.md
       - Profile reference: profile.md
   - Customize:
       - Skills and stages: customize.md

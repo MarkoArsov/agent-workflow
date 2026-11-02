@@ -39,9 +39,11 @@ def parser():
         command = sub.add_parser(name)
         command.add_argument("manifest", type=Path)
         if name == "verify":
-            command.add_argument("--phase", choices=["red", "green"], default="green")
+            command.add_argument("--phase", choices=["setup", "red", "green"], default="green")
+            command.add_argument('--check', action='append', dest='checks', help='Run only named contract checks')
         if name in {"run", "preflight"}:
             command.add_argument("--trusted", action="store_true")
+            command.add_argument('--pull-isolation-image', action='store_true', help='Consent once to pulling the configured container image')
         if name == "run":
             command.add_argument("--no-wait", action="store_true")
             command.add_argument("--unattended", action="store_true", help=argparse.SUPPRESS)
@@ -80,6 +82,8 @@ def parser():
     command = sub.add_parser("sync-base")
     command.add_argument("repositories", nargs="+")
     sub.add_parser("worktrees")
+    clean = sub.add_parser('clean', help='Remove owned clean worktrees for recorded cancelled/merged/closed tasks')
+    clean.add_argument('--older-than', help='Minimum elapsed terminal age, for example 7d')
     task = sub.add_parser("task", help="Allocate an isolated task worktree before specification")
     task.add_argument("action", choices=["start"])
     task.add_argument("name")
@@ -202,17 +206,41 @@ def execute(args):
             from . import verification, state
             saved = read_json(state.directory(project, plan["task"]) / "state.json", {})
             checkouts = saved.get("checkouts", {row["id"]: str(project.repo_path(row["id"])) for row in plan["repositories"]})
-            checks = verification.run_checks(project, plan, checkouts, phase=args.phase)
+            from . import isolation, policy
+            cfg = saved.get('policy') or policy.effective(project, plan)
+            requested = isolation.configuration(cfg)
+            ctx = None
+            if requested['mode'] == 'container':
+                ctx = isolation.build_execution_context(project, cfg, task=plan['task'], checkouts=checkouts,
+                    trusted=saved.get('execution', project.profile['execution'])['permission_mode'] == 'trusted',
+                    frozen=saved.get('execution', {}).get('isolation'))
+                if ctx.get('mode') == 'container':
+                    isolation.verify_account(project, ctx)
+            token = isolation.active.set(ctx)
+            try:
+                if args.checks and set(args.checks) - {c['id'] for c in plan['checks']}:
+                    raise WorkflowError('Unknown named check; choose IDs from the task contract')
+                checks = verification.run_checks(project, plan, checkouts, phase=args.phase, names=args.checks)
+            finally:
+                try: isolation.cancel_containers(ctx)
+                finally: isolation.active.reset(token)
             return {"status": "complete" if all(c["passed"] for c in checks) else "failed", "checks": checks}
         if args.command == "validate-plan":
             runner.binding(project, plan)
             return {"valid": True, "task": plan["task"]}
         if args.command == "preflight" or args.dry_run:
             from . import policy
-            return runner.preflight(project, plan, execution=policy.execution(project, plan, trusted=args.trusted,
-                                                                             unattended=getattr(args, "detach", False) or not sys.stdin.isatty()))
-        return runner.detach(project, args.manifest, trusted=args.trusted, no_wait=args.no_wait) if args.detach else runner.run(
-            project, plan, trusted=args.trusted, no_wait=args.no_wait, unattended=args.unattended or not sys.stdin.isatty())
+            from . import factory, git_ops
+            unattended = getattr(args, 'detach', False) or not sys.stdin.isatty()
+            saved = read_json(__import__('plovi.state', fromlist=['directory']).directory(project, plan['task']) / 'state.json', {})
+            execution = saved.get('execution') or policy.execution(project, plan, trusted=args.trusted, unattended=unattended)
+            strategies = factory.strategies(project, plan, unattended=unattended, prior=saved)
+            if 'factory' in strategies.values() and not saved:
+                git_ops.prepare(project, plan, strategies=strategies)
+            execution['checkout_strategies'] = strategies
+            return runner.preflight(project, plan, execution=execution, pull_isolation_image=args.pull_isolation_image)
+        return runner.detach(project, args.manifest, trusted=args.trusted, no_wait=args.no_wait, pull_isolation_image=args.pull_isolation_image) if args.detach else runner.run(
+            project, plan, trusted=args.trusted, no_wait=args.no_wait, unattended=args.unattended or not sys.stdin.isatty(), pull_isolation_image=args.pull_isolation_image)
     if args.command in {"status", "watch", "resume", "answer", "cancel", "retry", "approve"}:
         from . import state, runner, manifest
         project = context(args)
@@ -245,6 +273,9 @@ def execute(args):
     if args.command == "sync-base":
         from .git_ops import sync_base
         return sync_base(context(args), args.repositories)
+    if args.command == 'clean':
+        from .factory import clean
+        return {'removed': clean(context(args), older_than=args.older_than)}
     if args.command == "worktrees":
         from .git_ops import worktrees
         return worktrees(context(args))

@@ -149,3 +149,29 @@ or effort variant's score. New/recent model reporting still works for known labs
     Update models can use benchmark evidence when you configure a key. It still
     shows the exact proposed settings diff for approval. Watching does not change
     routes, ranks or saved plans, and specify never needs a benchmark request.
+
+## Choose capability and effort separately
+
+Evaluator 1.2 inherits task facts per stage and then applies that stage's
+`stage_facts` overrides. A 650-line routine test suite receives a size advisory and
+balanced effort; it does not automatically need a deep model. Complex or uncertain
+implementation can use deep/demanding alongside strong/balanced tests. High-risk,
+certain routine review can use deep capability with balanced effort. Unsupported
+or unknown effort mappings omit the argument. Maximum effort is never automatic.
+
+The snapshot's bounded `details` explain effective facts, their sources, capability,
+effort, exclusions, constraints and ordered fallbacks. Compact CLI output labels
+adaptive selection, retained defaults and explicit pins. Planner `suggested_routes`
+only break suitable remaining ties; `routes` and pins require attributable user or
+project instructions. Legacy attribution stays explicitly unknown.
+
+Project `adaptive_stages` can release profile pins after moving preferences into
+`.plovi/models.json` defaults. Missing/stale catalogues retain valid defaults with a
+precise warning. No configured route, unavailable models or missing newly required
+capabilities remain unresolved. Saved 1.0/1.1 snapshots keep their original routes
+and hashes; downstream exports use the updated portable selftest independently.
+
+!!! note "What changes for your workflow"
+    Describe difficulty per stage, including explicit uncertainty overrides where
+    appropriate. Large routine tests can use balanced effort. This saves resources
+    by policy; subscription cost and actual usage remain unknown without evidence.

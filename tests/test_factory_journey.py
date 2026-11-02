@@ -44,7 +44,7 @@ class FactoryJourneyTests(HardeningTest):
             if stage == 'implement-tests': write_json(schema, {'health': {'ready': True}})
             if stage == 'implement': raise KeyboardInterrupt()
         with patch.object(state, 'save', side_effect=observe), patch.object(runner, 'accept_evidence', side_effect=accept):
-            stopped = runner.run(self.project, self.plan)
+            stopped = runner.run(self.project, self.plan, unattended=False)
         self.assertEqual(stopped['status'], 'cancelled')
         self.assertEqual(stopped['completed'], ['implement-tests', 'implement'])
         self.assertEqual(len(self.calls()), 5)
@@ -54,7 +54,7 @@ class FactoryJourneyTests(HardeningTest):
         rows=[json.loads(line) for line in output.read_text().splitlines()]
         self.assertGreaterEqual(len(rows), 1)
         self.assertTrue(all('baseline' not in row and 'attempts' not in row for row in rows))
-        result=runner.run(self.project,self.plan,resume=True)
+        result=runner.run(self.project,self.plan,resume=True, unattended=False)
         self.assertEqual(result['status'],'complete')
         self.assertEqual(result['completed'],self.plan['stages'])
         self.assertEqual(len(self.calls()),6)
@@ -69,13 +69,13 @@ class FactoryJourneyTests(HardeningTest):
 
     def test_malformed_report_and_stalled_tool_are_bounded(self):
         self.fixture([{'report': {'status': 'complete', 'assumptions': [42]}}])
-        result=runner.run(self.project,self.plan)
+        result=runner.run(self.project,self.plan, unattended=False)
         self.assertEqual(result['status'],'escalated')
         self.assertEqual(len(self.calls()),1)
         self.root=self.root/'second';self.root.mkdir()
         self.fixture([{'tool_stall':True}])
         self.plan['limits']['tool_timeout_seconds']=1
-        result=runner.run(self.project,self.plan)
+        result=runner.run(self.project,self.plan, unattended=False)
         self.assertEqual(result['status'],'failed')
         self.assertEqual(len(self.calls()),1)
         self.assertEqual(result['attempts'][0]['classification'],'tool-stalled')

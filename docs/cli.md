@@ -134,3 +134,17 @@ Watch/pipeline exit status is 0 for completion or a still-active bounded observa
 1 for a stopped run requiring action, 2 for a command error, and 130 for interruption
 of the viewer. Existing run/answer/approval inspection contracts remain compatible;
 a question or pending gate is a successful command with a paused task. Closing a viewer leaves the detached worker running.
+
+## Factory allocations and container checks
+
+```sh
+plovi worktrees
+plovi clean --older-than 7d
+plovi verify ai-plans/example/pipeline.json --check behavior --phase green
+plovi run ai-plans/example/pipeline.json --pull-isolation-image
+```
+
+Clean uses recorded terminal lifecycle status, never age as proof of closure.
+Verify uses the saved execution boundary, including check services.
+The pull flag is one-time consent for the configured image; ordinary runs never
+pull. Container preflight pins the local image ID. See [isolated execution](isolation.md).

@@ -16,7 +16,7 @@ class LegacyMigrationTests(HardeningTest):
             checkout = Path(self.project.root)
             (checkout / 'test_baseline.py').write_text('import unittest\nclass Baseline(unittest.TestCase):\n def test_existing(self):self.assertEqual(1, 1)\n')
             self.git(checkout, 'add', 'test_baseline.py');self.git(checkout, 'commit', '-m', 'Initialize baseline regression')
-        saved = runner.run(self.project, self.plan)
+        saved = runner.run(self.project, self.plan, unattended=False)
         self.assertEqual(saved['completed'], ['implement-tests'])
         root = state.directory(self.project, 'sample')
         old = json.loads((root / 'binding.json').read_text())
