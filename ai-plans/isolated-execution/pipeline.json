@@ -498,6 +498,30 @@
       "identities": [
         "test_companion_fixture_reaches_factory"
       ]
+    },
+    {
+      "id": "compatibility-regressions",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "-m",
+          "unittest",
+          "-v",
+          "tests.test_permissions",
+          "tests.test_recovery",
+          "tests.test_concurrency",
+          "tests.test_resume_recovery_v2",
+          "tests.test_runner_lifecycle",
+          "tests.test_fake_runtime_identity"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 300
+      },
+      "parser": "unittest",
+      "phases": [
+        "green"
+      ]
     }
   ],
   "outcomes": [
@@ -627,6 +651,13 @@
       "id": "companion-fixture-setup-healthy",
       "checks": [
         "companion-fixture-health"
+      ]
+    },
+    {
+      "id": "legacy-cli-fixtures-compatible",
+      "checks": [
+        "compatibility-regressions",
+        "full-suite"
       ]
     }
   ],

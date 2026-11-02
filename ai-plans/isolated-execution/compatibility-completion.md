@@ -36,3 +36,18 @@ explicit; use bounded independent correction for settled in-scope discrepancies.
 Continue until all named checks and independent review pass, correcting failures
 inside this expanded scope. No remote publishing, native login switch, container
 pull or deployment is newly authorized by this revision.
+
+Verification follow-through: the final independent review must also inspect portable
+fake-runtime cases on Windows. A simulated container unit test must not accidentally
+require a supported real host engine, Unix-only calls or rewriting a .cmd shim as
+Python. Keep the explicit Windows unsupported diagnostic and real-engine opt-in
+separate from always-on fake protocol and argv coverage.
+
+Local verification before continuation: all 372 tests completed successfully with
+2 explicitly approved skips. The fake immutable-image regression demonstrated red
+before its fix and green afterward. Permission/account cases and recovery/launch/
+concurrency cases pass with real disposable remotes, explicit branches and owned
+checkout assertions. Strict docs, generated references/wrappers, 4526 links and
+public-content checks pass. Preserve these fixes and move through the ordinary
+implementation evidence and independent review gates. Do not redo the implementation
+or invent another product decision when the remaining work is verification.
