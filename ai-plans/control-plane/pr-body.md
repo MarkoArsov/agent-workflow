@@ -50,14 +50,27 @@ Closes #18.
   `test_setup_registers_project`, `test_add_is_idempotent_and_rejects_conflicting_root`, `test_text_format`).
 - `tests/test_rebuild_state.py`: `RebuildStateTests` (`test_rebuilt_state_gives_identical_status`,
   `test_rebuild_rejects_tampered_blob`, `test_rebuild_without_history_fails_clearly`).
-- Shared helpers in `tests/fixtures/control_plane.py`. No existing test changed.
+- `tests/test_background_runs.py`: `BackgroundRunTests` (task-branch base, refusals for
+  unpushed base and uncommitted plan, preflight never allocates, receipt root message,
+  `allowed_commands` accepted and rejected).
+- `tests/test_provider_outcomes.py`: `UsageLimitTests` (structured classification, pause
+  without same-provider fallback, resume keeps edits, inbox item) and `ReportParsingTests`.
+- Shared helpers in `tests/fixtures/control_plane.py`; the provider double gained a
+  usage-limit step. No existing test changed.
 
 ## Commands run
 
-The implementation stage replaces this section with the commands actually run and
-their results, taken from the runner's verification evidence: unittest discover,
-`.venv/bin/python -m mkdocs build --strict`, `.venv/bin/python scripts/check_links.py site`,
-generate_docs --check, generate_plugin_skills --check, check_public_content --history.
+All named checks through `plovi verify --phase green` on macOS (Python 3.14):
+
+- `python3 -m unittest discover -s tests -v`: 428 tests, OK, 1 skipped (the opt-in
+  Docker smoke test, as before).
+- Focused suites: ledger 9, operations 14, inbox 8, projects 4, rebuild-state 3,
+  background runs 7, provider outcomes 6; compatibility set 169 (1 approved skip).
+- `.venv/bin/python -m mkdocs build --strict`: built.
+- `.venv/bin/python scripts/check_links.py site`: 0 failures.
+- `python3 scripts/generate_docs.py --check`: current.
+- `python3 scripts/generate_plugin_skills.py --check`: "Native discovery wrappers are current."
+- `python3 scripts/check_public_content.py --history`: 0 findings.
 
 ## What changes for your workflow
 

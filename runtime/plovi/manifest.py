@@ -10,6 +10,8 @@ from .util import WorkflowError, contained, digest, identifier, json_text, read_
 PUBLISH = {"commit-and-push", "draft-pr"}
 PHASES = {"setup", "red", "green"}
 PARSERS = {"unittest", "pytest", "dotnet", "jest", "tap", "generic"}
+# Arguments a restricted provider allowlist can encode exactly: no spaces or shell syntax.
+SAFE_ARGUMENT = r"[a-zA-Z0-9_./:=+@%\\-]+"
 
 def load(path, project):
     path = Path(path).resolve()
@@ -197,6 +199,16 @@ def validate(value, project):
     cost = corrections.get("max_known_cost_usd")
     if cost is not None and (type(cost) not in (int, float) or not math.isfinite(cost) or cost <= 0):
         raise WorkflowError("max_known_cost_usd must be positive and finite")
+    commands = value.get("allowed_commands", [])
+    if not isinstance(commands, list):
+        raise WorkflowError("allowed_commands must be a list of {argv, cwd} entries")
+    for entry in commands:
+        if (not isinstance(entry, dict) or set(entry) - {"argv", "cwd"} or not isinstance(entry.get("argv"), list)
+                or not entry["argv"] or not all(isinstance(arg, str) and re.fullmatch(SAFE_ARGUMENT, arg) for arg in entry["argv"])):
+            raise WorkflowError("allowed_commands: each entry needs an argv list of plain arguments, without spaces or shell syntax")
+        cwd = entry.get("cwd", ".")
+        if not isinstance(cwd, str) or Path(cwd).is_absolute() or ".." in Path(cwd).parts:
+            raise WorkflowError("allowed_commands: cwd must stay inside the repository")
     return value
 
 def command_for(project, check):
@@ -219,3 +231,16 @@ def matches(path, patterns):
 
 def digest_manifest(value):
     return digest(json_text({k: v for k, v in value.items() if not k.startswith("_")}))
+
+def plan_sha256(manifest):
+    """SHA-256 over the canonical manifest (no `_` keys) and each plan file's path and bytes, in listed order."""
+    import hashlib
+    value = hashlib.sha256(json_text({k: v for k, v in manifest.items() if not k.startswith("_")}).encode("utf-8"))
+    directory = Path(manifest["_directory"])
+    for name in manifest.get("plan_files", []):
+        path = contained(directory, name)
+        if not path.is_file():
+            raise WorkflowError(f"Complete the approved plan file: {name}")
+        data = path.read_bytes()
+        value.update(b"\0" + name.encode("utf-8") + b"\0" + str(len(data)).encode("ascii") + b"\0" + data)
+    return value.hexdigest()

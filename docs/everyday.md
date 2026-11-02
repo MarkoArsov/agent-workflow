@@ -61,6 +61,32 @@ This is a limit on attention, not on tools. The orchestrator can still work unat
 
 <!-- checkpoints: EXE-5 -->
 
+## Start the day with the inbox
+
+~~~sh
+plovi inbox --format text
+~~~
+
+The inbox lists everything that needs you across your registered projects, oldest first:
+questions to answer, plans to approve, diffs over the limits, escalations, failed runs and
+interruptions. Each item ends with the next step, and that step is one plovi command.
+The inbox is computed from the [ledger](ledger.md) on every call, so it is never stale.
+
+A good daily loop:
+
+1. Read the inbox. Answer questions and approve plans first; they unblock running work.
+2. Review what finished. A completed run is ready for your review, not for merging.
+3. Retry or resume what stopped, after reading its reason.
+4. Only then start something new.
+
+`setup --apply` registers a project for the inbox. Add one set up elsewhere with
+`plovi projects add PATH`; `plovi projects list` shows which roots still exist.
+
+!!! note "What changes for your workflow"
+    Begin with `plovi inbox` instead of checking each task's status. Agents see the
+    same list with `plovi inbox` (JSON by default) and act on it through the
+    [plovi-factory skill](generated/skills.md#factory).
+
 ## Where a task waits
 
 ~~~text

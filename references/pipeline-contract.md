@@ -9,6 +9,8 @@ or a clearly trivial low-risk edit, with its reason recorded. A missing route ke
 the full contract a draft; it is not a reason to silently select manual execution.
 Run validate-plan and preflight before reporting a contract ready, distinguishing
 their actual results from planned checks. Specification still ends at approval.
+The plan hash covers the manifest and every plan file; any edit after approval
+needs a new approval before a background worker starts it.
 
 Allocate the configured task checkout with task start before writing a new plan; task/repository
 and branch/base selection does not require an existing manifest. Keep single-repo
@@ -102,6 +104,9 @@ exact repository-relative files; outputs may use declared path patterns.
 Provider reports accept complete, needs_input, blocked, spec_conflict, impossible and test_fixture_repair.
 needs_input requires a nonempty question; escalations require a nonempty reason.
 Optional assumptions are strings in an array. Malformed reports are not evidence.
+A report is the whole final message, a final ```json fence, or a last JSON line after prose.
+A provider usage limit (classified from structured errors) skips that provider's
+fallbacks and pauses the run with its reset time; resume keeps the stopped edits.
 Escalations stop attempts/fallbacks immediately; retry retains history and starts
 fresh. Ordinary resume cannot clear an escalation or pending diff approval.
 
@@ -191,5 +196,9 @@ the task-owned writable and detached companion trees, independent of user clones
 Container mode requires those factory receipts and a preflight-pinned image ID.
 It covers AI attempts, independent repair/review attempts, custom commands, named
 checks, verify and environment services. Runtime guards and selected delivery stay
-host-side. Policy/bindings contain API variable names, never their values. See
+host-side. Policy/bindings contain API variable names, never their values.
+A task with its own task-start branch starts its factory branch from that branch's
+committed head (its start commit must be on the remote base; the plan must be
+committed). Preflight and dry runs never allocate. Optional allowed_commands lists
+exact plain-argv commands a restricted run may execute; they bind with the plan. See
 [isolated execution](../docs/isolation.md) for mounts, failure and cleanup semantics.

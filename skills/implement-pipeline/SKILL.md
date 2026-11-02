@@ -33,6 +33,15 @@ configuration root with --project so a copied profile cannot cause nested worktr
 
 
 
+Launching with pipeline (or run, resume, answer, retry and approve) records the
+plan approval for the current plan hash, with the launching actor. Background
+workers refuse a plan whose current hash has no recorded approval, or a run whose
+plan changed since it started; the error names `plovi approve TASK --plan`. Show the
+person that preview and apply its hash only on their explicit approval. Agents pass
+`--actor-agent NAME --via TOOL --reason TEXT` on every changing command, and preview
+high-risk approvals before applying them by digest. Use `plovi inbox` to list what
+waits on the person, and `pause`/`resume` to stop at a stage boundary and continue.
+
 Read policy show and preflight's permission mode/source. Detached/non-TTY runs are
 restricted by default; do not silently add --trusted. Report escalated with its
 kind/reason and retry command. Retry starts fresh with a person-provided note;

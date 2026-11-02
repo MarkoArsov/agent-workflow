@@ -30,6 +30,7 @@ def read(project, task):
                     if value.get("status") in {"starting", "running", "waiting"}:
                         value["status"] = "interrupted"
                         save(directory(project, task), value)
+                        _record_interruption(project, task, value)
             except WorkflowError:
                 pass
     live = read_json(directory(project, task) / "live.json", {})
@@ -37,6 +38,15 @@ def read(project, task):
         for key in ("activity", "activity_at", "heartbeat_at", "provider", "model", "repair_round", "tool_active", "tool_started_at", "check", "passed"):
             if key in live: value[key] = live[key]
     return value
+
+def _record_interruption(project, task, value):
+    import sys
+    from . import ledger
+    try:
+        ledger.interrupted(project, task, value)
+    except (WorkflowError, OSError) as exc:
+        print(f"Warning: plovi could not record the interruption in the ledger ({exc}).", file=sys.stderr)
+
 
 def observe(project, task):
     """Read the compact observer receipt, falling back once for legacy journals."""

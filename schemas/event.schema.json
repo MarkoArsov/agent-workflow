@@ -1,0 +1,126 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "plovi ledger event",
+  "description": "One line of the append-only ledger. Required data fields per type live in runtime/plovi/ledger.py and docs/ledger.md.",
+  "type": "object",
+  "required": [
+    "v",
+    "id",
+    "at",
+    "project",
+    "subject",
+    "type",
+    "actor",
+    "reason",
+    "data"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "v": {
+      "const": 1
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+    },
+    "at": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\\.[0-9]{3}Z$"
+    },
+    "project": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{0,79}$"
+    },
+    "subject": {
+      "type": "object",
+      "required": [
+        "kind",
+        "id"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "task",
+            "schedule",
+            "execution",
+            "pr",
+            "policy",
+            "project"
+          ]
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        }
+      }
+    },
+    "type": {
+      "enum": [
+        "task.created",
+        "task.claimed",
+        "run.started",
+        "stage.started",
+        "attempt.finished",
+        "stage.finished",
+        "question.asked",
+        "question.answered",
+        "plan.proposed",
+        "plan.approved",
+        "approval.requested",
+        "approval.granted",
+        "escalation.raised",
+        "run.paused",
+        "run.resumed",
+        "run.interrupted",
+        "run.cancelled",
+        "run.finished",
+        "delivery.committed",
+        "delivery.pushed",
+        "pr.opened",
+        "policy.changed",
+        "project.registered",
+        "state.checkpoint",
+        "pause.requested",
+        "cancel.requested",
+        "project.unregistered"
+      ]
+    },
+    "actor": {
+      "type": "object",
+      "required": [
+        "kind",
+        "name"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "person",
+            "agent",
+            "plovi"
+          ]
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "via": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        }
+      }
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2000
+    },
+    "data": {
+      "type": "object"
+    }
+  }
+}

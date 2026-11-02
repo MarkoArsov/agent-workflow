@@ -17,7 +17,17 @@ plovi policy set execution.unattended_permission_mode '"restricted"' --yes
 ```
 
 `set` shows a diff and validates before saving. Enter a literal `y` interactively,
-or pass `--yes` after review. Noninteractive edits require `--yes`. Unsupported
+or pass `--yes` after review. Noninteractive edits require `--yes`, or the digest of a
+reviewed preview. Agents always preview first and apply by digest; `--yes` is refused
+when `--actor-agent` is passed:
+
+```sh
+plovi policy set limits.max_changed_files 60 --actor-agent helper --via plovi-factory --reason "Keep diffs small"
+plovi policy set limits.max_changed_files 60 --actor-agent helper --via plovi-factory --reason "Keep diffs small" --approve DIGEST
+```
+
+The preview prints the diff and its digest and changes nothing. Every saved change
+records a `policy.changed` event with the actor and reason in the [ledger](ledger.md). Unsupported
 TOML edits and stale previews leave the original file intact. No-op edits preserve
 bytes. `doctor` reports missing policy and values duplicated in the profile.
 
@@ -32,6 +42,7 @@ bytes. `doctor` reports missing policy and values duplicated in the profile.
 | `paths.protected` | `[".github/workflows/**", "**/migrations/**"]` |
 | `execution.unattended_permission_mode` | `"restricted"` |
 | `execution.tracking_mode` | `"auto"` |
+| `execution.require_plan_approval` | `true`; background workers need an approved plan hash |
 | `autonomy.level` | `"assisted"` |
 | `grants` | Empty reserved table |
 | `isolation.mode` | `"none"` |
@@ -75,6 +86,23 @@ receive no automatic path approval.
     Review policy during setup. When a run pauses for size or protected paths,
     inspect its diff and approve each pending gate. Changes to that diff need a
     fresh approval.
+
+## Plan approval for background workers
+
+With `execution.require_plan_approval = true`, the background worker that `pipeline`
+and `run --detach` start refuses a plan whose current hash has no `plan.approved`
+event, and refuses to continue a run whose plan changed since it started. Explicit
+launches approve the plan they start: `run`, `run --detach`, `pipeline`, and the
+`resume`, `answer`, `retry` and `approve` continuations record the approval first.
+Approve a plan without starting it:
+
+```sh
+plovi approve TASK --plan
+plovi approve TASK --plan --approve PLAN_SHA256
+```
+
+Set the key to `false` to let workers start any validated plan. Runs that started
+before plan approvals existed keep running.
 
 ## Tracking preference
 

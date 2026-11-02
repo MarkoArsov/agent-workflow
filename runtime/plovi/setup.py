@@ -239,4 +239,12 @@ def apply(proposal: dict, approval: str) -> dict:
             else:
                 atomic_write(path, old.decode())
         raise
-    return {"root": str(root), "changed": [p.relative_to(root).as_posix() for p, _ in paths]}
+    result = {"root": str(root), "changed": [p.relative_to(root).as_posix() for p, _ in paths]}
+    try:
+        from .project import load
+        from .registry import register
+        register(load(root, migrate=False), command="setup")
+    except WorkflowError as exc:
+        # Registration only feeds the inbox; the applied setup stays valid.
+        result["warnings"] = [f"plovi applied setup but could not register the project: {exc}"]
+    return result

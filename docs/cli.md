@@ -13,9 +13,16 @@ permissions, checks, and saved evidence. Run `plovi --help` for the complete lis
 <div class="cli-commands">
 <div class="cli-command"><code>plovi setup [path]</code><p>Preview project setup. Apply the reviewed proposal with its approval digest.</p></div>
 <div class="cli-command"><code>plovi policy show [--json]</code><p>Read effective policy and each value's source.</p></div>
-<div class="cli-command"><code>plovi policy set SECTION.KEY VALUE [--yes]</code><p>Review and save a validated TOML edit.</p></div>
+<div class="cli-command"><code>plovi policy set SECTION.KEY VALUE [--yes | --approve DIGEST]</code><p>Review and save a validated TOML edit. Agents preview, then apply by digest.</p></div>
+<div class="cli-command"><code>plovi inbox [--format text|json]</code><p>List what needs you across registered projects, oldest first, with the command that resolves each item.</p></div>
+<div class="cli-command"><code>plovi events [--task ID] [--since TIME|ID]</code><p>Read the ledger: every transition and command, with actor and reason.</p></div>
 <div class="cli-command"><code>plovi retry TASK [--note FILE]</code><p>Resolve an escalation in a fresh session, retaining history.</p></div>
-<div class="cli-command"><code>plovi approve TASK --size|--paths [--actor NAME] [--reason TEXT]</code><p>Approve the current diff gate and verify retained output.</p></div>
+<div class="cli-command"><code>plovi approve TASK --plan|--size|--paths [--approve DIGEST] [--actor NAME] [--reason TEXT]</code><p>Approve a plan by its hash, or the current diff gate and verify retained output.</p></div>
+<div class="cli-command"><code>plovi pause TASK</code><p>Stop a running task before its next stage. <code>resume</code> continues it.</p></div>
+<div class="cli-command"><code>plovi cancel TASK</code><p>Ask the owning runner to stop the task.</p></div>
+<div class="cli-command"><code>plovi projects add|list|remove</code><p>Register projects for the inbox. Removing one never deletes files.</p></div>
+<div class="cli-command"><code>plovi rebuild-state TASK</code><p>Restore a task's state cache from the ledger.</p></div>
+<div class="cli-command"><code>plovi commands [--json]</code><p>List every operation, its arguments, whether it changes anything and its risk.</p></div>
 <div class="cli-command"><code>plovi inspect</code><p>Show the project profile and effective skill sources.</p></div>
 <div class="cli-command"><code>plovi skill list</code><p>List the skills available in this project.</p></div>
 <div class="cli-command"><code>plovi validate-plan PLAN</code><p>Check a full pipeline's requirements, paths, stages and routes.</p></div>
@@ -23,8 +30,8 @@ permissions, checks, and saved evidence. Run `plovi --help` for the complete lis
 <div class="cli-command"><code>plovi migrate TASK [--apply]</code><p>Preview or apply a reviewed legacy test checkpoint, renew its proof, and leave implementation stopped.</p></div>
 <div class="cli-command"><code>plovi pipeline PLAN|TASK</code><p>Start or safely resume an approved task with a pinned runtime. Reuse an active worker and attach tracking in the current terminal. Add <code>--no-watch</code> for a tracking descriptor.</p></div>
 <div class="cli-command"><code>plovi run PLAN</code><p>Run the approved pipeline. Add <code>--detach</code> to run it in the background, <code>--no-wait</code> to refuse claim conflicts, or <code>--trusted</code> for explicit trusted execution.</p></div>
-<div class="cli-command"><code>plovi status TASK</code><p>Read the saved status and evidence for a task.</p></div>
-<div class="cli-command"><code>plovi answer TASK --file FILE</code><p>Answer the question saved by a paused task.</p></div>
+<div class="cli-command"><code>plovi status [TASK]</code><p>Read the saved status for a task, or list every task from the ledger.</p></div>
+<div class="cli-command"><code>plovi answer TASK --file FILE|--text TEXT</code><p>Answer the question saved by a stopped task.</p></div>
 <div class="cli-command"><code>plovi resume TASK</code><p>Resume a stopped task. Use <code>--rebind</code> only for an approved plan revision.</p></div>
 <div class="cli-command"><code>plovi verify PLAN</code><p>Run the plan's checks again against its current changes.</p></div>
 <div class="cli-command"><code>plovi models inspect</code><p>Inspect workflow-local model settings.</p></div>
@@ -148,3 +155,34 @@ Clean uses recorded terminal lifecycle status, never age as proof of closure.
 Verify uses the saved execution boundary, including check services.
 The pull flag is one-time consent for the configured image; ordinary runs never
 pull. Container preflight pins the local image ID. See [isolated execution](isolation.md).
+
+## Operations, actors and the ledger
+
+Every command that changes something is an operation in one registry.
+`plovi commands --json` lists each one with its arguments, whether it changes
+anything, and its risk; [the command reference](commands.md) is generated from it.
+
+```sh
+plovi commands
+plovi answer csv-export --text "Keep the column order." --reason "Product decision"
+plovi events --task csv-export --format text
+```
+
+Every changing command accepts `--reason TEXT`, `--actor-agent NAME` and `--via TOOL`
+and records an event with that actor and reason in the [ledger](ledger.md). Without
+`--actor-agent`, the actor is the person from `git config user.name`.
+
+High-risk operations, `approve` and `policy set`, preview first: without
+`--approve DIGEST` they print what would change and its digest, change nothing and
+exit 0. Your existing `approve --size|--paths` and `policy set ... --yes` keep working.
+When `--actor-agent` is passed, those shortcuts are refused and the digest is required.
+`approve --plan` always needs the plan hash.
+
+JSON stays the default output, except `status`, which keeps its human default.
+`status`, `inbox`, `events` and `projects list` accept `--format text|json`.
+`paused` is a successful stop and exits 0.
+
+!!! note "What changes for your workflow"
+    Read `plovi inbox` to see what needs you, and pass `--reason` when the why
+    matters later. Agents always pass `--actor-agent` and preview high-risk changes
+    before you approve them.

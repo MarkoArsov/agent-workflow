@@ -422,10 +422,13 @@ def recover_resume(project, manifest, state, root, *, rebind=False, replay=True)
             break
 
 
-def run(project, manifest, *, resume=False, answer=None, rebind=False, trusted=False, unattended=None, no_wait=False, retry=False, note=None, approval=None, pull_isolation_image=False):
+def run(project, manifest, *, resume=False, answer=None, rebind=False, trusted=False, unattended=None, no_wait=False, retry=False, note=None, approval=None, pull_isolation_image=False, require_plan_approval=False):
     root = journal.directory(project, manifest["task"])
     root.mkdir(parents=True, exist_ok=True)
     with journal.lock(root / "runner.lock"):
+        if require_plan_approval:
+            from .operations.plans import require
+            require(project, manifest, read_json(root / "state.json", {}))
         return _run_locked(project, manifest, root, resume=resume, answer=answer, rebind=rebind, trusted=trusted,
                            unattended=unattended, no_wait=no_wait, retry=retry, note=note, approval=approval,
                            pull_isolation_image=pull_isolation_image)
@@ -456,6 +459,11 @@ def _run_locked(project, manifest, root, *, resume, answer, rebind, trusted, una
                 and not policy.load(project).get('isolation') and not rebind):
             for kind in ('values', 'sources'):
                 bound['policy'][kind].pop('isolation', None)
+        if (prior and old_bound.get('policy') and 'require_plan_approval' not in old_bound['policy'].get('values', {}).get('execution', {})
+                and 'require_plan_approval' not in policy.load(project).get('execution', {}) and not rebind):
+            # Tasks bound before the plan-approval gate keep their original policy binding.
+            for kind in ('values', 'sources'):
+                bound['policy'][kind].get('execution', {}).pop('require_plan_approval', None)
         legacy_policy = bool(prior and old_bound and "policy" not in old_bound)
         if legacy_policy and not rebind:
             if any(policy.load(project).values()):
@@ -529,14 +537,17 @@ def _run_locked(project, manifest, root, *, resume, answer, rebind, trusted, una
             recover_resume(project, manifest, state, root, rebind=rebind,
                            replay=not retry and answer is None and prior.get("active_stage") not in prior.get("completed", []))
         state["manifest_path"] = manifest.get("_path", state["manifest_path"])
+        state["plan_sha256"] = contracts.plan_sha256(manifest)
         state["execution"] = execution
         state["policy"] = bound.get("policy", {"values": policy.defaults(), "sources": {}, "legacy": True})
         state.pop("error", None)
+        state.pop("pause_reason", None); state.pop("resets_at", None)
         state["pid"] = os.getpid()
         state["bound_rules"] = [json.loads(value) for name, value in bound.get("rules", {}).items() if name.endswith(".json")]
         write_json(root / "binding.json", bound)
         (root / "cancel.json").unlink(missing_ok=True)
         cancelled = lambda: (root / "cancel.json").exists()
+        paused = lambda: (root / "pause.json").exists()
         from .progress import Reporter, active
         launch = read_json(root / "launch.json", {})
         state["run_id"] = (launch.get("run_id") if not launch.get("claimed_at") else None) or uuid.uuid4().hex
@@ -552,13 +563,17 @@ def _run_locked(project, manifest, root, *, resume, answer, rebind, trusted, una
         from .identity import expected, fingerprint
         identity_token = expected.set(fingerprint(project))
         previous_summary = {}
+        from . import ledger
+        recorder = ledger.Recorder(project, manifest)
         def save():
             journal.save(root, state)
+            recorder.saved(state)
             fields = {key: state.get(key) for key in ("stage", "status", "completed")}
             reason = (state.get("escalation") or {}).get("reason") or state.get("error")
             if fields != previous_summary or reason:
                 reporter.emit("state_changed", **fields, reason=reason)
                 previous_summary.update(fields)
+        recorder.started(state)
         save()
         if state.get("recovered_output_attempt") != prior.get("recovered_output_attempt"):
             reporter.emit("output_recovered", stage=state.get("active_stage"))
@@ -579,10 +594,16 @@ def _run_locked(project, manifest, root, *, resume, answer, rebind, trusted, una
                     continue
                 if cancelled():
                     state["status"] = "cancelled"; save(); return state
+                if paused():
+                    # The safe point: the previous stage and its verification finished.
+                    state["status"] = "paused"; save()
+                    (root / "pause.json").unlink(missing_ok=True)
+                    return state
                 state["stage"] = stage; state["status"] = "running"
                 before = state.get("stage_before") if state.get("active_stage") == stage else None
                 before = before or git_ops.snapshot(project, state["checkouts"])
                 state["active_stage"] = stage; state["stage_before"] = before; save()
+                recorder.stage_started(state, stage)
                 if stage in contracts.PUBLISH:
                     if diff_limits.gate(project, manifest, state):
                         save(); return state
@@ -597,7 +618,7 @@ def _run_locked(project, manifest, root, *, resume, answer, rebind, trusted, una
                     git_ops.guard(before, git_ops.snapshot(project, state["checkouts"]), manifest, stage, custom=definition)
                     accept_evidence(project, manifest, stage, state, previous); save(); continue
                 retained = state.get("retained_output", {})
-                if retained.get("stage") == stage:
+                if retained.get("stage") == stage and not retained.get("partial"):
                     if diff_limits.gate(project, manifest, state):
                         save(); return state
                     evidence = verify_stage(project, manifest, stage, state, before, custom=definition, cancel=cancelled)
@@ -607,6 +628,12 @@ def _run_locked(project, manifest, root, *, resume, answer, rebind, trusted, una
                         state.pop("retained_output", None); save(); continue
                 pending = state.pop("pending_input", None)
                 feedback = None
+                if retained.get("stage") == stage and retained.get("partial"):
+                    # A usage limit stopped the last attempt; its edits stay and the next attempt continues them.
+                    state.pop("retained_output", None)
+                    feedback = {"provider": "usage_limit", "note": "The previous attempt stopped at a provider usage limit. "
+                                "Its edits are still in the checkout; continue from them."}
+                limited = set()
                 routes = contracts.route_for(project, manifest, stage)
                 if definition and definition.get("command"):
                     routes = [None]
@@ -616,6 +643,8 @@ def _run_locked(project, manifest, root, *, resume, answer, rebind, trusted, una
                 correction_limit = manifest.get("corrections", {}).get("fixture_rounds", 2)
                 for route_index, route in enumerate(routes):
                     if pending and route != pending["route"]:
+                        continue
+                    if route and route["provider"] in limited:
                         continue
                     attempts_allowed = limits.get("attempts_per_route", state["policy"]["values"]["limits"]["attempts_per_stage"])
                     for attempt in range(attempts_allowed + correction_limit):
@@ -674,6 +703,7 @@ def _run_locked(project, manifest, root, *, resume, answer, rebind, trusted, una
                         state["attempts"].append(entry)
                         reporter.emit("attempt_finished", stage=stage, attempt=index, kind=entry["failure_kind"])
                         write_json(root / "attempts" / f"{index:04d}.json", entry | {"output": result["output"]})
+                        recorder.attempt(state, entry, f"attempts/{index:04d}.json")
                         if classification == "complete" and report and report["status"] == "test_fixture_repair":
                             git_ops.guard(before, current, manifest, stage, custom=definition)
                             if state.get("red_test_files") and test_files(manifest, current) != state["red_test_files"]:
@@ -730,6 +760,19 @@ def _run_locked(project, manifest, root, *, resume, answer, rebind, trusted, una
                             state["pending_input"] = pending
                             state["status"] = "needs_input"; save(); return state
                         pending = None; answer = None
+                        if classification == "usage_limit":
+                            # Every route of this provider shares the account limit.
+                            limited.add(route["provider"])
+                            if any(r and r["provider"] not in limited for r in routes[route_index + 1:]):
+                                break
+                            changed = git_ops.changes(before, current)
+                            state["retained_output"] = {"stage": stage, "partial": True, "fingerprint": git_ops.fingerprint(current),
+                                "artifact_changes": {name: {path: current[name]["files"].get(path) for path in paths}
+                                                     for name, paths in changed.items()}}
+                            state["status"] = "paused"; state["pause_reason"] = "usage_limit"
+                            if events.resets_at is not None:
+                                state["resets_at"] = events.resets_at
+                            save(); return state
                         if classification in {"authentication", "quota", "model"}:
                             break
                         if classification != "complete" or not report or report["status"] != "complete":
@@ -750,6 +793,7 @@ def _run_locked(project, manifest, root, *, resume, answer, rebind, trusted, una
                 save(); return state
             publish_guard(project, manifest, state, cancelled)
             state["status"] = "complete"; state.pop("error", None); save()
+            (root / "pause.json").unlink(missing_ok=True)
             return state
         except (WorkflowError, OSError, KeyboardInterrupt) as exc:
             state["status"] = "cancelled" if isinstance(exc, KeyboardInterrupt) else "failed"
@@ -787,12 +831,15 @@ def detach(project, manifest_path, *, trusted=False, no_wait=False, pull_isolati
     preflight(project, manifest, execution=execution, pull_isolation_image=pull_isolation_image)
     root = journal.directory(project, manifest["task"])
     root.mkdir(parents=True, exist_ok=True)
+    # An explicit detached launch approves the plan its background worker requires.
+    from .operations.plans import self_approve
+    self_approve(project, manifest, {}, "run")
     with (root / "runner.log").open("a") as output:
         child = subprocess.Popen([sys.executable, str(package_root() / "bin/plovi"),
                                   "--project", str(project.root), "run", str(Path(manifest_path).resolve()), "--unattended",
                                   *(["--trusted"] if trusted else []), *(["--no-wait"] if no_wait else [])],
                                  stdin=subprocess.DEVNULL, stdout=output, stderr=output,
-                                 cwd=project.root, **detached())
+                                 cwd=project.root, env=dict(os.environ, PLOVI_WORKER="1"), **detached())
     # Keep the Popen object alive and reap it if the launching Python process stays up.
     import threading
     threading.Thread(target=child.wait, daemon=True).start()

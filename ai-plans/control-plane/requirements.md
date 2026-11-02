@@ -1,6 +1,7 @@
 # Requirements
 
-Approval status: revision 2 proposed, awaiting approval. Revision 1 (sections L–T)
+Approval status: revision 2 approved on 2 November 2026 for manual in-session
+implementation (person's choice: the revision changes the pipeline itself). Revision 1 (sections L–T)
 was approved on 2 November 2026 with Claude-only routes and is implemented in the
 worktree; v1/ preserves that contract. Full lane: substantive runtime,
 CLI, compatibility and concurrency changes across many components.
@@ -334,9 +335,10 @@ G1. Background runs keep the plan branch. When an unattended run selects the
 factory strategy and the task has an owned `task start` allocation for the same
 repository and branch, `factory.allocate` creates the factory task branch from
 that local branch's committed head instead of `origin/<base>`: fetch the head
-from the source clone into a task-owned mirror ref, require it to descend from
-the verified remote base commit (refuse with the fix otherwise), and record both
-`base_commit` and `task_head` in the receipt. Uncommitted or untracked files in
+from the source clone into a task-owned mirror ref, require the commit the task
+started from (the task receipt's `base_commit`) to be on the verified remote base
+so unpushed local base commits cannot enter (refuse with the fix otherwise), and
+record `base_commit`, `task_head` and `source: "task-branch"` in the receipt. Uncommitted or untracked files in
 the local worktree are never copied; if the plan directory has uncommitted
 changes the run refuses with "commit the plan first". Delivery then pushes a
 branch that contains the planning commits. Without a local allocation, behavior

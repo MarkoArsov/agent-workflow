@@ -24,7 +24,13 @@ projects/<project-id>/
 ```
 
 Each new task refreshes the remote base under a shared lock. Its receipt pins the
-base commit. Refresh updates remote-tracking refs and preserves active task heads.
+base commit. When the task already has its own `task start` branch, as every task
+planned with specify does, the factory branch starts from that branch's committed
+head instead, so the plan commits reach the pull request. The commit the task
+started from must already be on the remote base; plovi refuses unpushed base
+commits and an uncommitted plan, and never copies uncommitted files.
+`preflight` and `run --dry-run` only report the strategy; the checkout is created
+when the run starts. Refresh updates remote-tracking refs and preserves active task heads.
 Your clone's dirty files, index and branch can change while the task runs. Selected
 read-only companions also get detached factory checkouts at their remote base.
 

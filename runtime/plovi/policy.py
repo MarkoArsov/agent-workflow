@@ -15,7 +15,7 @@ _DEFAULTS = {
                'max_changed_files': 40, 'max_changed_lines': 1500,
                'size_exempt': ['**/package-lock.json', '**/*.lock']},
     'paths': {'protected': ['.github/workflows/**', '**/migrations/**']},
-    'execution': {'unattended_permission_mode': 'restricted', 'tracking_mode': 'auto'},
+    'execution': {'unattended_permission_mode': 'restricted', 'tracking_mode': 'auto', 'require_plan_approval': True},
     'autonomy': {'level': 'assisted'}, 'grants': {},
     'isolation': {'mode': 'none', 'runtime': 'auto', 'image': '', 'network': 'on',
                   'mount_harness_config': [], 'api_key_env': []}}
@@ -25,6 +25,8 @@ def defaults(*, include_isolation=False):
     result = copy.deepcopy(_DEFAULTS)
     if not include_isolation:
         result.pop('isolation')
+        # The plan-approval gate joined later; the legacy public shape omits it too.
+        result['execution'].pop('require_plan_approval')
     return result
 
 
@@ -129,14 +131,16 @@ def execution(project, manifest, *, trusted=False, unattended=False):
     if mode == 'restricted' and any(r['provider'] == 'claude' for routes in manifest.get('routes', project.profile['pipeline']['routes']).values() for r in routes):
         settings = result.setdefault('provider_settings', {}).setdefault('claude', {})
         if not settings.get('allowed_tools'):
-            from .manifest import command_for
+            from .manifest import SAFE_ARGUMENT, command_for
             tools = ['Read', 'Edit', 'Write', 'Glob', 'Grep', 'Bash(git status*)', 'Bash(git diff*)']
             for check in manifest['checks']:
                 command = command_for(project, check)
                 argv = command['argv']
-                if command.get('shell') or any(not re.fullmatch(r'[a-zA-Z0-9_./:=+@%\\-]+', arg) for arg in argv):
+                if command.get('shell') or any(not re.fullmatch(SAFE_ARGUMENT, arg) for arg in argv):
                     raise WorkflowError('Cannot encode configured check safely; supply execution.provider_settings.claude.allowed_tools')
                 tools.append('Bash(' + ' '.join(argv) + ')')
+            # Plan-named commands are bound with the plan, so its approval covers them.
+            tools += ['Bash(' + ' '.join(entry['argv']) + ')' for entry in manifest.get('allowed_commands', [])]
             settings['allowed_tools'] = list(dict.fromkeys(tools))
     return result
 
@@ -156,7 +160,8 @@ def toml(value):
         return '[' + ', '.join(toml(x) for x in value) + ']'
     raise WorkflowError('Unsupported TOML edit')
 
-def set_value(project, dotted, raw, *, yes=False):
+def plan_edit(project, dotted, raw):
+    """Compute a conservative plovi.toml edit without writing or prompting."""
     path = project.root / 'plovi.toml'
     before = path.read_bytes() if path.exists() else b''
     text = before.decode('utf-8')
@@ -171,8 +176,10 @@ def set_value(project, dotted, raw, *, yes=False):
     section, key = parts
     validate({section: {key: value}})
     validate(original)
+    from .util import digest
+    unchanged = {'changed': False, 'path': path, 'before': before, 'before_sha256': digest(before), 'diff': '', 'result': text}
     if original.get(section, {}).get(key) == value and type(original.get(section, {}).get(key)) is type(value):
-        return {'changed': False}
+        return unchanged
     newline = '\r\n' if b'\r\n' in before else '\n'
     lines = text.splitlines(keepends=True)
     start = end = None
@@ -218,14 +225,25 @@ def set_value(project, dotted, raw, *, yes=False):
     if parsed != expected:
         raise WorkflowError('Unsupported TOML edit; original preserved')
     diff = ''.join(difflib.unified_diff(text.splitlines(True), result.splitlines(True), fromfile='plovi.toml', tofile='plovi.toml'))
-    print(diff)
-    if not yes and (not sys.stdin.isatty() or input('Save reviewed policy? [y/N] ') != 'y'):
-        raise WorkflowError('Review the diff and pass --yes or enter y interactively')
+    return dict(unchanged, changed=True, diff=diff, result=result)
+
+
+def write_edit(project, edit):
     from .state import lock
     with lock(project.config / 'local/policy.lock'):
-        if (path.read_bytes() if path.exists() else b'') != before:
+        if (edit['path'].read_bytes() if edit['path'].exists() else b'') != edit['before']:
             raise WorkflowError('plovi.toml changed since preview; retry the edit')
-        atomic_write(path, result)
+        atomic_write(edit['path'], edit['result'])
+
+
+def set_value(project, dotted, raw, *, yes=False):
+    edit = plan_edit(project, dotted, raw)
+    if not edit['changed']:
+        return {'changed': False}
+    print(edit['diff'])
+    if not yes and (not sys.stdin.isatty() or input('Save reviewed policy? [y/N] ') != 'y'):
+        raise WorkflowError('Review the diff and pass --yes or enter y interactively')
+    write_edit(project, edit)
     return {'changed': True}
 
 

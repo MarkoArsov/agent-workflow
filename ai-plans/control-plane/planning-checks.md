@@ -97,3 +97,24 @@ never an import error.
   advisories large-test-scope and single-lineage. validate-plan: valid.
   preflight (from the person's terminal; this agent shell carries Claude
   credential variables that the account guard rejects): passed, trusted/profile.
+
+## Revision 2 manual implementation (approved for in-session work)
+
+Red, before product changes (`revision-red` identities, all assertion failures):
+- test_factory_branch_includes_task_branch_plan_commits: factory HEAD was the
+  remote base, not the task branch head.
+- test_preflight_and_dry_run_never_allocate: "True is not false : no receipt is
+  written" for both `preflight` and `run --dry-run`.
+- test_usage_limit_classified_from_structured_result_not_transcript:
+  'authentication' != 'usage_limit' (the exact production misclassification).
+- test_prose_then_bare_json_report_is_accepted: report was None.
+
+Green after the change: tests.test_background_runs 7/7 and
+tests.test_provider_outcomes 6/6; tests.test_providers unchanged and passing.
+Full named-check results are recorded below once `plovi verify --phase green` ends.
+
+`plovi verify --phase green` (run from the person's terminal): 15/16 passed on the
+first run, including full-suite 428 tests (1 approved skip). compatibility-regressions
+failed only because this revision added tests.test_container (opt-in Docker smoke
+skip) without an approved skip reason; the plan now carries the same reason as
+full-suite, and the rerun passed: 169 tests, 0 failures, 1 approved skip.

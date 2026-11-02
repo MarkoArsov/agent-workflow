@@ -1,5 +1,6 @@
 """Idempotent start/resume using the saved runtime and owned task checkout."""
 from pathlib import Path
+import os
 import subprocess
 import sys
 import threading
@@ -39,13 +40,17 @@ def launch(project, target, *, rebind=False, trusted=False, no_wait=False):
         if not saved:
             execution['checkout_strategies'] = strategies
         runner.preflight(project,plan,execution=execution)
+        # An explicit launch approves the plan its background worker requires.
+        from .operations.plans import self_approve
+        self_approve(project,plan,{},'pipeline')
         run_id=uuid.uuid4().hex
         launch_info={'run_id':run_id,'task':task,'at':time.time()};write_json(root/'launch.json',launch_info)
         argv=[sys.executable,str(Path(runtime['path'])/'bin/plovi'),'--project',str(project.root)]
         if saved:argv+=['resume',task,*(['--rebind'] if rebind else [])]
         else:argv+=['run',str(Path(plan['_path']).resolve()),'--unattended',*(['--trusted'] if trusted else []),*(['--no-wait'] if no_wait else [])]
         with (root/'runner.log').open('a',encoding='utf-8') as output:
-            child=subprocess.Popen(argv,cwd=project.root,stdin=subprocess.DEVNULL,stdout=output,stderr=output,**detached())
+            # The launcher recorded the plan approval; the worker enforces the gate.
+            child=subprocess.Popen(argv,cwd=project.root,stdin=subprocess.DEVNULL,stdout=output,stderr=output,env=dict(os.environ,PLOVI_WORKER='1'),**detached())
         deadline=time.monotonic()+30
         while time.monotonic()<deadline:
             current=read_json(root/'state.json',{})

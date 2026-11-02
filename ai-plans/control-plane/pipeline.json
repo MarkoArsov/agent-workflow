@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "task": "control-plane",
-  "plan_status": "revision-2-proposed-awaiting-approval",
+  "plan_status": "revision-2-approved-manual",
   "plan_files": [
     "prompt.md",
     "requirements.md",
@@ -353,7 +353,8 @@
       "parser": "unittest",
       "phases": [
         "green"
-      ]
+      ],
+      "approved_skip_reason": "Only explicitly opt-in real-engine smoke needs PLOVI_TEST_DOCKER=1 and a local prebuilt image; existing platform-specific tests retain their current conditions."
     },
     {
       "id": "full-suite",

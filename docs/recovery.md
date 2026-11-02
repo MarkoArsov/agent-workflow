@@ -63,21 +63,57 @@ Read the failing command or provider result before retrying.
 
 The orchestrator retries temporary problems and resumes saved progress. It does not silently change the approved route, or ignore a failed check.
 
-## Answer, resume, rebind, cancel
+## Answer, resume, rebind, pause, cancel
+
+Start with `plovi inbox`. It lists every question, plan, approval, escalation, failure
+and interruption that needs you, oldest first, each with the command that resolves it.
 
 ~~~sh
+plovi inbox --format text
 plovi answer csv-export --file answer.txt
+plovi answer csv-export --text "Keep the existing column order."
 plovi resume csv-export
 plovi resume csv-export --rebind
-plovi cancel csv-export
+plovi pause csv-export
+plovi cancel csv-export --reason "Superseded by csv-export-v2"
 ~~~
 
-- **Answer** resumes the exact provider session that asked. Retries and fallbacks always start fresh sessions.
+- **Answer** resumes the exact provider session that asked. Pass the answer with `--file` or `--text`, not both. Retries and fallbacks always start fresh sessions.
 - **Resume** continues from the first incomplete stage. A stage whose verified evidence still matches the current files is not repeated.
 - **Rebind** accepts a reviewed revision of the plan, profile, or skills. It archives the previous inputs and invalidates the stages they affect. Changing which repositories participate needs a new task ID.
+- **Pause** asks a running task to stop before its next stage starts, after the current attempt and its checks finish. The status becomes `paused` and the claim is released. `resume` or `pipeline` continues without repeating finished stages.
+- **Usage limit.** When the provider says your usage limit is reached, plovi does
+  not try another model from the same provider, because they share the limit. It
+  tries a route from another provider if the plan has one; otherwise the task is
+  `paused` with the reset time, and `plovi inbox` lists it. Run `plovi resume TASK`
+  after the reset. The interrupted attempt's edits stay, and the next attempt
+  continues from them.
 - **Cancel** asks the owning orchestrator to stop its own process group. A stale PID in the journal never authorizes killing a process, and one orchestrator owns each task at a time.
 
+Every one of these commands records an event with who acted and why in the [ledger](ledger.md).
+Pass `--reason` to say why; agents also pass `--actor-agent NAME --via TOOL`.
+
 Retries, run time, inactivity, and stalled tools are bounded by the plan's limits.
+
+## Approve a plan
+
+Background workers start only a plan whose current hash has a recorded approval.
+Starting a task yourself with `run`, `pipeline`, `resume`, `answer`, `retry` or `approve`
+records that approval for you. To approve a plan without starting it, preview it, then
+apply the hash it shows:
+
+~~~sh
+plovi approve csv-export --plan
+plovi approve csv-export --plan --approve PLAN_SHA256
+~~~
+
+The preview lists the manifest, each plan file and the hash. A digest for an older version
+of the plan is refused; preview again after any edit. Pass `--manifest PATH` when plovi
+cannot find the plan from the task allocation or its saved run.
+
+Diff approvals work the same way for agents: `plovi approve TASK --size --actor-agent NAME`
+returns a preview with the pending fingerprint, and `--approve FINGERPRINT` applies it.
+A person's `plovi approve TASK --size` keeps working without a digest.
 
 ## Keep partial work, but inspect it
 
@@ -165,8 +201,10 @@ or failed remote queries stop recovery. Never force push to repair recovery.
 `needs_approval` retains size and protected-path requirements. See [policy](policy.md).
 
 !!! note "What changes for your workflow"
-    Use retry for an escalation, answer for a question, and resume for an
-    interruption. Inspect the recorded reason and diff before continuing.
+    Check `plovi inbox` first. Use retry for an escalation, answer for a question,
+    resume for an interruption or a pause, and `approve --plan` before a background
+    worker starts a plan you have not launched yourself. Inspect the recorded reason
+    and diff before continuing.
 
 ## Delivery after workflow changes
 

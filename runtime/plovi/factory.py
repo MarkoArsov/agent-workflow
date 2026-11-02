@@ -118,6 +118,9 @@ def receipt(project, task, *, validate_git=True, check_branch=True):
         return None
     if (saved.get('task') != task or saved.get('project') != project.profile['project']['id']
             or saved.get('configuration_root') != str(project.root) or not saved.get('complete')):
+        if saved.get('configuration_root') and saved.get('configuration_root') != str(project.root) and saved.get('complete'):
+            raise WorkflowError(f"Factory allocation for {task} belongs to the project at {saved['configuration_root']}, "
+                                f"not {project.root}; run plovi with --project {saved['configuration_root']}")
         raise WorkflowError('Factory allocation is incomplete or belongs to another project; resume its original task')
     registered = read_json(safe(root(project), 'origin.json'), {})
     for row in saved['repositories']:
@@ -205,16 +208,47 @@ def allocate(project, task, *, unattended=False, manifest=None):
             commit = git(mirror, 'rev-parse', '--verify', 'refs/remotes/origin/' + base + '^{commit}')
             prepared.append({'repository': name, 'access': row['access'], 'branch': branch, 'base': base,
                              'base_commit': commit, 'path': str(target), 'mirror': str(mirror),
-                             'identity': urls[name], 'strategy': 'factory', 'ready': False})
+                             'identity': urls[name], 'strategy': 'factory', 'ready': False,
+                             **(_task_branch(project, task, name, branch, mirror, base, commit) if branch else {})})
         saved = {'schema_version': 1, 'project': project.profile['project']['id'], 'configuration_root': str(project.root),
                  'task': task, 'complete': False, 'repositories': prepared}
         write_json(path, saved)
         for row in prepared:
             target = Path(row['path']); target.parent.mkdir(parents=True, exist_ok=True)
-            git(Path(row['mirror']), 'worktree', 'add', *(['-b', row['branch']] if row['branch'] else ['--detach']), str(target), row['base_commit'])
+            git(Path(row['mirror']), 'worktree', 'add', *(['-b', row['branch']] if row['branch'] else ['--detach']), str(target),
+                row.get('task_head') or row['base_commit'])
             row['ready'] = True; write_json(path, saved)
         saved['complete'] = True; write_json(path, saved)
         return {r['repository']: r['path'] for r in prepared}
+
+
+def _task_branch(project, task, name, branch, mirror, base, remote_base):
+    """Start from the committed head of this task's own task-start branch, so planning commits are delivered."""
+    from .tasks import receipt_path as local_receipt
+    saved = read_json(local_receipt(project, task))
+    if not saved or saved.get('task') != task or saved.get('configuration_root') != str(project.root) or not saved.get('complete'):
+        return {}
+    row = next((r for r in saved.get('repositories', []) if r.get('repository') == name and r.get('branch') == branch), None)
+    if row is None:
+        return {}
+    source = project.repo_path(name)
+    head = git(source, 'rev-parse', '--verify', 'refs/heads/' + branch + '^{commit}')
+    plans = project.profile['planning']['directory'].rstrip('/') + '/' + task
+    checkout = Path(row['path'])
+    if checkout.is_dir() and git(checkout, 'status', '--porcelain', '--', plans):
+        raise WorkflowError(f'The task plan in {checkout / plans} has uncommitted changes; commit the plan first '
+                            'so the background run includes it')
+    ref = f'refs/plovi/tasks/{task}/{name}'
+    # Outside the mirror's fetch destinations, so remote refreshes never move it.
+    git(mirror, 'fetch', '--no-tags', str(source), f'+refs/heads/{branch}:{ref}')
+    if git(mirror, 'rev-parse', ref) != head:
+        raise WorkflowError('The task branch moved while it was copied; retry the run')
+    started = row.get('base_commit')
+    on_remote = started and run(['git', '-C', mirror, 'merge-base', '--is-ancestor', started, remote_base], mirror, check=False).returncode == 0
+    if not on_remote:
+        raise WorkflowError(f'The task branch {branch} starts from {str(started)[:12]}, which is not on origin/{base}; '
+                            f'push that base commit or start the task again from origin/{base}')
+    return {'task_head': head, 'source': 'task-branch'}
 
 
 def push(project, task, repository, branch):
