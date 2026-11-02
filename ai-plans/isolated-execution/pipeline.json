@@ -11,7 +11,8 @@
     "routing-scenarios.md",
     "migration.md",
     "companion-recovery.md",
-    "test-contract-revision.md"
+    "test-contract-revision.md",
+    "automatic-contract-recovery.md"
   ],
   "repositories": [
     {
@@ -74,7 +75,8 @@
         "tests/test_isolation_fixture_health.py",
         "tests/test_companion_fixture_health.py",
         "tests/test_pipeline_resume.py",
-        "skills/implement-tests/SKILL.md"
+        "skills/implement-tests/SKILL.md",
+        "tests/test_contract_recovery.py"
       ],
       "test_paths": [
         "tests/test_factory_checkouts.py",
@@ -88,7 +90,8 @@
         "tests/test_legacy_migration.py",
         "tests/test_isolation_fixture_health.py",
         "tests/test_companion_fixture_health.py",
-        "tests/test_pipeline_resume.py"
+        "tests/test_pipeline_resume.py",
+        "tests/test_contract_recovery.py"
       ]
     }
   ],
@@ -734,7 +737,8 @@
         "df40c6a67a32d56fa261d33335faf24000c1149d",
         "e5561f5d85390c2074b7a286d1446dae59b2b4a8",
         "e8b643c576330f30d1c5d01223572ce13cb6c44d",
-        "22a83466d893e66ade570615ade9c9137399c099"
+        "22a83466d893e66ade570615ade9c9137399c099",
+        "92bba4a3467d509cf5f9070aba4797ae463bd01c"
       ]
     },
     "approved_merges": {
@@ -744,24 +748,12 @@
       ]
     },
     "test_checkpoint": {
-      "binding_sha256": "cb7aadf2b828f17e26b128df1377d4fdeca1869c4a7e2e7e179d5fa8b15f531d",
-      "escalation_sha256": "bd0c33ec5a086805a82d8aa06dab90c6332a807482cec7e51398926221053473",
-      "fixture_request": {
-        "status": "test_fixture_repair",
-        "reason": "The independent companion-fixture-health check reproduces duplicate repository paths and an invalid absolute companion path before product code. Repair only fixture setup while preserving all existing assertions, test identities, skips and expected product behavior.",
-        "test_paths": [
-          {
-            "repository": "agent-workflow",
-            "path": "tests/test_factory_checkouts.py"
-          }
-        ],
-        "checks": [
-          "companion-fixture-health"
-        ]
-      }
+      "binding_sha256": "675237b2e91b08353714c39dbce52c928f7b4b96d11bc2951aedefad7ed11ee2",
+      "escalation_sha256": "3cd909c2a9a4d569e4dbdcead3a2bbbc5ecb718a26847e35d86927ccf2d12976"
     }
   },
   "corrections": {
-    "fixture_rounds": 2
+    "fixture_rounds": 2,
+    "contract_review_rounds": 2
   }
 }
