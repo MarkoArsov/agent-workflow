@@ -49,6 +49,27 @@ class WorkspaceTest(unittest.TestCase):
         self.git(path, "commit", "-m", "Initialize fixture")
         return path
 
+    def bare_remote(self, name):
+        path = self.root / f"remotes/{name}.git"
+        path.mkdir(parents=True, exist_ok=True)
+        self.git(path, "init", "--bare", "-b", "main")
+        return path
+
+    def seed_remote(self, bare, filename="README.md", content="# Fixture\n"):
+        import shutil
+        tmp = self.root / f"tmp-seed-{bare.stem}"
+        subprocess.run(["git", "clone", str(bare), str(tmp)], env=self.env, check=True, capture_output=True, text=True)
+        (tmp / filename).write_text(content)
+        self.git(tmp, "add", ".")
+        self.git(tmp, "commit", "-m", "Initialize")
+        self.git(tmp, "push", "origin", "main")
+        shutil.rmtree(tmp)
+
+    def clone_repo(self, bare, name):
+        path = self.root / name
+        subprocess.run(["git", "clone", str(bare), str(path)], env=self.env, check=True, capture_output=True, text=True)
+        return path
+
     def setup_project(self, path, patch=None):
         from plovi.setup import apply, propose
         p = propose(path, {"confirmed_defaults": True, "profile": patch or {}})

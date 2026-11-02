@@ -23,7 +23,7 @@ class AutonomousRepairTests(HardeningTest):
         self.fixture_repair()
         from plovi import manifest
         self.assertIn('setup', getattr(manifest, 'PHASES', {'red', 'green'}), 'Fixture setup phase is missing')
-        result=runner.run(self.project,self.plan)
+        result=runner.run(self.project,self.plan, unattended=False)
         self.assertEqual(result['status'],'complete')
         self.assertEqual(len(self.calls()),4)
         self.assertEqual(len({c['pid'] for c in self.calls()}),4)
@@ -32,7 +32,7 @@ class AutonomousRepairTests(HardeningTest):
 
     def test_repair_cannot_weaken_assertions(self):
         self.fixture_repair(weaken=True)
-        result=runner.run(self.project,self.plan)
+        result=runner.run(self.project,self.plan, unattended=False)
         self.assertNotEqual(result['status'],'complete')
         self.assertNotIn('implement',result['completed'])
         self.assertLessEqual(len(self.calls()),3)
@@ -40,13 +40,13 @@ class AutonomousRepairTests(HardeningTest):
     def test_repair_budget_exhaustion_stops(self):
         self.fixture_repair()
         self.plan['corrections']={'fixture_rounds':0}
-        result=runner.run(self.project,self.plan)
+        result=runner.run(self.project,self.plan, unattended=False)
         self.assertEqual(result['status'],'escalated')
         self.assertEqual(len(self.calls()),1)
 
     def test_requirement_change_requires_decision(self):
         self.fixture([{'report':{'status':'spec_conflict','reason':'Choose expected behavior'}}])
-        result=runner.run(self.project,self.plan)
+        result=runner.run(self.project,self.plan, unattended=False)
         self.assertEqual(result['status'],'escalated')
         self.assertEqual(len(self.calls()),1)
 
@@ -56,7 +56,7 @@ class AutonomousRepairTests(HardeningTest):
         steps[2]['report']['repair_approved']=False
         steps[3:3]=[steps[1],{'report':{'status':'complete','repair_approved':True}}]
         self.scenario.write_text(json.dumps(steps))
-        result=runner.run(self.project,self.plan)
+        result=runner.run(self.project,self.plan, unattended=False)
         self.assertEqual(result['status'],'complete')
         self.assertEqual([r['status'] for r in result['test_repairs']],['rejected','accepted'])
         self.assertEqual(len(self.calls()),6)
@@ -67,7 +67,7 @@ class AutonomousRepairTests(HardeningTest):
         original=(root/'test_app.py').read_text()
         steps=json.loads(self.scenario.read_text());steps[3:]=[steps[1],steps[2]]
         self.scenario.write_text(json.dumps(steps))
-        result=runner.run(self.project,self.plan)
+        result=runner.run(self.project,self.plan, unattended=False)
         self.assertEqual(result['status'],'escalated')
         self.assertEqual(len(self.calls()),5)
         self.assertEqual((root/'test_app.py').read_text(),original)
@@ -80,7 +80,7 @@ class AutonomousRepairTests(HardeningTest):
         self.plan['routes']={'default':[{'provider':'codex','model':'fixture-model'}],
                              'implement-tests':[{'provider':'codex','model':'unavailable'},
                                                 {'provider':'codex','model':'fallback'}]}
-        result=runner.run(self.project,self.plan)
+        result=runner.run(self.project,self.plan, unattended=False)
         self.assertEqual(result['status'],'complete')
         self.assertEqual(len(self.calls()),5)
         self.assertIn('fallback',self.calls()[2]['argv'])
@@ -91,5 +91,5 @@ class AutonomousRepairTests(HardeningTest):
         self.plan['corrections']={'fixture_rounds':2}
         self.plan['routes']={'implement':[{'provider':'codex','model':'fixture-model'}]}
         with self.assertRaisesRegex(WorkflowError,'test-author and review routes'):
-            runner.run(self.project,self.plan)
+            runner.run(self.project,self.plan, unattended=False)
         self.assertEqual(self.calls(),[])

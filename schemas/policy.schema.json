@@ -112,6 +112,85 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {}
+    },
+    "isolation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "enum": [
+            "none",
+            "container"
+          ],
+          "default": "none"
+        },
+        "runtime": {
+          "enum": [
+            "auto",
+            "docker",
+            "podman"
+          ],
+          "default": "auto"
+        },
+        "image": {
+          "type": "string",
+          "default": "",
+          "maxLength": 512,
+          "pattern": "^$|^[A-Za-z0-9][A-Za-z0-9._/@:+-]*$"
+        },
+        "network": {
+          "enum": [
+            "on",
+            "off"
+          ],
+          "default": "on"
+        },
+        "mount_harness_config": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "codex",
+              "claude",
+              "cursor"
+            ]
+          },
+          "default": []
+        },
+        "api_key_env": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+          },
+          "default": []
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "mode": {
+                "const": "container"
+              }
+            },
+            "required": [
+              "mode"
+            ]
+          },
+          "then": {
+            "required": [
+              "image"
+            ],
+            "properties": {
+              "image": {
+                "minLength": 1
+              }
+            }
+          }
+        }
+      ]
     }
   }
 }

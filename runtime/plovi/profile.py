@@ -51,7 +51,7 @@ def validate(profile: dict, root: Path | None = None) -> dict:
             raise WorkflowError(f"{name}: invalid task_policy")
         if "checkout_strategy_explicit" in repo and not isinstance(repo["checkout_strategy_explicit"], bool):
             raise WorkflowError(f"{name}: checkout_strategy_explicit must be boolean")
-        if repo.get("checkout_strategy") not in {"current-checkout", "feature-branch", "worktree"}:
+        if repo.get("checkout_strategy") not in {"current-checkout", "feature-branch", "worktree", "factory"}:
             raise WorkflowError(f"{name}: invalid checkout_strategy")
         if not repo.get("base_branch") or not repo.get("remote"):
             raise WorkflowError(f"{name}: base_branch and remote are required")

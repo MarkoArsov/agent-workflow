@@ -84,53 +84,98 @@ def validate_settings(value):
     return value
 
 
-def resolve_settings(layers, providers, legacy=None):
+def resolve_settings(layers, providers, legacy=None, *, origins=None):
     """Per-stage atomic routes; restrictions intersect; explicit legacy routes are pins."""
     result = {"schema_version": 1, "providers": sorted(set(providers)), "defaults": {}, "pins": {}, "blocked": [], "registry": []}
     registry = {}
+    result['sources'] = {'pins': {}, 'defaults': {}}
     for index, layer in enumerate(layers):
         validate_settings(layer)
+        origin = origins[index] if origins else ('project' if len(layers) > 1 and index == len(layers) - 1 else 'global' if len(layers) > 1 else 'legacy')
+        for stage in layer.get('defaults', {}):
+            result['sources']['defaults'][stage] = origin + '-default'
+        for stage in layer.get('pins', {}):
+            result['sources']['pins'][stage] = ('legacy-explicit-route' if origin == 'legacy' else origin + '-pin')
         if index == len(layers) - 1:
             # Existing project routes outrank machine pins; only project policy can release them.
             result["pins"].update(deepcopy(legacy or {}))
+            result['sources']['pins'].update({s: 'legacy-explicit-route' for s in legacy or {}})
         if "providers" in layer:
             result["providers"] = sorted(set(result["providers"]) & set(layer["providers"]))
         result["defaults"].update(deepcopy(layer.get("defaults", {})))
         if index == len(layers) - 1:
             for stage in layer.get("adaptive_stages", []):
                 result["pins"].pop(stage, None)
+                result['sources']['pins'].pop(stage, None)
         result["pins"].update(deepcopy(layer.get("pins", {})))
+        result['sources']['pins'].update({s: ('legacy-explicit-route' if origin == 'legacy' else origin + '-pin') for s in layer.get('pins', {})})
         result["blocked"] = sorted(set(result["blocked"]) | set(layer.get("blocked", [])))
         for entry in layer.get("registry", []):
             registry[route_key(entry)] = deepcopy(entry)
     result["registry"] = list(registry.values())
     if not layers:
         result["pins"].update(deepcopy(legacy or {}))
+        result['sources']['pins'].update({s: 'legacy-explicit-route' for s in legacy or {}})
     return result
 
 
-def validate_facts(facts):
-    if not isinstance(facts, dict) or not isinstance(facts.get("stages"), list) or not all(isinstance(s, str) for s in facts["stages"]):
-        raise ValueError("Task facts require stages")
-    if len(facts["stages"]) != len(set(facts["stages"])):
-        raise ValueError("Task stages must be unique")
-    if facts.get("size", "medium") not in {"small", "medium", "large"} or facts.get("risk", "standard") not in {"low", "standard", "high"}:
-        raise ValueError("Invalid task size or risk")
-    for field in ("repository_count", "test_files", "test_lines"):
+FACT_FIELDS = {'kind', 'size', 'risk', 'uncertain', 'complexity', 'test_files', 'test_lines'}
+FACT_DEFAULTS = {'kind': 'code', 'size': 'medium', 'risk': 'standard', 'uncertain': False,
+                 'complexity': 'routine', 'test_files': 0, 'test_lines': 0}
+
+
+def _validate_fact_values(facts):
+    enums = {'kind': {'code', 'docs', 'config'}, 'size': {'small', 'medium', 'large'},
+             'risk': {'low', 'standard', 'high'}, 'complexity': {'simple', 'routine', 'complex'}}
+    for field, choices in enums.items():
+        if field in facts and (not isinstance(facts[field], str) or facts[field] not in choices):
+            raise ValueError('Invalid ' + field)
+    for field in ('repository_count', 'test_files', 'test_lines'):
         if field in facts and (type(facts[field]) is not int or facts[field] < 0):
-            raise ValueError(field + " must be a nonnegative integer")
-    if "uncertain" in facts and type(facts["uncertain"]) is not bool:
-        raise ValueError("uncertain must be boolean")
-    for field in ("required_capabilities", "demanding_stages"):
+            raise ValueError(field + ' must be a nonnegative integer')
+    if 'uncertain' in facts and type(facts['uncertain']) is not bool:
+        raise ValueError('uncertain must be boolean')
+
+
+def validate_facts(facts):
+    if not isinstance(facts, dict) or not isinstance(facts.get('stages'), list) or not all(isinstance(s, str) and s for s in facts['stages']):
+        raise ValueError('Task facts require stages')
+    if len(facts['stages']) != len(set(facts['stages'])):
+        raise ValueError('Task stages must be unique')
+    if set(facts) - (FACT_FIELDS | {'stages', 'repository_count', 'required_capabilities', 'demanding_stages', 'routes', 'suggested_routes', 'stage_facts', 'route_origins'}):
+        raise ValueError('Unknown task fact field')
+    _validate_fact_values(facts)
+    for field in ('required_capabilities', 'demanding_stages'):
         if field in facts and (not isinstance(facts[field], list) or not all(isinstance(x, str) for x in facts[field])):
-            raise ValueError(field + " must be a string array")
-    if not isinstance(facts.get("routes", {}), dict):
-        raise ValueError("Explicit task routes must be an object")
-    for routes in facts.get("routes", {}).values():
-        if not isinstance(routes, list):
-            raise ValueError("Explicit task routes must be arrays")
-        for route in routes:
-            validate_route(route)
+            raise ValueError(field + ' must be a string array')
+    stages = set(facts['stages']) - MECHANICAL
+    origins = facts.get('route_origins', {})
+    if not isinstance(origins, dict) or set(origins) - set(facts.get('routes', {})) or any(not isinstance(v, str) or v not in {'user-task-route', 'project-pin', 'global-pin', 'legacy-explicit-route'} for v in origins.values()):
+        raise ValueError('route_origins must attribute explicit stage routes')
+    overrides = facts.get('stage_facts', {})
+    if not isinstance(overrides, dict) or set(overrides) - stages:
+        raise ValueError('stage_facts must name selected executable AI stages')
+    for row in overrides.values():
+        if not isinstance(row, dict) or set(row) - FACT_FIELDS:
+            raise ValueError('Unknown stage_facts field')
+        _validate_fact_values(row)
+    for field in ('routes', 'suggested_routes'):
+        routes = facts.get(field, {})
+        if not isinstance(routes, dict) or set(routes) - (stages | {'default'}):
+            raise ValueError(field + ' must name selected stages or default')
+        for rows in routes.values():
+            if not isinstance(rows, list):
+                raise ValueError(field + ' must contain route arrays')
+            for route in rows:
+                validate_route(route)
+
+
+def stage_facts(facts, stage):
+    values = dict(FACT_DEFAULTS)
+    values.update({k: v for k, v in facts.items() if k in FACT_FIELDS})
+    values.update(facts.get('stage_facts', {}).get(stage, {}))
+    sources = {k: 'stage' if k in facts.get('stage_facts', {}).get(stage, {}) else 'task' if k in facts else 'built-in' for k in values}
+    return values, sources
 
 
 def validate_catalogue(value):
@@ -148,15 +193,17 @@ def validate_catalogue(value):
 
 
 def requirement(facts, stage, policy):
-    risk = facts.get("risk", "standard")
-    affected = facts.get("demanding_stages", ["specify", "implement", "review"])
-    demanding = stage in affected and (risk == "high" or facts.get("uncertain", False) or (facts.get("size") == "large" and facts.get("repository_count", 1) > 1))
-    test_scope = stage == "implement-tests" and (facts.get("test_files", 0) >= policy["test_file_threshold"] or facts.get("test_lines", 0) >= policy["test_line_threshold"])
-    if demanding or test_scope:
-        return "deep", "demanding", "consequential-or-complex" if demanding else "large-test-scope"
-    if facts.get("size") == "small" and risk == "low" and facts.get("kind") in {"docs", "config"}:
-        return "fast", "simple", "small-bounded-change"
-    return "strong", "balanced", "routine-scoped-work"
+    values, _ = stage_facts(facts, stage)
+    affected = stage in facts.get('demanding_stages', facts['stages'])
+    complex_work = values['complexity'] == 'complex' or values['uncertain']
+    deep = affected and (values['risk'] == 'high' or complex_work or
+                        (values['size'] == 'large' and facts.get('repository_count', 1) > 1))
+    mode = 'demanding' if complex_work and affected else 'simple' if values['complexity'] == 'simple' else 'balanced'
+    if deep:
+        return 'deep', mode, 'consequential-or-complex'
+    if values['risk'] == 'low' and values['kind'] in {'docs', 'config'} and (values['size'] == 'small' or values['complexity'] == 'simple'):
+        return 'fast', 'simple', 'small-bounded-change'
+    return 'strong', mode, 'routine-scoped-work'
 
 
 def adversary_policy(policy):
@@ -207,7 +254,7 @@ def evaluate(registry, policy, catalogue, settings, facts):
     catalogue = catalogue or {"providers": {}}
     allowed = set(settings["providers"])
     blocked = set(settings.get("blocked", []))
-    output = {"schema_version": 1, "evaluator_version": VERSION, "routes": {}, "reasons": {}, "unresolved": [], "advisories": []}
+    output = {"schema_version": 1, "evaluator_version": VERSION, "routes": {}, "reasons": {}, "unresolved": [], "advisories": [], "details": {}}
     adversaries, slack = adversary_policy(policy)
     chosen = {}
     chosen_families = {}
@@ -233,6 +280,17 @@ def evaluate(registry, policy, catalogue, settings, facts):
     stages = sorted((s for s in facts["stages"] if s not in MECHANICAL), key=lambda s: (order.get(s, 2), s))
     for stage in stages:
         band, effort_mode, reason = requirement(facts, stage, policy)
+        effective, fact_sources = stage_facts(facts, stage)
+        detail = {'facts': effective, 'fact_sources': fact_sources, 'required_band': band,
+                  'effort_mode': effort_mode, 'requirement_reason': reason,
+                  'providers': sorted(allowed), 'required_capabilities': list(facts.get('required_capabilities', [])), 'eligibility': [], 'eligibility_truncated': 0}
+        if stage == 'implement-tests' and (effective['test_files'] >= policy['test_file_threshold'] or effective['test_lines'] >= policy['test_line_threshold']):
+            output['advisories'].append({'stage': stage, 'reason': 'large-test-scope'})
+        def explain(entry, why):
+            if len(detail['eligibility']) < 50:
+                detail['eligibility'].append({'provider': entry['provider'], 'model': entry['model'], 'reason': why})
+            else:
+                detail['eligibility_truncated'] += 1
         defaults = settings.get("defaults", {})
         current = defaults.get(stage, defaults.get("default", []))
         pins = settings.get("pins", {})
@@ -241,9 +299,13 @@ def evaluate(registry, policy, catalogue, settings, facts):
         prior_stages = [other for other in adversaries.get(stage, []) if other in chosen]
         prior = {chosen[other] for other in prior_stages if chosen[other]}
         selected = None
+        source = 'adaptive-selection'
         if pinned is not None:
             selected = deepcopy(pinned)
             reason = "explicit-route"
+            task_key = stage if stage in explicit else 'default'
+            pin_key = stage if stage in pins else 'default'
+            source = facts.get('route_origins', {}).get(task_key, 'legacy-explicit-route') if task_key in explicit else settings.get('sources', {}).get('pins', {}).get(pin_key, 'legacy-explicit-route')
         elif stage in defaults and not current:
             selected, reason = [], "explicitly-disabled"
         else:
@@ -251,24 +313,35 @@ def evaluate(registry, policy, catalogue, settings, facts):
             floor = BANDS[band] - (slack if prior else 0)
             for key, entry in entries.items():
                 host, model = observation(entry)
+                if entry['provider'] not in allowed or key in blocked:
+                    explain(entry, 'provider-or-model-restricted')
+                    continue
                 if entry.get("confidence") != "reviewed" or (stage not in entry["stages"] and "*" not in entry["stages"]) or BANDS[entry["band"]] < floor:
+                    explain(entry, 'unreviewed-or-unsuitable-stage-or-band')
                     continue
                 if not host.get("installed") or model.get("status") not in {"advertised", "confirmed", "used"}:
+                    explain(entry, 'not-observed-available')
                     continue
                 if entry.get("encoded_effort") in {"xhigh", "max", "ultra"}:
+                    explain(entry, 'maximum-effort-not-automatic')
                     continue
                 if entry.get("modes") and effort_mode not in entry["modes"]:
+                    explain(entry, 'unsupported-effort-mode')
                     continue
                 route = {"provider": entry["provider"], "model": entry["model"]}
-                effort = entry.get("efforts", {}).get(effort_mode, entry.get("efforts", {}).get("balanced"))
+                effort = entry.get("efforts", {}).get(effort_mode)
                 if effort and effort not in {"xhigh", "max", "ultra"} and effort in model.get("efforts", []):
                     route["reasoning"] = effort
                 if invalid(route):
+                    explain(entry, invalid(route))
                     continue
+                explain(entry, 'eligible')
                 below = int(BANDS[entry["band"]] < BANDS[band])
                 collision = int(bool(prior) and (not entry.get("lineage") or entry["lineage"] in prior))
                 keep = int(not current or route != current[0])
-                candidates.append(((below, collision, BANDS[entry["band"]], entry["rank"], int(entry["family"] in {chosen_families[other] for other in prior_stages}), keep, key), route, entry))
+                suggestions = facts.get('suggested_routes', {}).get(stage, facts.get('suggested_routes', {}).get('default', []))
+                suggested = next((i for i, r in enumerate(suggestions) if route_key(r) == key), len(suggestions))
+                candidates.append(((below, collision, BANDS[entry["band"]], entry["rank"], int(entry["family"] in {chosen_families[other] for other in prior_stages}), suggested, keep, key), route, entry))
             candidates.sort(key=lambda x: x[0])
             if candidates:
                 adequate = [row for row in candidates if row[0][0] == 0]
@@ -281,9 +354,11 @@ def evaluate(registry, policy, catalogue, settings, facts):
                     candidates = adequate
                     if prior and not alternate:
                         output["advisories"].append({"stage": stage, "reason": "single-lineage"})
+                reason = "adaptive-selection"
                 selected = diverse_chain([(route, entry) for _, route, entry in candidates], policy["max_fallbacks"] + 1)
             elif current:
                 selected, reason = deepcopy(current), "retained-configured-default"
+                source = "retained-default"
                 entry = entries.get(route_key(current[0]))
                 if entry and BANDS[entry["band"]] < BANDS[band]:
                     output["unresolved"].append({"stage": stage, "reason": "configured-default-below-required-band"})
@@ -296,6 +371,25 @@ def evaluate(registry, policy, catalogue, settings, facts):
             entry = entries.get(route_key(selected[0]))
             if entry and BANDS[entry["band"]] < BANDS[band]:
                 output["advisories"].append({"stage": stage, "reason": "explicit-route-below-recommended-band"})
+        detail['suggestions'] = []
+        for suggestion in facts.get('suggested_routes', {}).get(stage, facts.get('suggested_routes', {}).get('default', []))[:50]:
+            entry = entries.get(route_key(suggestion), {})
+            host, model = observation(suggestion)
+            exclusion = invalid(suggestion)
+            if not exclusion and (entry.get('confidence') != 'reviewed' or not host.get('installed') or model.get('status') not in {'advertised', 'confirmed', 'used'}):
+                exclusion = 'review-or-availability-not-established'
+            detail['suggestions'].append({'provider': suggestion['provider'], 'model': suggestion['model'],
+                'reason': exclusion or ('pin-takes-precedence' if pinned is not None else 'tie-preference-only')})
+        detail['configured_default_source'] = settings.get('sources', {}).get('defaults', {}).get(stage, settings.get('sources', {}).get('defaults', {}).get('default', 'unknown'))
+        detail.update(route_source=source if selected else 'unresolved', ordered_routes=deepcopy(selected),
+                      prior_lineages=sorted(prior), lineage_slack=slack)
+        if selected:
+            entry = entries.get(route_key(selected[0]), {})
+            mapping = entry.get('efforts', {}).get(effort_mode)
+            detail['effort_mapping'] = {'reviewed': mapping, 'selected': selected[0].get('reasoning'),
+                'reason': 'explicit-route' if pinned is not None else 'retained-default' if source == 'retained-default' else 'supported-mapping' if selected[0].get('reasoning') else 'unknown-or-unsupported-effort-omitted'}
+        detail['unresolved'] = [r['reason'] for r in output['unresolved'] if r['stage'] == stage]
+        output['details'][stage] = detail
         output["routes"][stage] = selected
         output["reasons"][stage] = reason
         primary = entries.get(route_key(selected[0]), {}) if selected else {}

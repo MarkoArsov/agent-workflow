@@ -10,7 +10,7 @@ class EvidenceTests(HardeningTest):
     def verified(self):
         self.fixture([{"report": {"status": "complete", "summary": "Fixture",
                                   "assumptions": ["Use offline fixtures"]}}])
-        return runner.run(self.project, self.plan)
+        return runner.run(self.project, self.plan, unattended=False)
 
     def test_pure_stable_evidence_uses_verified_results(self):
         from plovi.evidence import evidence_markdown

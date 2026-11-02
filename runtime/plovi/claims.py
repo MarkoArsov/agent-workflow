@@ -7,7 +7,64 @@ import time
 import uuid
 from . import state
 from .migration import lock_held
-from .util import WorkflowError, git, read_json, write_json
+from .util import WorkflowError, digest, git, read_json, write_json
+
+
+@contextmanager
+def shared_acquire(project, manifest, rows, *, no_wait=False):
+    """Different configuration roots sharing a factory still claim logical repos."""
+    from . import factory
+    root = factory.root(project)
+    path = factory.safe(root, 'claims.json')
+    key = digest(str(project.root)) + ':' + manifest['task']
+    logical = []
+    for row, selected in zip(rows, [r for r in manifest['repositories'] if r['access'] == 'write']):
+        repo = project.repository(selected['id'])
+        source = project.repo_path(selected['id'])
+        url = git(source, 'remote', 'get-url', repo['remote'], check=False)
+        logical_id = row['repository']
+        if url:
+            logical_id = 'remote:' + digest(factory._url(url, source))
+        logical.append(dict(row, repository=logical_id))
+    deadline = time.monotonic() + manifest.get('limits', {}).get('timeout_seconds', 1800)
+    registered = False
+    try:
+        while not registered:
+            existing = read_json(path, {})
+            with ExitStack() as probes:
+                stale = set()
+                for other, claim in existing.items():
+                    if other == key:
+                        continue
+                    try:
+                        probes.enter_context(state.lock(Path(claim['runner_lock'])))
+                    except WorkflowError:
+                        continue
+                    stale.add(other)
+                with state.lock(factory.safe(root, 'repo-ops.lock'), wait=True):
+                    claims = read_json(path, {})
+                    for other in stale:
+                        if claims.get(other) == existing.get(other):
+                            claims.pop(other, None)
+                    conflicts = [claim['task'] for other, claim in claims.items() if other != key
+                        and any(a['repository'] == b['repository'] and
+                            (a['strategy'] not in {'factory', 'worktree'} or b['strategy'] not in {'factory', 'worktree'}
+                             or overlap(a['paths'], b['paths'])) for a in logical for b in claim['repositories'])]
+                    if not conflicts:
+                        claims[key] = {'task': manifest['task'], 'configuration_root': str(project.root),
+                            'runner_lock': str(state.directory(project, manifest['task']) / 'runner.lock'), 'repositories': logical}
+                        write_json(path, claims); registered = True
+            if not registered:
+                if no_wait or time.monotonic() >= deadline:
+                    raise WorkflowError('Factory repository claim conflict; wait for the owning tasks: ' + ', '.join(sorted(set(conflicts))))
+                if (state.directory(project, manifest['task']) / 'cancel.json').exists():
+                    raise WorkflowError('Task cancelled while waiting for factory repository claims')
+                time.sleep(.1)
+        yield
+    finally:
+        if registered:
+            with state.lock(factory.safe(root, 'repo-ops.lock'), wait=True):
+                claims = read_json(path, {}); claims.pop(key, None); write_json(path, claims)
 
 def identity(project, name):
     root = project.repo_path(name)
@@ -29,7 +86,7 @@ def overlap(left, right):
     return False
 
 @contextmanager
-def acquire(project, manifest, *, no_wait=False):
+def acquire(project, manifest, *, no_wait=False, strategies=None):
     local = project.config / 'local'
     path = local / 'claims.json'
     task = manifest['task']
@@ -49,7 +106,7 @@ def acquire(project, manifest, *, no_wait=False):
             paths.extend(item['path'] for item in custom.get(stage, {}).get('outputs', [])
                          if item['repository'] == row['id'])
         return list(dict.fromkeys(paths))
-    rows = [{'repository': identity(project, r['id']), 'strategy': project.repository(r['id'])['checkout_strategy'],
+    rows = [{'repository': identity(project, r['id']), 'strategy': (strategies or {}).get(r['id'], project.repository(r['id'])['checkout_strategy']),
              'paths': patterns(r['id'], writable(r))}
             for r in manifest['repositories'] if r['access'] == 'write']
     deadline = time.monotonic() + manifest.get('limits', {}).get('timeout_seconds', 1800)
@@ -81,7 +138,7 @@ def acquire(project, manifest, *, no_wait=False):
                         if name == task: continue
                         for a in rows:
                             for b in claim['repositories']:
-                                if a['repository'] == b['repository'] and (a['strategy'] != 'worktree' or b['strategy'] != 'worktree' or overlap(a['paths'], b['paths'])):
+                                if a['repository'] == b['repository'] and (a['strategy'] not in {'worktree', 'factory'} or b['strategy'] not in {'worktree', 'factory'} or overlap(a['paths'], b['paths'])):
                                     conflicts.append(name)
                     if not conflicts:
                         claims[task] = {'task': task, 'repositories': rows}
@@ -107,7 +164,8 @@ def acquire(project, manifest, *, no_wait=False):
                     state.save(root, saved | {'task': task, 'status': 'failed', 'error': 'Timed out waiting for repository claims'})
                     raise WorkflowError('Timed out waiting for repository claims')
                 time.sleep(0.1)
-        yield
+        with shared_acquire(project, manifest, rows, no_wait=no_wait):
+            yield
     finally:
         if registered:
             with state.lock(local / 'repo-ops.lock', wait=True):

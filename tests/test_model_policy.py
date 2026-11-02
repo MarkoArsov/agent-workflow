@@ -56,7 +56,7 @@ class ModelPolicyTests(WorkspaceTest):
 
     def test_test_author_boundary_and_effort(self):
         entries=[entry('codex','routine',efforts={'balanced':'medium'}),entry('codex','deep','deep',efforts={'balanced':'medium','demanding':'high'})]
-        for files,lines,model,effort in [(3,299,'routine','medium'),(4,299,'deep','high'),(3,300,'deep','high')]:
+        for files,lines,model,effort in [(3,299,'routine','medium'),(4,299,'routine','medium'),(3,300,'routine','medium')]:
             result=self.evaluate({'stages':['implement-tests'],'test_files':files,'test_lines':lines},entries,catalog=catalogue(entries))
             self.assertEqual(result['routes']['implement-tests'][0],{'provider':'codex','model':model,'reasoning':effort})
 
@@ -82,7 +82,7 @@ class ModelPolicyTests(WorkspaceTest):
     def test_cursor_uses_exact_mode_ids(self):
         entries=[entry('cursor','x-medium',encoded_effort='medium',modes=['balanced']),entry('cursor','x-high','deep',encoded_effort='high',modes=['demanding'])]
         normal=self.evaluate(entries=entries,catalog=catalogue(entries))
-        hard=self.evaluate({'stages':['implement'],'risk':'high'},entries,catalog=catalogue(entries))
+        hard=self.evaluate({'stages':['implement'],'risk':'high','stage_facts':{'implement':{'complexity':'complex'}}},entries,catalog=catalogue(entries))
         self.assertEqual(normal['routes']['implement'][0],{'provider':'cursor','model':'x-medium'})
         self.assertEqual(hard['routes']['implement'][0],{'provider':'cursor','model':'x-high'})
 

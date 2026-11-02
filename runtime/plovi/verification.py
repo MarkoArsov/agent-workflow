@@ -4,7 +4,7 @@ import os
 import re
 from pathlib import Path
 from .manifest import command_for
-from .process import execute
+from .isolation import execute
 from .util import WorkflowError, contained, redact
 
 SETUP_ERROR = re.compile(r"ModuleNotFoundError|ImportError|SyntaxError|IndentationError|"
@@ -76,7 +76,7 @@ def check(project, definition, checkouts, *, phase="green", cancel=None, environ
     command = command_for(project, definition)
     root = Path(checkouts[definition["repository"]])
     cwd = contained(root, command.get("cwd", "."))
-    from .identity import environment as identity_environment
+    from .isolation import environment as identity_environment
     env = command_environment(command, environment)
     env = identity_environment(project, cwd, inherited=env) or env
     result = execute(command["argv"], cwd, env=env,

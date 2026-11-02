@@ -1,5 +1,6 @@
 import json
 import os
+from pathlib import Path
 from tests.helpers import HardeningTest
 from plovi import runner, state
 
@@ -11,7 +12,8 @@ class RecoveryTests(HardeningTest):
         self.git(root, "switch", "-c", "feature/sample")
         remote = self.root / "remote.git"; remote.mkdir(); self.git(remote, "init", "--bare")
         self.git(remote, "config", "core.logAllRefUpdates", "true")
-        self.git(root, "remote", "add", "origin", str(remote))
+        self.git(root, "remote", "set-url", "origin", str(remote))
+        self.git(root, "push", "origin", "main")
         self.plan["repositories"][0]["branch"] = "feature/sample"
         self.plan["delivery"] = {"commit_message": "Deliver approved fixture", "title": "Fixture", "body_file": "body.md"}
         (self.manifest_path.parent / "body.md").write_text("Approved fixture plan.\n")
@@ -20,7 +22,9 @@ class RecoveryTests(HardeningTest):
         self.git_trace = self.root / "git-trace.jsonl"
         self.env["GIT_TRACE2_EVENT"] = str(self.git_trace)
         gh = self.install_gh_double(); self.save_plan()
-        return root, remote, gh
+        from plovi import factory
+        allocated = factory.allocate(self.project, 'sample', unattended=True, manifest=self.plan)
+        return Path(allocated['app']), remote, gh
 
     def test_status_reconciles_abandoned_running_state_without_pid_signals(self):
         self.fixture([{}]); directory = state.directory(self.project, "sample")
@@ -33,10 +37,10 @@ class RecoveryTests(HardeningTest):
         self.assertEqual(state.read(self.project, "sample")["completed"], ["implement-tests"])
 
     def test_retained_verified_output_does_not_repeat_provider(self):
-        self.fixture([{}]); completed = runner.run(self.project, self.plan)
+        self.fixture([{}]); completed = runner.run(self.project, self.plan, unattended=False)
         completed.update(completed=[], status="running", active_stage="implement", stage_before=completed["baseline"])
         state.save(state.directory(self.project, "sample"), completed)
-        self.assertEqual(runner.run(self.project, self.plan, resume=True)["status"], "complete")
+        self.assertEqual(runner.run(self.project, self.plan, resume=True, unattended=False)["status"], "complete")
         self.assertEqual(len(self.calls()), 1)
 
     def crash_and_resume(self, point):
@@ -158,7 +162,7 @@ class RecoveryTests(HardeningTest):
 
     def repair_fixture(self):
         root = self.fixture([{}])
-        saved = runner.run(self.project, self.plan)
+        saved = runner.run(self.project, self.plan, unattended=False)
         saved.update(completed=[], status="failed", active_stage="implement", stage_before=saved["baseline"], stage_evidence={})
         saved.pop("retained_output", None)
         saved["attempts"][0]["report"] = None
@@ -167,7 +171,7 @@ class RecoveryTests(HardeningTest):
 
     def test_resume_replays_saved_output_without_provider(self):
         self.repair_fixture()
-        result = runner.run(self.project, self.plan, resume=True)
+        result = runner.run(self.project, self.plan, resume=True, unattended=False)
         self.assertEqual(result["status"], "complete")
         self.assertEqual(len(self.calls()), 1)
 
@@ -177,7 +181,7 @@ class RecoveryTests(HardeningTest):
         self.git(root, "add", "README.md"); self.git(root, "commit", "-m", "Approved repair")
         sha = self.git(root, "rev-parse", "HEAD")
         self.plan["recovery"] = {"approved_commits": {"app": [sha]}}
-        result = runner.run(self.project, self.plan, resume=True, rebind=True)
+        result = runner.run(self.project, self.plan, resume=True, rebind=True, unattended=False)
         self.assertEqual(result["status"], "complete")
         self.assertEqual(result["baseline"]["app"]["head"], sha)
         self.assertEqual(len(self.calls()), 1)
@@ -188,7 +192,7 @@ class RecoveryTests(HardeningTest):
         (root / "README.md").write_text("Unknown repair\n")
         self.git(root, "add", "README.md"); self.git(root, "commit", "-m", "Unknown repair")
         with self.assertRaisesRegex(WorkflowError, "repair"):
-            runner.run(self.project, self.plan, resume=True)
+            runner.run(self.project, self.plan, resume=True, unattended=False)
         self.assertEqual(len(self.calls()), 1)
 
     def test_dirty_repair_is_preserved_and_refused(self):
@@ -200,12 +204,12 @@ class RecoveryTests(HardeningTest):
         self.plan["recovery"] = {"approved_commits": {"app": [sha]}}
         (root / "README.md").write_text("Uncommitted work\n")
         with self.assertRaisesRegex(WorkflowError, "uncommitted"):
-            runner.run(self.project, self.plan, resume=True, rebind=True)
+            runner.run(self.project, self.plan, resume=True, rebind=True, unattended=False)
         self.assertEqual((root / "README.md").read_text(), "Uncommitted work\n")
         self.assertEqual(len(self.calls()), 1)
 
     def test_recovered_resume_is_idempotent(self):
         self.repair_fixture()
         for _ in range(2):
-            self.assertEqual(runner.run(self.project, self.plan, resume=True)["status"], "complete")
+            self.assertEqual(runner.run(self.project, self.plan, resume=True, unattended=False)["status"], "complete")
         self.assertEqual(len(self.calls()), 1)

@@ -52,7 +52,7 @@ def command(route, execution, *, session=None, prompt=None):
         argv += ["--force", "--sandbox", "disabled"] if trusted else ["--sandbox", "enabled"]
         if session:
             argv += ["--resume", session]
-        if prompt is not None:
+        if prompt is not None and execution.get('isolation', {}).get('mode') != 'container':
             argv += [prompt]
     return argv
 
@@ -90,8 +90,17 @@ def claude_environment(project, cwd, *, inherited=None):
         raise WorkflowError("Claude login does not match the configured personal account; sign in to that account and retry")
     return env
 
-def preflight(route, execution, cwd, *, project=None):
+def preflight(route, execution, cwd, *, project=None, context=None):
     argv = command(route, execution)
+    if context and context.get('mode') == 'container':
+        from ..isolation import run_contained
+        args = [argv[0], 'exec', '--help'] if route['provider'] == 'codex' else [argv[0], '--help']
+        result = run_contained(context, args)
+        if result.returncode or any(a not in result.stdout for a in argv[1:] if a.startswith('--')):
+            raise WorkflowError('Container harness is missing or lacks required flags; rebuild the selected image')
+        return {'provider': route['provider'], 'binary': argv[0], 'model': route['model'],
+                'permission_mode': execution['permission_mode'], 'boundary': 'container',
+                'model_validation': 'passed to provider; account availability is verified on first request'}
     binary = shutil.which(argv[0])
     if not binary:
         raise WorkflowError(f"Install/authenticate {argv[0]} or choose another configured route")

@@ -5,7 +5,7 @@ from plovi import runner, state
 class LimitTests(HardeningTest):
     def changed_files(self, count, *, lines=1):
         self.fixture([{"writes": {f"change_{n}.py": "# change\n" * lines for n in range(count)}}])
-        return runner.run(self.project, self.plan)
+        return runner.run(self.project, self.plan, unattended=False)
 
     def test_41_files_need_approval(self):
         result = self.changed_files(41)
@@ -30,7 +30,7 @@ class LimitTests(HardeningTest):
         self.fixture([{"writes": {f"first_{n}.py": "# first\n" for n in range(21)}},
                       {"writes": {f"second_{n}.py": "# second\n" for n in range(20)}}, {}],
                      stages=["implement", "review"])
-        result = runner.run(self.project, self.plan)
+        result = runner.run(self.project, self.plan, unattended=False)
         self.assertEqual(result["status"], "needs_approval")
         self.assertEqual(result["approval"]["files"], 41)
         self.assertEqual(len(self.calls()), 2)
@@ -40,7 +40,7 @@ class LimitTests(HardeningTest):
                   ("package-lock.json", "nested/package-lock.json", "poetry.lock", "nested/deps.lock")}
         self.fixture([{"writes": writes}])
         self.plan["repositories"][0]["paths"] = ["**"]
-        self.assertEqual(runner.run(self.project, self.plan)["status"], "complete")
+        self.assertEqual(runner.run(self.project, self.plan, unattended=False)["status"], "complete")
 
     def test_approval_resumes_retained_output_without_provider_replay(self):
         self.assertEqual(self.changed_files(41)["status"], "needs_approval")
@@ -60,7 +60,7 @@ class LimitTests(HardeningTest):
     def test_exempt_lockfile_still_requires_protected_path_approval(self):
         self.fixture([{"writes": {"db/migrations/poetry.lock": "entry\n" * 1600}}])
         self.plan["repositories"][0]["paths"] = ["**"]
-        result = runner.run(self.project, self.plan)
+        result = runner.run(self.project, self.plan, unattended=False)
         self.assertEqual(result["status"], "needs_approval")
         self.assertEqual(result["approval"]["kind"], "protected_paths")
         self.assertIn("db/migrations/poetry.lock", str(result["approval"]))
@@ -68,7 +68,7 @@ class LimitTests(HardeningTest):
     def test_binary_changes_count_one_line_each(self):
         self.fixture([{"binary_writes": {f"image_{i}.bin": "00010200" for i in range(41)}}])
         self.plan["repositories"][0]["paths"] = ["*.bin"]
-        result = runner.run(self.project, self.plan)
+        result = runner.run(self.project, self.plan, unattended=False)
         self.assertEqual(result["status"], "needs_approval")
         self.assertEqual((result["approval"]["files"], result["approval"]["lines"]), (41, 41))
 
@@ -76,7 +76,7 @@ class LimitTests(HardeningTest):
         root = self.fixture([{"deletes": ["old.py"]}])
         (root / "old.py").write_text("# old\n" * 1501)
         self.git(root, "add", "old.py"); self.git(root, "commit", "-m", "Add deletion fixture")
-        result = runner.run(self.project, self.plan)
+        result = runner.run(self.project, self.plan, unattended=False)
         self.assertEqual(result["status"], "needs_approval")
         self.assertEqual(result["approval"]["lines"], 1501)
 
@@ -86,7 +86,7 @@ class LimitTests(HardeningTest):
         (root / "old.py").write_text("# unchanged content\n")
         self.git(root, "add", "old.py"); self.git(root, "commit", "-m", "Add rename fixture")
         self.plan["repositories"][0]["paths"] = ["**"]
-        result = runner.run(self.project, self.plan)
+        result = runner.run(self.project, self.plan, unattended=False)
         self.assertEqual(result["status"], "needs_approval")
         self.assertIn("db/migrations/new.py", str(result["approval"]))
 
@@ -95,7 +95,7 @@ class LimitTests(HardeningTest):
         self.fixture([{"writes": writes}])
         self.plan["repositories"][0]["paths"] = ["**"]
         self.save_plan()
-        self.assertEqual(runner.run(self.project, self.plan)["status"], "needs_approval")
+        self.assertEqual(runner.run(self.project, self.plan, unattended=False)["status"], "needs_approval")
         approved = self.task_cli("approve", "sample", "--size", "--actor", "Fixture")
         self.assertEqual(approved.returncode, 0, approved.stdout + approved.stderr)
         self.assertEqual(state.read(self.project, "sample")["status"], "needs_approval")
@@ -108,7 +108,7 @@ class LimitTests(HardeningTest):
         writes = {f"db/migrations/change_{i}.py": "# migration\n" for i in range(41)}
         root = self.fixture([{"writes": writes}])
         self.plan["repositories"][0]["paths"] = ["**"]; self.save_plan()
-        self.assertEqual(runner.run(self.project, self.plan)["status"], "needs_approval")
+        self.assertEqual(runner.run(self.project, self.plan, unattended=False)["status"], "needs_approval")
         self.assertEqual(self.task_cli("approve", "sample", "--size", "--actor", "Fixture").returncode, 0)
         (root / "db/migrations/change_0.py").write_text("# changed after approval\n")
         self.task_cli("approve", "sample", "--paths", "--actor", "Fixture")

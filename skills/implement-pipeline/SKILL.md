@@ -55,3 +55,21 @@ recovery.approved_commits may advance a baseline, plus task-plan-only follow-up
 commits during reviewed rebind. Unknown or dirty repairs stop for inspection.
 Report recovered checks and stages separately from new provider work. Use the
 launcher containing the approved fixes and verify the configured account first.
+
+For a legacy run with a completed test stage and changed runtime instructions,
+preview migrate TASK before a rebind that would discard that stage. A reviewed
+recovery.test_checkpoint must match the saved binding and exact fixture escalation.
+Keep requirements, old checks/outcomes/routes and all frozen hashes unchanged.
+Approve exact source commits (and merges separately); never infer authorization
+from a path whitelist. Add fixture-health checks when needed and use the bounded
+independent repair request. Apply migration only within existing user approval.
+It renews setup/red proof, preserves test authoring, and leaves implementation
+stopped. Continue with pipeline TASK only when implementation is requested. Do not
+hand-edit saved state or regenerate completed tests to bypass migration failures.
+
+New unattended tasks use factory allocations from the remote base; report the
+returned task map and preserve the user's source clone. Resume uses saved owned
+checkouts and never relocates existing work. Container policy requires factory
+receipts and a pinned local image; report degraded restricted fallback explicitly.
+Contain agent/custom/check/service execution, while the host owns guards and
+all delivery. Stop/remove only receipt-owned containers during locked recovery.

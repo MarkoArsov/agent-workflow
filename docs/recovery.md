@@ -221,3 +221,46 @@ foreign edits or approve exact repair commits first. Legacy receipts without the
 hashes still require complete deterministic verification; they do not gain stronger
 provenance retroactively. A runtime receipt cannot be replaced while a worker or
 launch owns the task.
+
+## Migrate a legacy authored-test checkpoint
+
+For an existing run stopped before implementation, `plovi migrate TASK` previews a
+reviewed checkpoint handoff. `--apply` performs it without starting product work.
+The manifest must name exact original binding and fixture-escalation hashes in
+`recovery.test_checkpoint`. Requirements, existing checks/outcomes, stages and
+routes must stay unchanged; authored frozen tests must still match. Baseline test updates require exact source approval and an unchanged assertion/test contract. Only additive
+fixture-health checks are accepted. New health commands can refresh a derived
+restricted Claude check allowlist; explicit tool settings and permission mode stay
+in force.
+
+Approved source updates still require exact `recovery.approved_commits`. Merge
+commits additionally require `recovery.approved_merges` and reviewed rebind; ordinary
+resume never adopts an unreviewed merge. The handoff checks for foreign edits and
+archives the original state/binding before adoption. An optional `fixture_request`
+uses the bounded independent test-author/reviewer path, preserving test identities
+and assertions. Setup and red proof must pass before the existing test stage is
+retained and its exact escalation is archived.
+
+A completed handoff leaves the run interrupted at implementation. Use `pipeline
+TASK` to continue when requested. Repeating migrate with unchanged proof reuses its
+receipt without another provider request. Changed requirements, tests, identity,
+permissions, ownership, pending decisions or unconfirmed cleanup require review.
+No normal operation involves editing the saved state by hand.
+
+## Recover factory and container work
+
+Resume validates the saved factory receipt, branch and real remote identities. It
+never relocates existing local work or refreshes/rebases an active task. User-clone
+edits do not affect factory scope guards; task-owned writable and companion
+snapshots remain guarded. Changed ownership needs inspection, not automatic adoption.
+
+Container resume uses the frozen image ID and effective boundary. The task lock
+protects cleanup of retained owned containers and networks before provider replay.
+Restore an unavailable engine to complete pending cleanup; no unrelated resource
+is removed. A failed contained command never retries on the host. See
+[isolated execution](isolation.md) for fallback and safe terminal cleanup.
+
+!!! note "What changes for your workflow"
+    Inspect the saved task checkout when recovery reports ownership changes. Keep
+    its receipts, mirrors and evidence until the task is cancelled or confirmed
+    closed/merged and all work is safely retained.

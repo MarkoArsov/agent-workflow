@@ -70,6 +70,7 @@ An approved plan with explicit repository access, executable outcomes, ordered s
 | execution | no | object |
 | autonomy | no | object |
 | grants | no | object |
+| isolation | no | object |
 
 ## Project profile
 

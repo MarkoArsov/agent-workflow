@@ -160,6 +160,24 @@ commits during reviewed rebind. Unknown or dirty repairs stop for inspection.
 Report recovered checks and stages separately from new provider work. Use the
 launcher containing the approved fixes and verify the configured account first.
 
+For a legacy run with a completed test stage and changed runtime instructions,
+preview migrate TASK before a rebind that would discard that stage. A reviewed
+recovery.test_checkpoint must match the saved binding and exact fixture escalation.
+Keep requirements, old checks/outcomes/routes and all frozen hashes unchanged.
+Approve exact source commits (and merges separately); never infer authorization
+from a path whitelist. Add fixture-health checks when needed and use the bounded
+independent repair request. Apply migration only within existing user approval.
+It renews setup/red proof, preserves test authoring, and leaves implementation
+stopped. Continue with pipeline TASK only when implementation is requested. Do not
+hand-edit saved state or regenerate completed tests to bypass migration failures.
+
+New unattended tasks use factory allocations from the remote base; report the
+returned task map and preserve the user's source clone. Resume uses saved owned
+checkouts and never relocates existing work. Container policy requires factory
+receipts and a pinned local image; report degraded restricted fallback explicitly.
+Contain agent/custom/check/service execution, while the host owns guards and
+all delivery. Stop/remove only receipt-owned containers during locked recovery.
+
 ### `issue-writer` { .skill-entry data-skill="issue-writer Turn an idea, problem, or requirements into well-sized, detailed, test-first issues with dependencies and parallel waves." }
 
 Turn an idea, problem, or requirements into well-sized, detailed, test-first issues with dependencies and parallel waves.
@@ -357,6 +375,13 @@ paths in ignored local identity files; never write them into the public profile.
 Verify available account identity before managed requests and state unavailable
 verification honestly. Do not switch global provider or GitHub accounts.
 
+Offer factory as an explicit interactive checkout strategy alongside the existing
+choices. New unattended/detached/non-TTY CLI tasks use factory regardless of the
+interactive strategy; explain the remote-base prerequisite. Reviewed isolation
+policy can opt into experimental Docker/Podman with a local image and individual
+config/API-variable opt-ins. Container mode requires factory ownership; legacy
+local allocations need a fresh task. See docs/isolation.md for the exact boundary.
+
 ### `setup` { .skill-entry data-skill="setup Set up plovi for this project. Short name for project-setup." }
 
 Set up plovi for this project. Short name for project-setup.
@@ -502,6 +527,22 @@ check is not proof of agent execution. Do not push during specification.
 
 Repository or checkout references ordinarily identify the project source, not a ban on its configured task worktrees. Resolve explicit restrictions from their actual wording and project profile; do not invent a checkout constraint that conflicts with task isolation.
 
+For user-approved autonomous implementation, include corrections.contract_review_rounds
+(up to 2) in new manifests. This enables independent reconciliation of reported
+spec conflicts that are test-input/setup mistakes with unchanged requirements and
+assertions. Genuine decisions still stop. Do not enable it against explicit user
+preferences or present a syntactic guard as proof of semantic correctness.
+
+Model-policy 1.2: use stage_facts to distinguish complex/uncertain work from certain,
+routine tests. Missing fields inherit task facts, including uncertainty. Test file
+and line counts are size evidence/advisories, not automatic deep/high selection.
+Put planner route ideas in suggested_routes. Reserve routes for attributable user
+or project instructions, record route_origins and name that source in the plan.
+Origin metadata is not approval evidence. Preserve actual pins, provider/lineage
+constraints, reviewed model ranks and supported effort mappings. Show retained
+routes as retained, never as an adaptive recommendation. Do not re-evaluate an
+approved running plan when adopting a newer evaluator.
+
 ## Implementation and verification
 
 ### `implement` { .skill-entry data-skill="implement Implement an approved change and complete the named verification and correction loop." }
@@ -550,7 +591,7 @@ missing source rather than silently substituting unrelated guidance.
 
 2. In direct use, honor the task allocation and project checkout policy; manual test authoring does not waive an owned worktree. In an orchestrator stage, change only declared test_paths. Do not implement product behavior, commit, push, switch branches, or add unrelated test infrastructure.
 
-3. Run declared setup-phase fixture-health checks first. These must exercise helpers independently of missing product APIs and pass before assertion-red proof. Run the precise named checks. A meaningful red result identifies the expected test and an assertion against existing behavior. Import errors, syntax errors, missing dependencies, broken startup, and compilation errors are setup failures to repair before claiming red.
+3. Audit every authored case against the approved contract before freezing it. Exercise its setup independently of missing product APIs. Check ownership/allocation prerequisites, companion paths, fake tool discovery/image metadata, mandatory preflight ordering, environment changes and cancellation resources. A few representative health cases do not prove readiness of the other cases. When revising contradictory tests, preserve required behaviors and cases, replace incorrect assumptions with assertions on the actual approved guarantee, and report each requirements-to-test mapping. Run declared setup-phase fixture-health checks first. These must exercise helpers independently of missing product APIs and pass before assertion-red proof. Run the precise named checks. A meaningful red result identifies the expected test and an assertion against existing behavior. Import errors, syntax errors, missing dependencies, broken startup, and compilation errors are setup failures to repair before claiming red.
 
 4. Keep assertions specific to the behavior rather than mirroring implementation details. Do not add sleeps, disable assertions, skip tests, or broaden fixtures to hide failures.
 
@@ -903,6 +944,12 @@ existing work merely to retrofit the rule.
 New setup profiles default to worktree; explicit setup choices are honored and
 legacy approved plans retain their recorded checkout strategy. Missing planning.commit_plans means true.
 
+Explicit factory strategy allocates from independent user-data mirrors at the
+verified remote base, with receipt-owned paths and branches. Selected read-only
+companions use detached factory checkouts during unattended execution. Never
+adopt a mirror common directory without its validated allocation receipt. Ordinary
+interactive strategies and existing saved allocations keep their original rules.
+
 ## Pull requests and design review
 
 ### `address-pr-comments` { .skill-entry data-skill="address-pr-comments Retrieve complete PR feedback, implement selected fixes, and draft factual replies." }
@@ -1130,6 +1177,16 @@ Read the selected package's references/model-routing.md for the settings and tas
 7. After approval, run `models apply --input <proposal.json> --approve <digest>`. Report the reread effective values. If files changed, regenerate and show the proposal. An interrupted apply has `models recover` to restore its journaled previous values, preserving concurrent edits.
 
 Every specify uses the offline evaluator; do not create a recurring refresh job unless requested. Do not change approved task snapshots, stages, permissions, checks or retry limits. Interactive sessions must apply model changes through their host; a recommendation cannot switch the current session by itself.
+
+Compare capability and effort independently. Use stage_facts examples for large
+routine tests, complex uncertain implementation and high-risk routine review.
+Large test counts alone are advisories. Do not infer usage/cost savings without
+actual evidence. Explain route_source and bounded eligibility/exclusion details;
+retained defaults and pins are not adaptive recommendations. To release legacy
+profile pins, propose project defaults plus explicit adaptive_stages, including
+default when applicable, while preserving providers and unrelated fields. Add
+routine medium only with reviewed model/host evidence; otherwise omit effort.
+Old snapshots and downstream installations remain untouched.
 
 ### `wizard` { .skill-entry data-skill="wizard Guide a bounded manual procedure with explicit prerequisites, evidence, and side effects." }
 

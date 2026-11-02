@@ -49,3 +49,10 @@ capabilities separately from the provider/model. Keep account selectors/config
 paths in ignored local identity files; never write them into the public profile.
 Verify available account identity before managed requests and state unavailable
 verification honestly. Do not switch global provider or GitHub accounts.
+
+Offer factory as an explicit interactive checkout strategy alongside the existing
+choices. New unattended/detached/non-TTY CLI tasks use factory regardless of the
+interactive strategy; explain the remote-base prerequisite. Reviewed isolation
+policy can opt into experimental Docker/Podman with a local image and individual
+config/API-variable opt-ins. Container mode requires factory ownership; legacy
+local allocations need a fresh task. See docs/isolation.md for the exact boundary.

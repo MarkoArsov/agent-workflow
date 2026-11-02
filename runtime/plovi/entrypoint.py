@@ -32,6 +32,12 @@ def launch(project, target, *, rebind=False, trusted=False, no_wait=False):
         if saved and supplied and str(Path(saved['manifest_path']).resolve())!=str(Path(supplied['_path']).resolve()) and not rebind:
             raise WorkflowError('Task already uses another manifest; review it before rebinding')
         execution=saved.get('execution') or policy.execution(project,plan,trusted=trusted,unattended=True)
+        from . import factory, git_ops
+        strategies = factory.strategies(project, plan, unattended=True, prior=saved)
+        if not saved and 'factory' in strategies.values():
+            git_ops.prepare(project, plan, strategies=strategies)
+        if not saved:
+            execution['checkout_strategies'] = strategies
         runner.preflight(project,plan,execution=execution)
         run_id=uuid.uuid4().hex
         launch_info={'run_id':run_id,'task':task,'at':time.time()};write_json(root/'launch.json',launch_info)

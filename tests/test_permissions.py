@@ -6,6 +6,7 @@ from plovi import runner, state
 
 class PermissionTests(HardeningTest):
     def run_child(self, *flags):
+        self.plan["repositories"][0]["branch"] = "feature/sample"
         self.save_plan()
         response = self.task_cli("run", self.manifest_path, *flags)
         self.assertEqual(response.returncode, 0, response.stdout + response.stderr)
@@ -27,7 +28,7 @@ class PermissionTests(HardeningTest):
     def test_interactive_run_keeps_profile_mode(self):
         self.fixture([{}])
         with patch("sys.stdin.isatty", return_value=True):
-            self.assertEqual(runner.run(self.project, self.plan)["status"], "complete")
+            self.assertEqual(runner.run(self.project, self.plan, unattended=False)["status"], "complete")
         self.assertIn("--dangerously-bypass-approvals-and-sandbox", self.calls()[0]["argv"])
 
     def test_policy_can_explicitly_allow_unattended_trusted(self):
@@ -108,7 +109,7 @@ class PermissionTests(HardeningTest):
         status = {"loggedIn": True, "authMethod": "claude.ai", "apiProvider": "firstParty", "email": "company@example.invalid"}
         with patch.object(providers, "run", return_value=SimpleNamespace(returncode=0, stdout=json.dumps(status))):
             with self.assertRaisesRegex(WorkflowError, "does not match"):
-                runner.run(self.project, self.plan)
+                runner.run(self.project, self.plan, unattended=False)
         self.assertEqual(self.calls(), [])
 
     def test_wrong_claude_account_blocks_codex_stage_too(self):
@@ -122,7 +123,7 @@ class PermissionTests(HardeningTest):
         status = {"loggedIn": True, "authMethod": "claude.ai", "apiProvider": "firstParty", "email": "company@example.invalid"}
         with patch.object(providers, "run", return_value=SimpleNamespace(returncode=0, stdout=json.dumps(status))):
             with self.assertRaisesRegex(WorkflowError, "does not match"):
-                runner.run(self.project, self.plan)
+                runner.run(self.project, self.plan, unattended=False)
         self.assertEqual(self.calls(), [])
 
     def test_personal_claude_configuration_reaches_codex_stage(self):
@@ -132,6 +133,6 @@ class PermissionTests(HardeningTest):
         selected = dict(os.environ, CLAUDE_CONFIG_DIR=str(self.root / "personal"))
         with patch.object(providers, "claude_environment", return_value=selected), \
              patch.object(runner, "execute_process", wraps=runner.execute_process) as execute:
-            result = runner.run(self.project, self.plan)
+            result = runner.run(self.project, self.plan, unattended=False)
         self.assertEqual(result["status"], "complete")
         self.assertEqual(execute.call_args.kwargs["env"]["CLAUDE_CONFIG_DIR"], selected["CLAUDE_CONFIG_DIR"])

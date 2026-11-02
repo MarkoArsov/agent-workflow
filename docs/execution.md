@@ -116,3 +116,20 @@ An opaque selector fingerprint is bound to the task. Changing selectors requires
 reviewed rebind; changes during a managed run stop before its next subprocess.
 Claude identity is checked again before managed stages, checks and services.
 Public task evidence contains no expected email or private config directory.
+
+## Factory and container execution
+
+New unattended CLI runs use independent factory checkouts even when interactive
+setup chose a shared checkout. Interactive runs preserve their configured strategy;
+explicit factory supports interactive use. The Python API uses the same non-TTY detection unless its caller explicitly
+selects interactive or unattended execution. Resume keeps the recorded allocation
+and permission decision.
+
+Container mode runs provider help/auth probes inside the pinned image; it needs no
+host provider binary. A private account guard requires the corresponding read-only
+config opt-in. Host-only delivery still uses host credentials and existing guards.
+See [isolated execution](isolation.md) for the complete boundary and degraded fallback.
+
+!!! note "What changes for your workflow"
+    Keep the remote base ready for unattended work. Container checks need their
+    tools inside your image. Review the frozen mode and image before starting.

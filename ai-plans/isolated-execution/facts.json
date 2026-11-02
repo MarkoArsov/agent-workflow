@@ -1,0 +1,14 @@
+{
+  "stages": [
+    "implement-tests",
+    "implement",
+    "review"
+  ],
+  "kind": "code",
+  "size": "large",
+  "risk": "high",
+  "uncertain": true,
+  "repository_count": 1,
+  "test_files": 3,
+  "test_lines": 1050
+}

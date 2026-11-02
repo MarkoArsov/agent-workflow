@@ -34,6 +34,12 @@ bytes. `doctor` reports missing policy and values duplicated in the profile.
 | `execution.tracking_mode` | `"auto"` |
 | `autonomy.level` | `"assisted"` |
 | `grants` | Empty reserved table |
+| `isolation.mode` | `"none"` |
+| `isolation.runtime` | `"auto"` |
+| `isolation.image` | Empty; required for container mode |
+| `isolation.network` | `"on"` |
+| `isolation.mount_harness_config` | `[]`, opt-in provider IDs |
+| `isolation.api_key_env` | `[]`, explicit environment names |
 
 `ready` and `auto` are accepted autonomy values; they do not enable additional
 actions. Slot limits are reserved configuration, not a scheduler. Unknown keys,
@@ -77,3 +83,7 @@ profile: `auto`, `current-terminal`, `app-terminal`, `command-only`, or `off`.
 Auto uses the launching host's demonstrated capabilities. App-terminal falls back
 to a command when no supported app terminal tool exists. This preference does not
 change worker permissions or authorize additional model requests.
+
+Review [isolated execution](isolation.md) before enabling container mode. Image IDs,
+enums, provider IDs and environment names have separate validation; they are not
+repository globs. Names and immutable image identity are frozen, never API key values.

@@ -44,6 +44,10 @@ class Project:
                 return True
             if not active_common and start.is_relative_to(path):
                 return True
+        from .factory import owns
+        top = run(['git', 'rev-parse', '--show-toplevel'], start, check=False)
+        if top.returncode == 0:
+            return any(owns(self, repo['id'], Path(top.stdout.strip())) for repo in self.profile['repositories'])
         return False
 
 def load(root: Path, *, migrate=True) -> Project:
@@ -69,6 +73,22 @@ def resolve(start: Path | str = ".", explicit: Path | str | None = None, *, migr
     start = Path(start).expanduser().resolve()
     if start.is_file():
         start = start.parent
+    # Factory trees inherit source profiles; resolve their receipt owner before
+    # considering that copied profile as a new configuration root.
+    factory_projects = user_data().resolve() / 'projects'
+    if start.is_relative_to(factory_projects):
+        parts = start.relative_to(factory_projects).parts
+        if len(parts) >= 4 and parts[1] == 'worktrees':
+            project_id, _, task, repository = parts[:4]
+            from .factory import safe, receipt, owns
+            allocation = read_json(safe(factory_projects, project_id, 'allocations', task + '.json'), {})
+            if allocation.get('configuration_root'):
+                owner = load(Path(allocation['configuration_root']), migrate=False)
+                target = factory_projects.joinpath(*parts[:4])
+                if (owner.profile['project']['id'] == project_id and owns(owner, repository, target)
+                        and (not explicit or Path(explicit).expanduser().resolve() == owner.root)):
+                    return owner
+                raise WorkflowError('Factory worktree does not match its recorded project ownership')
     def accept(root, reference=None):
         project = load(root, migrate=False)
         if not project.accepts(start):
@@ -124,7 +144,7 @@ def resolve(start: Path | str = ".", explicit: Path | str | None = None, *, migr
     if common:
         matches = []
         for entry in read_json(user_data() / "projects.json", []):
-            if str(common) in entry.get("common_dirs", []) and Path(entry["root"]).exists():
+            if Path(entry["root"]).exists():
                 project = load(Path(entry["root"]), migrate=False)
                 if project.accepts(start):
                     matches.append(project)

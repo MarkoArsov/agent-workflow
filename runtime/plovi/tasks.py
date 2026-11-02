@@ -30,6 +30,14 @@ def _validate_checkout(project, row):
 
 def owned_checkout(project, task, repository, branch):
     """Return only a validated, complete allocation, or None for legacy manifests."""
+    from .factory import receipt as factory_receipt
+    allocated = factory_receipt(project, task)
+    if allocated is not None:
+        row = next((r for r in allocated['repositories'] if r['repository'] == repository), None)
+        if row:
+            if branch != row['branch']:
+                raise WorkflowError('Manifest repository/branch differs from its factory allocation')
+            return row['path']
     saved = read_json(receipt_path(project, task))
     if saved is None:
         return None
@@ -47,6 +55,22 @@ def owned_checkout(project, task, repository, branch):
 
 def start(project, task, *, repositories=None, base=None, resume=False):
     task = identifier(task)
+    selected = repositories or [r['id'] for r in project.profile['repositories'] if r['task_policy'] != 'never']
+    if any(project.repository(name)['checkout_strategy'] == 'factory' for name in selected):
+        from .factory import allocate, receipt_path as factory_path
+        if factory_path(project, task).exists() and not resume:
+            raise WorkflowError('Task already exists; use --resume only for this same task')
+        if resume and not factory_path(project, task).exists():
+            raise WorkflowError('No factory task allocation exists to resume')
+        if base is not None:
+            raise WorkflowError('Factory task start uses its configured remote base; set base_branch in the reviewed profile')
+        rows = [{'id': name, 'access': 'write', 'branch': project.profile['git']['branch_template'].format(task=task)} for name in selected]
+        factory_rows = [r for r in rows if project.repository(r['id'])['checkout_strategy'] == 'factory']
+        local_names = [r['id'] for r in rows if project.repository(r['id'])['checkout_strategy'] != 'factory']
+        checkouts = start(project, task, repositories=local_names, resume=resume)['checkouts'] if local_names else {}
+        checkouts.update(allocate(project, task, unattended=True, manifest={'task': task, 'repositories': factory_rows}))
+        return {'task': task, 'checkouts': checkouts, 'strategies': {name: project.repository(name)['checkout_strategy'] for name in selected},
+                'plans': {name: str(Path(path) / project.profile['planning']['directory'] / task) for name, path in checkouts.items()}}
     candidates = [r['id'] for r in project.profile['repositories'] if r['task_policy'] != 'never']
     if repositories is None:
         if len(candidates) != 1:

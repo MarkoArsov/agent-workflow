@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "providers": [
+    "codex",
+    "claude"
+  ],
+  "defaults": {
+    "implement-tests": [
+      {
+        "provider": "claude",
+        "model": "sonnet"
+      },
+      {
+        "provider": "codex",
+        "model": "gpt-6.1-sol"
+      }
+    ],
+    "implement": [
+      {
+        "provider": "codex",
+        "model": "gpt-6.1-sol"
+      },
+      {
+        "provider": "claude",
+        "model": "opus"
+      }
+    ],
+    "review": [
+      {
+        "provider": "claude",
+        "model": "opus"
+      },
+      {
+        "provider": "codex",
+        "model": "gpt-6.1-sol"
+      }
+    ],
+    "default": [
+      {
+        "provider": "codex",
+        "model": "gpt-6.1-sol"
+      },
+      {
+        "provider": "claude",
+        "model": "opus"
+      }
+    ]
+  },
+  "adaptive_stages": [
+    "implement-tests",
+    "implement",
+    "review",
+    "default"
+  ]
+}

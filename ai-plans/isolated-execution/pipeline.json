@@ -1,0 +1,842 @@
+{
+  "schema_version": 1,
+  "task": "isolated-execution",
+  "plan_status": "approved",
+  "plan_files": [
+    "prompt.md",
+    "requirements.md",
+    "implementation.md",
+    "deferred.md",
+    "project-quality.md",
+    "routing-scenarios.md",
+    "migration.md",
+    "companion-recovery.md",
+    "test-contract-revision.md",
+    "automatic-contract-recovery.md",
+    "compatibility-completion.md"
+  ],
+  "repositories": [
+    {
+      "id": "agent-workflow",
+      "access": "write",
+      "branch": "codex/isolated-execution",
+      "paths": [
+        "runtime/plovi/factory.py",
+        "runtime/plovi/isolation.py",
+        "runtime/plovi/git_ops.py",
+        "runtime/plovi/tasks.py",
+        "runtime/plovi/project.py",
+        "runtime/plovi/claims.py",
+        "runtime/plovi/runner.py",
+        "runtime/plovi/cli.py",
+        "runtime/plovi/policy.py",
+        "runtime/plovi/profile.py",
+        "runtime/plovi/setup.py",
+        "runtime/plovi/detect.py",
+        "runtime/plovi/process.py",
+        "runtime/plovi/state.py",
+        "runtime/plovi/verification.py",
+        "runtime/plovi/environments.py",
+        "runtime/plovi/providers/**",
+        "schemas/project.schema.json",
+        "schemas/policy.schema.json",
+        "tests/test_factory_checkouts.py",
+        "tests/test_container.py",
+        "tests/helpers.py",
+        "tests/fixtures/**",
+        "templates/isolation/Dockerfile",
+        "docs/**",
+        "mkdocs.yml",
+        "references/pipeline-contract.md",
+        "skills/worktree-start/SKILL.md",
+        "skills/project-setup/SKILL.md",
+        "skills/implement-pipeline/SKILL.md",
+        "PLAN.md",
+        "ai-plans/isolated-execution/**",
+        ".plovi/project.json",
+        ".plovi/models.json",
+        "PROJECT_WORKFLOW.md",
+        "runtime/plovi/model_policy/**",
+        "runtime/plovi/model_routing.py",
+        "references/model-routing.md",
+        "skills/specify/SKILL.md",
+        "skills/update-models/SKILL.md",
+        "tests/test_model_routing_revision.py",
+        "tests/test_model_policy.py",
+        "tests/test_workflow_practices.py",
+        "AGENTS.md",
+        "tests/test_recovery.py",
+        "schemas/pipeline.schema.json",
+        "runtime/plovi/manifest.py",
+        "runtime/plovi/checkpoints.py",
+        "runtime/plovi/repairs.py",
+        "runtime/plovi/entrypoint.py",
+        "runtime/plovi/runtime_pin.py",
+        "tests/test_legacy_migration.py",
+        "tests/test_isolation_fixture_health.py",
+        "tests/test_companion_fixture_health.py",
+        "tests/test_pipeline_resume.py",
+        "skills/implement-tests/SKILL.md",
+        "tests/test_contract_recovery.py",
+        "tests/test_runner.py",
+        "tests/test_runner_lifecycle.py",
+        "tests/test_runner_outcomes.py",
+        "tests/test_limits.py",
+        "tests/test_autonomous_repairs.py",
+        "tests/test_permissions.py",
+        "tests/test_policy.py",
+        "tests/test_concurrency.py",
+        "tests/test_evidence.py",
+        "tests/test_progress_events.py",
+        "tests/test_resume_recovery_v2.py",
+        "tests/test_factory_journey.py",
+        "tests/test_fake_runtime_identity.py"
+      ],
+      "test_paths": [
+        "tests/test_factory_checkouts.py",
+        "tests/test_container.py",
+        "tests/helpers.py",
+        "tests/fixtures/**",
+        "tests/test_model_routing_revision.py",
+        "tests/test_model_policy.py",
+        "tests/test_workflow_practices.py",
+        "tests/test_recovery.py",
+        "tests/test_legacy_migration.py",
+        "tests/test_isolation_fixture_health.py",
+        "tests/test_companion_fixture_health.py",
+        "tests/test_pipeline_resume.py",
+        "tests/test_contract_recovery.py",
+        "tests/test_runner.py",
+        "tests/test_runner_lifecycle.py",
+        "tests/test_runner_outcomes.py",
+        "tests/test_limits.py",
+        "tests/test_autonomous_repairs.py",
+        "tests/test_permissions.py",
+        "tests/test_policy.py",
+        "tests/test_concurrency.py",
+        "tests/test_evidence.py",
+        "tests/test_progress_events.py",
+        "tests/test_resume_recovery_v2.py",
+        "tests/test_factory_journey.py",
+        "tests/test_fake_runtime_identity.py"
+      ]
+    }
+  ],
+  "stages": [
+    "implement",
+    "review"
+  ],
+  "checks": [
+    {
+      "id": "factory-red",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "-m",
+          "unittest",
+          "-v",
+          "tests.test_factory_checkouts.FactoryCheckoutTests.test_unattended_ignores_dirty_user_clone"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 300
+      },
+      "parser": "unittest",
+      "phases": [
+        "red",
+        "green"
+      ],
+      "identities": [
+        "test_unattended_ignores_dirty_user_clone"
+      ]
+    },
+    {
+      "id": "container-red",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "-m",
+          "unittest",
+          "-v",
+          "tests.test_container.ContainerTests.test_isolation_policy_is_accepted"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 300
+      },
+      "parser": "unittest",
+      "phases": [
+        "red",
+        "green"
+      ],
+      "identities": [
+        "test_isolation_policy_is_accepted"
+      ]
+    },
+    {
+      "id": "routing-red",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "-m",
+          "unittest",
+          "-v",
+          "tests.test_model_routing_revision.ModelRoutingRevisionTests.test_large_routine_tests_do_not_force_deep",
+          "tests.test_model_routing_revision.ModelRoutingRevisionTests.test_stage_difficulty_does_not_spread"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 300
+      },
+      "parser": "unittest",
+      "phases": [
+        "red",
+        "green"
+      ],
+      "identities": [
+        "test_large_routine_tests_do_not_force_deep",
+        "test_stage_difficulty_does_not_spread"
+      ]
+    },
+    {
+      "id": "routing-revision",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "-m",
+          "unittest",
+          "-v",
+          "tests.test_model_routing_revision"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 300
+      },
+      "parser": "unittest",
+      "phases": [
+        "green"
+      ],
+      "identities": [
+        "test_large_routine_tests_do_not_force_deep",
+        "test_stage_difficulty_does_not_spread",
+        "test_deep_capability_can_use_balanced_effort",
+        "test_planner_suggestion_does_not_override_pin",
+        "test_suggestion_cannot_promote_unavailable_model",
+        "test_route_sources_are_explained",
+        "test_missing_catalogue_explanation_is_precise",
+        "test_old_snapshots_remain_valid",
+        "test_max_effort_is_never_automatic",
+        "test_effective_project_defaults_allow_both_providers"
+      ]
+    },
+    {
+      "id": "model-regressions",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "-m",
+          "unittest",
+          "-v",
+          "tests.test_model_policy",
+          "tests.test_model_watch",
+          "tests.test_workflow_practices"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 300
+      },
+      "parser": "unittest",
+      "phases": [
+        "green"
+      ]
+    },
+    {
+      "id": "portable-model-policy",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "-m",
+          "plovi.model_policy.selftest"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 300,
+        "env": {
+          "PYTHONPATH": "runtime"
+        }
+      },
+      "parser": "generic",
+      "phases": [
+        "green"
+      ],
+      "success_pattern": "[1-9]\\d* portable provider-subset contracts passed"
+    },
+    {
+      "id": "factory",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "-m",
+          "unittest",
+          "-v",
+          "tests.test_factory_checkouts"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 300
+      },
+      "parser": "unittest",
+      "phases": [
+        "green"
+      ],
+      "identities": [
+        "test_unattended_ignores_dirty_user_clone",
+        "test_user_clone_can_change_mid_run",
+        "test_next_task_refreshes_remote_base",
+        "test_factory_pushes_real_remote",
+        "test_read_companion_uses_factory_base",
+        "test_clean_keeps_active_dirty_and_unfinished",
+        "test_clean_removes_owned_terminal_worktrees",
+        "test_remote_identity_mismatch_refused",
+        "test_refresh_preserves_active_task_branch",
+        "test_resume_reuses_factory_allocation",
+        "test_interactive_preserves_profile_strategy"
+      ]
+    },
+    {
+      "id": "container",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "-m",
+          "unittest",
+          "-v",
+          "tests.test_container"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 300
+      },
+      "parser": "unittest",
+      "phases": [
+        "green"
+      ],
+      "identities": [
+        "test_docker_and_podman_argv",
+        "test_fake_runtime_runs_stages_and_checks",
+        "test_missing_runtime_refuses_trusted_unattended",
+        "test_missing_runtime_reports_restricted_fallback",
+        "test_no_implicit_pull",
+        "test_explicit_pull_consent",
+        "test_container_environment_does_not_leak_keys",
+        "test_check_services_stay_contained",
+        "test_cancel_removes_only_owned_container",
+        "test_windows_container_diagnostic"
+      ],
+      "approved_skip_reason": "Only the PLOVI_TEST_DOCKER=1 real-engine smoke is optional; fake runtime, argv and failure-path tests must always run."
+    },
+    {
+      "id": "full-suite",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "-m",
+          "unittest",
+          "discover",
+          "-s",
+          "tests",
+          "-v"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 600
+      },
+      "parser": "unittest",
+      "phases": [
+        "green"
+      ],
+      "approved_skip_reason": "Only explicitly opt-in real-engine smoke needs PLOVI_TEST_DOCKER=1 and a local prebuilt image; existing platform-specific tests retain their current conditions."
+    },
+    {
+      "id": "generated-docs",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "scripts/generate_docs.py",
+          "--check"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 300
+      },
+      "parser": "generic",
+      "phases": [
+        "green"
+      ],
+      "success_pattern": "^$"
+    },
+    {
+      "id": "docs-build",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "-m",
+          "mkdocs",
+          "build",
+          "--strict"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 300
+      },
+      "parser": "generic",
+      "phases": [
+        "green"
+      ],
+      "success_pattern": "Documentation built in"
+    },
+    {
+      "id": "links",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "scripts/check_links.py",
+          "site"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 300
+      },
+      "parser": "generic",
+      "phases": [
+        "green"
+      ],
+      "success_pattern": "Checked [1-9]\\d* internal links/assets; 0 failures\\."
+    },
+    {
+      "id": "public-content",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "scripts/check_public_content.py",
+          "--history"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 300
+      },
+      "parser": "generic",
+      "phases": [
+        "green"
+      ],
+      "success_pattern": "Scanned [1-9]\\d* items; 0 findings;"
+    },
+    {
+      "id": "resume-recovery",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "-m",
+          "unittest",
+          "-v",
+          "tests.test_recovery"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 300
+      },
+      "parser": "unittest",
+      "phases": [
+        "green"
+      ]
+    },
+    {
+      "id": "fixture-health",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "-m",
+          "unittest",
+          "-v",
+          "tests.test_isolation_fixture_health.FixtureHealthTests"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 300
+      },
+      "parser": "unittest",
+      "phases": [
+        "setup",
+        "green"
+      ],
+      "identities": [
+        "test_refresh_base_fixture_reaches_allocation",
+        "test_preserve_branch_fixture_reaches_refresh",
+        "test_missing_runtime_trusted_fixture_reaches_preflight",
+        "test_missing_runtime_restricted_fixture_reaches_preflight"
+      ]
+    },
+    {
+      "id": "companion-fixture-health",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "-m",
+          "unittest",
+          "-v",
+          "tests.test_companion_fixture_health.CompanionFixtureHealthTests"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 300
+      },
+      "parser": "unittest",
+      "phases": [
+        "setup",
+        "green"
+      ],
+      "identities": [
+        "test_companion_fixture_reaches_factory"
+      ]
+    },
+    {
+      "id": "compatibility-regressions",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "-m",
+          "unittest",
+          "-v",
+          "tests.test_permissions",
+          "tests.test_recovery",
+          "tests.test_concurrency",
+          "tests.test_resume_recovery_v2",
+          "tests.test_runner_lifecycle",
+          "tests.test_fake_runtime_identity"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 300
+      },
+      "parser": "unittest",
+      "phases": [
+        "green"
+      ]
+    },
+    {
+      "id": "container-protocol-health",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "-m",
+          "unittest",
+          "-v",
+          "tests.test_isolation_fixture_health.ContainerProtocolHealthTests"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 300
+      },
+      "parser": "unittest",
+      "phases": [
+        "green"
+      ],
+      "identities": [
+        "test_missing_image_reaches_runtime_inspect",
+        "test_fake_execution_is_portable_on_windows"
+      ]
+    }
+  ],
+  "outcomes": [
+    {
+      "id": "f1-f4-owned-independent-factory",
+      "checks": [
+        "factory-red",
+        "factory",
+        "full-suite"
+      ]
+    },
+    {
+      "id": "f5-host-only-delivery-and-resume",
+      "checks": [
+        "factory",
+        "container",
+        "full-suite"
+      ]
+    },
+    {
+      "id": "f6-safe-cleanup",
+      "checks": [
+        "factory"
+      ]
+    },
+    {
+      "id": "c1-policy",
+      "checks": [
+        "container-red",
+        "container",
+        "full-suite"
+      ]
+    },
+    {
+      "id": "c2-c3-execution-mounts-environment",
+      "checks": [
+        "container",
+        "full-suite"
+      ]
+    },
+    {
+      "id": "c4-preflight-fallback-platforms",
+      "checks": [
+        "container",
+        "container-protocol-health"
+      ]
+    },
+    {
+      "id": "c5-contained-service-and-cancellation",
+      "checks": [
+        "container",
+        "full-suite"
+      ]
+    },
+    {
+      "id": "d1-docs-design",
+      "checks": [
+        "generated-docs",
+        "docs-build",
+        "links"
+      ]
+    },
+    {
+      "id": "d2-d3-portable-isolated-acceptance",
+      "checks": [
+        "factory",
+        "container",
+        "full-suite",
+        "public-content"
+      ]
+    },
+    {
+      "id": "e1-e7-dual-provider-project-setup",
+      "checks": [
+        "routing-revision",
+        "model-regressions",
+        "full-suite"
+      ]
+    },
+    {
+      "id": "e2-e3-stage-sized-capability-and-effort",
+      "checks": [
+        "routing-red",
+        "routing-revision",
+        "model-regressions"
+      ]
+    },
+    {
+      "id": "e4-e5-provenance-and-eligibility",
+      "checks": [
+        "routing-revision",
+        "model-regressions"
+      ]
+    },
+    {
+      "id": "e6-snapshot-and-export-compatibility",
+      "checks": [
+        "routing-revision",
+        "model-regressions",
+        "portable-model-policy"
+      ]
+    },
+    {
+      "id": "e8-e9-routing-docs-and-verification",
+      "checks": [
+        "routing-revision",
+        "full-suite",
+        "generated-docs",
+        "docs-build",
+        "links",
+        "public-content"
+      ]
+    },
+    {
+      "id": "automatic-safe-resume",
+      "checks": [
+        "resume-recovery",
+        "full-suite"
+      ]
+    },
+    {
+      "id": "fixture-setup-healthy",
+      "checks": [
+        "fixture-health"
+      ]
+    },
+    {
+      "id": "companion-fixture-setup-healthy",
+      "checks": [
+        "companion-fixture-health"
+      ]
+    },
+    {
+      "id": "legacy-cli-fixtures-compatible",
+      "checks": [
+        "compatibility-regressions",
+        "full-suite"
+      ]
+    }
+  ],
+  "routes": {
+    "implement": [
+      {
+        "model": "gpt-6.1-sol",
+        "provider": "codex"
+      },
+      {
+        "model": "opus",
+        "provider": "claude"
+      }
+    ],
+    "implement-tests": [
+      {
+        "model": "sonnet",
+        "provider": "claude"
+      },
+      {
+        "model": "gpt-6.1-sol",
+        "provider": "codex"
+      }
+    ],
+    "review": [
+      {
+        "model": "opus",
+        "provider": "claude"
+      },
+      {
+        "model": "gpt-6.1-sol",
+        "provider": "codex"
+      }
+    ]
+  },
+  "model_selection": {
+    "advisories": [
+      {
+        "reason": "explicit-route-below-recommended-band",
+        "stage": "implement"
+      },
+      {
+        "reason": "explicit-route-below-recommended-band",
+        "stage": "implement-tests"
+      },
+      {
+        "reason": "single-lineage",
+        "stage": "review"
+      }
+    ],
+    "evaluator_version": "1.1.0",
+    "notice": "No model catalogue; retaining configured routes. Run update-models when convenient.",
+    "provenance": {
+      "catalogue": "9aecf438c3f923ce02f488be25cae648068d632535d5ec4d38b0fa6abb6b055f",
+      "facts": {
+        "kind": "code",
+        "repository_count": 1,
+        "risk": "high",
+        "size": "large",
+        "stages": [
+          "implement-tests",
+          "implement",
+          "review"
+        ],
+        "test_files": 3,
+        "test_lines": 1050,
+        "uncertain": true
+      },
+      "policy": "3c7d03f86602c435d0771f98e34a76bebfd100cc00bbd8ea18722b2b0ce10aa7",
+      "registry": "906caf9f74c729ddf882cba34d3fdf9b45082cc375ca45bca1882dcb955622e2",
+      "settings": "ab76e6a25034383fd5e45c5be0f459404b9f246598bfbe79d45bd6a87b59121c"
+    },
+    "reasons": {
+      "implement": "explicit-route",
+      "implement-tests": "explicit-route",
+      "review": "explicit-route"
+    },
+    "routes": {
+      "implement": [
+        {
+          "model": "gpt-6.1-sol",
+          "provider": "codex"
+        },
+        {
+          "model": "opus",
+          "provider": "claude"
+        }
+      ],
+      "implement-tests": [
+        {
+          "model": "sonnet",
+          "provider": "claude"
+        },
+        {
+          "model": "gpt-6.1-sol",
+          "provider": "codex"
+        }
+      ],
+      "review": [
+        {
+          "model": "opus",
+          "provider": "claude"
+        },
+        {
+          "model": "gpt-6.1-sol",
+          "provider": "codex"
+        }
+      ]
+    },
+    "schema_version": 1,
+    "snapshot_hash": "44c53b7d424caef9e178dd7b15299261d55a208fde99a981516c877b1af09e0b",
+    "unresolved": []
+  },
+  "limits": {
+    "attempts_per_route": 2,
+    "timeout_seconds": 7200,
+    "inactivity_seconds": 300,
+    "tool_timeout_seconds": 600,
+    "max_changed_files": 80,
+    "max_changed_lines": 5000
+  },
+  "references": [
+    "quality-guidance.md"
+  ],
+  "connectors": [],
+  "recovery": {
+    "approved_commits": {
+      "agent-workflow": [
+        "06a60d6ce4f36b4dce72f0bcef3dfba584d53b41",
+        "3ba1c174545c8d246f339e5a008082e2fb7f7206",
+        "fd211bb25ae9d91d5fdb76c81616ec234d430441",
+        "5b2d2c3d60ff0b9224058b9c0b36a38bd136ddbb",
+        "e898cfc64537a1626cc82edfa36ec19d89fb49fb",
+        "1fd2cffbf5e5bc458435d4726665753dc0b0ba6f",
+        "814e8e1c7d7403911e35258b2b51475ddae7e333",
+        "df40c6a67a32d56fa261d33335faf24000c1149d",
+        "e5561f5d85390c2074b7a286d1446dae59b2b4a8",
+        "e8b643c576330f30d1c5d01223572ce13cb6c44d",
+        "22a83466d893e66ade570615ade9c9137399c099",
+        "92bba4a3467d509cf5f9070aba4797ae463bd01c"
+      ]
+    },
+    "approved_merges": {
+      "agent-workflow": [
+        "814e8e1c7d7403911e35258b2b51475ddae7e333",
+        "df40c6a67a32d56fa261d33335faf24000c1149d"
+      ]
+    },
+    "test_checkpoint": {
+      "binding_sha256": "675237b2e91b08353714c39dbce52c928f7b4b96d11bc2951aedefad7ed11ee2",
+      "escalation_sha256": "3cd909c2a9a4d569e4dbdcead3a2bbbc5ecb718a26847e35d86927ccf2d12976"
+    }
+  },
+  "corrections": {
+    "fixture_rounds": 2,
+    "contract_review_rounds": 2
+  }
+}

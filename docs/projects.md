@@ -50,7 +50,8 @@ Nested folders, spaces, symlinks, and Git worktrees resolve to the same profile.
 
 A profile's **task_policy** is always, when-changed, or never.
 A plan selects each participating repository as read or write.
-Only writable participants receive task branches/worktrees or delivery actions.
+Only writable participants receive task branches or delivery actions. Factory
+runs also allocate detached checkouts for selected read-only companions.
 
 Never means never writable through the orchestrator; it may still be explicitly selected as a read-only check provider.
 Only declared writable path patterns may change.
@@ -68,4 +69,5 @@ Runtime evidence stays ignored.
     task checkout before plan writes, commits the complete contract by default,
     and reports requirements, manifest, branch, checkout and commit links. An
     unversioned shared plan store needs an explicit plan-owning repository or a
-    reviewed local-only choice. Read-only companions keep their current checkout.
+    reviewed local-only choice. Interactive local companions keep their current checkout; unattended runs use
+    factory-owned companion snapshots. See [isolated execution](isolation.md).

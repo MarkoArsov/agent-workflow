@@ -28,3 +28,13 @@ Read the selected package's references/model-routing.md for the settings and tas
 7. After approval, run `models apply --input <proposal.json> --approve <digest>`. Report the reread effective values. If files changed, regenerate and show the proposal. An interrupted apply has `models recover` to restore its journaled previous values, preserving concurrent edits.
 
 Every specify uses the offline evaluator; do not create a recurring refresh job unless requested. Do not change approved task snapshots, stages, permissions, checks or retry limits. Interactive sessions must apply model changes through their host; a recommendation cannot switch the current session by itself.
+
+Compare capability and effort independently. Use stage_facts examples for large
+routine tests, complex uncertain implementation and high-risk routine review.
+Large test counts alone are advisories. Do not infer usage/cost savings without
+actual evidence. Explain route_source and bounded eligibility/exclusion details;
+retained defaults and pins are not adaptive recommendations. To release legacy
+profile pins, propose project defaults plus explicit adaptive_stages, including
+default when applicable, while preserving providers and unrelated fields. Add
+routine medium only with reviewed model/host evidence; otherwise omit effort.
+Old snapshots and downstream installations remain untouched.

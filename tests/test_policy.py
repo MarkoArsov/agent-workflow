@@ -113,7 +113,7 @@ class PolicyTests(WorkspaceTest):
         # Use the common isolated provider fixture while keeping policy tests independent.
         root = HardeningTest.fixture(self, [{"session": "policy-question", "report": {
             "status": "needs_input", "question": "Proceed?"}}, {}])
-        self.assertEqual(runner.run(self.project, self.plan)["status"], "needs_input")
+        self.assertEqual(runner.run(self.project, self.plan, unattended=False)["status"], "needs_input")
         (root / "plovi.toml").write_text("[limits]\nmax_changed_files = 12\n")
         with self.assertRaisesRegex(WorkflowError, "rebind"):
-            runner.run(self.project, self.plan, resume=True, answer="Proceed")
+            runner.run(self.project, self.plan, resume=True, answer="Proceed", unattended=False)

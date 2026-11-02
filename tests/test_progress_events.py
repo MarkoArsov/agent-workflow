@@ -88,7 +88,7 @@ class VerificationCleanupTests(HardeningTest):
         result={'exit_code':None,'reason':'cancellation_failure','child_pid':123,
                 'output':'','duration_seconds':0}
         with patch('plovi.verification.execute',return_value=result):
-            with self.assertRaises(CleanupFailure):runner.run(self.project,self.plan)
+            with self.assertRaises(CleanupFailure):runner.run(self.project,self.plan, unattended=False)
         saved=state.read(self.project,'sample')
         self.assertEqual(saved['status'],'escalated')
         self.assertEqual(saved['escalation']['kind'],'cancellation_failure')
