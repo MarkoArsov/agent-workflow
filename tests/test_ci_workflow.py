@@ -67,6 +67,13 @@ class CIWorkflowTests(WorkspaceTest):
         self.assertIn('name: tests-${{ matrix.os }}-${{ matrix.python }}-${{ matrix.shard }}', core)
         self.assertIn('${{ runner.temp }}/test-timings.json', core)
 
+    def test_macos_batches_cover_both_python_versions(self):
+        core = self.job('core')
+        self.assertRegex(core, r'os: macos-latest\s+shard: 1\s+shards: 2')
+        for version in ('3.11', '3.14'):
+            self.assertRegex(core, r'os: macos-latest\s+python: "' + re.escape(version) + r'"\s+shard: 2\s+shards: 2')
+        self.assertIn("format(', batch {0}/{1}', matrix.shard, matrix.shards)", core)
+
     def smoke_code(self):
         match = re.search(r'shell: python\s*\n\s+run: \|\n(.*?)(?=^      - |\Z)',
                           self.job('windows-install'), re.M | re.S)
