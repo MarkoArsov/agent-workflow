@@ -405,7 +405,7 @@ class ScenarioTests(WorkspaceTest):
                          {"name": "core (ubuntu-latest, 3.14)", "started_at": stamp(0), "completed_at": stamp(130)}] for n in range(21, 31)}
         steps = {"B1": {"status": "passed", "owners": [49]}, "I1": {"status": "skipped", "owners": [21]}}
         self.install_github_fake({"actions": {"runs": runs, "jobs": jobs,
-                                              "artifacts": {"30": {"scenario-results": {"scenario-results.json": {"steps": steps}}}}}})
+                                              "artifacts": {"30": {"scenario-results-1": {"scenario-results.json": {"steps": steps}}}}}})
         result = self.cli_inproc("--project", project.root, "stats", "--gate", "--json", check=False)
         self.assertEqual(result.returncode, 1, "one run cannot meet the gate")
         data = json.loads(result.stdout)

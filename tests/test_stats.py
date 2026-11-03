@@ -1,7 +1,12 @@
 """plovi stats: logical runs and interventions from the ledger, and the stable-enough gate."""
+import contextlib
+import io
 import json
+import subprocess
+import unittest.mock
 from datetime import datetime, timedelta, timezone
 from tests.helpers import WorkspaceTest
+from tests.fixtures import github_fake
 
 PERSON = {"kind": "person", "name": "Dana"}
 OTHER = {"kind": "person", "name": "Sam"}
@@ -215,6 +220,18 @@ class GateTests(WorkspaceTest):
         self.local.parent.mkdir(parents=True, exist_ok=True)
         self.local.write_text(json.dumps({"cpu_count": 4, "jobs": 4, "seconds": 200, "date": "2026-11-01"}))
         self.state = self.install_github_fake(self.actions())
+        # A gate evaluation makes about 22 gh calls; answer them in-process, which is much faster on
+        # Windows. Scenario step X1 runs plovi stats --gate against the installed fake.
+        patcher = unittest.mock.patch("plovi.stats.run", side_effect=self.gh)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    @staticmethod
+    def gh(argv, cwd, **_):
+        out, err = io.StringIO(), io.StringIO()
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+            code = github_fake.main([str(arg) for arg in argv[1:]])
+        return subprocess.CompletedProcess(argv, code, out.getvalue(), err.getvalue())
 
     def actions(self, *, rerun=None, slow_ubuntu=False, scenario=None):
         runs, jobs = [], {}
@@ -228,7 +245,14 @@ class GateTests(WorkspaceTest):
         steps = scenario or {"U1": {"status": "passed", "owners": [49]}, "B3": {"status": "passed", "owners": [47]},
                              "I1": {"status": "skipped", "owners": [21]}, "D0": {"status": "passed", "owners": [49, 48]}}
         return {"repo": "octo/sample", "actions": {"runs": runs, "jobs": jobs, "logs": {},
-                                                   "artifacts": {"110": {"scenario-results": {"scenario-results.json": {"steps": steps}}}}}}
+                                                   "artifacts": {"110": self.batches(steps)}}}
+
+    @staticmethod
+    def batches(steps):
+        """Two CI batches: each step ran in the first and is not-run in the second."""
+        idle = {key: dict(value, status="not-run") for key, value in steps.items()}
+        return {"scenario-results-1": {"scenario-results.json": {"steps": steps}},
+                "scenario-results-2": {"scenario-results.json": {"steps": idle}}}
 
     @staticmethod
     def job(name, seconds):
@@ -296,6 +320,12 @@ class GateTests(WorkspaceTest):
         result = self.evaluate()
         self.assertFalse(result["G5"]["passed"])
         self.assertIn("U1", result["G5"]["detail"])
+
+    def test_g5_fails_when_a_done_step_ran_in_no_batch(self):
+        self.script(scenario={"U1": {"status": "not-run", "owners": [49]}, "D0": {"status": "passed", "owners": [49, 48]}})
+        result = self.evaluate()
+        self.assertFalse(result["G5"]["passed"])
+        self.assertIn("not passing: U1", result["G5"]["detail"])
 
     def test_missing_github_data_is_a_failure_not_a_crash(self):
         self.state.write_text(json.dumps({"repo": "octo/sample"}))

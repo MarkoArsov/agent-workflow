@@ -49,18 +49,18 @@ class CIWorkflowTests(WorkspaceTest):
         self.assertIn('pipefail', self.job('core'))
 
     def matrix(self, workflow):
-        entries = re.findall(r'- os: (\S+)\n\s+python: "([\d.]+)"\n(?:\s+shard: (\d)\n\s+shards: (\d)\n)?\s+jobs: (\w+)',
+        entries = re.findall(r'- \{os: (\S+), python: "([\d.]+)", shard: (\d+), shards: (\d+), jobs: (\w+)(?:, scenario: true)?\}',
                              self.job('core', workflow))
         return sorted(entries)
 
     def test_pull_request_matrix_and_nightly_matrix(self):
-        windows = lambda version: [('windows-latest', version, str(n), '3', '2') for n in (1, 2, 3)]
-        self.assertEqual(self.matrix('verify'), sorted([
-            ('macos-latest', '3.14', '', '', 'auto'), ('ubuntu-latest', '3.11', '', '', 'auto'),
-            ('ubuntu-latest', '3.14', '', '', 'auto'), *windows('3.14')]))
-        self.assertEqual(self.matrix('nightly'), sorted([
-            *[(os, version, '', '', 'auto') for os in ('ubuntu-latest', 'macos-latest') for version in ('3.11', '3.14')],
-            *windows('3.11'), *windows('3.14')]))
+        def batches(os, version, shards, jobs):
+            return [(os, version, str(n), str(shards), jobs) for n in range(1, shards + 1)]
+        def platforms(version):
+            return [*batches('ubuntu-latest', version, 2, 'auto'), *batches('macos-latest', version, 3, 'auto'),
+                    *batches('windows-latest', version, 8, '2')]
+        self.assertEqual(self.matrix('verify'), sorted([*batches('ubuntu-latest', '3.11', 2, 'auto'), *platforms('3.14')]))
+        self.assertEqual(self.matrix('nightly'), sorted([*platforms('3.11'), *platforms('3.14')]))
         nightly = self.workflow('nightly')
         self.assertIn('cron: "17 2 * * *"', nightly)
         self.assertIn('workflow_dispatch:', nightly)
@@ -90,23 +90,23 @@ class CIWorkflowTests(WorkspaceTest):
         self.assertIn('--timings "$RUNNER_TEMP/test-timings.json"', core)
         self.assertIn('--results-dir "$RUNNER_TEMP/test-results"', core)
         self.assertIn('--summary "$GITHUB_STEP_SUMMARY"', core)
-        self.assertRegex(core, r'name: Run isolated unit tests\s+timeout-minutes: 20')
-        self.assertRegex(core, r'(?m)^    timeout-minutes: 25$')
+        self.assertRegex(core, r'name: Run isolated unit tests\s+timeout-minutes: 12')
+        self.assertRegex(core, r'(?m)^    timeout-minutes: 15$')
         self.assertIn('if: always()', core)
         self.assertIn('name: tests-${{ matrix.os }}-${{ matrix.python }}-${{ matrix.shard || 1 }}', core)
         self.assertIn('${{ runner.temp }}/test-timings.json', core)
         self.assertIn('${{ runner.temp }}/test-results/', core)
         self.assertIn("format(', batch {0}/{1}', matrix.shard, matrix.shards)", core)
 
-    def test_one_core_job_uploads_scenario_results_for_the_gate(self):
+    def test_ubuntu_314_batches_upload_scenario_results_for_the_gate(self):
         core = self.job('core')
-        self.assertEqual(core.count('scenario: true'), 1)
-        self.assertRegex(core, r'- os: ubuntu-latest\n\s+python: "3.14"\n\s+jobs: auto\n\s+#[^\n]*\n\s+scenario: true')
+        self.assertEqual(re.findall(r'- \{os: (\S+), python: "([\d.]+)", shard: (\d+)[^}\n]*scenario: true\}', core),
+                         [('ubuntu-latest', '3.14', '1'), ('ubuntu-latest', '3.14', '2')])
         self.assertIn('--scenario-results "$RUNNER_TEMP/scenario-results.json"', core)
         self.assertIn('"${scenario[@]}"', core)
         upload = core.split('name: Keep scenario results for the stable-enough gate', 1)[1]
         self.assertIn('if: always() && matrix.scenario', upload)
-        self.assertIn('name: scenario-results\n', upload)
+        self.assertIn('name: scenario-results-${{ matrix.shard }}\n', upload)
         self.assertIn('${{ runner.temp }}/scenario-results.json', upload)
         self.assertNotIn('scenario: true', self.job('core', 'nightly'))
 

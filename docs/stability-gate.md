@@ -45,8 +45,9 @@ question: When can the pipeline lane replace the manual lane?
     - **Routes** come from `provider` on `attempt.finished`.
     - **Next command** comes from `next` on stop events. Runs recorded before stops carried
       `next` fail G4 until newer runs replace them.
-- **G5.** The Ubuntu Python 3.14 `core` job uploads `scenario-results.json` as the
-  `scenario-results` artifact. plovi downloads it from the newest completed Verify run on `main`.
+- **G5.** Each Ubuntu Python 3.14 `core` batch uploads `scenario-results.json` as a
+  `scenario-results-N` artifact. plovi downloads them all from the newest completed Verify run
+  on `main` and takes each step's result from the batch that ran it.
 
 Missing data is a FAIL with the reason, never an error: no `gh`, no runs, no local record.
 

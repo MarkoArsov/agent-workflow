@@ -294,13 +294,29 @@ def _g4(rows):
             "numbers": numbers}
 
 
+# A step runs in one CI batch and is "not-run" in the others; the most telling status wins.
+PRECEDENCE = ("failed", "error", "passed", "skipped", "not-run")
+
+
+def merge_steps(batches):
+    """Combine scenario results from several CI batches into one status per step."""
+    merged = {}
+    for steps in batches:
+        for key, value in steps.items():
+            rank = lambda item: PRECEDENCE.index(item.get("status")) if item.get("status") in PRECEDENCE else 0
+            if key not in merged or rank(value) < rank(merged[key]):
+                merged[key] = value
+    return merged
+
+
 def _g5(project, ci):
     if not ci:
         return {"passed": False, "detail": "no completed Verify run on main to read scenario results from", "numbers": {}}
     newest = ci[0]["id"]
     with tempfile.TemporaryDirectory(prefix="plovi-scenario-") as folder:
-        _gh(project, "run", "download", str(newest), "--name", "scenario-results", "--dir", folder)
-        steps = json.loads((Path(folder) / "scenario-results.json").read_text(encoding="utf-8")).get("steps", {})
+        _gh(project, "run", "download", str(newest), "--pattern", "scenario-results*", "--dir", folder)
+        steps = merge_steps(json.loads(path.read_text(encoding="utf-8")).get("steps", {})
+                            for path in sorted(Path(folder).rglob("scenario-results.json")))
     owned = {key: value for key, value in steps.items() if value.get("owners") and set(value["owners"]) <= DONE_OWNERS}
     failing = sorted(key for key, value in owned.items() if value.get("status") != "passed")
     numbers = {"run": newest, "steps": len(owned), "failing": failing}

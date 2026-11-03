@@ -1,5 +1,6 @@
 """Parallel workers, per-test timeouts, tiers and change-based selection in scripts/run_tests.py."""
 import json
+import re
 import subprocess
 import sys
 import time
@@ -207,6 +208,24 @@ class RunTestsTests(WorkspaceTest):
         selections = [sorted(item["test"] for item in json.loads(path.read_text())["tests"]) for path in timed]
         self.assertEqual(selections[0], selections[1])
         self.assertEqual(selections[0], json.loads(runs[0].stdout))
+
+    def weigh(self, suite, seconds):
+        rows = {test: [value] for test, value in seconds.items()}
+        (suite / "timings.json").write_text(json.dumps({"schema_version": 2, "platforms": [sys.platform], "tests": rows}))
+
+    def test_batches_balance_committed_weights(self):
+        suite = self.suite({"test_heavy": "    def test_long(self): pass\n",
+                            "test_light": "".join(f"    def test_{case}(self): pass\n" for case in range(4))})
+        self.weigh(suite, {"test_heavy.Case.test_long": 40.0, **{f"test_light.Case.test_{case}": 10.0 for case in range(4)}})
+        batches = [json.loads(self.invoke("--start-directory", suite, "--shard", n, "--shards", 2, "--list").stdout) for n in (1, 2)]
+        self.assertEqual(batches, [["test_heavy.Case.test_long"], [f"test_light.Case.test_{case}" for case in range(4)]])
+
+    def test_workers_split_a_module_by_weight(self):
+        suite = self.suite({"test_big": "".join(f"    def test_{case}(self): pass\n" for case in range(4))})
+        self.weigh(suite, {"test_big.Case.test_0": 30.0, **{f"test_big.Case.test_{case}": 10.0 for case in (1, 2, 3)}})
+        result = self.invoke("--start-directory", suite, "--jobs", 2)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(sorted(re.findall(r"worker \d \((\d) tests: test_big\)", result.stderr)), ["1", "3"])
 
     def test_invalid_jobs_and_timeout_are_rejected(self):
         suite = self.suite({"test_ok": "    def test_passes(self): pass\n"})

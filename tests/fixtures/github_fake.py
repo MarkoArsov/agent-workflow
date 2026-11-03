@@ -5,6 +5,7 @@ It does only what a test scripted in the state file at PLOVI_TEST_GITHUB_STATE.
 Every call is appended to <state>.calls.json. A call no handler maps exits 99
 and prints its argv, so a test that reaches new GitHub behavior fails loudly.
 """
+import fnmatch
 import json
 import os
 import re
@@ -285,16 +286,20 @@ def run_view_command(state, argv):
 
 
 def run_download(state, argv):
-    run_id, name, directory = positional(argv, 2), option(argv, "--name", "-n"), option(argv, "--dir", "-D")
-    if not name or not directory:
+    """--name extracts into --dir; --pattern extracts each match into --dir/<artifact>, as gh does."""
+    run_id, directory = positional(argv, 2), option(argv, "--dir", "-D")
+    name, pattern = option(argv, "--name", "-n"), option(argv, "--pattern", "-p")
+    if not directory or not (name or pattern):
         raise Unmapped()
-    files = state["actions"]["artifacts"].get(run_id, {}).get(name)
-    if files is None:
-        raise Failed(f"no artifact matches {name}")
-    for filename, content in files.items():
-        target = Path(directory) / filename
-        target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_text(content if isinstance(content, str) else json.dumps(content), encoding="utf-8")
+    artifacts = state["actions"]["artifacts"].get(run_id, {})
+    chosen = {name: ""} if name else {key: key for key in sorted(artifacts) if fnmatch.fnmatchcase(key, pattern)}
+    if not chosen or any(key not in artifacts for key in chosen):
+        raise Failed("no artifact matches any of the names or patterns provided")
+    for key, folder in chosen.items():
+        for filename, content in artifacts[key].items():
+            target = Path(directory) / folder / filename
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text(content if isinstance(content, str) else json.dumps(content), encoding="utf-8")
     return ""
 
 

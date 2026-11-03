@@ -148,8 +148,8 @@ publishing uses a separate concurrency group.
 The `smoke` job runs first, in under two minutes. It compiles the sources, runs
 the smoke tier of tests and checks generated documentation. Every other job waits
 for it, so a basic break fails fast. The `core` jobs then run every test in
-parallel workers: Linux with Python 3.11 and 3.14, macOS with 3.14, and Windows
-with 3.14 in three shards. The `audit` job checks public content once,
+parallel workers, in batches of about five minutes: Linux with Python 3.11 and 3.14,
+macOS with 3.14, and Windows with 3.14. The `audit` job checks public content once,
 including all fetched reachable history. The `docs` job checks the built site.
 `windows-install` installs the checked-out source in Windows PowerShell 5.1 and
 reinstalls it in PowerShell 7 using temporary child environments. This proves local

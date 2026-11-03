@@ -161,6 +161,9 @@ class GithubFakeTests(WorkspaceTest):
         target = self.root / "download"
         self.gh("run", "download", "11", "--name", "scenario-results", "--dir", str(target))
         self.assertEqual(json.loads((target / "scenario-results.json").read_text()), {"U1": "passed"})
+        self.gh("run", "download", "11", "--pattern", "scenario-*", "--dir", str(self.root / "matched"))
+        self.assertEqual(json.loads((self.root / "matched/scenario-results/scenario-results.json").read_text()), {"U1": "passed"})
+        self.assertEqual(self.gh("run", "download", "11", "--pattern", "tests-*", "--dir", str(target), check=False).returncode, 1)
         self.assertEqual(self.gh("run", "download", "11", "--name", "other", "--dir", str(target), check=False).returncode, 1)
 
     def test_integration_reads_work_against_the_fake(self):

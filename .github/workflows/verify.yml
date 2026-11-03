@@ -41,38 +41,30 @@ jobs:
   core:
     name: core (${{ matrix.os }}, ${{ matrix.python }}${{ matrix.shards && format(', batch {0}/{1}', matrix.shard, matrix.shards) || '' }})
     needs: smoke
-    timeout-minutes: 25
+    timeout-minutes: 15
     strategy:
       fail-fast: false
-      # Python 3.11 on macOS and Windows runs nightly (nightly.yml).
+      # Python 3.11 on macOS and Windows runs nightly (nightly.yml). Batches are balanced by
+      # tests/timings.json so each runs about five minutes of tests; refresh it with
+      # scripts/update_test_weights.py when a batch drifts. plovi stats --gate reads the
+      # scenario results of the Ubuntu 3.14 batches (G5).
       matrix:
         include:
-          - os: ubuntu-latest
-            python: "3.11"
-            jobs: auto
-          - os: ubuntu-latest
-            python: "3.14"
-            jobs: auto
-            # plovi stats --gate reads this job's scenario results (G5).
-            scenario: true
-          - os: macos-latest
-            python: "3.14"
-            jobs: auto
-          - os: windows-latest
-            python: "3.14"
-            shard: 1
-            shards: 3
-            jobs: 2
-          - os: windows-latest
-            python: "3.14"
-            shard: 2
-            shards: 3
-            jobs: 2
-          - os: windows-latest
-            python: "3.14"
-            shard: 3
-            shards: 3
-            jobs: 2
+          - {os: ubuntu-latest, python: "3.11", shard: 1, shards: 2, jobs: auto}
+          - {os: ubuntu-latest, python: "3.11", shard: 2, shards: 2, jobs: auto}
+          - {os: ubuntu-latest, python: "3.14", shard: 1, shards: 2, jobs: auto, scenario: true}
+          - {os: ubuntu-latest, python: "3.14", shard: 2, shards: 2, jobs: auto, scenario: true}
+          - {os: macos-latest, python: "3.14", shard: 1, shards: 3, jobs: auto}
+          - {os: macos-latest, python: "3.14", shard: 2, shards: 3, jobs: auto}
+          - {os: macos-latest, python: "3.14", shard: 3, shards: 3, jobs: auto}
+          - {os: windows-latest, python: "3.14", shard: 1, shards: 8, jobs: 2}
+          - {os: windows-latest, python: "3.14", shard: 2, shards: 8, jobs: 2}
+          - {os: windows-latest, python: "3.14", shard: 3, shards: 8, jobs: 2}
+          - {os: windows-latest, python: "3.14", shard: 4, shards: 8, jobs: 2}
+          - {os: windows-latest, python: "3.14", shard: 5, shards: 8, jobs: 2}
+          - {os: windows-latest, python: "3.14", shard: 6, shards: 8, jobs: 2}
+          - {os: windows-latest, python: "3.14", shard: 7, shards: 8, jobs: 2}
+          - {os: windows-latest, python: "3.14", shard: 8, shards: 8, jobs: 2}
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7
@@ -82,7 +74,7 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
       - name: Run isolated unit tests
-        timeout-minutes: 20
+        timeout-minutes: 12
         shell: bash
         run: |
           set -o pipefail
@@ -107,7 +99,7 @@ jobs:
         if: always() && matrix.scenario
         uses: actions/upload-artifact@v7
         with:
-          name: scenario-results
+          name: scenario-results-${{ matrix.shard }}
           path: ${{ runner.temp }}/scenario-results.json
           retention-days: 30
   audit:

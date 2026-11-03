@@ -241,24 +241,38 @@ def select_changed(start, ref, tiers):
     return selected, [f"Changed against {ref}: {', '.join(sorted(changed | direct))}"]
 
 
-def assign(selected, jobs, timings, slow):
-    """Split tests into at most `jobs` groups of whole modules, longest estimated module first."""
-    modules = {}
-    for test in selected:
-        modules.setdefault(module_of(test), []).append(test)
-    known = {}
-    for item in (timings or {}).get("tests", []):
-        known[item["test"]] = item["seconds"]
+def weights(start):
+    """Committed per-test seconds for this platform (tests/timings.json), or {}."""
+    data = load_json(Path(start) / "timings.json") or {}
+    if sys.platform not in data.get("platforms", []):
+        return {}
+    column = data["platforms"].index(sys.platform)
+    return {test: row[column] for test, row in data.get("tests", {}).items() if row[column] is not None}
+
+
+def balance(tests, count, known, slow=()):
+    """Split tests into `count` lists of similar estimated time, longest first; deterministic for the same inputs."""
     per_test = sorted(known.values())[len(known) // 2] if known else 1.0
-    cost = {name: sum(known.get(test.id(), per_test) for test in tests) for name, tests in modules.items()}
-    groups = [{"modules": [], "cost": 0.0} for _ in range(max(1, min(jobs, len(modules))))]
-    for name in sorted(modules, key=lambda name: (name not in slow, -cost[name], name)):
+    cost = {test.id(): known.get(test.id(), per_test) for test in tests}
+    groups = [{"tests": [], "cost": 0.0} for _ in range(max(1, count))]
+    for test in sorted(tests, key=lambda test: (module_of(test) not in slow, -cost[test.id()], test.id())):
         group = min(groups, key=lambda group: group["cost"])
-        group["modules"].append(name)
-        group["cost"] += cost[name]
+        group["tests"].append(test)
+        group["cost"] += cost[test.id()]
     for group in groups:
-        group["modules"].sort(key=lambda name: (name not in slow, name))
-        group["tests"] = [test.id() for name in group["modules"] for test in modules[name]]
+        # Keep a module's tests together so per-process fixture templates are reused.
+        group["tests"].sort(key=lambda test: test.id())
+    return groups
+
+
+def assign(selected, jobs, timings, slow, known=None):
+    """Split tests into at most `jobs` worker groups by estimated time; `timings` (local history) overrides `known`."""
+    known = dict(known or {})
+    known.update({item["test"]: item["seconds"] for item in (timings or {}).get("tests", [])})
+    groups = balance(selected, min(jobs, len(selected)), known, slow)
+    for group in groups:
+        group["modules"] = sorted({module_of(test) for test in group["tests"]})
+        group["tests"] = [test.id() for test in group["tests"]]
     return [group for group in groups if group["tests"]]
 
 
@@ -444,7 +458,9 @@ def main(argv=None):
         parser.error("--record needs a full run: drop --changed, --tier smoke and --shards")
     tiers = load_tiers(args.start_directory)
     discovered = discover(args.start_directory, args.pattern)
-    selected = discovered[args.shard - 1::args.shards]
+    known = weights(args.start_directory)
+    # Batches use only committed weights so every CI job computes the same split.
+    selected = balance(discovered, args.shards, known, set(tiers["slow"]))[args.shard - 1]["tests"]
     if args.tier == "smoke":
         selected = [test for test in selected if module_of(test) in tiers["smoke"]]
     if args.changed:
@@ -464,7 +480,7 @@ def main(argv=None):
     default_timings = ROOT / ".plovi/local/test-timings.json"
     tracked = args.start_directory.resolve() == DEFAULT_TESTS.resolve()
     history = load_json(default_timings) if tracked else load_json(args.timings) if args.timings else None
-    groups = assign(selected, args.jobs, history, set(tiers["slow"]))
+    groups = assign(selected, args.jobs, history, set(tiers["slow"]), known)
     print(f"Batch {args.shard}/{args.shards}: {len(selected)} of {len(discovered)} discovered tests "
           f"in {len(groups)} worker(s); per-test timeout {args.per_test_timeout:g} s", file=sys.stderr, flush=True)
     started = time.perf_counter()
@@ -482,7 +498,7 @@ def main(argv=None):
     print_summary(total, seconds)
     if args.summary:
         write_summary(args.summary, total, seconds)
-    timings = {"schema_version": 1, "shard": args.shard, "shards": args.shards, "jobs": len(groups),
+    timings = {"schema_version": 1, "platform": sys.platform, "shard": args.shard, "shards": args.shards, "jobs": len(groups),
                "discovered": len(discovered), "selected": len(selected), "tests_run": total["testsRun"],
                "successful": successful(total), "seconds": seconds, "tests": total["durations"]}
     if args.timings:
