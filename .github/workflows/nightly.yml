@@ -47,6 +47,12 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python }}
+      - name: Skip Defender scans of test files and processes
+        # Scanning each Git and Python process and temporary file slows Windows tests.
+        # The runner is discarded after the job.
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: Add-MpPreference -ExclusionPath $env:GITHUB_WORKSPACE, $env:RUNNER_TEMP, $env:TEMP, $env:RUNNER_TOOL_CACHE -ExclusionProcess python.exe, git.exe
       - name: Run isolated unit tests
         timeout-minutes: 15
         shell: bash

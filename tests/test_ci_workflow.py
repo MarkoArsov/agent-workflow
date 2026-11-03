@@ -98,6 +98,12 @@ class CIWorkflowTests(WorkspaceTest):
         self.assertIn('${{ runner.temp }}/test-results/', core)
         self.assertIn("format(', batch {0}/{1}', matrix.shard, matrix.shards)", core)
 
+    def test_defender_exclusions_apply_only_on_windows_runners(self):
+        step = self.job('core').split('- name: Skip Defender scans of test files and processes', 1)[1].split('- name:', 1)[0]
+        self.assertIn("if: runner.os == 'Windows'", step)
+        self.assertIn('Add-MpPreference -ExclusionPath', step)
+        self.assertNotIn('DisableRealtimeMonitoring', step)
+
     def test_ubuntu_314_batches_upload_scenario_results_for_the_gate(self):
         core = self.job('core')
         self.assertEqual(re.findall(r'- \{os: (\S+), python: "([\d.]+)", shard: (\d+)[^}\n]*scenario: true\}', core),
