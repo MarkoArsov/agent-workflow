@@ -16,6 +16,7 @@ permissions, checks, and saved evidence. Run `plovi --help` for the complete lis
 <div class="cli-command"><code>plovi policy set SECTION.KEY VALUE [--yes | --approve DIGEST]</code><p>Review and save a validated TOML edit. Agents preview, then apply by digest.</p></div>
 <div class="cli-command"><code>plovi inbox [--format text|json]</code><p>List what needs you across registered projects, oldest first, with the command that resolves each item.</p></div>
 <div class="cli-command"><code>plovi events [--task ID] [--since TIME|ID]</code><p>Read the ledger: every transition and command, with actor and reason.</p></div>
+<div class="cli-command"><code>plovi stats [--since DATE|DURATION] [--task ID] [--json] [--gate]</code><p>Count runs, interventions, stops, time, attempts and tokens from the ledger. <code>--gate</code> checks the stability gate and exits 0 only when it passes.</p></div>
 <div class="cli-command"><code>plovi retry TASK [--note FILE]</code><p>Resolve an escalation in a fresh session, retaining history.</p></div>
 <div class="cli-command"><code>plovi approve TASK --plan|--size|--paths [--approve DIGEST] [--actor NAME] [--reason TEXT]</code><p>Approve a plan by its hash, or the current diff gate and verify retained output.</p></div>
 <div class="cli-command"><code>plovi pause TASK</code><p>Stop a running task before its next stage. <code>resume</code> continues it.</p></div>

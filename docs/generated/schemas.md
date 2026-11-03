@@ -33,7 +33,7 @@ One line of the append-only ledger. Required data fields per type live in runtim
 | at | yes | string |
 | project | yes | string |
 | subject | yes | object |
-| type | yes | task.created, task.claimed, run.started, stage.started, attempt.finished, stage.finished, question.asked, question.answered, plan.proposed, plan.approved, approval.requested, approval.granted, escalation.raised, run.paused, run.resumed, run.interrupted, run.cancelled, run.finished, delivery.committed, delivery.pushed, pr.opened, policy.changed, project.registered, state.checkpoint, pause.requested, cancel.requested, project.unregistered |
+| type | yes | task.created, task.claimed, run.started, stage.started, attempt.finished, stage.finished, question.asked, question.answered, plan.proposed, plan.approved, approval.requested, approval.granted, escalation.raised, run.paused, run.resumed, run.interrupted, run.cancelled, run.finished, delivery.committed, delivery.pushed, pr.opened, policy.changed, project.registered, state.checkpoint, pause.requested, cancel.requested, project.unregistered, checkpoint.migrated |
 | actor | yes | object |
 | reason | yes | string |
 | data | yes | object |

@@ -82,6 +82,28 @@ requests run Ubuntu with Python 3.11 and 3.14, macOS with 3.14, and Windows with
 CI keeps each job's log, worker results and per-test timings for seven days,
 including successful runs.
 
+### Scenario tests: how to own a step
+
+`tests/scenario` holds the [target scenario](generated/scenario.md): one test per step in
+`tests/scenario/steps.py`, each decorated `@owned_by(...)` with the issues that own it.
+`tests/scenario/owners.json` marks each owner `done` or `pending`. A step runs only when
+all its owners are done; until then it is skipped with "owned by #N (pending)".
+
+To own a step in your pull request:
+
+1. Replace the step's `self.fail("not implemented")` stub with a real test. Use the
+   fixture projects (`self.project("hobby")` or `self.project("product")`), the provider
+   double (`self.provider([...])`) and `self.install_github_fake(state)` for GitHub.
+2. Set your issue to `done` in `owners.json` once all your steps have tests.
+3. Run `python3 scripts/generate_docs.py` so `docs/generated/scenario.md` shows the new status.
+
+Flipping an owner without a test fails, and `test_traceability` fails when a step has no
+owner, no test method, or an owner missing from `owners.json`. Keep the GitHub fake dumb:
+add a handler for each new `gh` call your code makes, and nothing a test didn't script.
+An unmapped call exits 99 and prints its arguments. `python3 scripts/run_tests.py
+--scenario-results PATH` writes each step's result; CI keeps it for the
+[stability gate](stability-gate.md).
+
 The optional local host check, `python3 scripts/host_smoke.py`, validates installed command interfaces and exercises Claude plugin lifecycle in a temporary configuration. It does not generate model responses or publish anything.
 
 ## One source of truth
