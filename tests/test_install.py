@@ -6,7 +6,7 @@ import subprocess
 import sys
 from pathlib import Path
 from unittest.mock import patch
-from tests.helpers import PACKAGE, WorkspaceTest
+from tests.helpers import PACKAGE, WorkspaceTest, remove_tree
 from plovi import install
 from plovi.extensions import copy_skill, new_skill
 from plovi.util import WorkflowError, read_json, write_json
@@ -213,7 +213,7 @@ class InstallTests(WorkspaceTest):
         foreign.parent.mkdir(); foreign.write_text("keep me")
         new = source / "skills/new-task/SKILL.md"
         new.parent.mkdir(); new.write_text("---\nname: new-task\ndescription: Test new discovery.\n---\n")
-        shutil.rmtree(source / "skills/review")
+        remove_tree(source / "skills/review")
         marker = read_json(source / "workflow-package.json")
         marker["discovery"] = {"prefix": "next", "aliases": {"project-setup": "start"}}
         write_json(source / "workflow-package.json", marker)

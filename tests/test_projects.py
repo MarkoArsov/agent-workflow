@@ -7,13 +7,15 @@ from __future__ import annotations
 import json
 import shutil
 from pathlib import Path
-from tests.helpers import WorkspaceTest
+from tests.helpers import InProcessCli, WorkspaceTest, remove_tree
 from tests.fixtures.control_plane import TIMESTAMP, ControlPlaneMixin, rows
 from plovi.project import load
 from plovi.util import read_json, user_data
 
 
-class ProjectRegistryTests(ControlPlaneMixin, WorkspaceTest):
+class ProjectRegistryTests(InProcessCli, ControlPlaneMixin, WorkspaceTest):
+    SUBPROCESS_TESTS = frozenset({"test_add_list_remove_keeps_files"})
+
     def registry(self):
         return read_json(user_data() / "projects.json", [])
 
@@ -91,7 +93,7 @@ class ProjectRegistryTests(ControlPlaneMixin, WorkspaceTest):
         second = self.configured("two")
         for project in (first, second):
             self.ok(self.run_cli("projects", "add", project.root))
-        shutil.rmtree(second.root)
+        remove_tree(second.root)
         text = self.ok(self.run_cli("projects", "list", "--format", "text")).stdout
         expected = [f"{e['id']}  {e['root']}" + ("" if Path(e["root"]).exists() else "  missing") for e in self.registry()]
         self.assertEqual(text.splitlines(), expected)

@@ -6,7 +6,7 @@ from urllib.parse import urlsplit
 import re
 import time
 from .state import lock, directory
-from .util import WorkflowError, common_dir, git, identifier, read_json, run, user_data, write_json
+from .util import WorkflowError, common_dir, git, identifier, read_json, run, same_path, user_data, write_json
 
 
 def root(project):
@@ -133,8 +133,8 @@ def receipt(project, task, *, validate_git=True, check_branch=True):
         if validate_git:
             if common_dir(expected) != mirror.resolve():
                 raise WorkflowError('Factory worktree has different Git ownership')
-            registered_paths = {Path(x[9:]).resolve() for x in git(mirror, 'worktree', 'list', '--porcelain', '-z').split('\0') if x.startswith('worktree ')}
-            if expected.resolve() not in registered_paths:
+            registered_paths = [x[9:] for x in git(mirror, 'worktree', 'list', '--porcelain', '-z').split('\0') if x.startswith('worktree ')]
+            if not any(same_path(expected, path) for path in registered_paths):
                 raise WorkflowError('Factory worktree is no longer registered')
             if check_branch and git(expected, 'branch', '--show-current') != (row['branch'] or ''):
                 raise WorkflowError('Factory task branch changed; restore the approved branch before resuming')
@@ -151,7 +151,7 @@ def owns(project, repository, path):
     if name != repository:
         return False
     saved = receipt(project, task)
-    return bool(saved and any(r['repository'] == name and r['path'] == str(path) for r in saved['repositories']))
+    return bool(saved and any(r['repository'] == name and same_path(r['path'], path) for r in saved['repositories']))
 
 
 def strategies(project, manifest, *, unattended=False, prior=None):

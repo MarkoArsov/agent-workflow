@@ -1,10 +1,9 @@
 from __future__ import annotations
 import json
 import os
-import time
 from pathlib import Path
 from unittest.mock import patch
-from tests.helpers import WorkspaceTest
+from tests.helpers import WorkspaceTest, wait_for
 from plovi import runner, state
 from plovi.util import WorkflowError, digest, json_text, read_json, write_json
 
@@ -47,25 +46,21 @@ class RunnerLifecycleTests(WorkspaceTest):
         return json.loads(self.scenario.with_suffix(".calls.json").read_text())
 
     def wait_status(self, predicate):
-        deadline = time.monotonic() + 15
         path = state.directory(self.project, "sample") / "state.json"
-        while time.monotonic() < deadline:
+        def reached():
             value = read_json(path)
-            if value and predicate(value):
-                return value
-            time.sleep(0.05)
-        self.fail("Runner did not reach the expected bounded state")
+            return value if value and predicate(value) else None
+        return wait_for(reached, timeout=15)
 
     def wait_unlocked(self):
         # The stop status is published just before the worker returns; it releases the lock on exit.
-        deadline = time.monotonic() + 15
-        while time.monotonic() < deadline:
+        def unlocked():
             try:
                 with state.lock(state.directory(self.project, "sample") / "runner.lock"):
-                    return
+                    return True
             except WorkflowError:
-                time.sleep(0.05)
-        self.fail("The detached runner did not release its lock")
+                return False
+        wait_for(unlocked, timeout=15)
 
     def test_detached_cancel_lock_and_resume(self):
         self.fixture([{"sleep": 8}, {}])

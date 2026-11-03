@@ -16,7 +16,7 @@ from .extensions import snapshot
 from .process import detached, CleanupFailure
 from .isolation import execute as execute_process, environment as identity_environment
 from . import isolation, factory
-from .util import WorkflowError, contained, digest, json_text, package_root, read_json, redact, write_json
+from .util import WorkflowError, contained, digest, is_absolute_anywhere, is_interactive, json_text, package_root, read_json, redact, write_json
 
 def redact_report(value):
     if isinstance(value, str):
@@ -54,7 +54,7 @@ def preflight(project, manifest, *, check_providers=True, execution=None, pull_i
     for row in manifest['repositories']:
         if row['access'] == 'write':
             owned_checkout(project, manifest['task'], row['id'], row.get('branch'))
-    execution = execution or policy.execution(project, manifest, unattended=not sys.stdin.isatty())
+    execution = execution or policy.execution(project, manifest, unattended=not is_interactive())
     values = policy.effective(project, manifest)
     requested_isolation = isolation.configuration(values)
     context = None
@@ -109,7 +109,7 @@ def preflight(project, manifest, *, check_providers=True, execution=None, pull_i
     for stage in custom.values():
         for item in stage["inputs"] + stage["outputs"]:
             project.repository(item["repository"])
-            if Path(item["path"]).is_absolute() or ".." in Path(item["path"]).parts:
+            if is_absolute_anywhere(item["path"]) or ".." in Path(item["path"]).parts:
                 raise WorkflowError("Custom stage inputs/outputs must remain repository-relative")
     rules.definitions(project)
     from .environments import definition as environment_definition
@@ -437,14 +437,14 @@ def run(project, manifest, *, resume=False, answer=None, rebind=False, trusted=F
 def _run_locked(project, manifest, root, *, resume, answer, rebind, trusted, unattended, no_wait, retry, note, approval, pull_isolation_image):
     contracts.validate(manifest, project)
     prior = read_json(root / 'state.json', {})
-    checkout_strategies = factory.strategies(project, manifest, unattended=not sys.stdin.isatty() if unattended is None else unattended, prior=prior)
+    checkout_strategies = factory.strategies(project, manifest, unattended=not is_interactive() if unattended is None else unattended, prior=prior)
     with claims.acquire(project, manifest, no_wait=no_wait, strategies=checkout_strategies):
         prior = read_json(root / "state.json", {})
         execution = prior.get("execution") or policy.execution(project, manifest, trusted=trusted,
-                            unattended=not sys.stdin.isatty() if unattended is None else unattended)
+                            unattended=not is_interactive() if unattended is None else unattended)
         if rebind:
             execution = policy.execution(project, manifest, trusted=trusted,
-                            unattended=not sys.stdin.isatty() if unattended is None else unattended)
+                            unattended=not is_interactive() if unattended is None else unattended)
         if not prior:
             execution['checkout_strategies'] = checkout_strategies
         elif 'checkout_strategies' in prior.get('execution', {}):

@@ -4,7 +4,7 @@ import os
 import shutil
 import sys
 from pathlib import Path
-from tests.helpers import PACKAGE, WorkspaceTest
+from tests.helpers import PACKAGE, WorkspaceTest, remove_tree
 from plovi import runner, manifest, state
 from plovi.util import WorkflowError, write_json
 
@@ -165,7 +165,7 @@ class RunnerTests(WorkspaceTest):
             if not hasattr(self, "project"):
                 self.fixture([behavior], stages=["implement"])
             else:
-                shutil.rmtree(state.directory(self.project, "sample"))
+                remove_tree(state.directory(self.project, "sample"))
                 self.scenario.with_suffix(".calls.json").unlink()
                 write_json(self.scenario, [behavior])
             self.plan["limits"]["inactivity_seconds"] = 1

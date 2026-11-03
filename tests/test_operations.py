@@ -8,7 +8,7 @@ from __future__ import annotations
 import json
 import threading
 import tomllib
-from tests.helpers import HardeningTest
+from tests.helpers import HardeningTest, InProcessCli
 from tests.fixtures.control_plane import AGENT, AGENT_FLAGS, RUNNER, ControlPlaneMixin, rows
 from plovi import runner, state
 from plovi.util import read_json
@@ -22,7 +22,10 @@ MUTATING_COMMANDS = [("answer",), ("approve",), ("retry",), ("pause",), ("resume
 SHA256 = r"^[0-9a-f]{64}$"
 
 
-class OperationCliTests(ControlPlaneMixin, HardeningTest):
+class OperationCliTests(InProcessCli, ControlPlaneMixin, HardeningTest):
+    SUBPROCESS_TESTS = frozenset({"test_commands_json_lists_every_operation", "test_mutating_operations_record_actor_and_reason",
+                                  "test_retry_with_note", "test_pause_stops_before_next_stage_and_resume_continues"})
+
     def asking(self, *questions):
         steps = [{"session": "asking-session", "report": {"status": "needs_input", "question": q}} for q in questions]
         self.fixture(steps + [{}], stages=["implement"])
@@ -226,7 +229,9 @@ class OperationCliTests(ControlPlaneMixin, HardeningTest):
         self.assertLessEqual({"task", "status", "cancel_requested", "detail"}, set(cancel))
 
 
-class PlanApprovalTests(ControlPlaneMixin, HardeningTest):
+class PlanApprovalTests(InProcessCli, ControlPlaneMixin, HardeningTest):
+    SUBPROCESS_TESTS = frozenset({"test_approval_of_different_hash_rejected"})
+
     def prepared(self):
         self.fixture([{}], stages=["implement"])
         self.factory_ready()

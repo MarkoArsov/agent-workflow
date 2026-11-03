@@ -8,7 +8,7 @@ import re
 import sys
 import tomllib
 from pathlib import Path, PureWindowsPath
-from .util import WorkflowError, atomic_write
+from .util import WorkflowError, atomic_write, is_absolute_anywhere, is_interactive
 
 _DEFAULTS = {
     'limits': {'running_tasks': 2, 'waiting_for_review': 3, 'attempts_per_stage': 2,
@@ -55,7 +55,7 @@ def validate(value):
                 raise WorkflowError(f'{path}: positive bounded integer required')
             if type(val) is list:
                 for item in val:
-                    if (not isinstance(item, str) or not item or Path(item).is_absolute()
+                    if (not isinstance(item, str) or not item or is_absolute_anywhere(item)
                             or PureWindowsPath(item).drive or '\\' in item or '..' in item.split('/')):
                         raise WorkflowError(f'{path}: repository-relative string globs required')
             if key == 'tracking_mode' and val not in {'auto', 'current-terminal', 'app-terminal', 'command-only', 'off'}:
@@ -241,7 +241,7 @@ def set_value(project, dotted, raw, *, yes=False):
     if not edit['changed']:
         return {'changed': False}
     print(edit['diff'])
-    if not yes and (not sys.stdin.isatty() or input('Save reviewed policy? [y/N] ') != 'y'):
+    if not yes and (not is_interactive() or input('Save reviewed policy? [y/N] ') != 'y'):
         raise WorkflowError('Review the diff and pass --yes or enter y interactively')
     write_edit(project, edit)
     return {'changed': True}

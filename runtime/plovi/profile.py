@@ -1,7 +1,7 @@
 """Validate the supported profile format without a runtime dependency."""
 from __future__ import annotations
 from pathlib import Path
-from .util import WorkflowError, contained, identifier
+from .util import WorkflowError, contained, identifier, is_absolute_anywhere
 
 PROVIDERS = {"codex", "claude", "cursor"}
 BASE_STAGES = ["implement-tests", "implement", "review", "commit-and-push", "draft-pr"]
@@ -16,7 +16,7 @@ def validate_command(command: dict):
     if not isinstance(timeout, int) or not 1 <= timeout <= 86400:
         raise WorkflowError("Command timeout must be between 1 and 86400 seconds")
     cwd = command.get("cwd", ".")
-    if not isinstance(cwd, str) or Path(cwd).is_absolute() or ".." in Path(cwd).parts:
+    if not isinstance(cwd, str) or is_absolute_anywhere(cwd) or ".." in Path(cwd).parts:
         raise WorkflowError("Command cwd must stay inside its repository")
     if Path(argv[0]).name in {"sh", "bash", "zsh", "cmd", "powershell", "pwsh"} and not command.get("shell", False):
         raise WorkflowError("Shell commands require shell: true")
@@ -40,7 +40,7 @@ def validate(profile: dict, root: Path | None = None) -> dict:
     for repo in repos:
         name = identifier(repo.get("id", ""))
         path = repo.get("path")
-        if not isinstance(path, str) or not path or Path(path).is_absolute() or ".." in Path(path).parts:
+        if not isinstance(path, str) or not path or is_absolute_anywhere(path) or ".." in Path(path).parts:
             raise WorkflowError(f"{name}: repository path must be relative to the project")
         if name in ids or path in paths:
             raise WorkflowError("Repository IDs and paths must be unique")
@@ -69,12 +69,12 @@ def validate(profile: dict, root: Path | None = None) -> dict:
         raise WorkflowError("planning.commit_plans must be boolean")
     for key in ("directory", "evidence_directory"):
         value = profile.get("planning", {}).get(key)
-        if not isinstance(value, str) or Path(value).is_absolute() or ".." in Path(value).parts:
+        if not isinstance(value, str) or is_absolute_anywhere(value) or ".." in Path(value).parts:
             raise WorkflowError(f"planning.{key} must be relative")
         if root:
             contained(root, value)
     for name, value in profile.get("extensions", {}).items():
-        if not isinstance(value, str) or Path(value).is_absolute() or ".." in Path(value).parts:
+        if not isinstance(value, str) or is_absolute_anywhere(value) or ".." in Path(value).parts:
             raise WorkflowError(f"extensions.{name} must be relative")
         if root:
             contained(root, value)

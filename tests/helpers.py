@@ -1,13 +1,54 @@
 from __future__ import annotations
+import atexit
+import contextlib
+import io
 import json
 import os
+import shutil
+import stat
 import subprocess
 import sys
 import tempfile
+import time
 import unittest
 from pathlib import Path
 PACKAGE = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PACKAGE / "runtime"))
+
+
+def remove_tree(path):
+    """Remove a tree that may hold read-only files, such as Git objects on Windows."""
+    def retry(function, failed, _info):
+        os.chmod(failed, stat.S_IWRITE)
+        function(failed)
+    if sys.version_info >= (3, 12):
+        shutil.rmtree(path, onexc=retry)
+    else:
+        shutil.rmtree(path, onerror=retry)
+
+
+def wait_for(predicate, timeout=10, interval=0.05):
+    """Poll until predicate() is truthy and return its value; fail after timeout seconds."""
+    deadline = time.monotonic() + timeout
+    while True:
+        value = predicate()
+        if value:
+            return value
+        if time.monotonic() >= deadline:
+            raise AssertionError(f"Condition not met within {timeout} s")
+        time.sleep(interval)
+
+
+_CACHE = {}
+
+
+def _cache_root():
+    """Per-process scratch space for fixture templates, removed when the process exits."""
+    if "root" not in _CACHE:
+        _CACHE["root"] = Path(tempfile.mkdtemp(prefix="plovi-fixture-cache-")).resolve()
+        atexit.register(remove_tree, _CACHE["root"])
+    return _CACHE["root"]
+
 
 class WorkspaceTest(unittest.TestCase):
     def setUp(self):
@@ -25,7 +66,9 @@ class WorkspaceTest(unittest.TestCase):
                     "GIT_CONFIG_KEY_1": "gc.auto", "GIT_CONFIG_VALUE_1": "0",
                     "GIT_AUTHOR_NAME": "Fixture", "GIT_AUTHOR_EMAIL": "fixture@example.invalid",
                     "GIT_COMMITTER_NAME": "Fixture", "GIT_COMMITTER_EMAIL": "fixture@example.invalid",
-                    "PYTHONDONTWRITEBYTECODE": "1", "PLOVI_PACKAGE": str(PACKAGE)}
+                    "PYTHONDONTWRITEBYTECODE": "1", "PLOVI_PACKAGE": str(PACKAGE),
+                    # UTC0 means UTC to both POSIX and the Windows C runtime, which requires an offset.
+                    "TZ": "UTC0"}
         if os.name == "nt":
             # Path.home() reads USERPROFILE; child processes need the system variables.
             self.env["USERPROFILE"] = str(self.home)
@@ -33,6 +76,9 @@ class WorkspaceTest(unittest.TestCase):
             self.env["LOCALAPPDATA"] = str(self.home / "local")
             self.env.update({key: os.environ[key] for key in ("SYSTEMROOT", "SYSTEMDRIVE", "WINDIR", "COMSPEC",
                                                               "PATHEXT", "TEMP", "TMP") if key in os.environ})
+            self.env["PYTHONUTF8"] = "1"
+        else:
+            self.env["LC_ALL"] = "C.UTF-8"
         self.patch = unittest.mock.patch.dict(os.environ, self.env, clear=True)
         self.patch.start()
         self.addCleanup(self.patch.stop)
@@ -41,12 +87,24 @@ class WorkspaceTest(unittest.TestCase):
         return subprocess.run(["git", "-C", str(root), *args], env=self.env, text=True, capture_output=True, check=check).stdout.strip()
 
     def repo(self, name):
+        """A plain repository on main with README.md "# Fixture" in one commit, copied from a per-process template."""
         path = self.root / name
-        path.mkdir(parents=True, exist_ok=True)
-        self.git(path, "init", "-b", "main")
-        (path / "README.md").write_text("# Fixture\n")
-        self.git(path, "add", ".")
-        self.git(path, "commit", "-m", "Initialize fixture")
+        if path.exists() and any(path.iterdir()):
+            self.git(path, "init", "-b", "main")
+            (path / "README.md").write_text("# Fixture\n")
+            self.git(path, "add", ".")
+            self.git(path, "commit", "-m", "Initialize fixture")
+            return path
+        if "repo" not in _CACHE:
+            template = _cache_root() / "repo"
+            template.mkdir()
+            self.git(template, "init", "-b", "main")
+            (template / "README.md").write_text("# Fixture\n")
+            self.git(template, "add", ".")
+            self.git(template, "commit", "-m", "Initialize fixture")
+            _CACHE["repo"] = template
+        # Templates are plain repositories: worktree metadata would hold absolute paths.
+        shutil.copytree(_CACHE["repo"], path, dirs_exist_ok=True, ignore=shutil.ignore_patterns("*.sample"))
         return path
 
     def bare_remote(self, name):
@@ -56,14 +114,24 @@ class WorkspaceTest(unittest.TestCase):
         return path
 
     def seed_remote(self, bare, filename="README.md", content="# Fixture\n"):
-        import shutil
-        tmp = self.root / f"tmp-seed-{bare.stem}"
-        subprocess.run(["git", "clone", str(bare), str(tmp)], env=self.env, check=True, capture_output=True, text=True)
-        (tmp / filename).write_text(content)
-        self.git(tmp, "add", ".")
-        self.git(tmp, "commit", "-m", "Initialize")
-        self.git(tmp, "push", "origin", "main")
-        shutil.rmtree(tmp)
+        """Push one "Initialize" commit holding only filename to main, built in a cached per-process repository."""
+        seeder = _CACHE.get("seeder")
+        if seeder is None:
+            seeder = _cache_root() / "seeder"
+            seeder.mkdir()
+            self.git(seeder, "init", "-b", "main")
+            _CACHE["seeder"] = seeder
+        key = ("tree", filename, content)
+        if key not in _CACHE:
+            # Match the bytes write_text() produced in a checkout, including Windows line endings.
+            data = content.replace("\n", os.linesep).encode()
+            blob = subprocess.run(["git", "-C", str(seeder), "hash-object", "-w", "--stdin"], input=data, env=self.env,
+                                  capture_output=True, check=True).stdout.decode().strip()
+            tree = subprocess.run(["git", "-C", str(seeder), "mktree"], input=f"100644 blob {blob}\t{filename}\n".encode(),
+                                  env=self.env, capture_output=True, check=True).stdout.decode().strip()
+            _CACHE[key] = tree
+        commit = self.git(seeder, "commit-tree", _CACHE[key], "-m", "Initialize")
+        self.git(seeder, "push", "--quiet", str(bare), f"{commit}:refs/heads/main")
 
     def clone_repo(self, bare, name):
         path = self.root / name
@@ -82,7 +150,63 @@ class WorkspaceTest(unittest.TestCase):
                               cwd=cwd or PACKAGE, env=self.env, stdin=subprocess.DEVNULL,
                               text=True, capture_output=True, check=check)
 
+    def cli_inproc(self, *args, cwd=None, check=True):
+        """Run plovi.cli.main in this process like cli(): same environment, no stdin, captured output."""
+        from plovi import cli, operations
+        argv = [str(item) for item in args]
+        stdout, stderr = io.StringIO(), io.StringIO()
+        saved = (dict(os.environ), os.getcwd(), sys.argv, sys.stdin, operations.FORWARDED, operations.WORKER)
+        try:
+            os.environ.clear()
+            os.environ.update(self.env)
+            os.chdir(cwd or PACKAGE)
+            sys.argv = [str(PACKAGE / "bin/plovi"), *argv]
+            sys.stdin = io.StringIO("")
+            with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
+                try:
+                    code = cli.main(argv)
+                except SystemExit as exc:
+                    if isinstance(exc.code, str):
+                        print(exc.code, file=sys.stderr)
+                    code = exc.code if isinstance(exc.code, int) else 0 if exc.code is None else 1
+        finally:
+            os.environ.clear()
+            os.environ.update(saved[0])
+            os.chdir(saved[1])
+            sys.argv, sys.stdin, operations.FORWARDED, operations.WORKER = saved[2:]
+        result = subprocess.CompletedProcess(["plovi", *argv], code, stdout.getvalue(), stderr.getvalue())
+        if check and code:
+            raise subprocess.CalledProcessError(code, result.args, result.stdout, result.stderr)
+        return result
+
 import unittest.mock
+
+
+class InProcessCli:
+    """Run CLI commands in this process, except those that cross the process boundary.
+
+    Commands that launch, forward to or watch other processes (main() dispatches them to a
+    pinned runtime, which prints from its own process) stay subprocesses, as do
+    the tests named in SUBPROCESS_TESTS: they keep each command's process contract tested.
+    """
+    PROCESS_COMMANDS = frozenset({"run", "pipeline", "watch", "verify", "migrate", "status"})
+    SUBPROCESS_TESTS = frozenset()
+
+    def cli(self, *args, cwd=None, check=True):
+        words = [str(item) for item in args]
+        command, skip = None, False
+        for word in words:
+            if skip:
+                skip = False
+            elif word == "--project":
+                skip = True
+            elif not word.startswith("-"):
+                command = word
+                break
+        if (self._testMethodName in self.SUBPROCESS_TESTS or command in self.PROCESS_COMMANDS
+                or "--help" in words or "-h" in words):
+            return super().cli(*args, cwd=cwd, check=check)
+        return self.cli_inproc(*args, cwd=cwd, check=check)
 
 
 class HardeningTest(WorkspaceTest):
@@ -104,7 +228,6 @@ class HardeningTest(WorkspaceTest):
         return self.cli("--project", self.project.root, *args, check=check)
 
     def install_gh_double(self):
-        import shutil
         binary = self.root / "bin"
         binary.mkdir(exist_ok=True)
         if os.name == "nt":

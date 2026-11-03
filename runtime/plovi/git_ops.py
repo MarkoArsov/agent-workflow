@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 from .manifest import matches
-from .util import WorkflowError, common_dir, contained, digest, git, json_text, run
+from .util import WorkflowError, common_dir, contained, digest, git, json_text, run, same_path
 
 def files(root):
     result = run(["git", "ls-files", "-z", "--cached", "--others", "--exclude-standard"], root).stdout
@@ -29,7 +29,7 @@ def snapshot(project, checkouts=None):
                               "index": digest(git(root, "ls-files", "--stage", "-z")),
                               "files": files(root)}
         parked = project.repo_path(repo["id"])
-        if root.resolve() != parked.resolve() and not owns(project, repo['id'], root):
+        if not same_path(root, parked) and not owns(project, repo['id'], root):
             result[repo["id"] + ":parked"] = {"head": git(parked, "rev-parse", "HEAD"),
                                                "index": digest(git(parked, "ls-files", "--stage", "-z")),
                                                "branch": git(parked, "branch", "--show-current"), "files": files(parked)}
@@ -109,9 +109,8 @@ def _prepare(project, manifest):
                 target = directory / manifest["task"] / name
                 if target.exists():
                     registered = git(root, "worktree", "list", "--porcelain", "-z").split("\0")
-                    worktrees = {Path(field.removeprefix("worktree ")).resolve()
-                                 for field in registered if field.startswith("worktree ")}
-                    if target.resolve() not in worktrees or common_dir(target) != common_dir(root):
+                    worktrees = [field.removeprefix("worktree ") for field in registered if field.startswith("worktree ")]
+                    if not any(same_path(target, path) for path in worktrees) or common_dir(target) != common_dir(root):
                         raise WorkflowError(f"Existing task worktree has different repository ownership: {target}")
                     if git(target, "branch", "--show-current") != branch:
                         raise WorkflowError(f"Existing worktree has a different branch: {target}")

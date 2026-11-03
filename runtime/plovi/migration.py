@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 import sys
 import time
-from .util import WorkflowError, atomic_write, digest, json_text, read_json
+from .util import WorkflowError, atomic_write, digest, is_absolute_anywhere, json_text, read_json
 
 LEGACY = ".agentflow"
 CURRENT = ".plovi"
@@ -270,7 +270,7 @@ def migrate(root):
         checkpoint("after-move")
         for relative, change in saved["changes"].items():
             relative_path = Path(relative)
-            if relative_path.is_absolute() or ".." in relative_path.parts:
+            if is_absolute_anywhere(relative) or ".." in relative_path.parts:
                 raise WorkflowError("Invalid migration journal path")
             destination = root / rebase_path(relative)
             if destination.is_symlink() or not destination.resolve().is_relative_to(root):

@@ -2,15 +2,15 @@
 
 Text layout fixed by test_text_format_snapshot (requirements leave it open):
     "N item(s) need(s) you." then a blank line, then per item, separated by blank lines:
-    "<local YYYY-MM-DD HH:MM>  <kind>  <task>[  <title when it differs from task>]"
+    "<local YYYY-MM-DD HH:MM; tests run the CLI with TZ=UTC0>  <kind>  <task>[  <title when it differs from task>]"
     "  <reason>"
     "  Next: <action labels joined by '; '>"
 An empty inbox prints "Nothing needs you."
 """
 from __future__ import annotations
 import json
-from datetime import datetime
-from tests.helpers import HardeningTest
+from datetime import datetime, timezone
+from tests.helpers import HardeningTest, InProcessCli
 from tests.fixtures.control_plane import RUNNER, ControlPlaneMixin, rows
 from plovi import runner, state
 from plovi.util import read_json, user_data, write_json
@@ -19,7 +19,7 @@ ITEM_KEYS = {"id", "kind", "project", "subject", "title", "reason", "created_at"
 
 
 def local(created_at):
-    return datetime.fromisoformat(created_at.replace("Z", "+00:00")).astimezone().strftime("%Y-%m-%d %H:%M")
+    return datetime.fromisoformat(created_at.replace("Z", "+00:00")).astimezone(timezone.utc).strftime("%Y-%m-%d %H:%M")
 
 
 def render(items):
@@ -36,7 +36,10 @@ def render(items):
     return header + "\n\n" + "\n\n".join(blocks) + "\n"
 
 
-class InboxTests(ControlPlaneMixin, HardeningTest):
+class InboxTests(InProcessCli, ControlPlaneMixin, HardeningTest):
+    # The snapshot needs the child's TZ=UTC0; this process keeps its own time zone.
+    SUBPROCESS_TESTS = frozenset({"test_text_format_snapshot", "test_question_item_appears_and_clears_after_answer"})
+
     def single_item(self, kind, opening_type, operation, task="sample"):
         items = self.task_inbox(task)
         self.assertEqual([item["kind"] for item in items], [kind], items)
