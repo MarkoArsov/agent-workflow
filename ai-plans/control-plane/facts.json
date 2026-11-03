@@ -1,0 +1,65 @@
+{
+  "stages": [
+    "implement-tests",
+    "implement",
+    "review"
+  ],
+  "kind": "code",
+  "size": "large",
+  "risk": "high",
+  "uncertain": true,
+  "repository_count": 1,
+  "test_files": 7,
+  "test_lines": 1800,
+  "stage_facts": {
+    "implement-tests": {
+      "complexity": "routine",
+      "uncertain": false
+    },
+    "implement": {
+      "complexity": "complex"
+    },
+    "review": {
+      "risk": "high",
+      "complexity": "routine",
+      "uncertain": false
+    }
+  },
+  "routes": {
+    "implement": [
+      {
+        "provider": "claude",
+        "model": "opus"
+      },
+      {
+        "provider": "claude",
+        "model": "sonnet"
+      }
+    ],
+    "implement-tests": [
+      {
+        "provider": "claude",
+        "model": "opus"
+      },
+      {
+        "provider": "claude",
+        "model": "sonnet"
+      }
+    ],
+    "review": [
+      {
+        "provider": "claude",
+        "model": "opus"
+      },
+      {
+        "provider": "claude",
+        "model": "sonnet"
+      }
+    ]
+  },
+  "route_origins": {
+    "implement": "user-task-route",
+    "implement-tests": "user-task-route",
+    "review": "user-task-route"
+  }
+}

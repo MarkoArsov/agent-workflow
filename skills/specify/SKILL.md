@@ -29,6 +29,8 @@ renewed approval. A lane/model choice is not implementation approval.
    plan write, including manual tasks and trivial edits; honor an explicit setup
    choice of current-checkout or feature-branch. Run `plovi task start <task>`
    (select writable participants with repeated --repository for multi-repo work).
+   For an issue-based task pass `--issue OWNER/REPO#N --title "<issue title>"` so the
+   inbox names the task by its issue; plovi does not fetch titles itself.
    Use --base only for an explicitly selected dependency/base; otherwise use the
    configured base, not the unrelated task currently checked out. Never reuse
    another task's branch or honor legacy current-checkout as a shortcut for a new
@@ -100,7 +102,9 @@ renewed approval. A lane/model choice is not implementation approval.
 
 ## Establish readiness and stop
 
-10. For a full plan run validate-plan, then preflight. Report actual results, scope,
+10. For a full plan run validate-plan, then preflight. A successful validate-plan
+    records `plan.proposed` once per plan hash, so the plan appears in the person's
+    inbox until it is approved or started. Report actual results, scope,
     check mappings, permission mode, routes and selected delivery actions. A prose
     plan plus a promise to create the manifest later is incomplete. When inputs
     are missing, still retain all plan files and a clearly labeled draft manifest,

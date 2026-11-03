@@ -124,6 +124,8 @@ class Events:
         self.usage = None
         self.cost_usd = None
         self.error = None
+        self.usage_limited = False
+        self.resets_at = None
 
     def line(self, line):
         try:
@@ -134,6 +136,7 @@ class Events:
         self.session = event.get("thread_id", event.get("session_id", self.session))
         if kind in {"error", "turn.failed"} or event.get("is_error"):
             self.error = str(event.get("error", event.get("result", event.get("message", "Provider error"))))
+            self._limit(event)
         if kind == "item.completed":
             item = event.get("item", {})
             if item.get("type") == "agent_message":
@@ -163,6 +166,16 @@ class Events:
                 self.cost_usd = event["total_cost_usd"]
         return None
 
+    def _limit(self, event):
+        """Record a provider usage limit from structured error fields only."""
+        info = event.get("rate_limit_info") or (event.get("api_error_params") or {}).get("rate_limit_info") or {}
+        if (event.get("api_error") in {"usage_limit_reached", "rate_limit"} or event.get("api_error_status") == 429
+                or (isinstance(info, dict) and info.get("status") == "rejected")):
+            self.usage_limited = True
+            reset = info.get("resetsAt") if isinstance(info, dict) else None
+            if type(reset) in (int, float) and math.isfinite(reset):
+                self.resets_at = reset
+
     def report(self):
         texts = [self.terminal_result] if self.terminal_result is not None else reversed(self.text)
         for text in texts:
@@ -172,29 +185,58 @@ class Events:
                 stripped = terminal.group(1)
             try:
                 value = json.loads(stripped)
-                if isinstance(value, dict) and "status" in value and (not isinstance(value["status"], str) or value["status"] not in {"complete", "needs_input", "blocked", "spec_conflict", "impossible", "test_fixture_repair"}):
-                    return None
-                if isinstance(value, dict) and value.get("status") in {"complete", "needs_input", "blocked", "spec_conflict", "impossible", "test_fixture_repair"}:
-                    status = value["status"]
-                    required = "question" if status == "needs_input" else "reason" if status != "complete" else None
-                    if required and (not isinstance(value.get(required), str) or not value[required].strip()):
-                        return None
-                    if status == "test_fixture_repair" and (not isinstance(value.get("test_paths"), list) or not isinstance(value.get("checks"), list) or not all(isinstance(x, str) for x in value.get("checks", []))):
-                        return None
-                    if "assumptions" in value and (not isinstance(value["assumptions"], list) or not all(isinstance(x, str) for x in value["assumptions"])):
-                        return None
-                    return value
             except ValueError:
-                continue
+                # A report may follow prose when its last non-empty line is one JSON object.
+                lines = [line for line in text.strip().splitlines() if line.strip()]
+                if len(lines) < 2:
+                    continue
+                try:
+                    value = json.loads(lines[-1])
+                except ValueError:
+                    continue
+                if not isinstance(value, dict) or "status" not in value:
+                    continue
+            checked = _checked_report(value)
+            if checked is not _NOT_A_REPORT:
+                return checked
         return None
+
+
+_STATUSES = {"complete", "needs_input", "blocked", "spec_conflict", "impossible", "test_fixture_repair"}
+_NOT_A_REPORT = object()
+
+
+def _checked_report(value):
+    """Return a valid report, None for an invalid one, or _NOT_A_REPORT for other JSON."""
+    if not isinstance(value, dict) or "status" not in value:
+        return _NOT_A_REPORT
+    status = value["status"]
+    if not isinstance(status, str) or status not in _STATUSES:
+        return None
+    required = "question" if status == "needs_input" else "reason" if status != "complete" else None
+    if required and (not isinstance(value.get(required), str) or not value[required].strip()):
+        return None
+    if status == "test_fixture_repair" and (not isinstance(value.get("test_paths"), list) or not isinstance(value.get("checks"), list) or not all(isinstance(x, str) for x in value.get("checks", []))):
+        return None
+    if "assumptions" in value and (not isinstance(value["assumptions"], list) or not all(isinstance(x, str) for x in value["assumptions"])):
+        return None
+    return value
 
 def classify(result, events):
     if result["reason"]:
         return result["reason"]
-    text = (events.error or "") + (result["output"] if result["exit_code"] else "")
+    if events.usage_limited:
+        return "usage_limit"
+    # Match only error messages: the provider's error event, or non-event output
+    # lines such as stderr. Transcript events can mention any word.
+    text = events.error or ""
+    if not text and result["exit_code"]:
+        text = "\n".join(line for line in result["output"].splitlines() if not line.lstrip().startswith("{"))[-4000:]
+    if re.search(r"(?i)usage.limit|hit your [\w-]+ limit", text):
+        return "usage_limit"
     if re.search(r"(?i)unauthorized|authentication|invalid.api.key|not.logged.in", text):
         return "authentication"
-    if re.search(r"(?i)quota|usage.limit|insufficient.*credit", text):
+    if re.search(r"(?i)quota|insufficient.*credit", text):
         return "quota"
     if re.search(r"(?i)model.*(?:not.found|not.available|unsupported|does.not.exist)", text):
         return "model"
@@ -205,7 +247,7 @@ def classify(result, events):
 
 
 def failure_kind(classification):
-    return {'authentication':'provider_authentication','quota':'provider_quota',
+    return {'authentication':'provider_authentication','quota':'provider_quota','usage_limit':'provider_usage_limit',
             'model':'unsupported_model','transient':'transient_transport',
             'cancelled':'cancelled','cancellation_failure':'cancellation_failure',
             'inactive':'provider_inactive','tool-stalled':'tool_stalled',

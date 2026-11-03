@@ -57,6 +57,8 @@ nav:
       - Skills: generated/skills.md
   - Inside:
       - CLI: cli.md
+      - Command reference: commands.md
+      - The ledger: ledger.md
       - Code map: code-map.md
       - Evidence and checks: verification.md
       - Review and delivery: review.md

@@ -22,6 +22,22 @@ Host or command transport with capabilities and per-provider headless availabili
 | providers | yes | object |
 | env_refs | no | array |
 
+## plovi ledger event
+
+One line of the append-only ledger. Required data fields per type live in runtime/plovi/ledger.py and docs/ledger.md.
+
+| Field | Required | Format |
+|---|---|---|
+| v | yes | constant |
+| id | yes | string |
+| at | yes | string |
+| project | yes | string |
+| subject | yes | object |
+| type | yes | task.created, task.claimed, run.started, stage.started, attempt.finished, stage.finished, question.asked, question.answered, plan.proposed, plan.approved, approval.requested, approval.granted, escalation.raised, run.paused, run.resumed, run.interrupted, run.cancelled, run.finished, delivery.committed, delivery.pushed, pr.opened, policy.changed, project.registered, state.checkpoint, pause.requested, cancel.requested, project.unregistered |
+| actor | yes | object |
+| reason | yes | string |
+| data | yes | object |
+
 ## Model routing settings
 
 Independent workflow-global or project routing policy. Changes use an exact scoped proposal; task routes are saved separately.
@@ -53,6 +69,7 @@ An approved plan with explicit repository access, executable outcomes, ordered s
 | approved_no_red_reason | no | string |
 | limits | no | object |
 | delivery | no | object |
+| allowed_commands | no | array |
 | references | no | array |
 | connectors | no | array |
 | model_selection | no | object |

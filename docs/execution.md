@@ -40,6 +40,18 @@ Otherwise plovi derives Read, Edit, Write, Glob, Grep, narrow Git status/diff ru
 and the selected check argv. Unsafe command encodings stop preflight and ask for
 an explicit allowlist. It never derives a broad Bash wildcard.
 
+A plan can name extra commands a restricted run may use, such as generators that
+rewrite files the change must keep current:
+
+```json
+"allowed_commands": [{"argv": ["python3", "scripts/generate_docs.py"]}]
+```
+
+Each entry is an exact argv of plain arguments, with no spaces or shell syntax,
+and an optional repository-relative `cwd`. The commands are part of the plan, so
+approving the plan approves them. They become exact `Bash(...)` entries in
+Claude's allowlist; trusted mode is unchanged.
+
 Detached and non-TTY runs default to restricted. An explicit
 `execution.unattended_permission_mode = "trusted"` in [policy](policy.md), or
 `run --trusted`, opts in to trusted unattended work. Interactive runs keep the

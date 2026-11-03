@@ -112,6 +112,11 @@ def summary(state):
     elif status=='needs_approval':value['next_action']='Inspect pending_approvals and approve each current diff gate'
     elif status=='escalated':value['next_action']='Inspect retained evidence, then plovi retry '+task+' --note DECISION'
     elif status in {'failed','interrupted','cancelled'}:value['next_action']='Inspect retained evidence, then plovi resume '+task
+    elif status=='paused' and state.get('pause_reason')=='usage_limit':
+        value['pause_reason']='usage_limit'
+        if state.get('resets_at') is not None:value['resets_at']=state['resets_at']
+        value['next_action']='Wait for the provider usage limit to reset, then plovi resume '+task
+    elif status=='paused':value['next_action']='plovi resume '+task
     return value
 
 

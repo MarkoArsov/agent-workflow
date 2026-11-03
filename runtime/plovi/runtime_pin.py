@@ -63,4 +63,5 @@ def dispatch(project, task, argv, *, source, create=False, upgrade=False):
     if saved is None: return None
     target=verify(saved)
     if target == Path(source).resolve(): return None
-    return subprocess.run([sys.executable,str(target/'bin/plovi'),*argv]).returncode
+    # The launcher already recorded operation events; the pinned process continues the work.
+    return subprocess.run([sys.executable,str(target/'bin/plovi'),*argv],env=dict(os.environ,PLOVI_FORWARDED='1')).returncode

@@ -1,0 +1,787 @@
+{
+  "schema_version": 1,
+  "task": "control-plane",
+  "plan_status": "approved",
+  "plan_files": [
+    "prompt.md",
+    "requirements.md",
+    "implementation.md",
+    "deferred.md",
+    "project-quality.md"
+  ],
+  "repositories": [
+    {
+      "id": "agent-workflow",
+      "access": "write",
+      "branch": "codex/control-plane",
+      "paths": [
+        "runtime/plovi/**",
+        "schemas/event.schema.json",
+        "schemas/policy.schema.json",
+        "skills/factory/**",
+        "skills/specify/**",
+        "skills/implement-pipeline/**",
+        "templates/plugin-skills/**",
+        "scripts/generate_docs.py",
+        "scripts/docs_content.py",
+        "docs/**",
+        "mkdocs.yml",
+        "references/pipeline-contract.md",
+        "CHANGELOG.md",
+        "ai-plans/control-plane/**",
+        "tests/test_ledger.py",
+        "tests/test_operations.py",
+        "tests/test_inbox.py",
+        "tests/test_projects.py",
+        "tests/test_rebuild_state.py",
+        "tests/helpers.py",
+        "tests/fixtures/**"
+      ],
+      "test_paths": [
+        "tests/test_ledger.py",
+        "tests/test_operations.py",
+        "tests/test_inbox.py",
+        "tests/test_projects.py",
+        "tests/test_rebuild_state.py",
+        "tests/helpers.py",
+        "tests/fixtures/**"
+      ]
+    }
+  ],
+  "stages": [
+    "implement-tests",
+    "implement",
+    "review",
+    "commit-and-push",
+    "draft-pr"
+  ],
+  "checks": [
+    {
+      "id": "control-plane-red",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "-m",
+          "unittest",
+          "-v",
+          "tests.test_operations.OperationCliTests.test_commands_json_lists_every_operation",
+          "tests.test_operations.PlanApprovalTests.test_unattended_worker_refuses_without_plan_approval",
+          "tests.test_inbox.InboxTests.test_question_item_appears_and_clears_after_answer",
+          "tests.test_projects.ProjectRegistryTests.test_add_list_remove_keeps_files",
+          "tests.test_ledger.LedgerCliTests.test_runner_transitions_are_listed_by_events",
+          "tests.test_rebuild_state.RebuildStateTests.test_rebuilt_state_gives_identical_status"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 300
+      },
+      "parser": "unittest",
+      "phases": [
+        "red",
+        "green"
+      ],
+      "identities": [
+        "test_commands_json_lists_every_operation",
+        "test_unattended_worker_refuses_without_plan_approval",
+        "test_question_item_appears_and_clears_after_answer",
+        "test_add_list_remove_keeps_files",
+        "test_runner_transitions_are_listed_by_events",
+        "test_rebuilt_state_gives_identical_status"
+      ]
+    },
+    {
+      "id": "ledger",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "-m",
+          "unittest",
+          "-v",
+          "tests.test_ledger"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 300
+      },
+      "parser": "unittest",
+      "phases": [
+        "green"
+      ],
+      "identities": [
+        "test_append_read_round_trip",
+        "test_every_event_type_validates_against_schema",
+        "test_concurrent_processes_never_interleave",
+        "test_torn_last_line_skipped_with_one_warning",
+        "test_month_rollover_reads_across_files",
+        "test_state_import_is_idempotent",
+        "test_ledger_lives_outside_repository_and_worktrees",
+        "test_oversized_event_rejected",
+        "test_runner_transitions_are_listed_by_events"
+      ]
+    },
+    {
+      "id": "operations",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "-m",
+          "unittest",
+          "-v",
+          "tests.test_operations"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 300
+      },
+      "parser": "unittest",
+      "phases": [
+        "green"
+      ],
+      "identities": [
+        "test_commands_json_lists_every_operation",
+        "test_mutating_operations_record_actor_and_reason",
+        "test_answer_with_text_and_file",
+        "test_retry_with_note",
+        "test_pause_stops_before_next_stage_and_resume_continues",
+        "test_cancel_records_event",
+        "test_high_risk_without_digest_previews_and_changes_nothing",
+        "test_agent_actor_requires_digest_for_existing_approvals",
+        "test_existing_json_output_shapes_preserved",
+        "test_unattended_worker_refuses_without_plan_approval",
+        "test_approval_of_different_hash_rejected",
+        "test_explicit_run_records_approval_automatically",
+        "test_pipeline_launch_records_approval_before_worker",
+        "test_policy_can_disable_worker_gate"
+      ]
+    },
+    {
+      "id": "inbox",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "-m",
+          "unittest",
+          "-v",
+          "tests.test_inbox"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 300
+      },
+      "parser": "unittest",
+      "phases": [
+        "green"
+      ],
+      "identities": [
+        "test_question_item_appears_and_clears_after_answer",
+        "test_plan_item_clears_after_approval",
+        "test_approval_item_clears_after_approve",
+        "test_escalation_item_clears_after_retry",
+        "test_failed_item_clears_after_resume",
+        "test_interrupted_item_clears_after_resume",
+        "test_items_oldest_first_with_issue_titles",
+        "test_text_format_snapshot"
+      ]
+    },
+    {
+      "id": "projects",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "-m",
+          "unittest",
+          "-v",
+          "tests.test_projects"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 300
+      },
+      "parser": "unittest",
+      "phases": [
+        "green"
+      ],
+      "identities": [
+        "test_add_list_remove_keeps_files",
+        "test_setup_registers_project",
+        "test_add_is_idempotent_and_rejects_conflicting_root",
+        "test_text_format"
+      ]
+    },
+    {
+      "id": "rebuild-state",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "-m",
+          "unittest",
+          "-v",
+          "tests.test_rebuild_state"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 300
+      },
+      "parser": "unittest",
+      "phases": [
+        "green"
+      ],
+      "identities": [
+        "test_rebuilt_state_gives_identical_status",
+        "test_rebuild_rejects_tampered_blob",
+        "test_rebuild_without_history_fails_clearly"
+      ]
+    },
+    {
+      "id": "compatibility-regressions",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "-m",
+          "unittest",
+          "-v",
+          "tests.test_runner",
+          "tests.test_limits",
+          "tests.test_policy",
+          "tests.test_recovery",
+          "tests.test_pipeline_resume",
+          "tests.test_concurrency",
+          "tests.test_setup",
+          "tests.test_task_isolation",
+          "tests.test_progress_events",
+          "tests.test_runner_outcomes",
+          "tests.test_runner_lifecycle",
+          "tests.test_resume_recovery_v2",
+          "tests.test_factory_checkouts"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 600
+      },
+      "parser": "unittest",
+      "phases": [
+        "green"
+      ]
+    },
+    {
+      "id": "full-suite",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "-m",
+          "unittest",
+          "discover",
+          "-s",
+          "tests",
+          "-v"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 900
+      },
+      "parser": "unittest",
+      "phases": [
+        "green"
+      ],
+      "approved_skip_reason": "Only explicitly opt-in real-engine smoke needs PLOVI_TEST_DOCKER=1 and a local prebuilt image; existing platform-specific tests retain their current conditions."
+    },
+    {
+      "id": "generated-docs",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "scripts/generate_docs.py",
+          "--check"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 300
+      },
+      "parser": "generic",
+      "phases": [
+        "green"
+      ],
+      "success_pattern": "^$"
+    },
+    {
+      "id": "plugin-skills",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "scripts/generate_plugin_skills.py",
+          "--check"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 300
+      },
+      "parser": "generic",
+      "phases": [
+        "green"
+      ],
+      "success_pattern": "^$"
+    },
+    {
+      "id": "docs-build",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "-m",
+          "mkdocs",
+          "build",
+          "--strict"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 300
+      },
+      "parser": "generic",
+      "phases": [
+        "green"
+      ],
+      "success_pattern": "Documentation built in"
+    },
+    {
+      "id": "links",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "scripts/check_links.py",
+          "site"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 300
+      },
+      "parser": "generic",
+      "phases": [
+        "green"
+      ],
+      "success_pattern": "Checked [1-9]\\d* internal links/assets; 0 failures\\."
+    },
+    {
+      "id": "public-content",
+      "repository": "agent-workflow",
+      "command": {
+        "argv": [
+          "python3",
+          "scripts/check_public_content.py",
+          "--history"
+        ],
+        "cwd": ".",
+        "timeout_seconds": 300
+      },
+      "parser": "generic",
+      "phases": [
+        "green"
+      ],
+      "success_pattern": "Scanned [1-9]\\d* items; 0 findings;"
+    }
+  ],
+  "outcomes": [
+    {
+      "id": "l-ledger-append-read-concurrency",
+      "checks": [
+        "control-plane-red",
+        "ledger",
+        "full-suite"
+      ]
+    },
+    {
+      "id": "l-runner-events-and-rebuild",
+      "checks": [
+        "control-plane-red",
+        "ledger",
+        "rebuild-state",
+        "compatibility-regressions"
+      ]
+    },
+    {
+      "id": "o-operations-registry-actor-reason",
+      "checks": [
+        "control-plane-red",
+        "operations"
+      ]
+    },
+    {
+      "id": "o-plan-approval-gate",
+      "checks": [
+        "control-plane-red",
+        "operations",
+        "compatibility-regressions"
+      ]
+    },
+    {
+      "id": "i-inbox-kinds-and-actions",
+      "checks": [
+        "control-plane-red",
+        "inbox"
+      ]
+    },
+    {
+      "id": "p-projects-registry",
+      "checks": [
+        "control-plane-red",
+        "projects"
+      ]
+    },
+    {
+      "id": "f-factory-skill-and-docs",
+      "checks": [
+        "generated-docs",
+        "plugin-skills",
+        "docs-build",
+        "links",
+        "public-content"
+      ]
+    },
+    {
+      "id": "compatibility-preserved",
+      "checks": [
+        "compatibility-regressions",
+        "full-suite"
+      ]
+    }
+  ],
+  "routes": {
+    "implement": [
+      {
+        "model": "opus",
+        "provider": "claude"
+      },
+      {
+        "model": "sonnet",
+        "provider": "claude"
+      }
+    ],
+    "implement-tests": [
+      {
+        "model": "opus",
+        "provider": "claude"
+      },
+      {
+        "model": "sonnet",
+        "provider": "claude"
+      }
+    ],
+    "review": [
+      {
+        "model": "opus",
+        "provider": "claude"
+      },
+      {
+        "model": "sonnet",
+        "provider": "claude"
+      }
+    ]
+  },
+  "model_selection": {
+    "advisories": [
+      {
+        "reason": "large-test-scope",
+        "stage": "implement-tests"
+      },
+      {
+        "reason": "single-lineage",
+        "stage": "implement-tests"
+      },
+      {
+        "reason": "single-lineage",
+        "stage": "review"
+      }
+    ],
+    "details": {
+      "implement": {
+        "configured_default_source": "project-default",
+        "effort_mapping": {
+          "reason": "explicit-route",
+          "reviewed": "high",
+          "selected": null
+        },
+        "effort_mode": "demanding",
+        "eligibility": [],
+        "eligibility_truncated": 0,
+        "fact_sources": {
+          "complexity": "stage",
+          "kind": "task",
+          "risk": "task",
+          "size": "task",
+          "test_files": "task",
+          "test_lines": "task",
+          "uncertain": "task"
+        },
+        "facts": {
+          "complexity": "complex",
+          "kind": "code",
+          "risk": "high",
+          "size": "large",
+          "test_files": 5,
+          "test_lines": 1300,
+          "uncertain": true
+        },
+        "lineage_slack": 1,
+        "ordered_routes": [
+          {
+            "model": "opus",
+            "provider": "claude"
+          },
+          {
+            "model": "sonnet",
+            "provider": "claude"
+          }
+        ],
+        "prior_lineages": [],
+        "providers": [
+          "claude",
+          "codex"
+        ],
+        "required_band": "deep",
+        "required_capabilities": [],
+        "requirement_reason": "consequential-or-complex",
+        "route_source": "user-task-route",
+        "suggestions": [],
+        "unresolved": []
+      },
+      "implement-tests": {
+        "configured_default_source": "project-default",
+        "effort_mapping": {
+          "reason": "explicit-route",
+          "reviewed": "medium",
+          "selected": null
+        },
+        "effort_mode": "balanced",
+        "eligibility": [],
+        "eligibility_truncated": 0,
+        "fact_sources": {
+          "complexity": "stage",
+          "kind": "task",
+          "risk": "task",
+          "size": "task",
+          "test_files": "task",
+          "test_lines": "task",
+          "uncertain": "stage"
+        },
+        "facts": {
+          "complexity": "routine",
+          "kind": "code",
+          "risk": "high",
+          "size": "large",
+          "test_files": 5,
+          "test_lines": 1300,
+          "uncertain": false
+        },
+        "lineage_slack": 1,
+        "ordered_routes": [
+          {
+            "model": "opus",
+            "provider": "claude"
+          },
+          {
+            "model": "sonnet",
+            "provider": "claude"
+          }
+        ],
+        "prior_lineages": [
+          "anthropic"
+        ],
+        "providers": [
+          "claude",
+          "codex"
+        ],
+        "required_band": "deep",
+        "required_capabilities": [],
+        "requirement_reason": "consequential-or-complex",
+        "route_source": "user-task-route",
+        "suggestions": [],
+        "unresolved": []
+      },
+      "review": {
+        "configured_default_source": "project-default",
+        "effort_mapping": {
+          "reason": "explicit-route",
+          "reviewed": "medium",
+          "selected": null
+        },
+        "effort_mode": "balanced",
+        "eligibility": [],
+        "eligibility_truncated": 0,
+        "fact_sources": {
+          "complexity": "stage",
+          "kind": "task",
+          "risk": "stage",
+          "size": "task",
+          "test_files": "task",
+          "test_lines": "task",
+          "uncertain": "stage"
+        },
+        "facts": {
+          "complexity": "routine",
+          "kind": "code",
+          "risk": "high",
+          "size": "large",
+          "test_files": 5,
+          "test_lines": 1300,
+          "uncertain": false
+        },
+        "lineage_slack": 1,
+        "ordered_routes": [
+          {
+            "model": "opus",
+            "provider": "claude"
+          },
+          {
+            "model": "sonnet",
+            "provider": "claude"
+          }
+        ],
+        "prior_lineages": [
+          "anthropic"
+        ],
+        "providers": [
+          "claude",
+          "codex"
+        ],
+        "required_band": "deep",
+        "required_capabilities": [],
+        "requirement_reason": "consequential-or-complex",
+        "route_source": "user-task-route",
+        "suggestions": [],
+        "unresolved": []
+      }
+    },
+    "evaluator_version": "1.2.0",
+    "notice": "No model catalogue; retaining configured routes. Run update-models when convenient.",
+    "provenance": {
+      "catalogue": "9aecf438c3f923ce02f488be25cae648068d632535d5ec4d38b0fa6abb6b055f",
+      "facts": {
+        "kind": "code",
+        "repository_count": 1,
+        "risk": "high",
+        "route_origins": {
+          "implement": "user-task-route",
+          "implement-tests": "user-task-route",
+          "review": "user-task-route"
+        },
+        "routes": {
+          "implement": [
+            {
+              "model": "opus",
+              "provider": "claude"
+            },
+            {
+              "model": "sonnet",
+              "provider": "claude"
+            }
+          ],
+          "implement-tests": [
+            {
+              "model": "opus",
+              "provider": "claude"
+            },
+            {
+              "model": "sonnet",
+              "provider": "claude"
+            }
+          ],
+          "review": [
+            {
+              "model": "opus",
+              "provider": "claude"
+            },
+            {
+              "model": "sonnet",
+              "provider": "claude"
+            }
+          ]
+        },
+        "size": "large",
+        "stage_facts": {
+          "implement": {
+            "complexity": "complex"
+          },
+          "implement-tests": {
+            "complexity": "routine",
+            "uncertain": false
+          },
+          "review": {
+            "complexity": "routine",
+            "risk": "high",
+            "uncertain": false
+          }
+        },
+        "stages": [
+          "implement-tests",
+          "implement",
+          "review"
+        ],
+        "test_files": 5,
+        "test_lines": 1300,
+        "uncertain": true
+      },
+      "policy": "3c7d03f86602c435d0771f98e34a76bebfd100cc00bbd8ea18722b2b0ce10aa7",
+      "registry": "906caf9f74c729ddf882cba34d3fdf9b45082cc375ca45bca1882dcb955622e2",
+      "settings": "5bda7607fc3f050d3622ca32a9aa5520da3a3abdca8f3dc463a9a19284aff0b2"
+    },
+    "reasons": {
+      "implement": "explicit-route",
+      "implement-tests": "explicit-route",
+      "review": "explicit-route"
+    },
+    "routes": {
+      "implement": [
+        {
+          "model": "opus",
+          "provider": "claude"
+        },
+        {
+          "model": "sonnet",
+          "provider": "claude"
+        }
+      ],
+      "implement-tests": [
+        {
+          "model": "opus",
+          "provider": "claude"
+        },
+        {
+          "model": "sonnet",
+          "provider": "claude"
+        }
+      ],
+      "review": [
+        {
+          "model": "opus",
+          "provider": "claude"
+        },
+        {
+          "model": "sonnet",
+          "provider": "claude"
+        }
+      ]
+    },
+    "schema_version": 1,
+    "snapshot_hash": "4fad5003cce84f81fed79f5db90309ab4db47c2fa8e05dc9c995f0ef4ae47b03",
+    "unresolved": []
+  },
+  "limits": {
+    "attempts_per_route": 2,
+    "timeout_seconds": 7200,
+    "inactivity_seconds": 300,
+    "tool_timeout_seconds": 900,
+    "max_changed_files": 80,
+    "max_changed_lines": 7000
+  },
+  "references": [
+    "quality-guidance.md"
+  ],
+  "connectors": [],
+  "corrections": {
+    "fixture_rounds": 2,
+    "contract_review_rounds": 2
+  },
+  "delivery": {
+    "commit_message": "Add the control plane: ledger, operations, inbox, projects registry and plovi-factory skill",
+    "title": "Add the control plane: ledger, operations, inbox and projects registry",
+    "body_file": "pr-body.md"
+  }
+}

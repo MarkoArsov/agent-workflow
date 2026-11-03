@@ -11,6 +11,18 @@ def context(args):
     from .project import resolve
     return resolve(Path(args.project or "."))
 
+def actor_flags(command, *, reason=True):
+    """Every mutating command records who acted and why."""
+    if reason:
+        command.add_argument("--reason", help="Why; recorded in the ledger with the actor")
+    command.add_argument("--actor-agent", metavar="NAME", help="Record an agent as the actor; agents must always pass it")
+    command.add_argument("--via", default="cli", help="Tool the agent acts through (default: cli)")
+
+
+def output_format(command):
+    command.add_argument("--format", choices=["text", "json"], help="Output format")
+
+
 def parser():
     p = argparse.ArgumentParser(prog="plovi", description="One workflow, customized for each project.")
     p.add_argument("--version", action="version", version=__version__)
@@ -21,8 +33,10 @@ def parser():
     policy = sub.add_parser("policy", help="Review project policy")
     policy_sub = policy.add_subparsers(dest="action", required=True)
     policy_sub.add_parser("show").add_argument("--json", action="store_true")
-    edit = policy_sub.add_parser("set")
-    edit.add_argument("key"); edit.add_argument("value"); edit.add_argument("--yes", action="store_true")
+    edit = policy_sub.add_parser("set", help="Change one policy value; preview first, then apply by digest")
+    edit.add_argument("key"); edit.add_argument("value"); edit.add_argument("--yes", action="store_true", help="Person shortcut after reviewing the diff")
+    edit.add_argument("--approve", metavar="DIGEST", help="Apply the previewed change with this digest")
+    actor_flags(edit)
     setup = sub.add_parser("setup", help="Detect and preview configuration, then apply the approved proposal")
     setup.add_argument("path", nargs="?", default=".")
     setup.add_argument("--answers", type=Path)
@@ -44,6 +58,8 @@ def parser():
         if name in {"run", "preflight"}:
             command.add_argument("--trusted", action="store_true")
             command.add_argument('--pull-isolation-image', action='store_true', help='Consent once to pulling the configured container image')
+        if name in {"run", "validate-plan"}:
+            actor_flags(command)
         if name == "run":
             command.add_argument("--no-wait", action="store_true")
             command.add_argument("--unattended", action="store_true", help=argparse.SUPPRESS)
@@ -60,9 +76,13 @@ def parser():
     pipeline.add_argument("--trusted", action="store_true")
     pipeline.add_argument("--no-wait", action="store_true")
     pipeline.add_argument("--json", action="store_true")
-    for name in ("status", "watch", "resume", "answer", "cancel", "retry", "approve"):
-        command = sub.add_parser(name)
-        command.add_argument("task")
+    actor_flags(pipeline)
+    helps = {"status": "Show a task's progress, or list every task", "pause": "Stop a running task before its next stage",
+             "resume": "Continue a stopped task", "answer": "Answer a task's question", "cancel": "Cancel a task",
+             "retry": "Retry an escalated task", "approve": "Approve a plan or a diff gate", "watch": "Follow a task"}
+    for name in ("status", "watch", "resume", "answer", "cancel", "retry", "approve", "pause"):
+        command = sub.add_parser(name, help=helps[name])
+        command.add_argument("task", nargs="?" if name == "status" else None)
         if name in ("resume", "answer", "retry", "approve"):
             command.add_argument("--rebind", action="store_true")
             command.add_argument("--upgrade-runtime", action="store_true")
@@ -70,15 +90,38 @@ def parser():
             command.add_argument("--note", type=Path)
         if name == "approve":
             gate = command.add_mutually_exclusive_group(required=True)
+            gate.add_argument("--plan", action="store_true", help="Approve the task's current plan by its hash")
             gate.add_argument("--size", action="store_true"); gate.add_argument("--paths", action="store_true")
-            command.add_argument("--actor"); command.add_argument("--reason")
+            command.add_argument("--actor", help="Person name to record; defaults to git user.name")
+            command.add_argument("--approve", metavar="DIGEST", help="Digest from the preview; required for --plan and for agents")
+            command.add_argument("--manifest", type=Path, help="Plan manifest when plovi cannot find it")
         if name == "answer":
-            command.add_argument("--file", type=Path, required=True)
+            answer = command.add_mutually_exclusive_group(required=True)
+            answer.add_argument("--file", type=Path); answer.add_argument("--text")
+        if name in {"resume", "answer", "cancel", "retry", "approve", "pause"}:
+            actor_flags(command)
         if name in {"status", "watch"}:
             command.add_argument("--json", action="store_true")
             command.add_argument("--verbose", action="store_true")
+        if name == "status":
+            output_format(command)
         if name == "watch":
             command.add_argument("--seconds", type=int, default=None)
+    output_format(sub.add_parser("inbox", help="List what needs you across registered projects"))
+    events = sub.add_parser("events", help="List ledger events")
+    events.add_argument("--task"); events.add_argument("--since", help="ISO timestamp or event ID")
+    output_format(events)
+    projects = sub.add_parser("projects", help="Register, list and remove projects")
+    projects_sub = projects.add_subparsers(dest="action", required=True)
+    added = projects_sub.add_parser("add", help="Register a configured project")
+    added.add_argument("path", type=Path); actor_flags(added)
+    output_format(projects_sub.add_parser("list", help="List registered projects"))
+    removed = projects_sub.add_parser("remove", help="Unregister a project; files stay on disk")
+    removed.add_argument("id"); actor_flags(removed)
+    rebuild = sub.add_parser("rebuild-state", help="Rebuild state.json from the ledger")
+    rebuild.add_argument("task"); actor_flags(rebuild)
+    commands = sub.add_parser("commands", help="List every operation for agents and the app")
+    commands.add_argument("--json", action="store_true"); output_format(commands)
     command = sub.add_parser("sync-base")
     command.add_argument("repositories", nargs="+")
     sub.add_parser("worktrees")
@@ -90,6 +133,9 @@ def parser():
     task.add_argument("--repository", action="append", help="Writable repository ID; required when several exist")
     task.add_argument("--base", help="Explicit local base ref; defaults to each repository's configured base")
     task.add_argument("--resume", action="store_true", help="Resume only this task's existing owned allocation")
+    task.add_argument("--issue", help="Issue reference this task implements, for example owner/repo#12")
+    task.add_argument("--title", help="Issue title shown in the inbox")
+    actor_flags(task)
     command = sub.add_parser("rule")
     command.add_argument("action", choices=["list", "record"])
     command.add_argument("name", nargs="?")
@@ -143,7 +189,21 @@ def watch(project, task, *, seconds=None, json_output=False):
         time.sleep(.2)
 
 
+OPERATIONS = {"status", "inbox", "events", "answer", "approve", "retry", "pause", "resume", "cancel",
+              "policy", "projects", "rebuild-state", "commands"}
+
+
+def operation_name(args):
+    if args.command in {"policy", "projects"}:
+        return f"{args.command}.{args.action}"
+    return args.command
+
+
 def execute(args):
+    if args.command in OPERATIONS:
+        from . import operations
+        values = {key: (str(value) if isinstance(value, Path) else value) for key, value in vars(args).items()}
+        return operations.call(operation_name(args), values)
     if args.command == "migrate":
         from .checkpoints import migrate
         return migrate(context(args), args.task, apply=args.apply)
@@ -155,14 +215,14 @@ def execute(args):
             args._watched = True
             return watch(project, result["task"], json_output=args.json)
         return result
-    if args.command == "policy":
-        from . import policy
-        project = context(args)
-        return policy.effective(project) if args.action == "show" else policy.set_value(project, args.key, args.value, yes=args.yes)
-
     if args.command == "task":
         from .tasks import start
-        return start(context(args), args.name, repositories=args.repository, base=args.base, resume=args.resume)
+        project = context(args)
+        result = start(project, args.name, repositories=args.repository, base=args.base, resume=args.resume)
+        if not args.resume:
+            from .operations.tasks import task_started
+            task_started(project, result, vars(args))
+        return result
     if args.command == "models":
         from .model_routing import execute as models_execute
         return models_execute(args)
@@ -227,49 +287,36 @@ def execute(args):
             return {"status": "complete" if all(c["passed"] for c in checks) else "failed", "checks": checks}
         if args.command == "validate-plan":
             runner.binding(project, plan)
+            from .operations.tasks import after_validation
+            after_validation(project, plan, vars(args))
             return {"valid": True, "task": plan["task"]}
         if args.command == "preflight" or args.dry_run:
             from . import policy
-            from . import factory, git_ops
+            from . import factory
             unattended = getattr(args, 'detach', False) or not sys.stdin.isatty()
             saved = read_json(__import__('plovi.state', fromlist=['directory']).directory(project, plan['task']) / 'state.json', {})
             execution = saved.get('execution') or policy.execution(project, plan, trusted=args.trusted, unattended=unattended)
             strategies = factory.strategies(project, plan, unattended=unattended, prior=saved)
-            if 'factory' in strategies.values() and not saved:
-                git_ops.prepare(project, plan, strategies=strategies)
+            # Report only: checkouts are allocated when a run starts, never by a preview.
             execution['checkout_strategies'] = strategies
-            return runner.preflight(project, plan, execution=execution, pull_isolation_image=args.pull_isolation_image)
-        return runner.detach(project, args.manifest, trusted=args.trusted, no_wait=args.no_wait, pull_isolation_image=args.pull_isolation_image) if args.detach else runner.run(
-            project, plan, trusted=args.trusted, no_wait=args.no_wait, unattended=args.unattended or not sys.stdin.isatty(), pull_isolation_image=args.pull_isolation_image)
-    if args.command in {"status", "watch", "resume", "answer", "cancel", "retry", "approve"}:
-        from . import state, runner, manifest
+            result = runner.preflight(project, plan, execution=execution, pull_isolation_image=args.pull_isolation_image)
+            result['checkout_strategies'] = strategies
+            if 'factory' in strategies.values() and not saved:
+                result['allocation'] = 'Factory checkouts are created when the run starts.'
+            return result
+        if args.detach:
+            return runner.detach(project, args.manifest, trusted=args.trusted, no_wait=args.no_wait, pull_isolation_image=args.pull_isolation_image)
+        from . import operations
+        from .operations.plans import worker_gate
+        # Only the background worker enforces a prior plan approval; explicit runs approved it at launch.
+        gate = bool(args.unattended or operations.WORKER) and worker_gate(project, plan)
+        return runner.run(project, plan, trusted=args.trusted, no_wait=args.no_wait, unattended=args.unattended or not sys.stdin.isatty(),
+                          pull_isolation_image=args.pull_isolation_image, require_plan_approval=gate)
+    if args.command == "watch":
+        from . import state
         project = context(args)
-        if args.command == "cancel":
-            return state.cancel(project, args.task)
-        result = state.observe(project, args.task) if args.command == "watch" or (args.command == "status" and not args.verbose) else state.read(project, args.task)
-        if args.command in {"resume", "answer", "retry", "approve"}:
-            # Observer startup summaries intentionally omit control-plane fields.
-            result = read_json(state.directory(project, args.task) / "state.json")
-            if not result: raise WorkflowError("No saved task to continue")
-            approval = None
-            if args.command == "approve":
-                from .util import git
-                actor = args.actor or git(project.root, "config", "user.name", check=False)
-                if not actor.strip():
-                    raise WorkflowError("Configure git user.name or pass --actor to record the approval")
-                kind = "size" if args.size else "protected_paths"
-                approval = (kind, actor, args.reason or "Explicit --size approval" if args.size else args.reason or "Explicit --paths approval")
-            plan = manifest.load(result["manifest_path"], project)
-            return runner.run(project, plan, resume=True, rebind=args.rebind,
-                              answer=args.file.read_text() if args.command == "answer" else None,
-                              retry=args.command == "retry", note=args.note.read_text() if args.command == "retry" and args.note else None,
-                              approval=approval)
-        if args.command == "watch":
-            return watch(project, args.task, seconds=args.seconds, json_output=args.json)
-        if args.command == "status" and not args.verbose:
-            from .progress import summary
-            return summary(result)
-        return result
+        state.observe(project, args.task)
+        return watch(project, args.task, seconds=args.seconds, json_output=args.json)
     if args.command == "sync-base":
         from .git_ops import sync_base
         return sync_base(context(args), args.repositories)
@@ -338,12 +385,33 @@ def execute(args):
         return {"path": str(new_skill(project, args.name, args.description)), "next": "Complete the procedure, then run refresh."}
     raise WorkflowError("Unknown command")
 
+def legacy_argv(command, argv):
+    """Arguments an older pinned runtime understands; this process recorded the control-plane flags."""
+    valued = {"--reason", "--actor-agent", "--via"} if command in {"run", "pipeline"} else set()
+    if command == "status":
+        valued.add("--format")
+    result, items = [], iter(argv)
+    for item in items:
+        name, separator, inline = item.partition("=")
+        if item == "--upgrade-runtime":
+            continue  # Never forward the upgrade into the immutable target recursively.
+        if name in valued:
+            value = inline if separator else next(items, "")
+            if name == "--format" and value == "json":
+                result.append("--json")
+            continue
+        result.append(item)
+    return result
+
+
 def main(argv=None):
     try:
         args = parser().parse_args(argv)
+        from . import operations
+        operations.capture_environment()
         if getattr(args, "upgrade_runtime", False) and not getattr(args, "rebind", False):
             raise WorkflowError("Runtime upgrade requires an explicitly reviewed --rebind")
-        if args.command in {"run", "pipeline", "resume", "answer", "retry", "approve", "status", "watch", "cancel", "verify", "migrate"}:
+        if args.command in {"run", "pipeline", "watch", "verify", "migrate"} or (args.command == "status" and args.task):
             from . import runtime_pin, manifest
             from .util import package_root
             project = context(args)
@@ -351,16 +419,22 @@ def main(argv=None):
             elif args.command == "pipeline":
                 task = manifest.load(Path(args.target), project)["task"] if Path(args.target).is_file() else args.target
             else: task = args.task
-            forwarded = list(sys.argv[1:] if argv is None else argv)
-            # Do not forward the upgrade flag into the immutable target recursively.
-            forwarded = [item for item in forwarded if item != "--upgrade-runtime"]
+            if args.command in {"run", "pipeline"}:
+                from .operations.tasks import before_launch
+                before_launch(project, {key: (str(value) if isinstance(value, Path) else value) for key, value in vars(args).items()})
+            forwarded = legacy_argv(args.command, list(sys.argv[1:] if argv is None else argv))
             code = runtime_pin.dispatch(project, task, forwarded, source=package_root(),
-                                        create=(args.command == "migrate" and args.apply) or args.command in {"pipeline", "resume", "answer", "retry", "approve"} or (args.command == "run" and not args.dry_run),
+                                        create=(args.command == "migrate" and args.apply) or args.command == "pipeline" or (args.command == "run" and not args.dry_run),
                                         upgrade=getattr(args, "upgrade_runtime", False))
             if code is not None: return code
         result = execute(args)
+        if isinstance(result, int) and not isinstance(result, bool):
+            return result  # A pinned runtime continued the task and printed its own result.
+        if isinstance(result, operations.Text):
+            print(result, end="")
+            return 0
         if result is not None and args.command != "watch" and not getattr(args, "_watched", False):
-            if args.command == "status" and not args.json and not args.verbose:
+            if args.command == "status" and not args.json and not args.verbose and args.format != "json":
                 from .progress import human
                 print(human(result))
             else:

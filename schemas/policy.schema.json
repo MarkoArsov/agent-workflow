@@ -91,6 +91,11 @@
             "off"
           ],
           "default": "auto"
+        },
+        "require_plan_approval": {
+          "type": "boolean",
+          "default": true,
+          "description": "Background workers start only a plan whose current hash has a recorded approval."
         }
       }
     },

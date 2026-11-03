@@ -46,6 +46,13 @@ if step.get("sleep"):
 if step.get("error"):
     print(json.dumps({"type": "error", "message": step["error"]}), flush=True)
     raise SystemExit(1)
+if step.get("usage_limit"):
+    # Transcript text mentions authentication; only the structured result says why it stopped.
+    print(json.dumps({"type": "assistant", "message": {"content": [{"type": "text", "text": "Reading the authentication helper."}]}}), flush=True)
+    print(json.dumps({"type": "result", "subtype": "success", "is_error": True, "api_error_status": 429,
+                      "api_error": "usage_limit_reached", "result": "You've hit your 5-hour limit",
+                      "rate_limit_info": {"status": "rejected", "resetsAt": step["usage_limit"], "rateLimitType": "five_hour"}}), flush=True)
+    raise SystemExit(1)
 report = step.get("report", {"status": "complete", "summary": "Fixture stage"})
 print(json.dumps({"type": "item.completed", "item": {"type": "agent_message", "text": json.dumps(report)}}))
 print(json.dumps({"type": "turn.completed", "usage": {"input_tokens": 10, "output_tokens": 5}}))

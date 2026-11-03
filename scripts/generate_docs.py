@@ -9,7 +9,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 SKILL_CATEGORIES = {
-    "Core workflow": ("setup", "specify", "implement-pipeline", "list-pipeline", "pipeline-workflow", "project-setup", "issue-writer", "draft-rfc"),
+    "Core workflow": ("setup", "specify", "implement-pipeline", "factory", "list-pipeline", "pipeline-workflow", "project-setup", "issue-writer", "draft-rfc"),
     "Implementation and verification": ("implement-tests", "implement", "review", "understand", "review-guide"),
     "Git and delivery": ("checkout-branch", "sync-base", "commit", "push", "commit-and-push", "draft-pr", "publish-workflow", "merge-to-base"),
     "Worktrees and environments": ("worktree-start", "worktree-list", "worktree-remove", "environment-status", "environment-release"),
@@ -24,6 +24,7 @@ FAST_LOOKUP = (
     ("Run a small follow-up or an isolated bugfix", ("specify", "implement"), ""),
     ("Revise an approved plan", ("specify",), "again, then `resume --rebind`"),
     ("Run the full pipeline", ("implement-pipeline",), ""),
+    ("See what needs you", ("factory",), "or `inbox`"),
     ("See what is configured and running", ("list-pipeline",), "or `status`"),
     ("Respond to a paused task", ("implement-pipeline",), "or `answer TASK --file`"),
     ("Recheck after a fix", ("implement",), "or `verify PLAN --phase green`"),
@@ -111,6 +112,41 @@ def rendered():
         schemas.append("")
     return {"skills.md": "\n".join(skills), "schemas.md": "\n".join(schemas)}
 
+
+def commands_page():
+    """docs/commands.md from the operations registry, the same data as `plovi commands --json`."""
+    import sys
+    sys.path.insert(0, str(ROOT / "runtime"))
+    from plovi.operations import catalog
+    rows = catalog()
+    risk = {"none": "Reads only", "low": "Changes a task or the registry", "high": "Preview, then apply by digest"}
+    lines = [
+        "---\ntitle: Command reference\ndescription: Every plovi operation, its arguments, whether it changes anything and its risk.\nfooter: reference\nfooter_order: 3\n---\n",
+        "# Command reference\n",
+        "Generated from the operations registry by `scripts/generate_docs.py`. Agents read the same data with `plovi commands --json`.\n",
+        "Every operation that changes something accepts `--reason`, `--actor-agent NAME` and `--via TOOL`, and records "
+        "an event with that actor and reason in the [ledger](ledger.md). High-risk operations return a preview with a digest "
+        "and change nothing until you pass `--approve DIGEST`.\n",
+        "| Operation | Changes | Risk | What it does |", "|---|---|---|---|",
+    ]
+    lines += [f"| [`{row['name']}`](#{row['name'].replace('.', '')}) | {'yes' if row['mutates'] else 'no'} | {row['risk']} | {row['summary']} |"
+              for row in rows]
+    lines.append("")
+    for row in rows:
+        lines += [f"## {row['name']}\n", row["summary"] + ".\n", f"```sh\n{row['usage']}\n```\n",
+                  f"Risk: **{row['risk']}**. {risk[row['risk']]}.\n"]
+        properties = row["arguments"].get("properties", {})
+        if properties:
+            lines += ["| Argument | Required | Format | Meaning |", "|---|---|---|---|"]
+            for name, prop in properties.items():
+                kind = ", ".join(map(str, prop["enum"])) if "enum" in prop else prop.get("type", "value")
+                lines.append(f"| `{name}` | {'yes' if name in row['arguments'].get('required', []) else 'no'} | {kind} | {prop.get('description', '')} |")
+            lines.append("")
+    lines += ["!!! note \"What changes for your workflow\"",
+              "    Agents read `plovi commands --json` first and use these operations instead of editing plovi files.",
+              "    People can use the same commands; `plovi inbox` names the one to run next.", ""]
+    return "\n".join(lines)
+
 def generate(check=False):
     import importlib.util
     spec = importlib.util.spec_from_file_location("workflow_docs_content", Path(__file__).with_name("docs_content.py"))
@@ -121,8 +157,10 @@ def generate(check=False):
     if not check:
         directory.mkdir(parents=True, exist_ok=True)
     stale = []
-    for name, content in rendered().items():
-        path = directory / name
+    pages = {directory / name: content for name, content in rendered().items()}
+    pages[ROOT / "docs/commands.md"] = commands_page()
+    for path, content in pages.items():
+        name = path.relative_to(ROOT / "docs").as_posix()
         # Explicit UTF-8 and LF: Windows defaults to the ANSI code page and CRLF.
         if not path.exists() or path.read_text(encoding="utf-8") != content:
             stale.append(name)

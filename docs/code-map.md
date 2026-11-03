@@ -49,7 +49,8 @@ Inside a task's evidence directory:
 
 | File | What it holds |
 |---|---|
-| `state.json` | The run journal: status, current stage, completed stages, attempts, checkouts, delivery progress, and any pending question. Written atomically. |
+| `state.json` | The run journal: status, current stage, completed stages, attempts, checkouts, delivery progress, and any pending question. Written atomically. A cache of the ledger's latest state checkpoint; `rebuild-state` restores it. |
+| `pause.json`, `cancel.json` | A pending pause or cancel request the runner reads at the next safe point. |
 | `binding.json` | The plan, profile, skills, rules, and references this run is bound to. |
 | `attempts/NNNN.json` | One agent or command attempt: route, session, classification, usage, cost when reported, and redacted output. |
 | `evidence/STAGE-NNNN.json` | One verified stage: every check's command and parsed result, rule findings, changed paths, and the diff fingerprint. |
@@ -73,6 +74,9 @@ Everything below is standard-library Python with zero runtime dependencies.
 | `git_ops.py` | Snapshots files, computes the diff fingerprint, guards writable paths, prepares checkouts, and performs guarded delivery. |
 | `rules.py` | Evaluates the built-in secret detector and your blocking, advisory, and prose rules; records recurring examples. |
 | `state.py` | Atomic run journals, the project lock, and cancellation requests. A stale PID never authorizes a kill. |
+| `ledger.py` | The append-only event ledger outside the project: one JSON line per transition, state checkpoints in a content-addressed blob store, imports of older runs, and task views. |
+| `operations/` | The one command layer. Each operation declares its arguments, whether it changes anything and its risk; high-risk operations preview first and apply by digest. Also the inbox and the plan-approval gate. |
+| `registry.py` | The user-level projects registry the inbox and project resolution read. |
 | `process.py` | Runs commands in their own process group with timeouts, inactivity and stalled-tool limits, and owned-only termination. |
 | `providers/` | Builds the Claude Code, Codex, and Cursor commands for a route, and normalizes their events: session, final report, usage, and cost when reported. |
 | `environments.py` | Disposable test services with leases, observed readiness, exported connection details, and owned cleanup. |
@@ -103,6 +107,8 @@ Everything below is standard-library Python with zero runtime dependencies.
 | What did we agree to build? | `ai-plans/<task>/requirements.md` and `pipeline.json` |
 | Which files may change? | The `paths` and `test_paths` of each writable repository in `pipeline.json` |
 | What is happening right now? | `plovi status <task>` or `watch <task>` |
+| What needs me? | `plovi inbox` |
+| What happened, and who did it? | `plovi events --task <task>` and the [ledger](ledger.md) |
 | Why did a check pass or fail? | `evidence/STAGE-NNNN.json` in the task's evidence directory |
 | What did the agent actually say? | `attempts/NNNN.json` |
 | What changed in a rebind? | `revisions/` and the `revisions` list in `state.json` |

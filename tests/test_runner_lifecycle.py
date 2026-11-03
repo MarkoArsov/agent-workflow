@@ -56,6 +56,17 @@ class RunnerLifecycleTests(WorkspaceTest):
             time.sleep(0.05)
         self.fail("Runner did not reach the expected bounded state")
 
+    def wait_unlocked(self):
+        # The stop status is published just before the worker returns; it releases the lock on exit.
+        deadline = time.monotonic() + 15
+        while time.monotonic() < deadline:
+            try:
+                with state.lock(state.directory(self.project, "sample") / "runner.lock"):
+                    return
+            except WorkflowError:
+                time.sleep(0.05)
+        self.fail("The detached runner did not release its lock")
+
     def test_detached_cancel_lock_and_resume(self):
         self.fixture([{"sleep": 8}, {}])
         self.plan['repositories'][0]['branch'] = 'feature/sample'
@@ -70,6 +81,7 @@ class RunnerLifecycleTests(WorkspaceTest):
         state.cancel(self.project, "sample")
         result = self.wait_status(lambda value: value["status"] == "cancelled")
         self.assertEqual(result["attempts"][0]["classification"], "cancelled")
+        self.wait_unlocked()
         result = runner.run(self.project, self.plan, resume=True, unattended=False)
         self.assertEqual(result["status"], "complete")
         self.assertNotEqual(self.calls()[0]["pid"], self.calls()[1]["pid"])

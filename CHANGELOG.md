@@ -1,5 +1,27 @@
 # Changelog
 
+## Unreleased
+
+- Add the append-only ledger: one event per task transition and changing command,
+  with actor and reason, stored per project under user data. `state.json` becomes a
+  cache that `plovi rebuild-state TASK` restores from state checkpoints.
+- Add one command layer: `plovi commands --json` lists every operation with its
+  arguments and risk. Changing commands accept `--reason`, `--actor-agent` and `--via`.
+  High-risk operations preview first and apply with `--approve DIGEST`.
+- Add `plovi inbox`, `plovi events`, `plovi pause`, `plovi projects add|list|remove`,
+  `plovi status` without a task, `answer --text` and `approve --plan`.
+- Background workers require a recorded plan approval for the current plan hash;
+  explicit launches record it. Disable with `execution.require_plan_approval = false`.
+- `setup --apply` registers the project; `task start` accepts `--issue` and `--title`.
+- Add the plovi-factory skill for agents acting on the control plane.
+- Background runs start from the task's own branch, so planning commits are
+  delivered; `preflight` and `run --dry-run` no longer create factory checkouts.
+- Plans can name `allowed_commands` that restricted runs may execute.
+- A provider usage limit pauses the run with its reset time instead of failing it,
+  skips fallbacks from the same provider, and resume keeps the interrupted edits.
+  Failure kinds come from structured provider errors, not transcript text.
+- Completion reports may end with a bare JSON line after prose.
+
 ## 0.1.1
 
 - Rename Agent Flow to lowercase plovi across the runtime, installers, CLI,
