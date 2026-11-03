@@ -90,6 +90,11 @@ The person name comes from `git config user.name` in the project root, else `loc
 | `pause.requested` | `run_id`? | `plovi pause` asks the runner to stop at the next stage. |
 | `cancel.requested` | `run_id`? | `plovi cancel` asks the runner to stop. |
 | `checkpoint.migrated` | `binding_sha256` | `plovi migrate --apply` moves a legacy test checkpoint onto the current plan. |
+| `plan.rebound` | `run_id`, `old`, `new` | The run continues with an approved plan revision, or `resume --rebind` binds one. `old` and `new` are binding hashes. |
+| `commits.adopted` | `repository`, `commits`, `author`? | Resume adopts linear commits on the task branch that the task's own Git identity made. |
+| `limits.exceeded` | `run_id`, `files`, `lines`, `limit` | The diff passed `max_changed_files` or `max_changed_lines` but stayed under the ceiling, so the run continued. |
+| `receipt.rederived` | `repository`, `path`? | A missing or changed allocation receipt matched this task's ledger, so the runner rewrote it. |
+| `provider.circuit_open` | `run_id`, `provider`, `classification` | A permanent provider failure, such as authentication, skips that provider for the rest of the run. |
 
 `next` on a stop event is the command that continues the task. [`plovi stats`](stability-gate.md) reads these events.
 

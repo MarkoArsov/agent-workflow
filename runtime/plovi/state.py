@@ -6,6 +6,23 @@ from contextlib import contextmanager
 from pathlib import Path
 from .util import WorkflowError, contained, identifier, read_json, write_json
 
+# Saved state without state_version is version 1. Version 2 (#47) adds attempt kinds, budgets and adoption records.
+STATE_VERSION = 2
+
+
+def migrate(saved):
+    """Bring older saved state forward; refuse state written by a newer plovi."""
+    version = saved.get("state_version", 1)
+    if version == STATE_VERSION:
+        return saved
+    if type(version) is not int or version > STATE_VERSION or version < 1:
+        raise WorkflowError(f"This task's saved state version {version} needs a newer plovi; update plovi, then resume")
+    for key, empty in (("attempts", []), ("completed", []), ("delivery", {}), ("stage_evidence", {})):
+        saved.setdefault(key, type(empty)())
+    saved["state_version"] = STATE_VERSION
+    return saved
+
+
 def directory(project, task):
     return contained(project.root, project.profile["planning"]["evidence_directory"]) / identifier(task)
 

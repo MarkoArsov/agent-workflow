@@ -12,22 +12,39 @@ from .util import WorkflowError, atomic_write, is_absolute_anywhere, is_interact
 
 _DEFAULTS = {
     'limits': {'running_tasks': 2, 'waiting_for_review': 3, 'attempts_per_stage': 2,
-               'max_changed_files': 40, 'max_changed_lines': 1500,
+               'max_changed_files': 40, 'max_changed_lines': 1500, 'ceiling_factor': 4,
                'size_exempt': ['**/package-lock.json', '**/*.lock']},
     'paths': {'protected': ['.github/workflows/**', '**/migrations/**']},
-    'execution': {'unattended_permission_mode': 'restricted', 'tracking_mode': 'auto', 'require_plan_approval': True},
+    'execution': {'unattended_permission_mode': 'profile', 'tracking_mode': 'auto', 'require_plan_approval': True,
+                  'runtime_pin': False},
     'autonomy': {'level': 'assisted'}, 'grants': {},
+    'corrections': {'same_session_rounds': 2, 'challenges': 3},
+    'budgets': {'task_minutes': 120, 'task_attempts': 10, 'task_cost_usd': 0},
     'isolation': {'mode': 'none', 'runtime': 'auto', 'image': '', 'network': 'on',
-                  'mount_harness_config': [], 'api_key_env': []}}
+                  'mount_harness_config': [], 'api_key_env': [], 'checkout': 'task-worktree'}}
+# Keys that joined after the original public shape; defaults() omits them for older adapters.
+_LATER = {'limits': ('ceiling_factor',), 'execution': ('require_plan_approval', 'runtime_pin'),
+          'corrections': None, 'budgets': None, 'isolation': None}
+# Inclusive integer bounds where 1..10,000,000 is wrong; 0 disables a correction.
+_BOUNDS = {('limits', 'attempts_per_stage'): (1, 5), ('limits', 'ceiling_factor'): (1, 100),
+           ('corrections', 'same_session_rounds'): (0, 10), ('corrections', 'challenges'): (0, 10)}
 
 def defaults(*, include_isolation=False):
     # Preserve the original public defaults shape for older adapters.
     result = copy.deepcopy(_DEFAULTS)
     if not include_isolation:
-        result.pop('isolation')
-        # The plan-approval gate joined later; the legacy public shape omits it too.
-        result['execution'].pop('require_plan_approval')
+        for section, keys in _LATER.items():
+            if keys is None:
+                result.pop(section)
+            else:
+                for key in keys:
+                    result[section].pop(key)
     return result
+
+
+def setting(values, section, key):
+    """A policy value, falling back to the built-in default for policies bound before the key existed."""
+    return values.get(section, {}).get(key, _DEFAULTS[section][key])
 
 
 def isolation_defaults():
@@ -46,13 +63,18 @@ def validate(value):
             if key not in _DEFAULTS[section]:
                 _unknown(path, [f'{section}.{x}' for x in _DEFAULTS[section]])
             example = _DEFAULTS[section][key]
+            if path == 'budgets.task_cost_usd':
+                if type(val) not in (int, float) or not math.isfinite(val) or val < 0:
+                    raise WorkflowError(f'{path}: a cost in US dollars, 0 or more, required (0 means no cap)')
+                continue
             if type(val) is not type(example):
                 raise WorkflowError(f'{path}: expected {type(example).__name__}')
             if section == 'isolation':
                 _isolation_field(key, val)
                 continue
-            if type(val) is int and not 1 <= val <= (5 if key == 'attempts_per_stage' else 10000000):
-                raise WorkflowError(f'{path}: positive bounded integer required')
+            low, high = _BOUNDS.get((section, key), (1, 10000000))
+            if type(val) is int and not low <= val <= high:
+                raise WorkflowError(f'{path}: an integer from {low} to {high} required')
             if type(val) is list:
                 for item in val:
                     if (not isinstance(item, str) or not item or is_absolute_anywhere(item)
@@ -62,15 +84,18 @@ def validate(value):
                 raise WorkflowError(f'{path}: unsupported tracking mode')
             if key == 'level' and val not in {'assisted', 'ready', 'auto'}:
                 raise WorkflowError(f'{path}: choose assisted, ready or auto')
-            if key == 'unattended_permission_mode' and val not in {'restricted', 'trusted'}:
-                raise WorkflowError(f'{path}: choose restricted or trusted')
+            if key == 'unattended_permission_mode' and val not in {'profile', 'restricted', 'trusted'}:
+                raise WorkflowError(f'{path}: choose profile, restricted or trusted')
     isolation = dict(_DEFAULTS['isolation'], **value.get('isolation', {}))
     if isolation['mode'] == 'container' and not isolation['image']:
         raise WorkflowError('isolation.image is required for container mode; choose a local image')
+    if isolation['mode'] == 'container' and isolation['checkout'] != 'factory':
+        raise WorkflowError('Container mode needs isolation.checkout = "factory"; set it in plovi.toml')
     return value
 
 def _isolation_field(key, value):
-    enums = {'mode': {'none', 'container'}, 'runtime': {'auto', 'docker', 'podman'}, 'network': {'on', 'off'}}
+    enums = {'mode': {'none', 'container'}, 'runtime': {'auto', 'docker', 'podman'}, 'network': {'on', 'off'},
+             'checkout': {'task-worktree', 'factory'}}
     if key in enums and value not in enums[key]:
         raise WorkflowError(f'isolation.{key}: choose ' + ', '.join(sorted(enums[key])))
     if key == 'image' and value and not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9._/@:+-]{0,511}', value):
@@ -125,6 +150,9 @@ def execution(project, manifest, *, trusted=False, unattended=False):
     elif unattended:
         mode = resolved['values']['execution']['unattended_permission_mode']
         source = 'policy' if resolved['sources']['execution']['unattended_permission_mode'] == 'plovi.toml' else 'unattended default'
+        if mode == 'profile':
+            # Unattended runs use the project's own mode; restricted stays an explicit choice.
+            mode, source = result['permission_mode'], source + ' (profile)'
     else:
         mode, source = result['permission_mode'], 'profile'
     result.update(permission_mode=mode, permission_source=source)

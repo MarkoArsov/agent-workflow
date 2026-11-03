@@ -1,0 +1,20 @@
+== Step 1: policy keys, ledger types, state version
+ERROR: test_recovery_keys_have_documented_defaults_and_bounds (tests.test_policy.PolicyTests.test_recovery_keys_have_documented_defaults_and_bounds)
+KeyError: 'corrections'
+ERROR: test_state_version_migrates_forward (tests.test_defaults_v2.StateVersionTests.test_state_version_migrates_forward)
+AttributeError: module 'plovi.state' has no attribute 'migrate'
+FAIL: test_container_mode_needs_factory_checkouts (tests.test_policy.PolicyTests.test_container_mode_needs_factory_checkouts)
+AssertionError: WorkflowError not raised
+FAIL: test_documented_defaults_and_independent_values (tests.test_policy.PolicyTests.test_documented_defaults_and_independent_values)
+AssertionError: {'lim[294 chars]e': 'restricted', 'tracking_mode': 'auto'}, 'a[41 chars]: {}} != {'lim[294 chars]e': 'profile', 'tracking_mode': 'auto'}, 'auto[38 chars]: {}}
+FAIL: test_every_event_type_validates_against_schema (tests.test_ledger.LedgerTests.test_every_event_type_validates_against_schema)
+AssertionError: {'plan.rebound', 'run.cancelled', 'approval.requested', 'cancel.requested', 'limits.exceeded', 'attempt.finished', 'question.answered', 'project.registered', 'stage.started', 'receipt.rederived', 'plan.proposed', 'run.paused', 'task.claimed', 'delivery.pushed', 'run.interrupted', 'policy.changed', 'escalation.raised', 'stage.finished', 'delivery.committed', 'run.resumed', 'task.created', 'checkpoint.migrated', 'pr.opened', 'run.started', 'state.checkpoint', 'run.finished', 'commits.adopted', 'provider.circuit_open', 'plan.approved', 'question.asked', 'project.unregistered', 'pause.requested', 'approval.granted'} not found in [{'task', 'project', 'pr', 'execution', 'schedule', 'policy'}, {'run.cancelled', 'approval.requested', 'cancel.requested', 'attempt.finished', 'question.answered', 'project.registered', 'stage.started', 'plan.proposed', 'run.paused', 'task.claimed', 'delivery.pushed', 'run.interrupted', 'policy.changed', 'escalation.raised', 'stage.finished', 'delivery.committed', 'run.resumed', 'task.created', 'checkpoint.migrated', 'pr.opened', 'run.started', 'state.checkpoint', 'run.finished', 'plan.approved', 'question.asked', 'project.unregistered', 'pause.requested', 'approval.granted'}, {'plovi', 'person', 'agent'}] : the schema enumerates exactly the ledger event types
+Ran 23 tests in 9.469s
+FAILED (failures=3, errors=2)
+
+== Step 1 (5.8 permission default; old default 'restricted' restored temporarily)
+FAIL: test_unattended_uses_profile_permission_mode (tests.test_defaults_v2.PermissionDefaultTests.test_unattended_uses_profile_permission_mode)
+AssertionError: Tuples differ: ('restricted', 'unattended default') != ('trusted', 'unattended default (profile)')
+Ran 2 tests in 5.257s
+FAILED (failures=1)
+

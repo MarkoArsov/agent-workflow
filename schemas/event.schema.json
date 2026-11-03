@@ -85,7 +85,12 @@
         "pause.requested",
         "cancel.requested",
         "project.unregistered",
-        "checkpoint.migrated"
+        "checkpoint.migrated",
+        "plan.rebound",
+        "commits.adopted",
+        "limits.exceeded",
+        "receipt.rederived",
+        "provider.circuit_open"
       ]
     },
     "actor": {

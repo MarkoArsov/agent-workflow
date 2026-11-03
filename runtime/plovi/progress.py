@@ -104,6 +104,24 @@ def read_events(root,cursor=0):
         return rows,result
 
 
+def next_command(state):
+    """The exact command that continues a stopped task, or None while it runs or after it completes."""
+    task = state.get('task', 'TASK'); status = state.get('status')
+    if state.get('next_command'):
+        return state['next_command']
+    if status == 'needs_input':
+        return f'plovi answer {task} --file ANSWER'
+    if status == 'needs_approval':
+        pending = next(iter(state.get('pending_approvals') or []), None) or state.get('approval') or {}
+        flag = '--size' if pending.get('kind') == 'size' else '--paths'
+        return f"plovi approve {task} {flag} --approve {pending.get('fingerprint', 'FINGERPRINT')}"
+    if status == 'escalated':
+        return f'plovi retry {task} --note DECISION'
+    if status in {'failed', 'interrupted', 'cancelled', 'paused'}:
+        return f'plovi resume {task}'
+    return None
+
+
 def summary(state):
     keys=('task','run_id','status','stage','completed','pending_input','escalation','pending_approvals','error','activity','activity_at','heartbeat_at','started_at','provider','model','repair_round','tool_active','tool_started_at','check','passed','updated_at')
     value={'type':'summary','schema_version':1,**{k:state[k] for k in keys if state.get(k) is not None}}
@@ -117,6 +135,8 @@ def summary(state):
         if state.get('resets_at') is not None:value['resets_at']=state['resets_at']
         value['next_action']='Wait for the provider usage limit to reset, then plovi resume '+task
     elif status=='paused':value['next_action']='plovi resume '+task
+    command=next_command(state)
+    if command:value['next']=command
     return value
 
 

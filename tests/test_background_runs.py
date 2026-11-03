@@ -110,6 +110,7 @@ class BackgroundRunTests(HardeningTest):
         self.assertEqual(len(loaded["allowed_commands"]), 2)
         with_claude = copy.deepcopy(loaded)
         with_claude["routes"] = {"default": [{"provider": "claude", "model": "fixture"}]}
+        (self.project.root / "plovi.toml").write_text('[execution]\nunattended_permission_mode = "restricted"\n')
         execution = policy.execution(self.project, with_claude, unattended=True)
         self.assertEqual(execution["permission_mode"], "restricted")
         tools = execution["provider_settings"]["claude"]["allowed_tools"]

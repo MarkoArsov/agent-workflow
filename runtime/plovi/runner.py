@@ -130,6 +130,26 @@ def preflight(project, manifest, *, check_providers=True, execution=None, pull_i
             "isolation": execution.get('isolation', {'mode': 'none'}),
             "side_effects": "Stage selection authorizes only the named delivery actions."}
 
+def keep_bound_defaults(new, old):
+    """A task keeps the built-in defaults it was bound with, so a newer plovi's defaults never force a rebind.
+
+    Keys the old binding lacks are dropped and changed built-in values revert; explicit
+    plovi.toml, profile or plan values still differ and still need a reviewed rebind.
+    """
+    for section in list(new['values']):
+        row, old_row = new['values'][section], old['values'].get(section)
+        sources = new['sources'].get(section, {})
+        for key in list(row):
+            if sources.get(key) != 'built-in':
+                continue
+            if old_row is None or key not in old_row:
+                row.pop(key); sources.pop(key, None)
+            elif old['sources'].get(section, {}).get(key, 'built-in') == 'built-in':
+                row[key] = copy.deepcopy(old_row[key])
+        if old_row is None and not row:
+            new['values'].pop(section); new['sources'].pop(section, None)
+
+
 def invalidate_from(old, new, stages, custom):
     common_keys = set(old) | set(new)
     if any(old.get(k) != new.get(k) for k in common_keys - {"skills"}):
@@ -455,15 +475,8 @@ def _run_locked(project, manifest, root, *, resume, answer, rebind, trusted, una
             prepared = git_ops.prepare(project, manifest, strategies=checkout_strategies)
         bound = binding(project, manifest)
         old_bound = read_json(root / "binding.json", {})
-        if (prior and old_bound.get('policy') and 'isolation' not in old_bound['policy'].get('values', {})
-                and not policy.load(project).get('isolation') and not rebind):
-            for kind in ('values', 'sources'):
-                bound['policy'][kind].pop('isolation', None)
-        if (prior and old_bound.get('policy') and 'require_plan_approval' not in old_bound['policy'].get('values', {}).get('execution', {})
-                and 'require_plan_approval' not in policy.load(project).get('execution', {}) and not rebind):
-            # Tasks bound before the plan-approval gate keep their original policy binding.
-            for kind in ('values', 'sources'):
-                bound['policy'][kind].get('execution', {}).pop('require_plan_approval', None)
+        if prior and old_bound.get('policy') and not rebind:
+            keep_bound_defaults(bound['policy'], old_bound['policy'])
         legacy_policy = bool(prior and old_bound and "policy" not in old_bound)
         if legacy_policy and not rebind:
             if any(policy.load(project).values()):
@@ -479,6 +492,9 @@ def _run_locked(project, manifest, root, *, resume, answer, rebind, trusted, una
         state = read_json(root / "state.json")
         if state and not state.get("binding_sha256"):
             state = None
+        if state:
+            from .state import migrate
+            state = migrate(state)
         if state and not resume:
             raise WorkflowError("A task run exists; use resume, answer, or a new task ID")
         if resume and not state:
@@ -523,7 +539,8 @@ def _run_locked(project, manifest, root, *, resume, answer, rebind, trusted, una
                 raise WorkflowError("There is no pending input session to answer")
         else:
             checkouts = prepared or git_ops.prepare(project, manifest, strategies=checkout_strategies)
-            state = {"schema_version": 1, "task": manifest["task"], "manifest_path": str(Path(manifest["_directory"]) / "pipeline.json"),
+            from .state import STATE_VERSION
+            state = {"schema_version": 1, "state_version": STATE_VERSION, "task": manifest["task"], "manifest_path": str(Path(manifest["_directory"]) / "pipeline.json"),
                      "status": "starting", "completed": [], "attempts": [], "checkouts": checkouts,
                      "baseline": git_ops.snapshot(project, checkouts), "binding_sha256": bound_hash,
                      "initial_dirty": {name: git_ops.dirty_paths(Path(path)) for name, path in checkouts.items()},

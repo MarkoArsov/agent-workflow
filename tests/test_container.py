@@ -92,6 +92,7 @@ class ContainerTests(WorkspaceTest):
         toml_text = textwrap.dedent("""\
             [isolation]
             mode = 'container'
+            checkout = 'factory'
             runtime = 'auto'
             image = 'plovi/runner:latest'
             network = 'off'
@@ -144,7 +145,7 @@ class ContainerTests(WorkspaceTest):
         project, task, checkout = self._factory_owned_project("run-stage")
         policy_cfg = {
             "isolation": {
-                "mode": "container",
+                "mode": "container", "checkout": "factory",
                 "runtime": "docker",
                 "image": "plovi/runner:test",
                 "network": "off",
@@ -187,7 +188,7 @@ class ContainerTests(WorkspaceTest):
 
         policy_cfg = {
             "isolation": {
-                "mode": "container",
+                "mode": "container", "checkout": "factory",
                 "runtime": "auto",
                 "image": "plovi/runner:test",
             }
@@ -211,7 +212,7 @@ class ContainerTests(WorkspaceTest):
 
         policy_cfg = {
             "isolation": {
-                "mode": "container",
+                "mode": "container", "checkout": "factory",
                 "runtime": "auto",
                 "image": "plovi/runner:test",
             }
@@ -233,7 +234,7 @@ class ContainerTests(WorkspaceTest):
         project, task, checkout = self._factory_owned_project("missing-image")
         policy_cfg = {
             "isolation": {
-                "mode": "container",
+                "mode": "container", "checkout": "factory",
                 "runtime": "docker",
                 "image": "plovi/runner:missing",
                 "network": "off",
@@ -255,7 +256,7 @@ class ContainerTests(WorkspaceTest):
         project = self.setup_project(self.repo("proj"))
         policy_cfg = {
             "isolation": {
-                "mode": "container",
+                "mode": "container", "checkout": "factory",
                 "runtime": "docker",
                 "image": "plovi/runner:test",
             }
@@ -283,7 +284,7 @@ class ContainerTests(WorkspaceTest):
         project, task, checkout = self._factory_owned_project("env-leak-check")
         policy_cfg = {
             "isolation": {
-                "mode": "container",
+                "mode": "container", "checkout": "factory",
                 "runtime": "docker",
                 "image": "plovi/runner:test",
                 "network": "off",
@@ -314,7 +315,7 @@ class ContainerTests(WorkspaceTest):
         project, task, checkout = self._factory_owned_project("task-svc")
         policy_cfg = {
             "isolation": {
-                "mode": "container",
+                "mode": "container", "checkout": "factory",
                 "runtime": "docker",
                 "image": "plovi/runner:test",
                 "network": "on",
@@ -336,7 +337,7 @@ class ContainerTests(WorkspaceTest):
         project, task, checkout = self._factory_owned_project("cancel-check")
         policy_cfg = {
             "isolation": {
-                "mode": "container",
+                "mode": "container", "checkout": "factory",
                 "runtime": "docker",
                 "image": "plovi/runner:test",
                 "network": "off",
@@ -375,7 +376,7 @@ class ContainerTests(WorkspaceTest):
         project, task, checkout = self._factory_owned_project("windows-diagnostic")
         policy_cfg = {
             "isolation": {
-                "mode": "container",
+                "mode": "container", "checkout": "factory",
                 "runtime": "auto",
                 "image": "plovi/runner:test",
             }
@@ -394,7 +395,7 @@ class ContainerTests(WorkspaceTest):
         project, task, checkout = self._factory_owned_project("real-engine-smoke")
         policy_cfg = {
             "isolation": {
-                "mode": "container",
+                "mode": "container", "checkout": "factory",
                 "runtime": "docker",
                 "image": os.environ.get("PLOVI_TEST_IMAGE", "plovi/runner:test"),
                 "network": "off",
@@ -438,7 +439,7 @@ class ContainerTests(WorkspaceTest):
         project = self.setup_project(self.repo("proj"))
         policy_cfg = {
             "isolation": {
-                "mode": "container",
+                "mode": "container", "checkout": "factory",
                 "runtime": "docker",
                 "image": "plovi/runner:test",
                 "network": "off",
@@ -460,7 +461,7 @@ class ContainerTests(WorkspaceTest):
         project, task, checkout = self._factory_owned_project("invalid-image-metadata")
         policy_cfg = {
             "isolation": {
-                "mode": "container",
+                "mode": "container", "checkout": "factory",
                 "runtime": "docker",
                 "image": "plovi/runner:test",
                 "network": "off",
@@ -497,7 +498,7 @@ class ContainerTests(WorkspaceTest):
             "exports": {"SERVICE_URL": "http://fixture-service:1234"},
         }]}}
         ctx = isolation.build_execution_context(project, {"isolation": {
-            "mode": "container", "runtime": "docker", "image": "plovi/runner:test", "network": "on",
+            "mode": "container", "checkout": "factory", "runtime": "docker", "image": "plovi/runner:test", "network": "on",
         }}, task=task)
         self.addCleanup(isolation.cancel_containers, ctx)
         token = isolation.active.set(ctx)
