@@ -5,7 +5,7 @@ Keep the public package generic and project configuration portable. Do not copy 
 Use Python 3.11+ and the standard library for runtime work. Install through install.py; this is not a pip distribution.
 
 ~~~sh
-python3 -m unittest discover -s tests -v
+python3 scripts/run_tests.py --jobs auto
 python3 scripts/generate_docs.py --check
 python3 scripts/check_public_content.py --history
 python3 -m venv .venv
@@ -13,6 +13,11 @@ python3 -m venv .venv
 .venv/bin/python -m mkdocs build --strict
 .venv/bin/python scripts/check_links.py site
 ~~~
+
+While fixing something, `python3 scripts/run_tests.py --changed` runs only the
+affected tests plus the smoke tier. A test that runs longer than 120 seconds prints
+every thread's stack and fails; `--per-test-timeout` changes the limit. See
+[Run tests quickly](docs/development.md#run-tests-quickly) for tiers, shards and timings.
 
 Tests create temporary homes, repositories, provider doubles, and local remotes.
 The E2E fixture listens on localhost. Never use a real agent configuration or account just to test installation or publishing.
