@@ -98,6 +98,18 @@ class CIWorkflowTests(WorkspaceTest):
         self.assertIn('${{ runner.temp }}/test-results/', core)
         self.assertIn("format(', batch {0}/{1}', matrix.shard, matrix.shards)", core)
 
+    def test_one_core_job_uploads_scenario_results_for_the_gate(self):
+        core = self.job('core')
+        self.assertEqual(core.count('scenario: true'), 1)
+        self.assertRegex(core, r'- os: ubuntu-latest\n\s+python: "3.14"\n\s+jobs: auto\n\s+#[^\n]*\n\s+scenario: true')
+        self.assertIn('--scenario-results "$RUNNER_TEMP/scenario-results.json"', core)
+        self.assertIn('"${scenario[@]}"', core)
+        upload = core.split('name: Keep scenario results for the stable-enough gate', 1)[1]
+        self.assertIn('if: always() && matrix.scenario', upload)
+        self.assertIn('name: scenario-results\n', upload)
+        self.assertIn('${{ runner.temp }}/scenario-results.json', upload)
+        self.assertNotIn('scenario: true', self.job('core', 'nightly'))
+
     def smoke_code(self):
         match = re.search(r'shell: python\s*\n\s+run: \|\n(.*?)(?=^      - |\Z)',
                           self.job('windows-install'), re.M | re.S)

@@ -53,6 +53,8 @@ jobs:
           - os: ubuntu-latest
             python: "3.14"
             jobs: auto
+            # plovi stats --gate reads this job's scenario results (G5).
+            scenario: true
           - os: macos-latest
             python: "3.14"
             jobs: auto
@@ -84,7 +86,9 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          python scripts/run_tests.py --shard ${{ matrix.shard || 1 }} --shards ${{ matrix.shards || 1 }} --jobs ${{ matrix.jobs }} --timings "$RUNNER_TEMP/test-timings.json" --results-dir "$RUNNER_TEMP/test-results" --summary "$GITHUB_STEP_SUMMARY" 2>&1 | tee "$RUNNER_TEMP/tests.log"
+          scenario=()
+          if [ "${{ matrix.scenario || false }}" = "true" ]; then scenario=(--scenario-results "$RUNNER_TEMP/scenario-results.json"); fi
+          python scripts/run_tests.py --shard ${{ matrix.shard || 1 }} --shards ${{ matrix.shards || 1 }} --jobs ${{ matrix.jobs }} --timings "$RUNNER_TEMP/test-timings.json" --results-dir "$RUNNER_TEMP/test-results" --summary "$GITHUB_STEP_SUMMARY" "${scenario[@]}" 2>&1 | tee "$RUNNER_TEMP/tests.log"
       - name: Summarize failure
         if: failure()
         shell: bash
@@ -99,6 +103,13 @@ jobs:
             ${{ runner.temp }}/test-timings.json
             ${{ runner.temp }}/test-results/
           retention-days: 7
+      - name: Keep scenario results for the stable-enough gate
+        if: always() && matrix.scenario
+        uses: actions/upload-artifact@v7
+        with:
+          name: scenario-results
+          path: ${{ runner.temp }}/scenario-results.json
+          retention-days: 30
   audit:
     needs: smoke
     runs-on: ubuntu-latest
