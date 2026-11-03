@@ -147,6 +147,33 @@ def commands_page():
               "    People can use the same commands; `plovi inbox` names the one to run next.", ""]
     return "\n".join(lines)
 
+def scenario_page():
+    """docs/generated/scenario.md from tests/scenario/steps.py and owners.json."""
+    import runpy
+    steps = runpy.run_path(str(ROOT / "tests/scenario/steps.py"))
+    rows, statuses = steps["SCENARIO_STEPS"], steps["load_owners"]()
+    done = [row for row in rows if steps["status"](row, statuses) == "done"]
+    lines = [
+        "---\ntitle: Target scenario\ndescription: Every step of the target scenario, the issues that own it, its test and whether it works yet.\n"
+        "question: How much of the target scenario works today?\n---\n",
+        "# Target scenario\n",
+        "Generated from `tests/scenario/steps.py` and `tests/scenario/owners.json` by `scripts/generate_docs.py`.\n",
+        "!!! summary \"In one minute\"",
+        "    - The target: tag issues, set a project up once, and let plovi plan, build and deliver them while you watch and steer.",
+        f"    - {len(done)} of {len(rows)} steps are done: every owning issue has landed and the step's test runs in CI.",
+        "    - A pending step's test is skipped with the issues it waits for. Each owning issue writes the test and marks itself done.",
+        "    - [The stability gate](../stability-gate.md) counts these steps in G5.\n",
+        "| ID | Step | Owners | Test | Status |", "|---|---|---|---|---|",
+    ]
+    for row in rows:
+        test = f"`{steps['TEST_FILE']}` `{row['test']}`"
+        if row.get("app_test"):
+            test = f"Playwright `{row['app_test']}`, checked by {test}"
+        owners = ", ".join(f"#{number}" for number in row["owners"])
+        lines.append(f"| {row['id']} | {row['text']} | {owners} | {test} | {steps['status'](row, statuses)} |")
+    lines += ["", "To own a step, see [Scenario tests: how to own a step](../development.md#scenario-tests-how-to-own-a-step).", ""]
+    return "\n".join(lines)
+
 def generate(check=False):
     import importlib.util
     spec = importlib.util.spec_from_file_location("workflow_docs_content", Path(__file__).with_name("docs_content.py"))
@@ -159,6 +186,7 @@ def generate(check=False):
     stale = []
     pages = {directory / name: content for name, content in rendered().items()}
     pages[ROOT / "docs/commands.md"] = commands_page()
+    pages[directory / "scenario.md"] = scenario_page()
     for path, content in pages.items():
         name = path.relative_to(ROOT / "docs").as_posix()
         # Explicit UTF-8 and LF: Windows defaults to the ANSI code page and CRLF.
