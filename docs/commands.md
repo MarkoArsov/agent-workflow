@@ -28,6 +28,7 @@ Every operation that changes something accepts `--reason`, `--actor-agent NAME` 
 | [`rebuild-state`](#rebuild-state) | yes | low | Rebuild a task's state.json and status.json from the ledger |
 | [`resume`](#resume) | yes | low | Continue a paused, failed or interrupted task without repeating finished stages |
 | [`retry`](#retry) | yes | low | Retry an escalated task, optionally with a note for the agent |
+| [`stats`](#stats) | no | none | Report runs, interventions, stops, time, attempts and tokens from the ledger; --gate checks the stable-enough gate |
 | [`status`](#status) | no | none | Show one task's progress, or every task the ledger knows |
 
 ## answer
@@ -292,6 +293,23 @@ Risk: **low**. Changes a task or the registry.
 | `reason` | no | string | Why this change is made; recorded in the ledger |
 | `actor_agent` | no | string | Agent name; agents must always pass it |
 | `via` | no | string | Tool the agent acts through |
+
+## stats
+
+Report runs, interventions, stops, time, attempts and tokens from the ledger; --gate checks the stable-enough gate.
+
+```sh
+plovi stats [--since DATE|DURATION] [--task ID] [--json] [--gate]
+```
+
+Risk: **none**. Reads only.
+
+| Argument | Required | Format | Meaning |
+|---|---|---|---|
+| `since` | no | string | ISO date or time, or a duration such as 7d |
+| `task` | no | string | Task ID |
+| `json` | no | boolean | Print JSON |
+| `gate` | no | boolean | Evaluate G1-G5; exit 0 only when all pass |
 
 ## status
 

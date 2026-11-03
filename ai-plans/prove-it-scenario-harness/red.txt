@@ -1,0 +1,210 @@
+FFEEEEEEFEEFFEEFFE
+======================================================================
+ERROR: test_g1_fails_on_a_rerun (tests.test_stats.GateTests.test_g1_fails_on_a_rerun)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<checkout>/tests/test_stats.py", line 257, in test_g1_fails_on_a_rerun
+    self.assertFalse(result["G1"]["passed"])
+                     ~~~~~~^^^^^^
+KeyError: 'G1'
+
+======================================================================
+ERROR: test_g2_fails_on_slow_ubuntu_suite_or_local_suite (tests.test_stats.GateTests.test_g2_fails_on_slow_ubuntu_suite_or_local_suite)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<checkout>/tests/test_stats.py", line 264, in test_g2_fails_on_slow_ubuntu_suite_or_local_suite
+    self.assertFalse(result["G2"]["passed"])
+                     ~~~~~~^^^^^^
+KeyError: 'G2'
+
+======================================================================
+ERROR: test_g3_fails_when_an_intervention_restarts_the_count (tests.test_stats.GateTests.test_g3_fails_when_an_intervention_restarts_the_count)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<checkout>/tests/test_stats.py", line 276, in test_g3_fails_when_an_intervention_restarts_the_count
+    self.assertFalse(result["G3"]["passed"])
+                     ~~~~~~^^^^^^
+KeyError: 'G3'
+
+======================================================================
+ERROR: test_g3_needs_large_runs_red_proof_and_both_providers (tests.test_stats.GateTests.test_g3_needs_large_runs_red_proof_and_both_providers)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<checkout>/tests/test_stats.py", line 285, in test_g3_needs_large_runs_red_proof_and_both_providers
+    self.assertFalse(result["G3"]["passed"])
+                     ~~~~~~^^^^^^
+KeyError: 'G3'
+
+======================================================================
+ERROR: test_g4_fails_when_a_stop_has_no_next_command (tests.test_stats.GateTests.test_g4_fails_when_a_stop_has_no_next_command)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<checkout>/tests/test_stats.py", line 290, in test_g4_fails_when_a_stop_has_no_next_command
+    self.assertTrue(result["G3"]["passed"])
+                    ~~~~~~^^^^^^
+KeyError: 'G3'
+
+======================================================================
+ERROR: test_g5_fails_when_a_done_step_fails (tests.test_stats.GateTests.test_g5_fails_when_a_done_step_fails)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<checkout>/tests/test_stats.py", line 297, in test_g5_fails_when_a_done_step_fails
+    self.assertFalse(result["G5"]["passed"])
+                     ~~~~~~^^^^^^
+KeyError: 'G5'
+
+======================================================================
+ERROR: test_a_resumed_run_is_one_logical_run_with_its_stops_and_attempts (tests.test_stats.RunTests.test_a_resumed_run_is_one_logical_run_with_its_stops_and_attempts)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<checkout>/tests/test_stats.py", line 100, in test_a_resumed_run_is_one_logical_run_with_its_stops_and_attempts
+    row = stats.runs(six_runs())[1]
+          ~~~~~~~~~~~~~~~~~~~~~~^^^
+IndexError: list index out of range
+
+======================================================================
+ERROR: test_attempt_kinds_tokens_and_cost (tests.test_stats.RunTests.test_attempt_kinds_tokens_and_cost)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<checkout>/tests/test_stats.py", line 159, in test_attempt_kinds_tokens_and_cost
+    known, unknown = stats.runs(book.events)
+    ^^^^^^^^^^^^^^
+ValueError: not enough values to unpack (expected 2, got 0)
+
+======================================================================
+ERROR: test_open_runs_report_their_last_stop (tests.test_stats.RunTests.test_open_runs_report_their_last_stop)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<checkout>/tests/test_stats.py", line 169, in test_open_runs_report_their_last_stop
+    row = stats.runs(book.events)[0]
+          ~~~~~~~~~~~~~~~~~~~~~~~^^^
+IndexError: list index out of range
+
+======================================================================
+ERROR: test_person_actor_events_count_and_agent_or_plan_approvals_do_not (tests.test_stats.RunTests.test_person_actor_events_count_and_agent_or_plan_approvals_do_not)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<checkout>/tests/test_stats.py", line 145, in test_person_actor_events_count_and_agent_or_plan_approvals_do_not
+    row = stats.runs(book.events)[0]
+          ~~~~~~~~~~~~~~~~~~~~~~~^^^
+IndexError: list index out of range
+
+======================================================================
+ERROR: test_totals (tests.test_stats.RunTests.test_totals)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<checkout>/tests/test_stats.py", line 177, in test_totals
+    self.assertEqual((totals["runs"], totals["interventionless"]), (6, 3))
+                      ~~~~~~^^^^^^^^
+KeyError: 'runs'
+
+======================================================================
+FAIL: test_all_criteria_pass (tests.test_stats.GateTests.test_all_criteria_pass)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<checkout>/tests/test_stats.py", line 249, in test_all_criteria_pass
+    self.assertEqual({key: value["passed"] for key, value in result.items()},
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                     {"G1": True, "G2": True, "G3": True, "G4": True, "G5": True}, json.dumps(result, indent=1))
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: {} != {'G1': True, 'G2': True, 'G3': True, 'G4': True, 'G5': True}
+- {}
++ {'G1': True, 'G2': True, 'G3': True, 'G4': True, 'G5': True} : {}
+
+======================================================================
+FAIL: test_cli_prints_every_criterion_and_exits_by_the_gate (tests.test_stats.GateTests.test_cli_prints_every_criterion_and_exits_by_the_gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<checkout>/tests/test_stats.py", line 312, in test_cli_prints_every_criterion_and_exits_by_the_gate
+    self.assertEqual(passed.returncode, 0, passed.stdout + passed.stderr)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 2 != 0 : usage: plovi [-h] [--version] [--project PROJECT]
+             {self-update,models,policy,setup,inspect,refresh,skill,validate-plan,preflight,run,verify,migrate,pipeline,status,watch,resume,answer,cancel,retry,approve,pause,inbox,events,projects,rebuild-state,commands,sync-base,worktrees,clean,task,rule,connector,github,environment,update,uninstall,doctor} ...
+plovi: error: argument command: invalid choice: 'stats' (choose from 'self-update', 'models', 'policy', 'setup', 'inspect', 'refresh', 'skill', 'validate-plan', 'preflight', 'run', 'verify', 'migrate', 'pipeline', 'status', 'watch', 'resume', 'answer', 'cancel', 'retry', 'approve', 'pause', 'inbox', 'events', 'projects', 'rebuild-state', 'commands', 'sync-base', 'worktrees', 'clean', 'task', 'rule', 'connector', 'github', 'environment', 'update', 'uninstall', 'doctor')
+
+
+======================================================================
+FAIL: test_missing_github_data_is_a_failure_not_a_crash (tests.test_stats.GateTests.test_missing_github_data_is_a_failure_not_a_crash)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<checkout>/tests/test_stats.py", line 303, in test_missing_github_data_is_a_failure_not_a_crash
+    self.assertEqual({key: value["passed"] for key, value in result.items()},
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                     {"G1": False, "G2": False, "G3": False, "G4": False, "G5": False})
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: {} != {'G1': False, 'G2': False, 'G3': False, 'G4': False, 'G5': False}
+- {}
++ {'G1': False, 'G2': False, 'G3': False, 'G4': False, 'G5': False}
+
+======================================================================
+FAIL: test_cancel_then_restart_counts_on_the_cancelled_run (tests.test_stats.RunTests.test_cancel_then_restart_counts_on_the_cancelled_run)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<checkout>/tests/test_stats.py", line 113, in test_cancel_then_restart_counts_on_the_cancelled_run
+    self.assertEqual([(r["task"], r["result"], len(r["interventions"])) for r in rows],
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                     [("redo", "cancelled", 1), ("redo", "pull-request", 0), ("dropped", "cancelled", 0)])
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Lists differ: [] != [('redo', 'cancelled', 1), ('redo', 'pull-[37 chars], 0)]
+
+Second list contains 3 additional elements.
+First extra element 0:
+('redo', 'cancelled', 1)
+
+- []
++ [('redo', 'cancelled', 1),
++  ('redo', 'pull-request', 0),
++  ('dropped', 'cancelled', 0)]
+
+======================================================================
+FAIL: test_interventions_in_the_six_run_fixture (tests.test_stats.RunTests.test_interventions_in_the_six_run_fixture)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<checkout>/tests/test_stats.py", line 92, in test_interventions_in_the_six_run_fixture
+    self.assertEqual([row["task"] for row in rows], ["answer", "retry", "clean", "approved", "foreign", "paused"])
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Lists differ: [] != ['answer', 'retry', 'clean', 'approved', 'foreign', 'paused']
+
+Second list contains 6 additional elements.
+First extra element 0:
+'answer'
+
+- []
++ ['answer', 'retry', 'clean', 'approved', 'foreign', 'paused']
+
+======================================================================
+FAIL: test_resume_after_failure_counts_unless_the_same_person_paused (tests.test_stats.RunTests.test_resume_after_failure_counts_unless_the_same_person_paused)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<checkout>/tests/test_stats.py", line 130, in test_resume_after_failure_counts_unless_the_same_person_paused
+    self.assertEqual([len(r["interventions"]) for r in stats.runs(book.events)], [1, 0, 1])
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Lists differ: [] != [1, 0, 1]
+
+Second list contains 3 additional elements.
+First extra element 0:
+1
+
+- []
++ [1, 0, 1]
+
+======================================================================
+FAIL: test_since_accepts_a_date_or_a_duration (tests.test_stats.RunTests.test_since_accepts_a_date_or_a_duration)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<checkout>/tests/test_stats.py", line 185, in test_since_accepts_a_date_or_a_duration
+    self.assertEqual([r["task"] for r in later], ["approved", "foreign", "paused"])
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Lists differ: [] != ['approved', 'foreign', 'paused']
+
+Second list contains 3 additional elements.
+First extra element 0:
+'approved'
+
+- []
++ ['approved', 'foreign', 'paused']
+
+----------------------------------------------------------------------
+Ran 18 tests in 2.840s
+
+FAILED (failures=7, errors=11)

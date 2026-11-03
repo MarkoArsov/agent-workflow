@@ -116,6 +116,9 @@ def parser():
     events = sub.add_parser("events", help="List ledger events")
     events.add_argument("--task"); events.add_argument("--since", help="ISO timestamp or event ID")
     output_format(events)
+    stats = sub.add_parser("stats", help="Report run statistics from the ledger; --gate checks the stable-enough gate")
+    stats.add_argument("--since", help="ISO date or time, or a duration such as 7d, 12h or 30m")
+    stats.add_argument("--task"); stats.add_argument("--json", action="store_true"); stats.add_argument("--gate", action="store_true")
     projects = sub.add_parser("projects", help="Register, list and remove projects")
     projects_sub = projects.add_subparsers(dest="action", required=True)
     added = projects_sub.add_parser("add", help="Register a configured project")
@@ -194,7 +197,7 @@ def watch(project, task, *, seconds=None, json_output=False):
         time.sleep(.2)
 
 
-OPERATIONS = {"status", "inbox", "events", "answer", "approve", "retry", "pause", "resume", "cancel",
+OPERATIONS = {"status", "inbox", "events", "stats", "answer", "approve", "retry", "pause", "resume", "cancel",
               "policy", "projects", "rebuild-state", "commands"}
 
 
@@ -443,7 +446,7 @@ def main(argv=None):
             return result  # A pinned runtime continued the task and printed its own result.
         if isinstance(result, operations.Text):
             print(result, end="")
-            return 0
+            return result.exit_code
         if result is not None and args.command != "watch" and not getattr(args, "_watched", False):
             if args.command == "status" and not args.json and not args.verbose and args.format != "json":
                 from .progress import human
