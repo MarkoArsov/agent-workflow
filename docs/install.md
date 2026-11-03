@@ -148,20 +148,45 @@ To update or remove it later, see [update and remove](lifecycle.md).
 
 ## Follow a development checkout
 
-For a machine that should use every local edit immediately, link the global runtime:
+For a machine that should use every local edit immediately, link the global runtime
+once, from the checkout you keep on the base branch:
 
 ~~~sh
 python3 install.py --global --link
-python3 install.py --global --sync
 ~~~
 
-The first command registers this checkout without copying the runtime. Skills, scripts,
-and references load from it on the next invocation, including uncommitted changes.
-The second command reconciles discovery entries when skills are added, removed, renamed,
-or their descriptions change. It does nothing when the installation is current.
-Run it after edits, or schedule it locally. On macOS, a user LaunchAgent can run the
-absolute Python and installer paths with `--global --sync`, `RunAtLoad`, and a
-`StartInterval` of 30 seconds. Keep that machine-specific service outside this repo.
+This registers the checkout without copying the runtime. Skills, scripts, and
+references load from it on the next invocation, including uncommitted changes.
+
+After that, plovi keeps the link current by itself:
+
+- **Skill discovery.** Every `plovi` command checks a fingerprint of the checkout's
+  skills, adapter templates and package metadata. When it changed (a skill was
+  added, removed, renamed or reworded), plovi refreshes discovery before running
+  the command and prints one line. You no longer run `--sync` by hand.
+- **The checkout itself.** At most once an hour, a `plovi` command starts a
+  background check that fetches the base branch and fast-forwards the checkout
+  when that is safe: it is on that branch, has no uncommitted tracked changes and
+  no local commits of its own. Otherwise it leaves everything as it is and the
+  next command prints one line saying why, for example
+  `plovi: the linked checkout is 3 commit(s) behind main. It has uncommitted changes. Update it with git pull.`
+
+Keep the linked checkout on the base branch and clean, and do your work in task
+worktrees (`plovi task start`). Merged pull requests then reach this machine on
+their own. Tasks that pinned an older runtime keep it until you upgrade them.
+
+~~~sh
+plovi self-update            # show the follow setting and the last result
+plovi self-update --now      # fetch, fast-forward and refresh discovery now
+plovi self-update --follow off
+plovi self-update --interval 30
+python3 install.py --global --link --no-follow   # link without automatic updates
+~~~
+
+`python3 install.py --global --sync` still works for a manual refresh. Set
+`PLOVI_NO_SELF_UPDATE=1` to turn off both automatic steps for one shell. A copied
+(not linked) installation does not update itself; reinstall it to upgrade. The
+background check's output goes to `self-update.log` in plovi's data folder.
 
 Public skill names come from `workflow-package.json`: `discovery.prefix` currently
 uses `plovi`; `discovery.aliases` can rename individual entry points. Change these values and

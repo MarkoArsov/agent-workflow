@@ -22,3 +22,7 @@ with task start before plan writes unless setup explicitly selected another stra
 Manual execution does not waive the configured checkout policy.
 Use returned checkout paths for every tool operation; never switch another chat's
 shared checkout. Only explicit continuation may resume the same owned task.
+
+This machine may run plovi linked to this checkout (install.py --global --link). The linked
+checkout fast-forwards and refreshes skill discovery by itself, so keep it on main and clean:
+make every change in a task worktree, never in the linked checkout.

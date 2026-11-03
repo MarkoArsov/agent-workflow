@@ -28,6 +28,11 @@ def parser():
     p.add_argument("--version", action="version", version=__version__)
     p.add_argument("--project", help="Configured project root; defaults to the current location")
     sub = p.add_subparsers(dest="command", required=True)
+    command = sub.add_parser("self-update", help="Keep a linked development install current (checkout and skill discovery)")
+    command.add_argument("--now", action="store_true", help="Fetch and fast-forward now, then refresh discovery")
+    command.add_argument("--follow", choices=["on", "off"], help="Turn automatic updates on or off")
+    command.add_argument("--interval", type=int, metavar="MINUTES", help="Minutes between update checks (default 60)")
+    command.add_argument("--background", action="store_true", help=argparse.SUPPRESS)
     from .model_policy.commands import arguments as model_arguments
     model_arguments(sub.add_parser("models", help="Refresh, review and evaluate workflow-local model routes"))
     policy = sub.add_parser("policy", help="Review project policy")
@@ -223,6 +228,9 @@ def execute(args):
             from .operations.tasks import task_started
             task_started(project, result, vars(args))
         return result
+    if args.command == "self-update":
+        from . import selfupdate
+        return selfupdate.command(args)
     if args.command == "models":
         from .model_routing import execute as models_execute
         return models_execute(args)
@@ -407,6 +415,9 @@ def legacy_argv(command, argv):
 def main(argv=None):
     try:
         args = parser().parse_args(argv)
+        if args.command != "self-update" and not getattr(args, "unattended", False):
+            from . import selfupdate
+            selfupdate.maybe_refresh()
         from . import operations
         operations.capture_environment()
         if getattr(args, "upgrade_runtime", False) and not getattr(args, "rebind", False):

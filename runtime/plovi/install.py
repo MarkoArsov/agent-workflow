@@ -369,6 +369,7 @@ def main(argv=None):
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--link", action="store_true", help="Use this live checkout for the global runtime")
     parser.add_argument("--sync", action="store_true", help="Refresh an existing linked global install")
+    parser.add_argument("--no-follow", action="store_true", help="With --link: never update the checkout automatically")
     parser.add_argument("--json", action="store_true", help="Print the machine-readable result")
     args = parser.parse_args(argv)
     try:
@@ -381,6 +382,11 @@ def main(argv=None):
             profile = read_json(Path(args.project).resolve() / ".plovi/project.json", {}) if args.project else {}
             agents = args.agents or profile.get("agents") or receipt.get("agents") or detect_agents()
             result = install(args.local_source, project=args.project, agents=agents, dry_run=args.dry_run, link=args.link)
+            if args.link and not args.project and not args.dry_run:
+                from .selfupdate import fingerprint, load, save
+                value = load()
+                value.update({"follow": not args.no_follow, "discovery": fingerprint(Path(args.local_source).resolve())})
+                save(value)
         receipt = read_json(installation_root(args.project, migrate=not args.dry_run) / "receipt.json", {})
         print(json_text(result) if args.json or args.sync else summary(result, receipt.get("agents") or agents), end="")
     except (WorkflowError, OSError) as exc:

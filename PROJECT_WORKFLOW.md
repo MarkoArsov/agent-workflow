@@ -14,3 +14,7 @@ Resolve this project's profile before using workflow defaults. Native instructio
 
 Model selection uses project adaptive defaults in `.plovi/models.json` for new tasks.
 Saved task routes remain frozen; both Codex and Claude are allowed.
+
+Linked install: plovi runs from the main checkout and updates it automatically (fetch, fast-forward
+when clean, refresh discovery). Keep the main checkout on main and unedited; work only in task
+worktrees. `plovi self-update` shows the last result.
