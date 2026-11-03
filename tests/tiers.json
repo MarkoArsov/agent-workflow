@@ -1,5 +1,5 @@
 {
   "smoke": ["test_setup", "test_policy", "test_providers", "test_runner", "test_ledger", "test_operations",
             "test_verification", "test_platform_paths", "test_run_tests"],
-  "slow": ["test_recovery", "test_limits", "test_legacy_migration", "test_permissions"]
+  "slow": ["test_recovery", "test_limits", "test_legacy_migration", "test_permissions", "scenario.test_target_scenario"]
 }

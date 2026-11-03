@@ -11,6 +11,7 @@ import faulthandler
 import json
 import os
 from pathlib import Path
+import runpy
 import shutil
 import subprocess
 import sys
@@ -192,6 +193,12 @@ def related(imported, changed):
     return imported == changed or changed.startswith(imported + ".") or imported.startswith(changed + ".")
 
 
+def test_modules(start):
+    """Dotted module name -> file for every test module, including nested packages such as scenario."""
+    return {path.relative_to(start).with_suffix("").as_posix().replace("/", "."): path
+            for path in Path(start).rglob("test_*.py") if "__pycache__" not in path.parts}
+
+
 def select_changed(start, ref, tiers):
     """Return (module names or None for every module, explanation lines)."""
     root = Path(subprocess.run(["git", "-C", str(start), "rev-parse", "--show-toplevel"],
@@ -211,46 +218,61 @@ def select_changed(start, ref, tiers):
             dotted = path[len("runtime/"):-len(".py")].replace("/", ".")
             changed.add(dotted.removesuffix(".__init__"))
         elif path.startswith(f"{tests_dir}/") and Path(path).name.startswith("test_") and path.endswith(".py"):
-            direct.add(Path(path).stem)
+            direct.add(path[len(tests_dir) + 1:-len(".py")].replace("/", "."))
         elif path.startswith(".github/"):
             direct.add("test_ci_workflow")
         elif path.startswith(f"{tests_dir}/"):
             everything.append(path)
         else:
             # A script, schema, template or skill file: select the test modules that name it.
-            naming = {test.stem for test in Path(start).glob("test_*.py")
+            naming = {name for name, test in test_modules(start).items()
                       if Path(path).name in test.read_text(encoding="utf-8")}
             if not naming:
                 everything.append(path)
             direct.update(naming)
     if everything:
         return None, [f"{path} changed; selecting every test." for path in everything[:5]]
-    selected = {name for name in direct if (Path(start) / f"{name}.py").is_file()}
-    for path in sorted(Path(start).glob("test_*.py")):
-        if any(related(name, module) for name in imported_modules(path) for module in changed):
-            selected.add(path.stem)
+    modules = test_modules(start)
+    selected = {name for name in direct if name in modules}
+    for name, path in sorted(modules.items()):
+        if any(related(imported, module) for imported in imported_modules(path) for module in changed):
+            selected.add(name)
     selected.update(tiers["smoke"])
     return selected, [f"Changed against {ref}: {', '.join(sorted(changed | direct))}"]
 
 
-def assign(selected, jobs, timings, slow):
-    """Split tests into at most `jobs` groups of whole modules, longest estimated module first."""
-    modules = {}
-    for test in selected:
-        modules.setdefault(module_of(test), []).append(test)
-    known = {}
-    for item in (timings or {}).get("tests", []):
-        known[item["test"]] = item["seconds"]
+def weights(start):
+    """Committed per-test seconds for this platform (tests/timings.json), or {}."""
+    data = load_json(Path(start) / "timings.json") or {}
+    if sys.platform not in data.get("platforms", []):
+        return {}
+    column = data["platforms"].index(sys.platform)
+    return {test: row[column] for test, row in data.get("tests", {}).items() if row[column] is not None}
+
+
+def balance(tests, count, known, slow=()):
+    """Split tests into `count` lists of similar estimated time, longest first; deterministic for the same inputs."""
     per_test = sorted(known.values())[len(known) // 2] if known else 1.0
-    cost = {name: sum(known.get(test.id(), per_test) for test in tests) for name, tests in modules.items()}
-    groups = [{"modules": [], "cost": 0.0} for _ in range(max(1, min(jobs, len(modules))))]
-    for name in sorted(modules, key=lambda name: (name not in slow, -cost[name], name)):
+    cost = {test.id(): known.get(test.id(), per_test) for test in tests}
+    groups = [{"tests": [], "cost": 0.0} for _ in range(max(1, count))]
+    for test in sorted(tests, key=lambda test: (module_of(test) not in slow, -cost[test.id()], test.id())):
         group = min(groups, key=lambda group: group["cost"])
-        group["modules"].append(name)
-        group["cost"] += cost[name]
+        group["tests"].append(test)
+        group["cost"] += cost[test.id()]
     for group in groups:
-        group["modules"].sort(key=lambda name: (name not in slow, name))
-        group["tests"] = [test.id() for name in group["modules"] for test in modules[name]]
+        # Keep a module's tests together so per-process fixture templates are reused.
+        group["tests"].sort(key=lambda test: test.id())
+    return groups
+
+
+def assign(selected, jobs, timings, slow, known=None):
+    """Split tests into at most `jobs` worker groups by estimated time; `timings` (local history) overrides `known`."""
+    known = dict(known or {})
+    known.update({item["test"]: item["seconds"] for item in (timings or {}).get("tests", [])})
+    groups = balance(selected, min(jobs, len(selected)), known, slow)
+    for group in groups:
+        group["modules"] = sorted({module_of(test) for test in group["tests"]})
+        group["tests"] = [test.id() for test in group["tests"]]
     return [group for group in groups if group["tests"]]
 
 
@@ -357,6 +379,30 @@ def write_timings(path, data):
     os.replace(temporary, path)
 
 
+def write_record(path, total, seconds, jobs):
+    """The local full-suite time the stable-enough gate reads (G2)."""
+    from datetime import date
+    write_timings(path, {"schema_version": 1, "cpu_count": os.cpu_count(), "jobs": jobs, "seconds": round(seconds, 1),
+                         "tests_run": total["testsRun"], "date": date.today().isoformat()})
+
+
+def scenario_results(total, selected, start):
+    """Each target-scenario step's result, with its owners, for the stable-enough gate (G5)."""
+    steps = runpy.run_path(str(Path(start) / "scenario" / "steps.py"))["SCENARIO_STEPS"]
+    failed = {item["test"] for item in total["failures"]}
+    errors = {item["test"] for item in total["errors"]} | set(total["notRun"])
+    skipped = {item["test"] for item in total["skipped"]}
+    ran = {item["test"] for item in total["durations"]}
+    ids = [test.id() for test in selected if ".test_target_scenario." in "." + test.id()]
+    result = {}
+    for step in steps:
+        name = next((test for test in ids if test.endswith("." + step["test"])), None)
+        status = ("not-run" if name is None or name not in ran | failed | errors | skipped else "failed" if name in failed
+                  else "error" if name in errors else "skipped" if name in skipped else "passed")
+        result[step["id"]] = {"status": status, "owners": step["owners"], "test": step["test"]}
+    return {"schema_version": 1, "steps": result}
+
+
 def parse_jobs(value):
     if value == "auto":
         return min(os.cpu_count() or 1, 8)
@@ -397,6 +443,9 @@ def main(argv=None):
     parser.add_argument("--results-dir", type=Path, help="Keep worker logs and result files here")
     parser.add_argument("--summary", type=Path, help="Append a Markdown summary, such as $GITHUB_STEP_SUMMARY")
     parser.add_argument("--list", action="store_true", help="Print selected test IDs without running them")
+    parser.add_argument("--record", nargs="?", type=Path, const=ROOT / ".plovi/local/stats/local-suite.json",
+                        help="After a passing full run, write the suite time here (default .plovi/local/stats/local-suite.json)")
+    parser.add_argument("--scenario-results", type=Path, help="Write each target-scenario step's result here")
     parser.add_argument("--worker", action="store_true", help=argparse.SUPPRESS)
     parser.add_argument("--tests-file", type=Path, help=argparse.SUPPRESS)
     parser.add_argument("--result", type=Path, help=argparse.SUPPRESS)
@@ -405,9 +454,13 @@ def main(argv=None):
         return run_worker(args)
     if args.shards < 1 or not 1 <= args.shard <= args.shards:
         parser.error("require 1 <= shard <= shards")
+    if args.record and (args.changed or args.tier == "smoke" or args.shards != 1):
+        parser.error("--record needs a full run: drop --changed, --tier smoke and --shards")
     tiers = load_tiers(args.start_directory)
     discovered = discover(args.start_directory, args.pattern)
-    selected = discovered[args.shard - 1::args.shards]
+    known = weights(args.start_directory)
+    # Batches use only committed weights so every CI job computes the same split.
+    selected = balance(discovered, args.shards, known, set(tiers["slow"]))[args.shard - 1]["tests"]
     if args.tier == "smoke":
         selected = [test for test in selected if module_of(test) in tiers["smoke"]]
     if args.changed:
@@ -427,7 +480,7 @@ def main(argv=None):
     default_timings = ROOT / ".plovi/local/test-timings.json"
     tracked = args.start_directory.resolve() == DEFAULT_TESTS.resolve()
     history = load_json(default_timings) if tracked else load_json(args.timings) if args.timings else None
-    groups = assign(selected, args.jobs, history, set(tiers["slow"]))
+    groups = assign(selected, args.jobs, history, set(tiers["slow"]), known)
     print(f"Batch {args.shard}/{args.shards}: {len(selected)} of {len(discovered)} discovered tests "
           f"in {len(groups)} worker(s); per-test timeout {args.per_test_timeout:g} s", file=sys.stderr, flush=True)
     started = time.perf_counter()
@@ -445,11 +498,18 @@ def main(argv=None):
     print_summary(total, seconds)
     if args.summary:
         write_summary(args.summary, total, seconds)
-    timings = {"schema_version": 1, "shard": args.shard, "shards": args.shards, "jobs": len(groups),
+    timings = {"schema_version": 1, "platform": sys.platform, "shard": args.shard, "shards": args.shards, "jobs": len(groups),
                "discovered": len(discovered), "selected": len(selected), "tests_run": total["testsRun"],
                "successful": successful(total), "seconds": seconds, "tests": total["durations"]}
     if args.timings:
         write_timings(args.timings, timings)
+    if args.scenario_results:
+        write_timings(args.scenario_results, scenario_results(total, selected, args.start_directory))
+    if args.record:
+        if successful(total):
+            write_record(args.record, total, seconds, len(groups))
+        else:
+            print("Not recorded: the suite failed. Fix the failures and run with --record again.", file=sys.stderr)
     if tracked:
         previous = {item["test"]: item for item in (history or {}).get("tests", [])}
         previous.update({item["test"]: item for item in total["durations"]})

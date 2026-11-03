@@ -22,31 +22,32 @@ IMPORTER = {"kind": "plovi", "name": "import"}
 TYPES = {
     "task.created": (("branches",), ("issue", "title")),
     "task.claimed": (("run_id",), ()),
-    "run.started": (("run_id", "manifest", "plan_sha256"), ()),
+    "run.started": (("run_id", "manifest", "plan_sha256"), ("red_proof",)),
     "stage.started": (("run_id", "stage"), ()),
-    "attempt.finished": (("run_id", "stage", "attempt", "classification", "path"), ("kind",)),
+    "attempt.finished": (("run_id", "stage", "attempt", "classification", "path"), ("kind", "provider", "usage", "cost_usd")),
     "stage.finished": (("run_id", "stage", "result"), ()),
-    "question.asked": (("run_id", "stage", "question"), ()),
+    "question.asked": (("run_id", "stage", "question"), ("next",)),
     "question.answered": (("run_id",), ()),
     "plan.proposed": (("plan_sha256", "manifest"), ()),
     "plan.approved": (("plan_sha256", "auto"), ("manifest",)),
-    "approval.requested": (("run_id", "kind", "fingerprint"), ()),
+    "approval.requested": (("run_id", "kind", "fingerprint"), ("next",)),
     "approval.granted": (("run_id", "kind", "fingerprint"), ()),
-    "escalation.raised": (("run_id", "stage", "kind", "detail"), ()),
-    "run.paused": ((), ("run_id", "status", "reason", "resets_at")),
+    "escalation.raised": (("run_id", "stage", "kind", "detail"), ("next",)),
+    "run.paused": ((), ("run_id", "status", "reason", "resets_at", "next")),
     "run.resumed": ((), ("run_id", "status", "retry")),
     "run.interrupted": ((), ("run_id", "status")),
     "run.cancelled": ((), ("run_id", "status")),
     "run.finished": (("run_id", "status"), ("error",)),
     "delivery.committed": (("repository", "commit"), ()),
     "delivery.pushed": (("repository", "branch"), ()),
-    "pr.opened": (("repository", "url"), ()),
+    "pr.opened": (("repository", "url"), ("files_changed",)),
     "policy.changed": (("diff",), ()),
     "project.registered": (("root",), ()),
     "state.checkpoint": (("run_id", "state_sha256", "keys"), ()),
     "pause.requested": ((), ("run_id",)),
     "cancel.requested": ((), ("run_id",)),
     "project.unregistered": ((), ("root",)),
+    "checkpoint.migrated": (("binding_sha256",), ()),
 }
 # Free text that may carry provider output or person input: redacted and bounded.
 TEXT_FIELDS = {"question": TEXT_LIMIT, "detail": TEXT_LIMIT, "title": 300, "error": TEXT_LIMIT, "diff": 16000}
@@ -455,6 +456,20 @@ def restore(project, task):
 
 # ---- runner transitions ----------------------------------------------------------
 
+def red_proof(manifest):
+    """True when the plan demonstrates a failing test before the change (implement-tests without a waiver)."""
+    return "implement-tests" in manifest.get("stages", []) and not manifest.get("approved_no_red_reason")
+
+
+def usage(value):
+    """Input and output token counts from a provider usage report, or None when it reports neither."""
+    if not isinstance(value, dict):
+        return None
+    tokens = {key: value[key] for key in ("input_tokens", "output_tokens")
+              if type(value.get(key)) is int and value[key] >= 0}
+    return tokens or None
+
+
 class Recorder:
     """Turn runner state transitions into ledger events and checkpoints.
 
@@ -498,7 +513,7 @@ class Recorder:
         run_id = state["run_id"]
         self._append("task.claimed", {"run_id": run_id})
         self._append("run.started", {"run_id": run_id, "manifest": str(state.get("manifest_path", "")),
-                                     "plan_sha256": state.get("plan_sha256", "")})
+                                     "plan_sha256": state.get("plan_sha256", ""), "red_proof": red_proof(self.manifest)})
         self.previous = self._snapshot(state)
 
     def stage_started(self, state, stage):
@@ -509,6 +524,14 @@ class Recorder:
                 "classification": entry["classification"], "path": path}
         if entry.get("failure_kind"):
             data["kind"] = entry["failure_kind"]
+        provider = (entry.get("route") or {}).get("provider")
+        if provider:
+            data["provider"] = provider
+        tokens = usage(entry.get("usage"))
+        if tokens:
+            data["usage"] = tokens
+        if entry.get("cost_usd") is not None:
+            data["cost_usd"] = entry["cost_usd"]
         self._append("attempt.finished", data)
 
     def saved(self, state):
@@ -539,7 +562,10 @@ class Recorder:
                 self._append("delivery.pushed", {"repository": name, "branch": branch or ""})
             if progress.get("pr") and progress.get("pr") != old.get("pr"):
                 url = progress["pr"].get("url", "") if isinstance(progress["pr"], dict) else str(progress["pr"])
-                self._append("pr.opened", {"repository": name, "url": url})
+                data = {"repository": name, "url": url}
+                if (progress.get("intent") or {}).get("paths") is not None:
+                    data["files_changed"] = len(progress["intent"]["paths"])
+                self._append("pr.opened", data)
         status = now["status"]
         if status != before["status"]:
             if status in {"failed", "escalated", "cancelled"} and state.get("stage") and state["stage"] not in now["completed"]:

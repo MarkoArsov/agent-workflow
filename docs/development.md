@@ -56,7 +56,7 @@ Tests must use their isolated HOME and provider configuration; never test instal
 | `--changed` | Tests that import a changed `runtime/plovi` module or were changed themselves, plus the smoke tier. Compares with `origin/main`, else `main`; `--base REF` picks another. |
 | `--tier smoke` | The fast modules listed in `tests/tiers.json`. |
 | `--per-test-timeout 30` | Fails a test that runs longer than 30 seconds. The default is 120, or `PLOVI_TEST_TIMEOUT`. |
-| `--shard 1 --shards 3` | One deterministic third of the tests, as a CI batch runs them. Combines with `--jobs`. |
+| `--shard 1 --shards 3` | One of three batches of similar estimated time, as a CI job runs them. Combines with `--jobs`. |
 | `--list` | The selected test IDs, without running them. |
 
 While you fix something, run `--changed`. Before a pull request, run `--jobs auto`.
@@ -65,10 +65,20 @@ says to run the docs checks. A workflow change selects the CI workflow tests, an
 any other file selects the tests that name it. A change to `tests/helpers.py`, a
 fixture, or a file no test names selects every test.
 
-Each worker runs whole modules. A run balances them using the timings it records
-in `.plovi/local/test-timings.json`, which Git ignores. Slow modules, listed in
-`tests/tiers.json`, start first. Each worker prints its output when it finishes.
-All failures follow at the end, with the ten slowest tests.
+Batches and workers are balanced by estimated time per test, longest first.
+Estimates come from `tests/timings.json`, which holds each test's time on Linux,
+macOS and Windows in CI. Locally, the timings a run records in
+`.plovi/local/test-timings.json`, which Git ignores, take precedence for workers.
+Batches use only the committed file, so every CI job computes the same split.
+Each worker prints its output when it finishes. All failures follow at the end,
+with the ten slowest tests.
+
+When a CI batch drifts well past five minutes, refresh the weights from a recent run:
+
+```sh
+gh run download RUN_ID --pattern 'tests-*' --dir runs
+python3 scripts/update_test_weights.py runs/*/test-timings.json
+```
 
 A test that exceeds its timeout prints the stack of every thread and fails. Its
 worker stops, and the tests it had not reached are reported as not run. The other
@@ -77,10 +87,37 @@ its modules.
 
 CI runs a smoke job first: it compiles the sources, runs the smoke tier and checks
 generated documentation. The full matrix starts only when smoke passes. Pull
-requests run Ubuntu with Python 3.11 and 3.14, macOS with 3.14, and Windows with
-3.14 in three shards. A nightly workflow also runs macOS and Windows with 3.11.
+requests run Ubuntu with Python 3.11 and 3.14 in two batches each, macOS with 3.14
+in three, and Windows with 3.14 in eight. Each batch runs about five minutes of
+tests. A nightly workflow also runs macOS and Windows with 3.11.
+
+Test commands that stand in for `gh`, providers or Docker are Python scripts. Install
+them with `install_script` from `tests/helpers.py`: on Windows it builds an `.exe`, because
+a `.cmd` shim passes its arguments through cmd.exe, which splits them at `&` and newlines.
 CI keeps each job's log, worker results and per-test timings for seven days,
 including successful runs.
+
+### Scenario tests: how to own a step
+
+`tests/scenario` holds the [target scenario](generated/scenario.md): one test per step in
+`tests/scenario/steps.py`, each decorated `@owned_by(...)` with the issues that own it.
+`tests/scenario/owners.json` marks each owner `done` or `pending`. A step runs only when
+all its owners are done; until then it is skipped with "owned by #N (pending)".
+
+To own a step in your pull request:
+
+1. Replace the step's `self.fail("not implemented")` stub with a real test. Use the
+   fixture projects (`self.project("hobby")` or `self.project("product")`), the provider
+   double (`self.provider([...])`) and `self.install_github_fake(state)` for GitHub.
+2. Set your issue to `done` in `owners.json` once all your steps have tests.
+3. Run `python3 scripts/generate_docs.py` so `docs/generated/scenario.md` shows the new status.
+
+Flipping an owner without a test fails, and `test_traceability` fails when a step has no
+owner, no test method, or an owner missing from `owners.json`. Keep the GitHub fake dumb:
+add a handler for each new `gh` call your code makes, and nothing a test didn't script.
+An unmapped call exits 99 and prints its arguments. `python3 scripts/run_tests.py
+--scenario-results PATH` writes each step's result; CI keeps it for the
+[stability gate](stability-gate.md).
 
 The optional local host check, `python3 scripts/host_smoke.py`, validates installed command interfaces and exercises Claude plugin lifecycle in a temporary configuration. It does not generate model responses or publish anything.
 

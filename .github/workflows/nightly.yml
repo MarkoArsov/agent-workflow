@@ -8,53 +8,37 @@ permissions:
 jobs:
   core:
     name: core (${{ matrix.os }}, ${{ matrix.python }}${{ matrix.shards && format(', batch {0}/{1}', matrix.shard, matrix.shards) || '' }})
-    timeout-minutes: 25
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-latest
-            python: "3.11"
-            jobs: auto
-          - os: ubuntu-latest
-            python: "3.14"
-            jobs: auto
-          - os: macos-latest
-            python: "3.11"
-            jobs: auto
-          - os: macos-latest
-            python: "3.14"
-            jobs: auto
-          - os: windows-latest
-            python: "3.11"
-            shard: 1
-            shards: 3
-            jobs: 2
-          - os: windows-latest
-            python: "3.11"
-            shard: 2
-            shards: 3
-            jobs: 2
-          - os: windows-latest
-            python: "3.11"
-            shard: 3
-            shards: 3
-            jobs: 2
-          - os: windows-latest
-            python: "3.14"
-            shard: 1
-            shards: 3
-            jobs: 2
-          - os: windows-latest
-            python: "3.14"
-            shard: 2
-            shards: 3
-            jobs: 2
-          - os: windows-latest
-            python: "3.14"
-            shard: 3
-            shards: 3
-            jobs: 2
+          - {os: ubuntu-latest, python: "3.11", shard: 1, shards: 2, jobs: auto}
+          - {os: ubuntu-latest, python: "3.11", shard: 2, shards: 2, jobs: auto}
+          - {os: macos-latest, python: "3.11", shard: 1, shards: 3, jobs: auto}
+          - {os: macos-latest, python: "3.11", shard: 2, shards: 3, jobs: auto}
+          - {os: macos-latest, python: "3.11", shard: 3, shards: 3, jobs: auto}
+          - {os: windows-latest, python: "3.11", shard: 1, shards: 8, jobs: 2}
+          - {os: windows-latest, python: "3.11", shard: 2, shards: 8, jobs: 2}
+          - {os: windows-latest, python: "3.11", shard: 3, shards: 8, jobs: 2}
+          - {os: windows-latest, python: "3.11", shard: 4, shards: 8, jobs: 2}
+          - {os: windows-latest, python: "3.11", shard: 5, shards: 8, jobs: 2}
+          - {os: windows-latest, python: "3.11", shard: 6, shards: 8, jobs: 2}
+          - {os: windows-latest, python: "3.11", shard: 7, shards: 8, jobs: 2}
+          - {os: windows-latest, python: "3.11", shard: 8, shards: 8, jobs: 2}
+          - {os: ubuntu-latest, python: "3.14", shard: 1, shards: 2, jobs: auto}
+          - {os: ubuntu-latest, python: "3.14", shard: 2, shards: 2, jobs: auto}
+          - {os: macos-latest, python: "3.14", shard: 1, shards: 3, jobs: auto}
+          - {os: macos-latest, python: "3.14", shard: 2, shards: 3, jobs: auto}
+          - {os: macos-latest, python: "3.14", shard: 3, shards: 3, jobs: auto}
+          - {os: windows-latest, python: "3.14", shard: 1, shards: 8, jobs: 2}
+          - {os: windows-latest, python: "3.14", shard: 2, shards: 8, jobs: 2}
+          - {os: windows-latest, python: "3.14", shard: 3, shards: 8, jobs: 2}
+          - {os: windows-latest, python: "3.14", shard: 4, shards: 8, jobs: 2}
+          - {os: windows-latest, python: "3.14", shard: 5, shards: 8, jobs: 2}
+          - {os: windows-latest, python: "3.14", shard: 6, shards: 8, jobs: 2}
+          - {os: windows-latest, python: "3.14", shard: 7, shards: 8, jobs: 2}
+          - {os: windows-latest, python: "3.14", shard: 8, shards: 8, jobs: 2}
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7
@@ -63,12 +47,20 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python }}
+      - name: Skip Defender scans of test files and processes
+        # Scanning each Git and Python process and temporary file slows Windows tests.
+        # The runner is discarded after the job.
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: Add-MpPreference -ExclusionPath $env:GITHUB_WORKSPACE, $env:RUNNER_TEMP, $env:TEMP, $env:RUNNER_TOOL_CACHE -ExclusionProcess python.exe, git.exe
       - name: Run isolated unit tests
-        timeout-minutes: 20
+        timeout-minutes: 15
         shell: bash
         run: |
           set -o pipefail
-          python scripts/run_tests.py --shard ${{ matrix.shard || 1 }} --shards ${{ matrix.shards || 1 }} --jobs ${{ matrix.jobs }} --timings "$RUNNER_TEMP/test-timings.json" --results-dir "$RUNNER_TEMP/test-results" --summary "$GITHUB_STEP_SUMMARY" 2>&1 | tee "$RUNNER_TEMP/tests.log"
+          scenario=()
+          if [ "${{ matrix.scenario || false }}" = "true" ]; then scenario=(--scenario-results "$RUNNER_TEMP/scenario-results.json"); fi
+          python scripts/run_tests.py --shard ${{ matrix.shard || 1 }} --shards ${{ matrix.shards || 1 }} --jobs ${{ matrix.jobs }} --timings "$RUNNER_TEMP/test-timings.json" --results-dir "$RUNNER_TEMP/test-results" --summary "$GITHUB_STEP_SUMMARY" "${scenario[@]}" 2>&1 | tee "$RUNNER_TEMP/tests.log"
       - name: Summarize failure
         if: failure()
         shell: bash
@@ -83,3 +75,10 @@ jobs:
             ${{ runner.temp }}/test-timings.json
             ${{ runner.temp }}/test-results/
           retention-days: 7
+      - name: Keep scenario results for the stable-enough gate
+        if: always() && matrix.scenario
+        uses: actions/upload-artifact@v7
+        with:
+          name: scenario-results-${{ matrix.shard }}
+          path: ${{ runner.temp }}/scenario-results.json
+          retention-days: 30

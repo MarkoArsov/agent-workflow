@@ -1,5 +1,6 @@
 """Explicit legacy handoff: preserve authored tests only with renewed proof."""
 import copy
+import sys
 import tempfile
 import time
 import uuid
@@ -119,6 +120,18 @@ def validate(project, task, root):
     return working, plan, bound, current, False
 
 
+def record_migration(project, task, binding):
+    """Record the person who applied the migration; a ledger failure never undoes a finished migration."""
+    from . import ledger
+    from .operations import actor
+    try:
+        ledger.append(project, {"subject": {"kind": "task", "id": task}, "type": "checkpoint.migrated",
+                                "actor": actor({}, project.root), "reason": "Legacy test checkpoint migrated with plovi migrate --apply",
+                                "data": {"binding_sha256": binding}})
+    except (WorkflowError, OSError) as exc:
+        print(f"Warning: plovi could not write the ledger ({exc}); the migration is complete.", file=sys.stderr)
+
+
 def migrate(project, task, *, apply=False):
     root = state.directory(project, task)
     with state.lock(root / 'launch.lock'), state.lock(root / 'runner.lock'):
@@ -181,6 +194,7 @@ def migrate(project, task, *, apply=False):
                     fingerprint=git_ops.fingerprint(after), heads={k:v['head'] for k,v in after.items()})
                 write_json(root / 'binding.json', bound)
                 save(); reporter.emit('migration_complete', stage='implement', status='interrupted')
+                record_migration(project, task, saved['binding_sha256'])
                 return dict(result, status='migration_complete', checks=[{'id':c['id'],'phase':c['phase'],'passed':c['passed']} for c in checks])
         except (WorkflowError, OSError, KeyboardInterrupt) as exc:
             # Keep the original escalation until every proof has succeeded.

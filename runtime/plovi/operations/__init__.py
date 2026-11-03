@@ -136,7 +136,8 @@ def preview_digest(preview):
 
 
 class Text(str):
-    """Human output the CLI prints as-is."""
+    """Human output the CLI prints as-is; exit_code sets the process status."""
+    exit_code = 0
 
 
 def call(name, args):
@@ -147,4 +148,4 @@ def call(name, args):
 
 
 def _load():
-    from . import commands as _commands, inbox as _inbox, policy as _policy, projects as _projects, tasks as _tasks  # noqa: F401
+    from . import commands as _commands, inbox as _inbox, policy as _policy, projects as _projects, stats as _stats, tasks as _tasks  # noqa: F401

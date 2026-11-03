@@ -84,7 +84,8 @@
         "state.checkpoint",
         "pause.requested",
         "cancel.requested",
-        "project.unregistered"
+        "project.unregistered",
+        "checkpoint.migrated"
       ]
     },
     "actor": {

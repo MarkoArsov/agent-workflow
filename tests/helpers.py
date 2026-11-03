@@ -1,6 +1,7 @@
 from __future__ import annotations
 import atexit
 import contextlib
+import functools
 import io
 import json
 import os
@@ -14,6 +15,53 @@ import unittest
 from pathlib import Path
 PACKAGE = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PACKAGE / "runtime"))
+
+
+@functools.lru_cache(maxsize=None)
+def windows_launcher(script, python=None):
+    """An .exe that runs script with this Python, or None without pip's launchers.
+
+    A .cmd shim goes through cmd.exe, which splits arguments at & and newlines.
+    pip builds its console scripts the same way: its distlib launcher, a shebang
+    line, then a zip whose __main__.py runs the script.
+    """
+    import importlib.util
+    import platform
+    import struct
+    import zipfile
+    spec = importlib.util.find_spec("pip")
+    if spec is None or not spec.submodule_search_locations:
+        return None
+    name = "t32.exe" if struct.calcsize("P") == 4 else "t64-arm.exe" if platform.machine().upper() == "ARM64" else "t64.exe"
+    launcher = Path(list(spec.submodule_search_locations)[0]) / "_vendor/distlib" / name
+    if not launcher.exists():
+        return None
+    archive = io.BytesIO()
+    with zipfile.ZipFile(archive, "w") as bundle:
+        bundle.writestr("__main__.py", f"import runpy\nrunpy.run_path({str(script)!r}, run_name='__main__')\n")
+    shebang = f'#!"{python or sys.executable}"\n'.encode()
+    return launcher.read_bytes() + shebang + archive.getvalue()
+
+
+def install_script(folder, name, script):
+    """Put a Python script on folder as the command name; return its path.
+
+    Windows gets an .exe from windows_launcher, or a .cmd shim without pip.
+    """
+    folder.mkdir(parents=True, exist_ok=True)
+    if os.name != "nt":
+        target = folder / name
+        shutil.copy(script, target)
+        target.chmod(0o755)
+        return target
+    launcher = windows_launcher(str(script))
+    if launcher:
+        target = folder / f"{name}.exe"
+        target.write_bytes(launcher)
+    else:
+        target = folder / f"{name}.cmd"
+        target.write_text(f'@"{sys.executable}" "{script}" %*\r\n')
+    return target
 
 
 def remove_tree(path):
@@ -138,6 +186,21 @@ class WorkspaceTest(unittest.TestCase):
         subprocess.run(["git", "clone", str(bare), str(path)], env=self.env, check=True, capture_output=True, text=True)
         return path
 
+    def install_github_fake(self, state=None):
+        """Install tests/fixtures/github_fake.py as gh, first on PATH; return its state file.
+
+        The fake knows only what the state scripts; it logs calls to <state>.calls.json.
+        """
+        binary = self.root / "bin"
+        install_script(binary, "gh", PACKAGE / "tests/fixtures/github_fake.py")
+        path = self.root / "github-state.json"
+        path.write_text(json.dumps(state or {}, indent=1), encoding="utf-8")
+        for environment in (self.env, os.environ):
+            if str(binary) not in environment["PATH"].split(os.pathsep):
+                environment["PATH"] = str(binary) + os.pathsep + environment["PATH"]
+            environment["PLOVI_TEST_GITHUB_STATE"] = str(path)
+        return path
+
     def setup_project(self, path, patch=None):
         from plovi.setup import apply, propose
         p = propose(path, {"confirmed_defaults": True, "profile": patch or {}})
@@ -229,12 +292,7 @@ class HardeningTest(WorkspaceTest):
 
     def install_gh_double(self):
         binary = self.root / "bin"
-        binary.mkdir(exist_ok=True)
-        if os.name == "nt":
-            (binary / "gh.cmd").write_text(f'@"{sys.executable}" "{PACKAGE / "tests/fixtures/gh_double.py"}" %*\r\n')
-        else:
-            shutil.copy(PACKAGE / "tests/fixtures/gh_double.py", binary / "gh")
-            (binary / "gh").chmod(0o755)
+        install_script(binary, "gh", PACKAGE / "tests/fixtures/gh_double.py")
         path = self.root / "gh-state.json"
         self.env["PLOVI_TEST_GH_STATE"] = str(path)
         os.environ["PLOVI_TEST_GH_STATE"] = str(path)

@@ -1,5 +1,6 @@
 """Parallel workers, per-test timeouts, tiers and change-based selection in scripts/run_tests.py."""
 import json
+import re
 import subprocess
 import sys
 import time
@@ -129,6 +130,24 @@ class RunTestsTests(WorkspaceTest):
         self.assertIn("No tests affected; run the docs checks.", docs.stdout)
         self.assertNotIn("Ran ", docs.stderr)
 
+    def test_changed_selects_nested_test_modules(self):
+        repo = self.changed_repo()
+        header = "import sys, pathlib\nsys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2] / 'runtime'))\n"
+        (repo / "tests/nested").mkdir()
+        (repo / "tests/nested/__init__.py").write_text("")
+        (repo / "tests/nested/test_deep.py").write_text(header + "import unittest\nfrom plovi import foo\nclass Case(unittest.TestCase):\n"
+                                                        "    def test_deep(self): pass\n")
+        self.git(repo, "add", ".")
+        self.git(repo, "commit", "-m", "Add a nested module")
+        (repo / "runtime/plovi/foo.py").write_text("VALUE = 4\n")
+        listing = self.invoke("--start-directory", repo / "tests", "--changed", "--list", cwd=repo)
+        self.assertIn("nested.test_deep.Case.test_deep", json.loads(listing.stdout[listing.stdout.index("["):]))
+        self.git(repo, "checkout", "--", "runtime/plovi/foo.py")
+        (repo / "tests/nested/test_deep.py").write_text((repo / "tests/nested/test_deep.py").read_text() + "# edited\n")
+        direct = self.invoke("--start-directory", repo / "tests", "--changed", "--list", cwd=repo)
+        self.assertEqual(json.loads(direct.stdout[direct.stdout.index("["):]),
+                         ["nested.test_deep.Case.test_deep", "test_basic.Case.test_basic"])
+
     def test_changed_helper_or_fixture_selects_every_test(self):
         repo = self.changed_repo()
         (repo / "tests/helpers.py").write_text("HELPER = 1\n")
@@ -165,7 +184,8 @@ class RunTestsTests(WorkspaceTest):
         self.assertEqual(set(tiers), {"smoke", "slow"})
         self.assertTrue(tiers["smoke"])
         for name in tiers["smoke"] + tiers["slow"]:
-            self.assertTrue((PACKAGE / f"tests/{name}.py").is_file(), name)
+            # Nested packages such as tests/scenario use dotted module names.
+            self.assertTrue((PACKAGE / "tests" / (name.replace(".", "/") + ".py")).is_file(), name)
         self.assertFalse(set(tiers["smoke"]) & set(tiers["slow"]))
 
     def test_smoke_tier_selects_only_listed_modules(self):
@@ -189,6 +209,24 @@ class RunTestsTests(WorkspaceTest):
         self.assertEqual(selections[0], selections[1])
         self.assertEqual(selections[0], json.loads(runs[0].stdout))
 
+    def weigh(self, suite, seconds):
+        rows = {test: [value] for test, value in seconds.items()}
+        (suite / "timings.json").write_text(json.dumps({"schema_version": 2, "platforms": [sys.platform], "tests": rows}))
+
+    def test_batches_balance_committed_weights(self):
+        suite = self.suite({"test_heavy": "    def test_long(self): pass\n",
+                            "test_light": "".join(f"    def test_{case}(self): pass\n" for case in range(4))})
+        self.weigh(suite, {"test_heavy.Case.test_long": 40.0, **{f"test_light.Case.test_{case}": 10.0 for case in range(4)}})
+        batches = [json.loads(self.invoke("--start-directory", suite, "--shard", n, "--shards", 2, "--list").stdout) for n in (1, 2)]
+        self.assertEqual(batches, [["test_heavy.Case.test_long"], [f"test_light.Case.test_{case}" for case in range(4)]])
+
+    def test_workers_split_a_module_by_weight(self):
+        suite = self.suite({"test_big": "".join(f"    def test_{case}(self): pass\n" for case in range(4))})
+        self.weigh(suite, {"test_big.Case.test_0": 30.0, **{f"test_big.Case.test_{case}": 10.0 for case in (1, 2, 3)}})
+        result = self.invoke("--start-directory", suite, "--jobs", 2)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(sorted(re.findall(r"worker \d \((\d) tests: test_big\)", result.stderr)), ["1", "3"])
+
     def test_invalid_jobs_and_timeout_are_rejected(self):
         suite = self.suite({"test_ok": "    def test_passes(self): pass\n"})
         for args in (("--jobs", 0), ("--jobs", "many"), ("--per-test-timeout", 0)):
@@ -203,3 +241,46 @@ class RunTestsTests(WorkspaceTest):
         text = summary.read_text()
         self.assertIn("FAIL `test_fail.Case.test_fails`", text)
         self.assertIn("Slowest tests", text)
+
+    def test_record_writes_the_local_suite_time_only_after_a_full_passing_run(self):
+        suite = self.suite({"test_ok": "    def test_passes(self): pass\n"})
+        record = self.root / "stats/local-suite.json"
+        result = self.invoke("--start-directory", suite, "--jobs", 2, "--record", record)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        data = json.loads(record.read_text())
+        self.assertEqual((data["tests_run"], data["jobs"]), (1, 1))
+        self.assertGreater(data["cpu_count"], 0)
+        self.assertGreaterEqual(data["seconds"], 0)
+        self.assertRegex(data["date"], r"^\d{4}-\d{2}-\d{2}$")
+        record.unlink()
+        failing = self.suite({"test_bad": "    def test_fails(self): self.fail('no')\n"})
+        result = self.invoke("--start-directory", failing, "--record", record)
+        self.assertEqual(result.returncode, 1)
+        self.assertFalse(record.exists())
+        self.assertIn("Not recorded", result.stderr)
+        partial = self.invoke("--start-directory", suite, "--tier", "smoke", "--record", record)
+        self.assertEqual(partial.returncode, 2)
+        self.assertIn("--record needs a full run", partial.stderr)
+
+    def test_scenario_results_map_each_step_to_its_result_and_owners(self):
+        suite = self.suite({"test_other": "    def test_passes(self): pass\n"})
+        scenario = suite / "scenario"
+        scenario.mkdir()
+        (scenario / "__init__.py").write_text("")
+        (scenario / "steps.py").write_text(
+            "SCENARIO_STEPS = [\n"
+            " {'id': 'A1', 'text': 'Passes', 'owners': [49], 'test': 'ScenarioTests.test_A1_passes'},\n"
+            " {'id': 'A2', 'text': 'Skips', 'owners': [21], 'test': 'ScenarioTests.test_A2_skips'},\n"
+            " {'id': 'A3', 'text': 'Fails', 'owners': [49, 48], 'test': 'ScenarioTests.test_A3_fails'},\n"
+            " {'id': 'A4', 'text': 'Missing', 'owners': [50], 'test': 'ScenarioTests.test_A4_missing'},\n]\n")
+        (scenario / "test_target_scenario.py").write_text(
+            "import unittest\nclass ScenarioTests(unittest.TestCase):\n"
+            "    def test_A1_passes(self): pass\n"
+            "    @unittest.skip('owned by #21 (pending)')\n    def test_A2_skips(self): pass\n"
+            "    def test_A3_fails(self): self.fail('not implemented')\n")
+        output = self.root / "scenario-results.json"
+        result = self.invoke("--start-directory", suite, "--jobs", 2, "--scenario-results", output)
+        self.assertEqual(result.returncode, 1, result.stderr)
+        steps = json.loads(output.read_text())["steps"]
+        self.assertEqual({key: (value["status"], value["owners"]) for key, value in steps.items()},
+                         {"A1": ("passed", [49]), "A2": ("skipped", [21]), "A3": ("failed", [49, 48]), "A4": ("not-run", [50])})

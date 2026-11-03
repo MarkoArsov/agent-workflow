@@ -338,7 +338,9 @@ def clean(project, *, older_than=None):
                     if not delivered.get('pushed') or delivered.get('commit') != git(target, 'rev-parse', 'HEAD'):
                         continue
                 info = git(mirror, 'worktree', 'list', '--porcelain')
-                block = next((b for b in info.split('\n\n') if b.startswith('worktree ' + str(target) + '\n')), '')
+                # Git prints C:/ paths on Windows; compare paths, not text.
+                block = next((b for b in info.split('\n\n')
+                              if b.startswith('worktree ') and same_path(target, b.split('\n', 1)[0][9:])), '')
                 if not block or '\nlocked' in block:
                     continue
                 git(mirror, 'worktree', 'remove', str(target)); git(mirror, 'worktree', 'prune')

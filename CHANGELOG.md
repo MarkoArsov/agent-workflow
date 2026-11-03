@@ -21,6 +21,23 @@
   skips fallbacks from the same provider, and resume keeps the interrupted edits.
   Failure kinds come from structured provider errors, not transcript text.
 - Completion reports may end with a bare JSON line after prose.
+- Add `plovi stats [--since] [--task] [--json] [--gate]`: runs, interventions, stops,
+  time, attempts and tokens from the ledger. `--gate` checks the stability gate
+  (G1 to G5) and exits 0 only when every criterion passes.
+- The ledger records the provider, token usage and cost on `attempt.finished`,
+  `red_proof` on `run.started`, `files_changed` on `pr.opened`, and an optional `next`
+  command on stop events. `plovi migrate --apply` records `checkpoint.migrated`.
+- Add the target-scenario harness in `tests/scenario`, a stateful GitHub CLI fake for
+  tests, and the generated `docs/generated/scenario.md` page.
+- `scripts/run_tests.py` gains `--record` (the local suite time for the gate) and
+  `--scenario-results PATH`; `--changed` now selects nested test modules.
+- CI batches and test workers are balanced by per-test time from `tests/timings.json`
+  (refresh it with `scripts/update_test_weights.py`), so each CI job runs about five
+  minutes of tests. Windows runs eight batches, macOS three and Ubuntu two per version.
+- `plovi clean` removes finished task worktrees on Windows, where Git prints paths
+  with forward slashes.
+- Windows tests install command doubles as `.exe` launchers, so arguments with `&` or
+  newlines reach them intact.
 
 ## 0.1.1
 

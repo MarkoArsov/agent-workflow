@@ -79,6 +79,8 @@ nav:
       - Checkpoint scorecard: scorecard.md
       - Security boundary: security.md
       - How it's tested: coverage.md
+      - Target scenario: generated/scenario.md
+      - Stability gate: stability-gate.md
   - Maintain:
       - Update and remove: lifecycle.md
       - Contribute and develop: development.md

@@ -1,0 +1,2 @@
+{"stages": ["specify", "implement"], "kind": "code", "size": "large", "risk": "standard", "uncertain": false,
+ "complexity": "complex", "repository_count": 1, "test_files": 6, "test_lines": 1400}

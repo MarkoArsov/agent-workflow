@@ -1,0 +1,14 @@
+Task                Started (UTC)     Result   Duration  Attempts  Interventions  Stops  Tokens
+control-plane       2026-11-02 15:10  running  43 s      0         0              1      -
+isolated-execution  2026-11-02 15:10  running  0 s       0         0              1      -
+runner-hardening    2026-11-02 15:10  failed   0 s       0         0              0      -
+
+Runs: 3. Without interventions: 3. Median duration: -. Attempts per run: 0.0. Tokens per run: -.
+
+G1 FAIL  CI on main: 3 of the last 10 Verify runs on main passed without a rerun; slowest job median core (windows-latest, 3.11, batch 2/3) 10.8 min of 20 min (54%, limit 60%)
+G2 FAIL  Suite speed: Ubuntu suite median 176 s (limit 150 s); local suite 162 s on 15 CPUs (limit 240 s on 4)
+G3 FAIL  Pipeline runs: 0 consecutive interventionless runs to a PR (need 5); 0 changed 10 or more files (need 2); 0 with red proof (need 1); providers none (missing claude, codex)
+G4 FAIL  Stop quality: 0 qualifying pipeline runs to check stops in
+G5 FAIL  Scenario harness: could not read the data: no artifact matches any of the names or patterns provided
+
+The gate is not met. Keep using the manual lane; see docs/stability-gate.md.

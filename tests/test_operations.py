@@ -13,7 +13,7 @@ from tests.fixtures.control_plane import AGENT, AGENT_FLAGS, RUNNER, ControlPlan
 from plovi import runner, state
 from plovi.util import read_json
 
-RISKS = {"status": "none", "inbox": "none", "events": "none", "commands": "none", "policy.show": "none",
+RISKS = {"status": "none", "inbox": "none", "events": "none", "stats": "none", "commands": "none", "policy.show": "none",
          "projects.list": "none", "answer": "low", "retry": "low", "pause": "low", "resume": "low",
          "cancel": "low", "projects.add": "low", "projects.remove": "low", "rebuild-state": "low",
          "approve": "high", "policy.set": "high"}
