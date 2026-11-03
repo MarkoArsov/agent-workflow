@@ -126,7 +126,8 @@ class LegacyMigrationTests(HardeningTest):
         self.reviewed_merge();self.save_plan()
         result = self.task_cli('migrate', 'sample', '--apply')
         self.assertNotEqual(result.returncode, 0)
-        self.assertIn('repair commit', result.stderr)
+        # Since #47 an unapproved merge stops with the task-ownership message.
+        self.assertIn('were not made by this task', result.stderr)
         self.assertEqual(len(self.calls()), 2)
 
     def test_fixture_correction_uses_independent_routes_without_reauthoring(self):

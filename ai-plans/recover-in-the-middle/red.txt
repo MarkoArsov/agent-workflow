@@ -81,3 +81,21 @@ KeyError: 'pause_reason'
 Ran 3 tests in 4.870s
 FAILED (errors=3)
 
+== Step 7c: adoption on resume and receipts (before the change)
+ERROR: test_interrupted_attempt_edits_adopted (tests.test_gates_v2.AdoptionTests.test_interrupted_attempt_edits_adopted)
+KeyError: 'artifact_changes'
+ERROR: test_task_owned_commits_adopted_on_resume (tests.test_gates_v2.AdoptionTests.test_task_owned_commits_adopted_on_resume)
+plovi.util.WorkflowError: Unapproved recovery repair commit; review exact commits before resuming
+ERROR: test_receipt_rederived_from_ledger (tests.test_gates_v2.ReceiptTests.test_receipt_rederived_from_ledger)
+AttributeError: 'NoneType' object has no attribute 'endswith'
+FAIL: test_foreign_author_commit_stops (tests.test_gates_v2.AdoptionTests.test_foreign_author_commit_stops)
+plovi.util.WorkflowError: Unapproved recovery repair commit; review exact commits before resuming
+AssertionError: "were not made by this task: d64000d6aeee.*recovery.approved_commits" does not match "Unapproved recovery repair commit; review exact commits before resuming"
+FAIL: test_merge_commit_stops (tests.test_gates_v2.AdoptionTests.test_merge_commit_stops)
+plovi.util.WorkflowError: Unapproved recovery repair commit; review exact commits before resuming
+AssertionError: "were not made by this task" does not match "Unapproved recovery repair commit; review exact commits before resuming"
+FAIL: test_receipt_of_other_task_stops (tests.test_gates_v2.ReceiptTests.test_receipt_of_other_task_stops)
+AssertionError: WorkflowError not raised
+Ran 6 tests in 6.945s
+FAILED (failures=3, errors=3)
+

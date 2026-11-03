@@ -186,12 +186,14 @@ class RecoveryTests(HardeningTest):
         self.assertEqual(result["baseline"]["app"]["head"], sha)
         self.assertEqual(len(self.calls()), 1)
 
-    def test_resume_refuses_unknown_repair_commit(self):
+    def test_resume_refuses_foreign_repair_commit(self):
+        # Since #47 a linear commit by the task's own identity is adopted; another author's still stops.
         from plovi.util import WorkflowError
         root = self.repair_fixture()
         (root / "README.md").write_text("Unknown repair\n")
-        self.git(root, "add", "README.md"); self.git(root, "commit", "-m", "Unknown repair")
-        with self.assertRaisesRegex(WorkflowError, "repair"):
+        self.git(root, "add", "README.md")
+        self.git(root, "commit", "-m", "Unknown repair", "--author", "Other Person <other@example.invalid>")
+        with self.assertRaisesRegex(WorkflowError, "not made by this task.*recovery.approved_commits"):
             runner.run(self.project, self.plan, resume=True, unattended=False)
         self.assertEqual(len(self.calls()), 1)
 

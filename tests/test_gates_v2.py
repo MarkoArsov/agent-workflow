@@ -100,3 +100,97 @@ class PlanRevisionTests(HardeningTest):
         self.assertEqual((saved["status"], saved["pause_reason"]), ("paused", "plan_changed"))
         self.assertEqual(saved["next_command"], "plovi approve sample --plan, then plovi resume sample")
         self.assertEqual(len(self.calls()), 1)
+
+
+class AdoptionTests(HardeningTest):
+    def stop_for_input(self):
+        self.fixture([{"session": "asking", "report": {"status": "needs_input", "question": "Keep the parser?"}}, {}])
+        self.assertEqual(runner.run(self.project, self.plan, unattended=False)["status"], "needs_input")
+        return self.project.root
+
+    def commit(self, root, path, text, *extra):
+        (root / path).write_text(text)
+        self.git(root, "add", path)
+        self.git(root, "commit", "-m", f"Change {path}", *extra)
+        return self.git(root, "rev-parse", "HEAD")
+
+    def test_task_owned_commits_adopted_on_resume(self):
+        root = self.stop_for_input()
+        sha = self.commit(root, "app.py", "VALUE = 1\n# kept\n")
+        saved = runner.run(self.project, self.plan, resume=True, answer="Yes", unattended=False)
+        self.assertEqual(saved["status"], "complete")
+        adopted = [e for e in ledger.events(self.project) if e["type"] == "commits.adopted"]
+        self.assertEqual([(e["data"]["commits"], e["data"]["author"]) for e in adopted], [([sha], {"kind": "person"})])
+
+    def test_foreign_author_commit_stops(self):
+        from plovi.util import WorkflowError
+        root = self.stop_for_input()
+        sha = self.commit(root, "app.py", "VALUE = 1\n# foreign\n", "--author", "Other Person <other@example.invalid>")
+        with self.assertRaisesRegex(WorkflowError, f"were not made by this task: {sha[:12]}.*recovery.approved_commits"):
+            runner.run(self.project, self.plan, resume=True, answer="Yes", unattended=False)
+
+    def test_merge_commit_stops(self):
+        from plovi.util import WorkflowError
+        root = self.stop_for_input()
+        self.git(root, "switch", "-c", "side")
+        self.commit(root, "side.py", "X = 1\n")
+        self.git(root, "switch", "-")
+        self.commit(root, "app.py", "VALUE = 1\n# main\n")
+        self.git(root, "merge", "--no-ff", "-m", "Merge side", "side")
+        with self.assertRaisesRegex(WorkflowError, "were not made by this task"):
+            runner.run(self.project, self.plan, resume=True, answer="Yes", unattended=False)
+
+    def test_interrupted_attempt_edits_adopted(self):
+        self.fixture([{"writes": {"app.py": "VALUE = 1\nPARTIAL = True\n"}, "error": "temporary transport failure"}, {}])
+        self.assertEqual(runner.run(self.project, self.plan, unattended=False)["status"], "failed")
+        self.assertEqual(self.load_attempts()[0]["artifact_changes"]["app"].keys(), {"app.py"})
+        saved = runner.run(self.project, self.plan, resume=True, unattended=False)
+        self.assertEqual(saved["status"], "complete")
+        self.assertIn("Its edits are still in the checkout; continue from them.", self.calls()[1]["prompt"])
+        self.assertIn("PARTIAL = True", (self.project.root / "app.py").read_text())
+
+    def load_attempts(self):
+        from plovi import state
+        return state.read(self.project, "sample")["attempts"]
+
+
+class ReceiptTests(HardeningTest):
+    def started(self, name="first"):
+        root = self.repo("app")
+        self.setup_project(root, {"repositories": [{"id": "app", "path": "."}]})
+        self.git(root, "add", "."); self.git(root, "commit", "-m", "Configure fixture")
+        result = self.cli("task", "start", name, cwd=root, check=False)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        from plovi.project import load
+        project = load(root)
+        ledger.append(project, {"subject": {"kind": "task", "id": name}, "type": "task.claimed", "actor": dict(ledger.RUNNER),
+                                "reason": "The runner claimed the task", "data": {"run_id": "r" * 32}})
+        return project
+
+    def test_receipt_rederived_from_ledger(self):
+        from plovi import tasks
+        project = self.started()
+        receipt = tasks.receipt_path(project, "first")
+        saved = receipt.read_text(); receipt.unlink()
+        path = tasks.owned_checkout(project, "first", "app", "feature/first")
+        self.assertTrue(path.endswith("first/app"), path)
+        self.assertEqual(json_rows(receipt.read_text()), json_rows(saved))
+        events = [e for e in ledger.events(project) if e["type"] == "receipt.rederived"]
+        self.assertEqual([e["data"]["repository"] for e in events], ["app"])
+
+    def test_receipt_of_other_task_stops(self):
+        from plovi import tasks
+        from plovi.util import WorkflowError, write_json
+        project = self.started()
+        receipt = tasks.receipt_path(project, "first")
+        stolen = tasks.receipt_path(project, "second")
+        value = __import__("json").loads(receipt.read_text())
+        write_json(stolen, dict(value, task="second"))
+        receipt.unlink()
+        with self.assertRaisesRegex(WorkflowError, "belongs to task second"):
+            tasks.owned_checkout(project, "first", "app", "feature/first")
+
+
+def json_rows(text):
+    import json
+    return [{k: v for k, v in row.items() if k in {"repository", "branch", "path", "strategy"}} for row in json.loads(text)["repositories"]]

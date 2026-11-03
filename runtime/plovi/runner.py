@@ -452,10 +452,14 @@ def publish_guard(project, manifest, state, cancel):
         raise WorkflowError("Publication requires current green evidence")
 
 def recover_resume(project, manifest, state, root, *, rebind=False, replay=True):
-    """Reconcile explicitly approved repairs and replay retained output without inference."""
+    """Reconcile approved repairs and task-owned commits, replay retained output, and adopt interrupted edits.
+
+    Returns the task-owned commits it adopted, for the ledger.
+    """
+    adopted = []
     stage = state.get("active_stage")
     if not stage or stage in contracts.PUBLISH:
-        return
+        return adopted
     current = git_ops.snapshot(project, state["checkouts"])
     approvals = manifest.get("recovery", {}).get("approved_commits", {})
     repairs = []
@@ -473,7 +477,8 @@ def recover_resume(project, manifest, state, root, *, rebind=False, replay=True)
         commits = git_ops.git(checkout, "rev-list", "--reverse", before["head"] + ".." + after["head"]).splitlines()
         plan_dir = Path(manifest["_directory"]).resolve()
         permitted = set(approvals.get(name, []))
-        paths = set()
+        identity = task_email(checkout)
+        paths = set(); foreign = []; owned = []
         for commit in commits:
             parents = git_ops.git(checkout, "rev-list", "--parents", "-n", "1", commit).split()
             if len(parents) < 2:
@@ -482,8 +487,19 @@ def recover_resume(project, manifest, state, root, *, rebind=False, replay=True)
             plan_only = bool(changed) and all((checkout / path).resolve().is_relative_to(plan_dir) for path in changed)
             reviewed_merge = rebind and commit in permitted and commit in manifest.get("recovery", {}).get("approved_merges", {}).get(name, [])
             if (len(parents) != 2 and not reviewed_merge) or (commit not in permitted and not (rebind and permitted and plan_only)):
-                raise WorkflowError("Unapproved recovery repair commit; review exact commits before resuming")
+                # Linear commits by the task worktree's own identity are the task's; adopt them without approval.
+                author = git_ops.git(checkout, "log", "-1", "--format=%ae", commit)
+                if len(parents) == 2 and identity and author.casefold() == identity.casefold():
+                    owned.append(commit)
+                else:
+                    foreign.append(commit)
             paths.update(changed)
+        if foreign:
+            raise WorkflowError(f"Commits on {after['branch'] or 'the task branch'} were not made by this task: "
+                                + ", ".join(commit[:12] for commit in foreign)
+                                + ". Inspect them, then approve with recovery.approved_commits")
+        if owned:
+            adopted.append({"repository": name, "commits": owned, "author": {"kind": "person"}})
         if paths & set(git_ops.dirty_paths(checkout)):
             raise WorkflowError("Recovery repair paths have uncommitted edits; preserve and review them")
         repairs.append((name, commits, paths))
@@ -505,7 +521,7 @@ def recover_resume(project, manifest, state, root, *, rebind=False, replay=True)
             history.append({"repository": name, "previous_head": old_head, "head": current[name]["head"],
                             "commits": commits, "paths": sorted(paths), "at": time.time()})
     if not replay or stage in state.get("completed", []) or state.get("pending_input"):
-        return
+        return adopted
     def validate_artifacts(receipt):
         changes = receipt.get("artifact_changes")
         if changes is None: return  # Legacy receipts still require full deterministic verification.
@@ -522,7 +538,7 @@ def recover_resume(project, manifest, state, root, *, rebind=False, replay=True)
             raise WorkflowError("Saved output artifacts changed; inspect foreign edits or approve exact repair commits before recovery")
     if state.get("retained_output"):
         validate_artifacts(state["retained_output"])
-        return
+        return adopted
     for index in reversed(range(state.get("replay_after", 0), len(state.get("attempts", [])))):
         attempt = state["attempts"][index]
         if attempt.get("stage") != stage or attempt.get("classification") != "complete" or attempt.get("exit_code") != 0:
@@ -537,7 +553,25 @@ def recover_resume(project, manifest, state, root, *, rebind=False, replay=True)
             state["retained_output"] = {"stage": stage, "fingerprint": git_ops.fingerprint(current)}
             if "artifact_changes" in saved: state["retained_output"]["artifact_changes"] = saved["artifact_changes"]
             state["recovered_output_attempt"] = index
-            break
+            return adopted
+    # No usable output: keep the in-scope edits of the interrupted or failed attempt for the next one.
+    observed = state.get("stage_before")
+    if observed and git_ops.fingerprint(observed) != git_ops.fingerprint(current):
+        git_ops.guard(observed, current, manifest, stage)
+        changed = git_ops.changes(observed, current)
+        last = next((a for a in reversed(state.get("attempts", [])) if a.get("stage") == stage), {})
+        state["retained_output"] = {"stage": stage, "partial": True, "fingerprint": git_ops.fingerprint(current),
+                                    "reason": last.get("failure_kind") or "interrupted",
+                                    "artifact_changes": {name: {path: current[name]["files"].get(path) for path in paths}
+                                                         for name, paths in changed.items()}}
+    return adopted
+
+
+def task_email(checkout):
+    """The email this checkout commits as: Git's author identity from its config and environment."""
+    result = git_ops.run(["git", "var", "GIT_AUTHOR_IDENT"], Path(checkout), check=False)
+    match = re.search(r"<([^>]*)>", result.stdout or "")
+    return match.group(1) if result.returncode == 0 and match else None
 
 
 def run(project, manifest, *, resume=False, answer=None, rebind=False, trusted=False, unattended=None, no_wait=False, retry=False, note=None, approval=None, pull_isolation_image=False, require_plan_approval=False):
@@ -638,9 +672,10 @@ def _run_locked(project, manifest, root, *, resume, answer, rebind, trusted, una
                 frozen=execution.get('isolation')) if execution.get('isolation', {}).get('mode') == 'container' else None
         if execution_context:
             isolation.recover(project, manifest['task'], execution_context)
+        adopted = []
         if resume:
-            recover_resume(project, manifest, state, root, rebind=rebind,
-                           replay=not retry and answer is None and prior.get("active_stage") not in prior.get("completed", []))
+            adopted = recover_resume(project, manifest, state, root, rebind=rebind,
+                                     replay=not retry and answer is None and prior.get("active_stage") not in prior.get("completed", []))
         state["manifest_path"] = manifest.get("_path", state["manifest_path"])
         state["plan_sha256"] = contracts.plan_sha256(manifest)
         state["execution"] = execution
@@ -684,6 +719,8 @@ def _run_locked(project, manifest, root, *, resume, answer, rebind, trusted, una
         # run ID would report the old stop as the new run's result.
         state["status"] = "starting"
         recorder.started(state)
+        for row in adopted:
+            recorder.event("commits.adopted", row)
         for previous, current, automatic in rebound:
             recorder.event("plan.rebound", {"run_id": state["run_id"], "old": previous, "new": current},
                            actor=None if automatic else _person(project))
@@ -777,9 +814,11 @@ def _run_locked(project, manifest, root, *, resume, answer, rebind, trusted, una
                 pending = state.pop("pending_input", None)
                 feedback = None
                 if retained.get("stage") == stage and retained.get("partial"):
-                    # A usage limit stopped the last attempt; its edits stay and the next attempt continues them.
+                    # The last attempt stopped early; its edits stay and the next attempt continues them.
                     state.pop("retained_output", None)
-                    feedback = {"provider": "usage_limit", "note": "The previous attempt stopped at a provider usage limit. "
+                    reason = retained.get("reason", "usage_limit")
+                    stopped = "at a provider usage limit" if reason in {"usage_limit", "provider_usage_limit"} else f"early ({reason})"
+                    feedback = {"provider": reason, "note": f"The previous attempt stopped {stopped}. "
                                 "Its edits are still in the checkout; continue from them."}
                 limited = set()
                 routes = contracts.route_for(project, manifest, stage)
@@ -864,6 +903,12 @@ def _run_locked(project, manifest, root, *, resume, answer, rebind, trusted, una
                                                              for name, paths in git_ops.changes(before, current).items()}
                                 state["retained_output"] = {"stage": stage, "fingerprint": git_ops.fingerprint(current),
                                                             "artifact_changes": entry["artifact_changes"]}
+                            if classification not in {"complete", "cancellation_failure"}:
+                                # A failed, timed-out or cancelled attempt keeps its in-scope edits for the next one.
+                                stopped = git_ops.changes(before, current)
+                                if any(stopped.values()):
+                                    entry["artifact_changes"] = {name: {path: current[name]["files"].get(path) for path in paths}
+                                                                 for name, paths in stopped.items() if paths}
                             entry["failure_kind"] = providers.failure_kind(classification) if classification != "complete" else None
                             state["attempts"].append(entry)
                             reporter.emit("attempt_finished", stage=stage, attempt=index, kind=entry["failure_kind"])
