@@ -401,6 +401,14 @@
         }
       }
     },
+    "protected_paths": {
+      "type": "array",
+      "description": "Protected paths (within paths.protected) this plan changes; plan approval approves them.",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
     "corrections": {
       "type": "object",
       "additionalProperties": false,

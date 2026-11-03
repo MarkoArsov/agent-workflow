@@ -28,6 +28,11 @@ def evidence_markdown(state, manifest):
     lines.append('- Attempts used: ' + str(len(state.get('attempts', []))))
     diff = state.get('diff', {})
     lines.append('- Changed files: ' + escape(diff.get('files', 'unknown')) + '; lines: ' + escape(diff.get('lines', 'unknown')))
+    advisory = state.get('diff_advisory')
+    if advisory:
+        limit = advisory['limit']
+        lines.append(f"- Size: {advisory['files']:,} files, {advisory['lines']:,} lines "
+                     f"(limit {limit['files']:,}/{limit['lines']:,})")
     for attempt in state.get('attempts', []):
         for assumption in (attempt.get('report') or {}).get('assumptions', []):
             lines.append('- Assumption: ' + escape(assumption))

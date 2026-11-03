@@ -166,7 +166,7 @@ def repair(project, manifest, state, bound, root, stage, request, save, cancel):
         proof=verification.run_checks(project,manifest,state['checkouts'],phase=phase,cancel=cancel)
         checked=git_ops.snapshot(project,state['checkouts']);git_ops.guard(final,checked,manifest,'review',custom={'outputs':[]})
         if phase=='red' and not all(c['passed'] for c in proof):raise WorkflowError('Repaired tests lack valid red evidence')
-        state['red_test_files']=test_files(manifest,checked);state.pop('green',None)
+        state['red_test_files']=test_files(manifest,checked);state.pop('frozen_tests',None);state.pop('green',None)
         for repo,name in originals:
             if repo in state.get('stage_before',{}):state['stage_before'][repo]['files'][name]=checked[repo]['files'][name]
         record.update(status='accepted',checks=setup+proof,fingerprint=git_ops.fingerprint(checked))
@@ -224,7 +224,7 @@ def reconcile(project, manifest, state, bound, root, stage, request, save, cance
     final=git_ops.snapshot(project,state['checkouts']);git_ops.guard(after,final,manifest,'review',custom={'outputs':[]})
     if any(not c['passed'] for c in checks if c.get('phase')=='setup') or (phase=='red' and not all(c['passed'] for c in checks)):
         raise WorkflowError('Contract correction lacks passing setup and renewed red proof')
-    state['red_test_files']=test_files(manifest,final);state.pop('green',None)
+    state['red_test_files']=test_files(manifest,final);state.pop('frozen_tests',None);state.pop('green',None)
     for repo,name in originals:state['stage_before'][repo]['files'][name]=final[repo]['files'][name]
     record.update(status='accepted',checks=checks,review=final_decision)
     state.setdefault('test_repairs',[]).append({'stage':stage,'at':time.time(),'status':'accepted','kind':'contract-input-correction'})

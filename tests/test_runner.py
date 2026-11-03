@@ -111,11 +111,13 @@ class RunnerTests(WorkspaceTest):
         self.assertEqual(len(result["revisions"]), 1)
         self.assertIn(".plovi/project.json", result["initial_dirty"]["app"])
 
-    def test_implementation_cannot_add_tests_outside_the_frozen_red_set(self):
+    def test_implementation_may_add_tests_outside_the_frozen_red_set_and_they_are_listed(self):
+        # Since #47 only red-identity files freeze; other test files may change and review checks them.
         self.fixture([{"writes": {"test_app.py": "import unittest\nfrom app import VALUE\nclass Behavior(unittest.TestCase):\n def test_behavior(self): self.assertEqual(VALUE, 2)\n"}},
-                      {"writes": {"app.py": "VALUE = 2\n", "test_extra.py": "# Unverified new test\n"}}])
-        with self.assertRaisesRegex(WorkflowError, "frozen by implement-tests"):
-            runner.run(self.project, self.plan, unattended=False)
+                      {"writes": {"app.py": "VALUE = 2\n", "test_extra.py": "# Unverified new test\n"}}, {}])
+        result = runner.run(self.project, self.plan, unattended=False)
+        self.assertEqual(result["status"], "complete")
+        self.assertEqual(result["stage_evidence"]["implement"]["test_edits"], {"app": ["test_extra.py"]})
 
     def green_only(self, steps):
         root = self.fixture(steps)

@@ -38,11 +38,24 @@ def gate(project, manifest, state):
     state['diff'] = value
     settings = state['policy']['values']['limits']
     pending = []
-    if value['files'] > settings['max_changed_files'] or value['lines'] > settings['max_changed_lines']:
-        pending.append({'kind': 'size', 'files': value['files'], 'lines': value['lines'],
-                        'limit': {'files': settings['max_changed_files'], 'lines': settings['max_changed_lines']}})
-    if value['protected_paths']:
-        pending.append({'kind': 'protected_paths', 'paths': value['protected_paths']})
+    limit = {'files': settings['max_changed_files'], 'lines': settings['max_changed_lines']}
+    # Tasks bound before the ceiling existed keep the size gate at the limit itself.
+    factor = settings.get('ceiling_factor', 1)
+    if value['files'] > limit['files'] * factor or value['lines'] > limit['lines'] * factor:
+        pending.append({'kind': 'size', 'files': value['files'], 'lines': value['lines'], 'limit': limit,
+                        'ceiling': {'files': limit['files'] * factor, 'lines': limit['lines'] * factor}})
+        state.pop('diff_advisory', None)
+    elif value['files'] > limit['files'] or value['lines'] > limit['lines']:
+        # Over the limit but under the ceiling: recorded for the PR and the ledger, never a stop.
+        state['diff_advisory'] = {'files': value['files'], 'lines': value['lines'], 'limit': limit,
+                                  'fingerprint': value['fingerprint']}
+    else:
+        state.pop('diff_advisory', None)
+    # Protected paths the approved plan declares are approved with the plan.
+    declared = manifest.get('protected_paths', [])
+    undeclared = [item for item in value['protected_paths'] if not matches(item['path'], declared)]
+    if undeclared:
+        pending.append({'kind': 'protected_paths', 'paths': undeclared})
     approved = {x['kind'] for x in state.get('approvals', []) if x['fingerprint'] == value['fingerprint']}
     pending = [x | {'fingerprint': value['fingerprint']} for x in pending if x['kind'] not in approved]
     state['pending_approvals'] = pending

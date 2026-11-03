@@ -49,3 +49,35 @@ AssertionError: 'escalated' != 'complete'
 Ran 20 tests in 11.969s
 FAILED (failures=7, errors=4)
 
+== Step 6: narrow frozen tests (before the change any test_paths edit stops)
+ERROR: test_helper_edits_are_allowed_and_listed_in_evidence (tests.test_frozen_scope.FrozenScopeTests.test_helper_edits_are_allowed_and_listed_in_evidence)
+plovi.util.WorkflowError: Tests frozen by implement-tests changed; revise the plan and rebind
+ERROR: test_only_red_identity_files_are_frozen (tests.test_frozen_scope.FrozenScopeTests.test_only_red_identity_files_are_frozen)
+plovi.util.WorkflowError: Tests frozen by implement-tests changed; revise the plan and rebind
+ERROR: test_removing_a_test_fails_closed (tests.test_frozen_scope.FrozenScopeTests.test_removing_a_test_fails_closed)
+plovi.util.WorkflowError: Tests frozen by implement-tests changed; revise the plan and rebind
+ERROR: test_skipping_a_test_fails_closed (tests.test_frozen_scope.FrozenScopeTests.test_skipping_a_test_fails_closed)
+plovi.util.WorkflowError: Tests frozen by implement-tests changed; revise the plan and rebind
+Ran 5 tests in 9.424s
+FAILED (errors=4)
+
+== Step 7a: size ceiling and declared protected paths (before the change)
+FAIL: test_budget_overshoot_is_advisory_below_ceiling (tests.test_gates_v2.GateTests.test_budget_overshoot_is_advisory_below_ceiling)
+AssertionError: 'needs_approval' != 'complete'
+FAIL: test_declared_protected_path_needs_no_extra_approval (tests.test_gates_v2.GateTests.test_declared_protected_path_needs_no_extra_approval)
+AssertionError: 'needs_approval' != 'complete'
+FAIL: test_protected_paths_must_be_protected_by_policy (tests.test_gates_v2.GateTests.test_protected_paths_must_be_protected_by_policy)
+AssertionError: WorkflowError not raised
+Ran 5 tests in 5.343s
+FAILED (failures=3)
+
+== Step 7b: plan revisions (before the change a mid-run plan edit is ignored)
+ERROR: test_plan_change_during_stage_stops (tests.test_gates_v2.PlanRevisionTests.test_plan_change_during_stage_stops)
+KeyError: 'pause_reason'
+ERROR: test_plan_revision_rebinds_at_stage_boundary (tests.test_gates_v2.PlanRevisionTests.test_plan_revision_rebinds_at_stage_boundary)
+KeyError: 'revisions'
+ERROR: test_plan_revision_without_approval_stops_with_next_command (tests.test_gates_v2.PlanRevisionTests.test_plan_revision_without_approval_stops_with_next_command)
+KeyError: 'pause_reason'
+Ran 3 tests in 4.870s
+FAILED (errors=3)
+

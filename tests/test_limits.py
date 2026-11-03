@@ -3,6 +3,12 @@ from plovi import runner, state
 
 
 class LimitTests(HardeningTest):
+    def fixture(self, steps, **kwargs):
+        root = super().fixture(steps, **kwargs)
+        # These tests cover the approval flow at the limit; since #47 the default stops only above 4x the limit.
+        (self.project.root / "plovi.toml").write_text("[limits]\nceiling_factor = 1\n")
+        return root
+
     def changed_files(self, count, *, lines=1):
         self.fixture([{"writes": {f"change_{n}.py": "# change\n" * lines for n in range(count)}}])
         return runner.run(self.project, self.plan, unattended=False)

@@ -63,6 +63,7 @@ class InboxTests(InProcessCli, ControlPlaneMixin, HardeningTest):
 
     def run_until(self, status, steps):
         self.fixture(steps, stages=["implement"])
+        (self.project.root / "plovi.toml").write_text("[limits]\nceiling_factor = 1\n")  # Approval items appear at the limit (#47 default: 4x).
         self.save_plan()
         result = runner.run(self.project, self.plan, unattended=False)
         self.assertEqual(result["status"], status)

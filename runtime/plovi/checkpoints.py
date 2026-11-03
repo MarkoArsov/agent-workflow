@@ -185,6 +185,7 @@ def migrate(project, task, *, apply=False):
                 if not all(c['passed'] for c in checks):
                     raise WorkflowError('Migration lacks passing fixture setup and renewed red proof')
                 saved['red_test_files'] = runner.test_files(plan, after)
+                saved.pop('frozen_tests', None)  # An accepted checkpoint refreezes every test file.
                 saved['stage_evidence']['implement-tests'] = dict(saved['stage_evidence']['implement-tests'],
                     checks=checks, fingerprint=git_ops.fingerprint(after), passed=True, migration=True)
                 saved.setdefault('escalation_history', []).append(saved.pop('escalation'))

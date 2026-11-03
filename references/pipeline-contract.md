@@ -149,6 +149,10 @@ Mechanical rejection can reauthor within the bounded budget; weakening or change
 requirements stop. Failed requests without file edits may use approved fallback
 routes once each; identity mismatch stops before requests.
 
+Optional protected_paths lists globs within the policy's paths.protected that the plan
+changes; approving the plan approves those changes, and other protected paths still
+need approve --paths.
+
 Optional corrections.fixture_rounds is 0–5 (default 2), per implementation/review
 stage. Optional corrections.same_session_rounds (0–10, default 2) bounds same-session
 fixes of failing final checks, and corrections.challenges (0–10, default 3) bounds
