@@ -15,7 +15,7 @@ from .identity import capabilities as identity_capabilities
 from .extensions import snapshot
 from .process import detached, CleanupFailure
 from .isolation import execute as execute_process, environment as identity_environment
-from . import isolation, factory
+from . import autonomy, isolation, factory
 from .util import WorkflowError, contained, digest, is_absolute_anywhere, is_interactive, json_text, package_root, read_json, redact, write_json
 
 def redact_report(value):
@@ -284,6 +284,7 @@ def prompt_for(bound, manifest, stage, checkouts, before, feedback=None, custom=
             for path in git_ops.dirty_paths(root):
                 if path not in before[row["id"]]["files"] and (root / path).is_file():
                     parts.append(f"NEW FILE: {row['id']}/{path}\n{(root / path).read_text(errors='replace')}")
+    parts.append(autonomy.stage_prompt(stage))
     if feedback:
         parts.append("OBSERVED FAILED VERIFICATION; correct the cause within scope:\n" + json_text(feedback))
     return "\n\n".join(parts)
@@ -661,9 +662,14 @@ def _run_locked(project, manifest, root, *, resume, answer, rebind, trusted, una
                     routes = [None]
                 succeeded = False
                 limits = manifest.get("limits", {})
+                corrections = dict(state["policy"]["values"].get("corrections") or {}, **{
+                    k: v for k, v in manifest.get("corrections", {}).items() if k in {"same_session_rounds", "challenges"}})
+                round_limit = corrections.get("same_session_rounds", policy.setting({}, "corrections", "same_session_rounds"))
+                challenge_limit = corrections.get("challenges", policy.setting({}, "corrections", "challenges"))
                 repair_start = sum(r["stage"] == stage and r["status"] == "accepted" for r in state.get("test_repairs", []))
                 correction_limit = manifest.get("corrections", {}).get("fixture_rounds", 2)
                 for route_index, route in enumerate(routes):
+                    next_route = False
                     if pending and route != pending["route"]:
                         continue
                     if route and route["provider"] in limited:
@@ -672,141 +678,182 @@ def _run_locked(project, manifest, root, *, resume, answer, rebind, trusted, una
                     for attempt in range(attempts_allowed + correction_limit):
                         repaired = sum(r["stage"] == stage and r["status"] == "accepted" for r in state.get("test_repairs", [])) - repair_start
                         if attempt >= attempts_allowed + max(0, repaired): break
-                        if cancelled():
-                            state["status"] = "cancelled"; save(); return state
-                        index = len(state["attempts"])
-                        if definition and definition.get("command"):
-                            command = definition["command"]
-                            main_repo = next(r["id"] for r in manifest["repositories"] if r["access"] == "write")
-                            command_cwd = contained(Path(state["checkouts"][main_repo]), command.get("cwd", "."))
-                            command_env = verification.command_environment(command)
-                            command_env = identity_environment(project, command_cwd, inherited=command_env) or command_env
-                            result = execute_process(command["argv"], command_cwd,
-                                                     env=command_env,
-                                                     timeout=command.get("timeout_seconds", 300), cancel=cancelled,
-                                                     on_start=lambda pid: (state.update(child_pid=pid), save()))
-                            events = providers.Events()
-                            report = {"status": "complete"} if result["exit_code"] == 0 and not result["reason"] else None
-                            classification = "complete" if report else (result["reason"] or "transient")
-                        else:
-                            prompt = answer if pending else prompt_for(bound, manifest, stage, state["checkouts"], state["baseline"], feedback, definition)
-                            if not pending and state.get("retry_note"):
-                                prompt += "\n\nNOTE FROM THE PERSON\n" + state["retry_note"]
-                            session = pending["session"] if pending else None
-                            from .repairs import budget
-                            budget(manifest, state)
-                            argv = providers.command(route, execution, session=session, prompt=prompt)
-                            events = providers.Events()
-                            reporter.emit("attempt_started", stage=stage, provider=route["provider"], model=route["model"], attempt=index)
-                            primary = next(r["id"] for r in manifest["repositories"] if r["access"] == "write")
-                            provider_cwd = Path(state["checkouts"][primary])
-                            provider_env = identity_environment(project, provider_cwd)
-                            result = execute_process(argv, provider_cwd, env=provider_env,
-                                                     input_text=None if route["provider"] == "cursor" and not execution_context else prompt,
-                                                     timeout=limits.get("timeout_seconds", 1800),
-                                                     inactivity=limits.get("inactivity_seconds", 300),
-                                                     tool_timeout=limits.get("tool_timeout_seconds", 600),
-                                                     cancel=cancelled, on_line=events.line,
-                                                     on_start=lambda pid: (state.update(child_pid=pid), save()))
-                            report = events.report()
-                            classification = providers.classify(result, events)
-                        if classification != "cancellation_failure": state.pop("child_pid", None)
-                        entry = {"id": index, "run_id": state["run_id"], "stage": stage, "route": route, "classification": classification,
-                                 "session": events.session, "usage": events.usage, "cost_usd": events.cost_usd,
-                                 "exit_code": result["exit_code"], "duration_seconds": result["duration_seconds"],
-                                 "report": redact_report(report) if report else None}
-                        current = git_ops.snapshot(project, state["checkouts"])
-                        if classification == "complete" and report and report["status"] == "complete":
-                            entry["artifact_changes"] = {name: {path: current[name]["files"].get(path) for path in paths}
-                                                         for name, paths in git_ops.changes(before, current).items()}
-                            state["retained_output"] = {"stage": stage, "fingerprint": git_ops.fingerprint(current),
-                                                        "artifact_changes": entry["artifact_changes"]}
-                        entry["failure_kind"] = providers.failure_kind(classification) if classification != "complete" else None
-                        state["attempts"].append(entry)
-                        reporter.emit("attempt_finished", stage=stage, attempt=index, kind=entry["failure_kind"])
-                        write_json(root / "attempts" / f"{index:04d}.json", entry | {"output": result["output"]})
-                        recorder.attempt(state, entry, f"attempts/{index:04d}.json")
-                        if classification == "complete" and report and report["status"] == "test_fixture_repair":
-                            git_ops.guard(before, current, manifest, stage, custom=definition)
-                            if state.get("red_test_files") and test_files(manifest, current) != state["red_test_files"]:
-                                raise WorkflowError("Implementation changed frozen tests before requesting fixture repair")
-                            if stage not in {"implement", "review"}:
-                                raise WorkflowError("Fixture repair can only be requested during implementation or review")
-                            from .repairs import repair
-                            save()
-                            try:
-                                feedback = repair(project, manifest, state, bound, root, stage, report, save, cancelled)
-                            except CleanupFailure:
-                                raise
-                            except WorkflowError as exc:
-                                state["escalation"] = {"stage": stage, "kind": "cancellation_failure" if state.get("cleanup", {}).get("status") == "unconfirmed" else "fixture_setup", "reason": redact(str(exc)),
-                                                       "route": route, "session": events.session, "at": time.time()}
-                                state["status"] = "escalated"; save(); return state
-                            continue
-                        if classification == "cancellation_failure":
-                            state["cleanup"] = {"status": "unconfirmed", "child_pid": state.get("child_pid"), "stage": stage}
-                            state["escalation"] = {"stage": stage, "kind": "cancellation_failure", "reason": "Owned child cleanup could not be confirmed; inspect the retained process before retrying", "route": route, "session": events.session, "at": time.time()}
-                        if classification == "complete" and not report:
-                            state["escalation"] = {"stage": stage, "kind": "invalid_report",
-                                                   "reason": "Provider finished without a valid completion report; inspect retained output before retrying",
-                                                   "route": route, "session": events.session, "at": time.time()}
-                            state["retry_command"] = "plovi retry " + manifest["task"]
-                        if classification == "complete" and report and report["status"] == "spec_conflict" and stage in {"implement", "review"}:
-                            git_ops.guard(before, current, manifest, stage, custom=definition)
-                            if state.get("red_test_files") and test_files(manifest,current)!=state["red_test_files"]:
-                                raise WorkflowError("Implementation changed frozen tests before contract review")
-                            from .repairs import reconcile
-                            feedback = reconcile(project,manifest,state,bound,root,stage,report,save,cancelled)
-                            if feedback is not None: continue
-                        if report and report["status"] in {"blocked", "spec_conflict", "impossible"}:
-                            state["escalation"] = {"stage": stage, "kind": report["status"], "reason": redact(report["reason"]),
-                                                   "route": route, "session": events.session, "at": time.time()}
-                            state["retry_command"] = "plovi retry " + manifest["task"]
-                        save()
-                        current = git_ops.snapshot(project, state["checkouts"])
-                        git_ops.guard(before, current, manifest, stage, custom=definition)
-                        gate_pending = diff_limits.gate(project, manifest, state)
-                        if classification == "cancelled":
-                            state["status"] = "cancelled"; save(); return state
-                        if state.get("escalation"):
-                            state["status"] = "escalated"; save(); return state
-                        if report and report["status"] == "needs_input":
-                            if not events.session or not report.get("question"):
-                                raise WorkflowError("Provider requested input without a session ID/question")
-                            state["pending_input"] = {"route": route, "session": events.session, "question": redact(report["question"])}
-                            state["status"] = "needs_approval" if gate_pending else "needs_input"; save(); return state
-                        if gate_pending:
-                            save(); return state
-                        if pending and classification != "complete":
-                            # An answer must never be rerouted into a different provider/session.
-                            state["pending_input"] = pending
-                            state["status"] = "needs_input"; save(); return state
-                        pending = None; answer = None
-                        if classification == "usage_limit":
-                            # Every route of this provider shares the account limit.
-                            limited.add(route["provider"])
-                            if any(r and r["provider"] not in limited for r in routes[route_index + 1:]):
+                        # Same-session continuations (nudge, challenges, fix rounds) never consume route attempts.
+                        follow = None; nudged = False; rounds = 0; challenge_log = []
+                        while True:
+                            if cancelled():
+                                state["status"] = "cancelled"; save(); return state
+                            index = len(state["attempts"])
+                            kind = follow[1] if follow else "attempt"
+                            if definition and definition.get("command"):
+                                command = definition["command"]
+                                main_repo = next(r["id"] for r in manifest["repositories"] if r["access"] == "write")
+                                command_cwd = contained(Path(state["checkouts"][main_repo]), command.get("cwd", "."))
+                                command_env = verification.command_environment(command)
+                                command_env = identity_environment(project, command_cwd, inherited=command_env) or command_env
+                                result = execute_process(command["argv"], command_cwd,
+                                                         env=command_env,
+                                                         timeout=command.get("timeout_seconds", 300), cancel=cancelled,
+                                                         on_start=lambda pid: (state.update(child_pid=pid), save()))
+                                events = providers.Events()
+                                report = {"status": "complete"} if result["exit_code"] == 0 and not result["reason"] else None
+                                classification = "complete" if report else (result["reason"] or "transient")
+                            else:
+                                if follow:
+                                    prompt, session = follow[0], follow[2]
+                                else:
+                                    prompt = answer if pending else prompt_for(bound, manifest, stage, state["checkouts"], state["baseline"], feedback, definition)
+                                    if not pending and state.get("retry_note"):
+                                        prompt += "\n\nNOTE FROM THE PERSON\n" + state["retry_note"]
+                                    session = pending["session"] if pending else None
+                                from .repairs import budget
+                                budget(manifest, state)
+                                argv = providers.command(route, execution, session=session, prompt=prompt)
+                                events = providers.Events()
+                                reporter.emit("attempt_started", stage=stage, provider=route["provider"], model=route["model"], attempt=index, kind=kind)
+                                primary = next(r["id"] for r in manifest["repositories"] if r["access"] == "write")
+                                provider_cwd = Path(state["checkouts"][primary])
+                                provider_env = identity_environment(project, provider_cwd)
+                                result = execute_process(argv, provider_cwd, env=provider_env,
+                                                         input_text=None if route["provider"] == "cursor" and not execution_context else prompt,
+                                                         timeout=limits.get("timeout_seconds", 1800),
+                                                         inactivity=limits.get("inactivity_seconds", 300),
+                                                         tool_timeout=limits.get("tool_timeout_seconds", 600),
+                                                         cancel=cancelled, on_line=events.line,
+                                                         on_start=lambda pid: (state.update(child_pid=pid), save()))
+                                report = events.report()
+                                if report and report.get("stage") not in (None, stage):
+                                    report = None  # A terminal marker for another stage is not this stage's report.
+                                classification = providers.classify(result, events)
+                            if classification != "cancellation_failure": state.pop("child_pid", None)
+                            session_id = events.session or (follow[2] if follow else None)
+                            entry = {"id": index, "run_id": state["run_id"], "stage": stage, "route": route, "kind": kind,
+                                     "classification": classification,
+                                     "session": events.session, "usage": events.usage, "cost_usd": events.cost_usd,
+                                     "exit_code": result["exit_code"], "duration_seconds": result["duration_seconds"],
+                                     "report": redact_report(report) if report else None}
+                            follow = None
+                            current = git_ops.snapshot(project, state["checkouts"])
+                            if classification == "complete" and report and report["status"] == "complete":
+                                entry["artifact_changes"] = {name: {path: current[name]["files"].get(path) for path in paths}
+                                                             for name, paths in git_ops.changes(before, current).items()}
+                                state["retained_output"] = {"stage": stage, "fingerprint": git_ops.fingerprint(current),
+                                                            "artifact_changes": entry["artifact_changes"]}
+                            entry["failure_kind"] = providers.failure_kind(classification) if classification != "complete" else None
+                            state["attempts"].append(entry)
+                            reporter.emit("attempt_finished", stage=stage, attempt=index, kind=entry["failure_kind"])
+                            write_json(root / "attempts" / f"{index:04d}.json", entry | {"output": result["output"]})
+                            recorder.attempt(state, entry, f"attempts/{index:04d}.json")
+                            if classification == "complete" and report and report["status"] == "test_fixture_repair":
+                                git_ops.guard(before, current, manifest, stage, custom=definition)
+                                if state.get("red_test_files") and test_files(manifest, current) != state["red_test_files"]:
+                                    raise WorkflowError("Implementation changed frozen tests before requesting fixture repair")
+                                if stage not in {"implement", "review"}:
+                                    raise WorkflowError("Fixture repair can only be requested during implementation or review")
+                                from .repairs import repair
+                                save()
+                                try:
+                                    feedback = repair(project, manifest, state, bound, root, stage, report, save, cancelled)
+                                except CleanupFailure:
+                                    raise
+                                except WorkflowError as exc:
+                                    state["escalation"] = {"stage": stage, "kind": "cancellation_failure" if state.get("cleanup", {}).get("status") == "unconfirmed" else "fixture_setup", "reason": redact(str(exc)),
+                                                           "route": route, "session": events.session, "at": time.time()}
+                                    state["status"] = "escalated"; save(); return state
                                 break
-                            changed = git_ops.changes(before, current)
-                            state["retained_output"] = {"stage": stage, "partial": True, "fingerprint": git_ops.fingerprint(current),
-                                "artifact_changes": {name: {path: current[name]["files"].get(path) for path in paths}
-                                                     for name, paths in changed.items()}}
-                            state["status"] = "paused"; state["pause_reason"] = "usage_limit"
-                            if events.resets_at is not None:
-                                state["resets_at"] = events.resets_at
-                            save(); return state
-                        if classification in {"authentication", "quota", "model"}:
+                            if classification == "cancellation_failure":
+                                state["cleanup"] = {"status": "unconfirmed", "child_pid": state.get("child_pid"), "stage": stage}
+                                state["escalation"] = {"stage": stage, "kind": "cancellation_failure", "reason": "Owned child cleanup could not be confirmed; inspect the retained process before retrying", "route": route, "session": events.session, "at": time.time()}
+                            agent = not (definition and definition.get("command"))
+                            if classification == "complete" and not report and agent and not nudged and session_id:
+                                # A missing or invalid report gets one same-session nudge; then the checks decide.
+                                nudged = True
+                                follow = (autonomy.nudge(stage), "nudge", session_id)
+                                reporter.emit("nudge", stage=stage, reason="The stage ended without a report")
+                                save(); continue
+                            verdict = None
+                            if classification == "complete" and report and report["status"] in autonomy.STOP_STATUSES:
+                                reason = report.get("question") if report["status"] == "needs_input" else report.get("reason")
+                                verdict, stop_key = autonomy.classify_stop(reason or "", stage=stage,
+                                                                           commands=autonomy.commands(project, manifest))
+                                if verdict == "recoverable" and session_id and len(challenge_log) < challenge_limit:
+                                    challenge_log.append({"reason": redact(reason), "category": stop_key, "at": time.time()})
+                                    reporter.emit("challenge", stage=stage, reason=f"Continuing the same session: {stop_key} "
+                                                  f"(challenge {len(challenge_log)} of {challenge_limit})")
+                                    time.sleep(autonomy.backoff(len(challenge_log)))
+                                    follow = (autonomy.challenge_prompt(reason, stage), "challenge", session_id)
+                                    save(); continue
+                            if classification == "complete" and report and report["status"] == "spec_conflict" and stage in {"implement", "review"} and verdict != "stop":
+                                git_ops.guard(before, current, manifest, stage, custom=definition)
+                                if state.get("red_test_files") and test_files(manifest,current)!=state["red_test_files"]:
+                                    raise WorkflowError("Implementation changed frozen tests before contract review")
+                                from .repairs import reconcile
+                                feedback = reconcile(project,manifest,state,bound,root,stage,report,save,cancelled)
+                                if feedback is not None: break
+                            if report and report["status"] in {"blocked", "spec_conflict", "impossible"}:
+                                state["escalation"] = {"stage": stage, "kind": report["status"], "reason": redact(report["reason"]),
+                                                       "route": route, "session": events.session, "at": time.time()}
+                                if verdict == "stop":
+                                    state["escalation"]["stop_key"] = stop_key
+                                if challenge_log:
+                                    state["escalation"]["challenges"] = challenge_log
+                                state["retry_command"] = "plovi retry " + manifest["task"]
+                            save()
+                            current = git_ops.snapshot(project, state["checkouts"])
+                            git_ops.guard(before, current, manifest, stage, custom=definition)
+                            gate_pending = diff_limits.gate(project, manifest, state)
+                            if classification == "cancelled":
+                                state["status"] = "cancelled"; save(); return state
+                            if state.get("escalation"):
+                                state["status"] = "escalated"; save(); return state
+                            if report and report["status"] == "needs_input":
+                                if not session_id or not report.get("question"):
+                                    raise WorkflowError("Provider requested input without a session ID/question")
+                                state["pending_input"] = {"route": route, "session": session_id, "question": redact(report["question"])}
+                                state["status"] = "needs_approval" if gate_pending else "needs_input"; save(); return state
+                            if gate_pending:
+                                save(); return state
+                            if pending and classification != "complete":
+                                # An answer must never be rerouted into a different provider/session.
+                                state["pending_input"] = pending
+                                state["status"] = "needs_input"; save(); return state
+                            pending = None; answer = None
+                            if classification == "usage_limit":
+                                # Every route of this provider shares the account limit.
+                                limited.add(route["provider"])
+                                if any(r and r["provider"] not in limited for r in routes[route_index + 1:]):
+                                    next_route = True; break
+                                changed = git_ops.changes(before, current)
+                                state["retained_output"] = {"stage": stage, "partial": True, "fingerprint": git_ops.fingerprint(current),
+                                    "artifact_changes": {name: {path: current[name]["files"].get(path) for path in paths}
+                                                         for name, paths in changed.items()}}
+                                state["status"] = "paused"; state["pause_reason"] = "usage_limit"
+                                if events.resets_at is not None:
+                                    state["resets_at"] = events.resets_at
+                                save(); return state
+                            if classification in {"authentication", "quota", "model"}:
+                                next_route = True; break
+                            if classification != "complete" or (report and report["status"] != "complete"):
+                                feedback = {"provider": classification, "report": report}
+                                break
+                            evidence = verify_stage(project, manifest, stage, state, before, custom=definition, cancel=cancelled)
+                            state.setdefault("stage_evidence", {})[stage] = evidence
+                            write_json(root / "evidence" / f"{stage}-{index:04d}.json", evidence); save()
+                            if evidence["passed"]:
+                                accept_evidence(project, manifest, stage, state, evidence)
+                                succeeded = True; save(); break
+                            feedback = evidence
+                            if agent and session_id and rounds < round_limit:
+                                rounds += 1
+                                failures = [(c["id"], c.get("exit_code"), c.get("output")) for c in evidence["checks"] if not c["passed"]]
+                                failures += [("problem", 1, text) for text in evidence.get("problems", [])]
+                                reporter.emit("fix_round", stage=stage, reason=f"Continuing the same session: {len(failures)} "
+                                              f"check{'s' if len(failures) != 1 else ''} failed (round {rounds} of {round_limit})")
+                                follow = (autonomy.fix_prompt(failures), "fix-round", session_id)
+                                continue
                             break
-                        if classification != "complete" or not report or report["status"] != "complete":
-                            feedback = {"provider": classification, "report": report}
-                            continue
-                        evidence = verify_stage(project, manifest, stage, state, before, custom=definition, cancel=cancelled)
-                        state.setdefault("stage_evidence", {})[stage] = evidence
-                        write_json(root / "evidence" / f"{stage}-{index:04d}.json", evidence); save()
-                        if evidence["passed"]:
-                            accept_evidence(project, manifest, stage, state, evidence)
-                            succeeded = True; save(); break
-                        feedback = evidence
+                        if succeeded or next_route:
+                            break
                     if succeeded:
                         break
                 if not succeeded:

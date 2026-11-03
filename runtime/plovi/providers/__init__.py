@@ -199,7 +199,29 @@ class Events:
             checked = _checked_report(value)
             if checked is not _NOT_A_REPORT:
                 return checked
+        # Terminal markers replace the JSON report: the final message's last lines decide.
+        last = self.terminal_result if self.terminal_result is not None else (self.text[-1] if self.text else "")
+        return _marker_report(last)
+
+
+_STAGE_OK = re.compile(r"^PLOVI_STAGE_OK:[ \t]*([A-Za-z0-9_-]+)[ \t]*$")
+
+
+def _marker_report(text):
+    """PLOVI_STAGE_OK: <stage> as the last non-empty line, or PLOVI_INPUT_REQUIRED followed by numbered questions."""
+    lines = [line.rstrip() for line in (text or "").strip().splitlines()]
+    if not lines:
         return None
+    done = _STAGE_OK.match(lines[-1].strip())
+    if done:
+        summary = "\n".join(lines[:-1]).strip()
+        return {"status": "complete", "summary": summary or "Stage complete", "stage": done.group(1)}
+    for index, line in enumerate(lines):
+        if line.strip() == "PLOVI_INPUT_REQUIRED":
+            questions = "\n".join(lines[index + 1:]).strip()
+            if re.match(r"^\d+[.)]\s+\S", questions):
+                return {"status": "needs_input", "question": questions}
+    return None
 
 
 _STATUSES = {"complete", "needs_input", "blocked", "spec_conflict", "impossible", "test_fixture_repair"}

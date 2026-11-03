@@ -1,7 +1,7 @@
 """Challenging premature stops (#47): the stop list, recoverable categories and same-session continuation."""
 import unittest
-import tests.helpers  # noqa: F401  (puts runtime/ on sys.path)
-from plovi import autonomy, providers
+from tests.helpers import HardeningTest
+from plovi import autonomy, providers, runner
 
 COMMANDS = ["python3 -m unittest -v test_app", "npm run build", "python3 scripts/generate_client.py"]
 
@@ -102,3 +102,40 @@ class ResumeArgvTests(unittest.TestCase):
         cursor = providers.command({"provider": "cursor", "model": "m"}, execution, session="S3", prompt="p")
         self.assertEqual(cursor[cursor.index("--resume") + 1], "S3")
         self.assertEqual(cursor[-1], "p")
+
+
+class ChallengeRunTests(HardeningTest):
+    def run_plan(self, steps, **corrections):
+        self.fixture(steps)
+        self.plan["corrections"] = corrections
+        return runner.run(self.project, self.plan, unattended=False)
+
+    def test_recoverable_block_is_challenged_in_same_session(self):
+        saved = self.run_plan([{"report": {"status": "blocked", "reason": "network timeout while installing packages"}}, {}])
+        self.assertEqual(saved["status"], "complete")
+        calls = self.calls()
+        self.assertEqual(len(calls), 2)
+        self.assertEqual(calls[1]["argv"][-2:], ["fixture-session-1", "-"])
+        self.assertIn("Your previous stop was premature:", calls[1]["prompt"])
+        self.assertIn("network timeout while installing packages", calls[1]["prompt"])
+        self.assertEqual([a.get("kind") for a in saved["attempts"]], ["attempt", "challenge"])
+
+    def test_stop_list_block_is_not_challenged(self):
+        saved = self.run_plan([{"report": {"status": "blocked", "reason": "This changes the billing rules [stop:money]"}}, {}])
+        self.assertEqual(saved["status"], "escalated")
+        self.assertEqual(len(self.calls()), 1)
+        self.assertEqual(saved["escalation"]["stop_key"], "money")
+
+    def test_challenges_are_bounded_then_escalate_with_history(self):
+        blocked = {"report": {"status": "blocked", "reason": "connection reset by peer"}}
+        saved = self.run_plan([blocked], challenges=2)
+        self.assertEqual(saved["status"], "escalated")
+        self.assertEqual(len(self.calls()), 3)
+        history = saved["escalation"]["challenges"]
+        self.assertEqual([entry["reason"] for entry in history], ["connection reset by peer"] * 2)
+        self.assertTrue(all(isinstance(entry["at"], float) for entry in history))
+
+    def test_needs_input_question_still_reaches_the_person(self):
+        saved = self.run_plan([{"report": {"status": "needs_input", "question": "Which colour should the button be?"}}, {}])
+        self.assertEqual(saved["status"], "needs_input")
+        self.assertEqual(len(self.calls()), 1)

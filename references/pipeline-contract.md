@@ -150,7 +150,9 @@ requirements stop. Failed requests without file edits may use approved fallback
 routes once each; identity mismatch stops before requests.
 
 Optional corrections.fixture_rounds is 0–5 (default 2), per implementation/review
-stage. Optional corrections.max_known_cost_usd bounds reported usage before another
+stage. Optional corrections.same_session_rounds (0–10, default 2) bounds same-session
+fixes of failing final checks, and corrections.challenges (0–10, default 3) bounds
+same-session challenges of a premature stop; both override the project policy. Optional corrections.max_known_cost_usd bounds reported usage before another
 request. Missing usage stays unknown, so this is not a guaranteed total-spend cap.
 
 The pipeline entry point starts or recovers a task with an immutable runtime receipt.

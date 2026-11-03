@@ -5,10 +5,14 @@ from plovi.providers import Events
 from plovi.util import WorkflowError
 
 
+# Since #47 a stop is challenged when its reason is recoverable; this reason matches no category, so it is genuine.
+GENUINE = "A person must decide which export format users get"
+
+
 class RunnerOutcomeTests(HardeningTest):
-    def stop(self, kind):
-        reason = "A person must resolve the fixture constraint"
+    def stop(self, kind, reason=GENUINE, **corrections):
         self.fixture([{"session": "stop-session", "report": {"status": kind, "reason": reason}}, {}])
+        self.plan["corrections"] = corrections
         self.plan["limits"]["attempts_per_route"] = 2
         self.plan["routes"] = {"default": [
             {"provider": "codex", "model": "primary"},
@@ -34,6 +38,9 @@ class RunnerOutcomeTests(HardeningTest):
     def test_impossible_stops_after_one_attempt(self):
         self.stop("impossible")
 
+    def test_recoverable_reason_stops_after_one_attempt_when_challenges_are_off(self):
+        self.stop("blocked", reason="A person must resolve the fixture constraint", challenges=0)
+
     def test_all_reports_validate_required_fields_and_assumptions(self):
         for kind in ("complete", "needs_input", "blocked", "spec_conflict", "impossible"):
             with self.subTest(kind=kind):
@@ -50,16 +57,18 @@ class RunnerOutcomeTests(HardeningTest):
                     events.text = [json.dumps(report | {"assumptions": bad})]
                     self.assertIsNone(events.report(), bad)
 
-    def test_malformed_report_cannot_complete_stage(self):
-        self.fixture([{"report": {"status": "complete", "assumptions": [42]}}, {}])
+    def test_malformed_report_is_nudged_once_then_checks_decide(self):
+        # Before #47 a malformed report escalated as invalid_report; now one nudge, then the passing checks complete it.
+        self.fixture([{"report": {"status": "complete", "assumptions": [42]}}])
         self.plan["limits"]["attempts_per_route"] = 2
         self.plan["routes"] = {"default": [{"provider": "codex", "model": "primary"},
                                            {"provider": "codex", "model": "fallback"}]}
         result = runner.run(self.project, self.plan, unattended=False)
-        self.assertEqual(result["status"], "escalated")
-        self.assertEqual(result["escalation"]["kind"], "invalid_report")
-        self.assertEqual(len(self.calls()), 1)
-        self.assertNotIn("implement", result["completed"])
+        self.assertEqual(result["status"], "complete")
+        self.assertNotIn("escalation", result)
+        self.assertEqual([a["kind"] for a in result["attempts"]], ["attempt", "nudge"])
+        self.assertEqual({a["route"]["model"] for a in result["attempts"]}, {"primary"})
+        self.assertIn("implement", result["completed"])
 
     def test_transient_error_retries_in_fresh_session(self):
         self.fixture([{"error": "temporary transport failure"}, {}])
@@ -115,6 +124,6 @@ class RunnerOutcomeTests(HardeningTest):
         self.assertEqual(len(lines), 1)
         progress = json.loads(lines[0])
         self.assertEqual(progress["status"], "escalated")
-        self.assertEqual(progress["escalation"]["reason"], "A person must resolve the fixture constraint")
+        self.assertEqual(progress["escalation"]["reason"], GENUINE)
         self.assertNotIn("baseline", progress)
         self.assertNotIn("attempts", progress)

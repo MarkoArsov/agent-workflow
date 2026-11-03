@@ -115,6 +115,8 @@ class WorkspaceTest(unittest.TestCase):
                     "GIT_AUTHOR_NAME": "Fixture", "GIT_AUTHOR_EMAIL": "fixture@example.invalid",
                     "GIT_COMMITTER_NAME": "Fixture", "GIT_COMMITTER_EMAIL": "fixture@example.invalid",
                     "PYTHONDONTWRITEBYTECODE": "1", "PLOVI_PACKAGE": str(PACKAGE),
+                    # Same-session challenges wait 20 s and more between rounds; tests never wait.
+                    "PLOVI_CHALLENGE_BACKOFF_SECONDS": "0",
                     # UTC0 means UTC to both POSIX and the Windows C runtime, which requires an offset.
                     "TZ": "UTC0"}
         if os.name == "nt":

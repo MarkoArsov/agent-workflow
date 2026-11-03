@@ -123,6 +123,8 @@ def backoff(challenge, *, environ=None):
     return min(20 * 2 ** (challenge - 1), 300)
 
 
+# Report statuses that stop a stage; each is checked against the stop list and the recoverable categories.
+STOP_STATUSES = {"blocked", "spec_conflict", "impossible", "needs_input"}
 STAGE_OK = "PLOVI_STAGE_OK"
 INPUT_REQUIRED = "PLOVI_INPUT_REQUIRED"
 

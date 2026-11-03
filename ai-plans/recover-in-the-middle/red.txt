@@ -23,3 +23,29 @@ Before runtime/plovi/autonomy.py existed, tests.test_autonomy failed to import (
 That is an import error, not behavioural red. Behavioural red for challenges is in step 5 (runner tests).
 test_resume_argv_per_provider pins existing provider behaviour the challenge and fix loops reuse; it passed before.
 
+== Steps 3-5: optional reports, same-session fix loop, challenges (runner behaviour before the change)
+ERROR: test_missing_report_with_failing_checks_is_a_failed_attempt (tests.test_reports.ReportTests.test_missing_report_with_failing_checks_is_a_failed_attempt)
+plovi.util.WorkflowError: Invalid correction limits
+ERROR: test_rounds_exhausted_fall_back_to_fresh_attempt (tests.test_fix_loop.FixLoopTests.test_rounds_exhausted_fall_back_to_fresh_attempt)
+plovi.util.WorkflowError: Invalid correction limits
+ERROR: test_challenges_are_bounded_then_escalate_with_history (tests.test_autonomy.ChallengeRunTests.test_challenges_are_bounded_then_escalate_with_history)
+plovi.util.WorkflowError: Invalid correction limits
+ERROR: test_stop_list_block_is_not_challenged (tests.test_autonomy.ChallengeRunTests.test_stop_list_block_is_not_challenged)
+KeyError: 'stop_key'
+FAIL: test_input_required_marker_asks (tests.test_reports.ReportTests.test_input_required_marker_asks)
+AssertionError: 'escalated' != 'needs_input'
+FAIL: test_missing_report_nudged_once_then_checks_decide (tests.test_reports.ReportTests.test_missing_report_nudged_once_then_checks_decide)
+AssertionError: 'escalated' != 'complete'
+FAIL: test_terminal_marker_completes_stage (tests.test_reports.ReportTests.test_terminal_marker_completes_stage)
+AssertionError: 'escalated' != 'complete'
+FAIL: test_failing_final_checks_continue_same_session_then_pass (tests.test_fix_loop.FixLoopTests.test_failing_final_checks_continue_same_session_then_pass)
+AssertionError: 'failed' != 'complete'
+FAIL: test_fix_rounds_do_not_consume_route_attempts (tests.test_fix_loop.FixLoopTests.test_fix_rounds_do_not_consume_route_attempts)
+AssertionError: 'failed' != 'complete'
+FAIL: test_no_session_id_skips_rounds (tests.test_fix_loop.FixLoopTests.test_no_session_id_skips_rounds)
+AssertionError: Lists differ: [None, None] != ['attempt', 'attempt']
+FAIL: test_recoverable_block_is_challenged_in_same_session (tests.test_autonomy.ChallengeRunTests.test_recoverable_block_is_challenged_in_same_session)
+AssertionError: 'escalated' != 'complete'
+Ran 20 tests in 11.969s
+FAILED (failures=7, errors=4)
+

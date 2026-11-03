@@ -419,6 +419,18 @@
           "type": "integer",
           "minimum": 0,
           "maximum": 2
+        },
+        "same_session_rounds": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10,
+          "default": 2
+        },
+        "challenges": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10,
+          "default": 3
         }
       }
     }

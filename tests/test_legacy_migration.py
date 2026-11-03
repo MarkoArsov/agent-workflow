@@ -10,7 +10,8 @@ class LegacyMigrationTests(HardeningTest):
     def stopped(self, *, baseline_case=False):
         self.fixture([
             {'writes': {'test_app.py': 'import unittest\nfrom app import VALUE\nclass Behavior(unittest.TestCase):\n def test_behavior(self): self.assertEqual(VALUE, 2)\n'}},
-            {'report': {'status': 'spec_conflict', 'reason': 'Reviewed fixture upgrade is needed'}},
+            # A requirements stop for a person; since #47 a bare fixture reason would be challenged in the same session.
+            {'report': {'status': 'spec_conflict', 'reason': 'Reviewed fixture upgrade is needed [stop:behaviour]'}},
         ], stages=['implement-tests', 'implement', 'review'])
         if baseline_case:
             checkout = Path(self.project.root)

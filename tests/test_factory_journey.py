@@ -68,10 +68,12 @@ class FactoryJourneyTests(HardeningTest):
         self.assertEqual(len({x['sequence'] for x in events}),len(events))
 
     def test_malformed_report_and_stalled_tool_are_bounded(self):
+        # Since #47 a malformed report gets one same-session nudge, then the checks decide; it never loops.
         self.fixture([{'report': {'status': 'complete', 'assumptions': [42]}}])
         result=runner.run(self.project,self.plan, unattended=False)
-        self.assertEqual(result['status'],'escalated')
-        self.assertEqual(len(self.calls()),1)
+        self.assertEqual(result['status'],'complete')
+        self.assertEqual([a['kind'] for a in result['attempts']],['attempt','nudge'])
+        self.assertEqual(len(self.calls()),2)
         self.root=self.root/'second';self.root.mkdir()
         self.fixture([{'tool_stall':True}])
         self.plan['limits']['tool_timeout_seconds']=1
