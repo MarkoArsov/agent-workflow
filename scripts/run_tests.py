@@ -27,7 +27,8 @@ DEFAULT_TIMEOUT = 120
 TIMEOUT_EXIT = 3
 # faulthandler ends a worker whose watchdog cannot run, for example while a C call holds the GIL.
 HARD_STOP_GRACE = 10
-DOCS_ONLY = ("docs/", "design/")
+# Documentation and task plans; changing only these selects no tests.
+DOCS_ONLY = ("docs/", "design/", "ai-plans/")
 
 
 def cases(suite):
@@ -211,11 +212,20 @@ def select_changed(start, ref, tiers):
             changed.add(dotted.removesuffix(".__init__"))
         elif path.startswith(f"{tests_dir}/") and Path(path).name.startswith("test_") and path.endswith(".py"):
             direct.add(Path(path).stem)
-        else:
+        elif path.startswith(".github/"):
+            direct.add("test_ci_workflow")
+        elif path.startswith(f"{tests_dir}/"):
             everything.append(path)
+        else:
+            # A script, schema, template or skill file: select the test modules that name it.
+            naming = {test.stem for test in Path(start).glob("test_*.py")
+                      if Path(path).name in test.read_text(encoding="utf-8")}
+            if not naming:
+                everything.append(path)
+            direct.update(naming)
     if everything:
         return None, [f"{path} changed; selecting every test." for path in everything[:5]]
-    selected = set(direct)
+    selected = {name for name in direct if (Path(start) / f"{name}.py").is_file()}
     for path in sorted(Path(start).glob("test_*.py")):
         if any(related(name, module) for name in imported_modules(path) for module in changed):
             selected.add(path.stem)

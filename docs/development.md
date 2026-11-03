@@ -60,9 +60,10 @@ Tests must use their isolated HOME and provider configuration; never test instal
 | `--list` | The selected test IDs, without running them. |
 
 While you fix something, run `--changed`. Before a pull request, run `--jobs auto`.
-When only documentation changed, `--changed` selects no tests and says to run the
-docs checks. A change to `tests/helpers.py`, a fixture or a non-runtime file
-selects every test.
+When only documentation or task plans changed, `--changed` selects no tests and
+says to run the docs checks. A workflow change selects the CI workflow tests, and
+any other file selects the tests that name it. A change to `tests/helpers.py`, a
+fixture, or a file no test names selects every test.
 
 Each worker runs whole modules. A run balances them using the timings it records
 in `.plovi/local/test-timings.json`, which Git ignores. Slow modules, listed in

@@ -136,6 +136,30 @@ class RunTestsTests(WorkspaceTest):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(len(json.loads(result.stdout[result.stdout.index("["):])), 4)
 
+    def test_changed_ignores_plans_and_maps_named_files(self):
+        repo = self.changed_repo()
+        header = "import sys, pathlib\nsys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / 'runtime'))\n"
+        (repo / "tests/test_script_user.py").write_text(header + "import unittest\nclass Case(unittest.TestCase):\n"
+                                                        "    def test_names(self): self.assertTrue('scripts/tool.py')\n")
+        self.git(repo, "add", "tests/test_script_user.py")
+        self.git(repo, "commit", "-m", "Add script test")
+        (repo / "ai-plans/task").mkdir(parents=True)
+        (repo / "ai-plans/task/plan.md").write_text("# Plan\n")
+        (repo / "ai-plans/task/facts.json").write_text("{}\n")
+        plans = self.invoke("--start-directory", repo / "tests", "--changed", cwd=repo)
+        self.assertEqual(plans.returncode, 0, plans.stderr)
+        self.assertIn("No tests affected; run the docs checks.", plans.stdout)
+        (repo / "scripts").mkdir()
+        (repo / "scripts/tool.py").write_text("print(1)\n")
+        result = self.invoke("--start-directory", repo / "tests", "--changed", "--list", cwd=repo)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        listing = json.loads(result.stdout[result.stdout.index("["):])
+        self.assertEqual(listing, ["test_basic.Case.test_basic", "test_script_user.Case.test_names"])
+        (repo / "scripts/other.py").write_text("print(2)\n")
+        unnamed = self.invoke("--start-directory", repo / "tests", "--changed", "--list", cwd=repo)
+        self.assertIn("scripts/other.py changed; selecting every test.", unnamed.stdout)
+        self.assertEqual(len(json.loads(unnamed.stdout[unnamed.stdout.index("["):])), 5)
+
     def test_tiers_file_lists_existing_modules(self):
         tiers = json.loads((PACKAGE / "tests/tiers.json").read_text())
         self.assertEqual(set(tiers), {"smoke", "slow"})
