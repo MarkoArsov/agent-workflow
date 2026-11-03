@@ -23,7 +23,7 @@ session = step.get("session", "fixture-session-" + str(len(calls)))
 print(json.dumps({"type": "thread.started", "thread_id": session}), flush=True)
 if step.get("barrier_port"):
     # The test releases both children only after observing both active sessions.
-    with socket.create_connection(("127.0.0.1", step["barrier_port"]), timeout=15) as barrier:
+    with socket.create_connection(("127.0.0.1", step["barrier_port"]), timeout=120) as barrier:
         barrier.sendall(str(Path.cwd()).encode() + b"\n")
         if barrier.recv(1) != b"x":
             raise SystemExit("Fixture barrier closed without release")

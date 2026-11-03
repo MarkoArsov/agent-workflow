@@ -13,7 +13,7 @@ import threading
 import unittest.mock
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from tests.helpers import PACKAGE, WorkspaceTest, _cache_root, wait_for
+from tests.helpers import PACKAGE, WorkspaceTest, _cache_root, install_script, wait_for
 from tests.scenario.steps import APP_SPEC, owned_by
 from plovi.util import write_json
 
@@ -44,11 +44,7 @@ class ScenarioTests(WorkspaceTest):
         binaries = self.root / "bin"
         binaries.mkdir()
         for name in ("codex", "claude", "agent"):
-            if os.name == "nt":
-                (binaries / (name + ".cmd")).write_text(f'@"{sys.executable}" "{PACKAGE / "tests/fixtures/provider_double.py"}" %*\r\n')
-            else:
-                shutil.copy(PACKAGE / "tests/fixtures/provider_double.py", binaries / name)
-                (binaries / name).chmod(0o755)
+            install_script(binaries, name, PACKAGE / "tests/fixtures/provider_double.py")
         for environment in (self.env, os.environ):
             environment["PATH"] = str(binaries) + os.pathsep + environment["PATH"]
             environment["WORKFLOW_TEST_SCENARIO"] = str(self.scenario)

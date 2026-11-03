@@ -31,6 +31,10 @@
   tests, and the generated `docs/generated/scenario.md` page.
 - `scripts/run_tests.py` gains `--record` (the local suite time for the gate) and
   `--scenario-results PATH`; `--changed` now selects nested test modules.
+- `plovi clean` removes finished task worktrees on Windows, where Git prints paths
+  with forward slashes.
+- Windows tests install command doubles as `.exe` launchers, so arguments with `&` or
+  newlines reach them intact.
 
 ## 0.1.1
 

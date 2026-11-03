@@ -20,7 +20,7 @@ class ConcurrencyTests(HardeningTest):
         return process
 
     def barrier(self):
-        server = socket.socket(); server.bind(("127.0.0.1", 0)); server.listen(2); server.settimeout(10)
+        server = socket.socket(); server.bind(("127.0.0.1", 0)); server.listen(2); server.settimeout(60)
         self.addCleanup(server.close)
         return server
 
@@ -29,7 +29,7 @@ class ConcurrencyTests(HardeningTest):
             connection, _ = server.accept()
         except TimeoutError:
             self.fail("Both providers must become active before either is released")
-        connection.settimeout(10)
+        connection.settimeout(60)
         self.addCleanup(connection.close)
         connection.recv(4096)
         return connection
@@ -44,6 +44,8 @@ class ConcurrencyTests(HardeningTest):
         for task, pattern in (("first", "first_*.py"), ("second", "second_*.py")):
             plan = {k: v for k, v in self.plan.items() if not k.startswith("_")}
             plan = json.loads(json.dumps(plan)); plan["task"] = task
+            # The first provider waits silently while the second task starts, which takes seconds on loaded runners.
+            plan["limits"].update(timeout_seconds=120, inactivity_seconds=90)
             plan["repositories"][0].update(branch=f"feature/{task}", paths=[pattern])
             path = self.manifest_path.parent / f"{task}.json"; write_json(path, plan); plans.append(path)
             scenario = self.root / f"{task}-scenario.json"; write_json(scenario, [{"barrier_port": port}])

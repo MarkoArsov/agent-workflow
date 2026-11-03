@@ -8,14 +8,13 @@ from __future__ import annotations
 import json
 import os
 import platform
-import shutil
 import subprocess
 import sys
 import textwrap
 import unittest
 from pathlib import Path
 from unittest.mock import patch
-from tests.helpers import PACKAGE, WorkspaceTest
+from tests.helpers import PACKAGE, WorkspaceTest, install_script
 
 
 class ContainerTests(WorkspaceTest):
@@ -69,16 +68,7 @@ class ContainerTests(WorkspaceTest):
         simulator.start()
         self.addCleanup(simulator.stop)
         bin_dir = self.root / "fake-bin"
-        bin_dir.mkdir(exist_ok=True)
-        if os.name == "nt":
-            target = bin_dir / f"{name}.cmd"
-            target.write_text(
-                f'@"{sys.executable}" "{PACKAGE / "tests/fixtures/fake_docker.py"}" %*\r\n'
-            )
-        else:
-            target = bin_dir / name
-            shutil.copy(PACKAGE / "tests/fixtures/fake_docker.py", target)
-            target.chmod(0o755)
+        install_script(bin_dir, name, PACKAGE / "tests/fixtures/fake_docker.py")
         record = self.root / "container-calls.json"
         self.env["PLOVI_TEST_CONTAINER_RECORD"] = str(record)
         self.env["PATH"] = str(bin_dir) + os.pathsep + self.env.get("PATH", "")

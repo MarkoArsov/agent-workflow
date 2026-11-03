@@ -1,6 +1,7 @@
 from __future__ import annotations
 import atexit
 import contextlib
+import functools
 import io
 import json
 import os
@@ -16,6 +17,7 @@ PACKAGE = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PACKAGE / "runtime"))
 
 
+@functools.lru_cache(maxsize=None)
 def windows_launcher(script, python=None):
     """An .exe that runs script with this Python, or None without pip's launchers.
 
@@ -39,6 +41,27 @@ def windows_launcher(script, python=None):
         bundle.writestr("__main__.py", f"import runpy\nrunpy.run_path({str(script)!r}, run_name='__main__')\n")
     shebang = f'#!"{python or sys.executable}"\n'.encode()
     return launcher.read_bytes() + shebang + archive.getvalue()
+
+
+def install_script(folder, name, script):
+    """Put a Python script on folder as the command name; return its path.
+
+    Windows gets an .exe from windows_launcher, or a .cmd shim without pip.
+    """
+    folder.mkdir(parents=True, exist_ok=True)
+    if os.name != "nt":
+        target = folder / name
+        shutil.copy(script, target)
+        target.chmod(0o755)
+        return target
+    launcher = windows_launcher(str(script))
+    if launcher:
+        target = folder / f"{name}.exe"
+        target.write_bytes(launcher)
+    else:
+        target = folder / f"{name}.cmd"
+        target.write_text(f'@"{sys.executable}" "{script}" %*\r\n')
+    return target
 
 
 def remove_tree(path):
@@ -169,16 +192,7 @@ class WorkspaceTest(unittest.TestCase):
         The fake knows only what the state scripts; it logs calls to <state>.calls.json.
         """
         binary = self.root / "bin"
-        binary.mkdir(exist_ok=True)
-        fake = PACKAGE / "tests/fixtures/github_fake.py"
-        launcher = windows_launcher(fake) if os.name == "nt" else None
-        if launcher:
-            (binary / "gh.exe").write_bytes(launcher)
-        elif os.name == "nt":
-            (binary / "gh.cmd").write_text(f'@"{sys.executable}" "{fake}" %*\r\n')
-        else:
-            shutil.copy(fake, binary / "gh")
-            (binary / "gh").chmod(0o755)
+        install_script(binary, "gh", PACKAGE / "tests/fixtures/github_fake.py")
         path = self.root / "github-state.json"
         path.write_text(json.dumps(state or {}, indent=1), encoding="utf-8")
         for environment in (self.env, os.environ):
@@ -278,12 +292,7 @@ class HardeningTest(WorkspaceTest):
 
     def install_gh_double(self):
         binary = self.root / "bin"
-        binary.mkdir(exist_ok=True)
-        if os.name == "nt":
-            (binary / "gh.cmd").write_text(f'@"{sys.executable}" "{PACKAGE / "tests/fixtures/gh_double.py"}" %*\r\n')
-        else:
-            shutil.copy(PACKAGE / "tests/fixtures/gh_double.py", binary / "gh")
-            (binary / "gh").chmod(0o755)
+        install_script(binary, "gh", PACKAGE / "tests/fixtures/gh_double.py")
         path = self.root / "gh-state.json"
         self.env["PLOVI_TEST_GH_STATE"] = str(path)
         os.environ["PLOVI_TEST_GH_STATE"] = str(path)

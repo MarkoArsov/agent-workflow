@@ -1,10 +1,9 @@
 from __future__ import annotations
 import json
 import os
-import shutil
 import sys
 from pathlib import Path
-from tests.helpers import PACKAGE, WorkspaceTest, remove_tree
+from tests.helpers import PACKAGE, WorkspaceTest, install_script, remove_tree
 from plovi import runner, manifest, state
 from plovi.util import WorkflowError, write_json
 
@@ -28,11 +27,7 @@ class RunnerTests(WorkspaceTest):
         self.env["WORKFLOW_TEST_SCENARIO"] = str(self.scenario)
         binaries = self.root / "bin"; binaries.mkdir()
         for name in ("codex", "claude", "agent"):
-            if os.name == "nt":
-                (binaries / (name + ".cmd")).write_text(f'@"{sys.executable}" "{PACKAGE / "tests/fixtures/provider_double.py"}" %*\r\n')
-                continue
-            shutil.copy(PACKAGE / "tests/fixtures/provider_double.py", binaries / name)
-            (binaries / name).chmod(0o755)
+            install_script(binaries, name, PACKAGE / "tests/fixtures/provider_double.py")
         os.environ["PATH"] = str(binaries) + os.pathsep + self.env["PATH"]
         self.env["PATH"] = os.environ["PATH"]
         plan_dir = self.root / "plans"; plan_dir.mkdir()
