@@ -16,6 +16,31 @@ PACKAGE = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PACKAGE / "runtime"))
 
 
+def windows_launcher(script, python=None):
+    """An .exe that runs script with this Python, or None without pip's launchers.
+
+    A .cmd shim goes through cmd.exe, which splits arguments at & and newlines.
+    pip builds its console scripts the same way: its distlib launcher, a shebang
+    line, then a zip whose __main__.py runs the script.
+    """
+    import importlib.util
+    import platform
+    import struct
+    import zipfile
+    spec = importlib.util.find_spec("pip")
+    if spec is None or not spec.submodule_search_locations:
+        return None
+    name = "t32.exe" if struct.calcsize("P") == 4 else "t64-arm.exe" if platform.machine().upper() == "ARM64" else "t64.exe"
+    launcher = Path(list(spec.submodule_search_locations)[0]) / "_vendor/distlib" / name
+    if not launcher.exists():
+        return None
+    archive = io.BytesIO()
+    with zipfile.ZipFile(archive, "w") as bundle:
+        bundle.writestr("__main__.py", f"import runpy\nrunpy.run_path({str(script)!r}, run_name='__main__')\n")
+    shebang = f'#!"{python or sys.executable}"\n'.encode()
+    return launcher.read_bytes() + shebang + archive.getvalue()
+
+
 def remove_tree(path):
     """Remove a tree that may hold read-only files, such as Git objects on Windows."""
     def retry(function, failed, _info):
@@ -146,7 +171,10 @@ class WorkspaceTest(unittest.TestCase):
         binary = self.root / "bin"
         binary.mkdir(exist_ok=True)
         fake = PACKAGE / "tests/fixtures/github_fake.py"
-        if os.name == "nt":
+        launcher = windows_launcher(fake) if os.name == "nt" else None
+        if launcher:
+            (binary / "gh.exe").write_bytes(launcher)
+        elif os.name == "nt":
             (binary / "gh.cmd").write_text(f'@"{sys.executable}" "{fake}" %*\r\n')
         else:
             shutil.copy(fake, binary / "gh")

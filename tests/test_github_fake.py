@@ -2,7 +2,9 @@
 import json
 import shutil
 import subprocess
-from tests.helpers import WorkspaceTest
+import sys
+import unittest
+from tests.helpers import PACKAGE, WorkspaceTest, windows_launcher
 
 
 class GithubFakeTests(WorkspaceTest):
@@ -24,6 +26,20 @@ class GithubFakeTests(WorkspaceTest):
 
     def calls(self):
         return json.loads(self.state_path.with_suffix(".calls.json").read_text())
+
+    def test_windows_launcher_passes_ampersands_and_newlines_intact(self):
+        launcher = windows_launcher(PACKAGE / "tests/fixtures/github_fake.py")
+        if launcher is None:
+            raise unittest.SkipTest("pip's script launchers are not installed")
+        # Python runs the launcher's zip payload directly; on Windows the .exe hands it the same argv.
+        (self.root / "gh.exe").write_bytes(launcher)
+        query = "query {\n  viewer\n}"
+        subprocess.run([sys.executable, str(self.root / "gh.exe"), "api", "graphql", "-f", f"query={query}"],
+                       env=self.env, cwd=self.root, capture_output=True, check=False)
+        subprocess.run([sys.executable, str(self.root / "gh.exe"), "api", "repos/octo/sample/issues?labels=a&state=open"],
+                       env=self.env, cwd=self.root, capture_output=True, check=True)
+        self.assertEqual([c["argv"] for c in self.calls()],
+                         [["api", "graphql", "-f", f"query={query}"], ["api", "repos/octo/sample/issues?labels=a&state=open"]])
 
     def test_unmapped_call_exits_99_with_its_argv(self):
         result = self.gh("release", "list", check=False)
