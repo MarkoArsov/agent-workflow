@@ -1,8 +1,10 @@
 # plovi roadmap refinement: research, target design and plan
 
-Status: proposal for review, 3 November 2026. Planning only: no product code, GitHub
-issues, PLAN.md or remote state were changed. Everything below is applied only after
-approval (section 7 lists the questions that block a recommendation).
+Status: approved on 3 November 2026 with every recommendation, including Q1–Q4.
+Applied to GitHub: S1 = #46, S2 = #47, S3 = #48, S4 = #49, N1 = #50, N2 = #51;
+#21, #23 and #25 rewritten; #18, #19, #20, #22, #24 and #41 amended; #26 closed;
+milestones reshaped. #18 (PR #45) was merged on 3 November 2026, so W0 is complete.
+The issues are the source of truth from here; this file records the research.
 
 Privacy note: the comparison with the earlier workflow is written at the level of
 behaviour, without its organisation, repository names, paths or identifiers, so that

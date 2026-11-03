@@ -1,5 +1,52 @@
 # plovi implementation plan
 
+## Approved direction: stabilise, then deliver the target scenario (3 November 2026)
+
+The user requested deep research and a roadmap refinement; the reviewed proposal
+is ai-plans/roadmap-refinement/proposal.md. The user approved every
+recommendation, including the four open decisions. Approved:
+
+1. Principle: fail closed at the edges (publishing, secrets, writes outside the
+   task's repositories, destructive commands, spending caps, merging); recover
+   in the middle (between an approved plan and a verified diff). Every stop names
+   its reason and the next command.
+2. Stabilization first, in the manual lane: #46 fast, reliable CI and tests;
+   #47 implement-owned fix loop, same-session challenges and simpler defaults;
+   #48 plan-time check validation, scoped verification and evidence-only claims;
+   #49 target-scenario acceptance harness, run statistics and the gate.
+3. Stable-enough gate (#49): main green on 10 consecutive runs with job medians
+   at or under 60% of their step timeouts; Ubuntu full suite at or under 150 s and
+   local at or under 4 min on 4 cores; 5 consecutive real pipeline runs with zero
+   interventions (2 roadmap-size, 1 bugfix with red proof, Claude and Codex both
+   used); every stop explained; the scenario steps of #18 and #46-#49 green.
+   After the gate the pipeline lane is the default; from wave 5 the factory
+   schedule builds issues up to M size on this repository.
+4. Decisions: unattended runs use the project's permission mode (trusted by
+   default, as in section 1); new tasks use task worktrees starting from the
+   remote base, with factory checkouts opt-in; issues filed by QA jobs are not
+   labelled for intake by default; PR CI runs Ubuntu 3.11/3.14, macOS 3.14 and
+   Windows 3.14, with macOS 3.11 and Windows 3.11 nightly.
+5. Defaults: containers and runtime pinning are opt-in; diff budgets are advisory
+   below a 4x ceiling; protected paths listed in an approved plan are
+   pre-approved; complete plan revisions rebind at stage boundaries; task-owned
+   commits and in-scope edits are adopted; skips are advisory unless a planned
+   identity is skipped; missing reports are decided by checks.
+6. Target scenario as the acceptance target: tests/scenario maps every step to
+   its owning issue; docs/coverage.md lists the live smoke checks doubles cannot
+   prove. New behaviour keys live in plovi.toml ([intake], [planning],
+   [pipeline], [delivery], [merge], [budgets], [targets.<name>]); detected
+   repository facts stay in .plovi/project.json.
+7. Issue changes: #21 rewritten (headless planning that auto-approves unless a
+   stop-list item applies); #23 rewritten as delivery and merge policies,
+   including auto-merge; #25 keeps take-over and #51 takes the Ask palette; #26
+   closed with its parts redistributed; #50 adds deployed targets and QA jobs
+   that file issues with dedupe, caps and loop guards; #18, #19, #20, #22, #24
+   and #41 amended. Milestones: 0 Stabilization, 2 Control plane and app,
+   3 Schedules, 4 Delivery and hands-on, 5 Polish.
+
+The earlier workflow was inspected read-only for behaviour only. No private
+names, paths or identifiers enter this repository. No publication is included.
+
 ## Approved follow-up: specify contract handoff (30 October 2026)
 
 The user requested checking full-contract and branch/commit behavior after a
@@ -492,7 +539,8 @@ The runner must be complete and usable, not a script that only prints prompts.
   record per-repository commit/push/PR state and resume without duplicating actions.
 - Plan revisions preserve audit history and rebind to a complete revision, invalidating
   the necessary downstream state rather than discarding unrelated completed work.
-- Bound retries and recovery. Permanent authentication/quota/model failures advance
+- Bound retries and recovery. Recoverable premature stops are challenged in the same
+  session a bounded number of times before escalation. Permanent authentication/quota/model failures advance
   only through approved fallbacks. Genuine input requests resume the exact asking
   provider/session; retries and route changes start fresh sessions.
 - Provide dry-run, preflight, detached execution, status, watch, resume, answer, and
