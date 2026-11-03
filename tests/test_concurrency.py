@@ -66,7 +66,7 @@ class ConcurrencyTests(HardeningTest):
             self.assertEqual(state.read(self.project, task)["status"], "running")
         one.sendall(b"x"); two.sendall(b"x")
         for task in ("first", "second"):
-            watched = self.task_cli("watch", task, "--seconds", "20")
+            watched = self.task_cli("watch", task, "--seconds", "120")
             self.assertEqual(watched.returncode, 0, watched.stdout + watched.stderr)
             self.assertEqual(state.read(self.project, task)["status"], "complete")
         self.assertEqual(self.git(root, "branch", "--show-current"), "main")

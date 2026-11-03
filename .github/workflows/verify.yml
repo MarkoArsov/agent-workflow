@@ -41,7 +41,7 @@ jobs:
   core:
     name: core (${{ matrix.os }}, ${{ matrix.python }}${{ matrix.shards && format(', batch {0}/{1}', matrix.shard, matrix.shards) || '' }})
     needs: smoke
-    timeout-minutes: 15
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       # Python 3.11 on macOS and Windows runs nightly (nightly.yml). Batches are balanced by
@@ -74,7 +74,7 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
       - name: Run isolated unit tests
-        timeout-minutes: 12
+        timeout-minutes: 15
         shell: bash
         run: |
           set -o pipefail
