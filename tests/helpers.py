@@ -138,6 +138,27 @@ class WorkspaceTest(unittest.TestCase):
         subprocess.run(["git", "clone", str(bare), str(path)], env=self.env, check=True, capture_output=True, text=True)
         return path
 
+    def install_github_fake(self, state=None):
+        """Install tests/fixtures/github_fake.py as gh, first on PATH; return its state file.
+
+        The fake knows only what the state scripts; it logs calls to <state>.calls.json.
+        """
+        binary = self.root / "bin"
+        binary.mkdir(exist_ok=True)
+        fake = PACKAGE / "tests/fixtures/github_fake.py"
+        if os.name == "nt":
+            (binary / "gh.cmd").write_text(f'@"{sys.executable}" "{fake}" %*\r\n')
+        else:
+            shutil.copy(fake, binary / "gh")
+            (binary / "gh").chmod(0o755)
+        path = self.root / "github-state.json"
+        path.write_text(json.dumps(state or {}, indent=1), encoding="utf-8")
+        for environment in (self.env, os.environ):
+            if str(binary) not in environment["PATH"].split(os.pathsep):
+                environment["PATH"] = str(binary) + os.pathsep + environment["PATH"]
+            environment["PLOVI_TEST_GITHUB_STATE"] = str(path)
+        return path
+
     def setup_project(self, path, patch=None):
         from plovi.setup import apply, propose
         p = propose(path, {"confirmed_defaults": True, "profile": patch or {}})
