@@ -18,3 +18,8 @@ AssertionError: Tuples differ: ('restricted', 'unattended default') != ('trusted
 Ran 2 tests in 5.257s
 FAILED (failures=1)
 
+== Step 2: autonomy tables
+Before runtime/plovi/autonomy.py existed, tests.test_autonomy failed to import (ModuleNotFoundError: plovi.autonomy).
+That is an import error, not behavioural red. Behavioural red for challenges is in step 5 (runner tests).
+test_resume_argv_per_provider pins existing provider behaviour the challenge and fix loops reuse; it passed before.
+
