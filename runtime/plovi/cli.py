@@ -5,7 +5,7 @@ import json
 import sys
 from pathlib import Path
 from . import __version__
-from .util import WorkflowError, json_text, read_json, atomic_write
+from .util import WorkflowError, json_text, read_json, atomic_write, is_interactive
 
 def context(args):
     from .project import resolve
@@ -211,7 +211,7 @@ def execute(args):
         from .entrypoint import launch
         project = context(args)
         result = launch(project, args.target, rebind=args.rebind, trusted=args.trusted, no_wait=args.no_wait)
-        if not args.no_watch and result.get("tracking", {}).get("mode") in {"auto", "current-terminal"} and sys.stdout.isatty() and result.get("status") in {"starting", "running", "waiting"}:
+        if not args.no_watch and result.get("tracking", {}).get("mode") in {"auto", "current-terminal"} and is_interactive(sys.stdout) and result.get("status") in {"starting", "running", "waiting"}:
             args._watched = True
             return watch(project, result["task"], json_output=args.json)
         return result
@@ -293,7 +293,7 @@ def execute(args):
         if args.command == "preflight" or args.dry_run:
             from . import policy
             from . import factory
-            unattended = getattr(args, 'detach', False) or not sys.stdin.isatty()
+            unattended = getattr(args, 'detach', False) or not is_interactive()
             saved = read_json(__import__('plovi.state', fromlist=['directory']).directory(project, plan['task']) / 'state.json', {})
             execution = saved.get('execution') or policy.execution(project, plan, trusted=args.trusted, unattended=unattended)
             strategies = factory.strategies(project, plan, unattended=unattended, prior=saved)
@@ -310,7 +310,7 @@ def execute(args):
         from .operations.plans import worker_gate
         # Only the background worker enforces a prior plan approval; explicit runs approved it at launch.
         gate = bool(args.unattended or operations.WORKER) and worker_gate(project, plan)
-        return runner.run(project, plan, trusted=args.trusted, no_wait=args.no_wait, unattended=args.unattended or not sys.stdin.isatty(),
+        return runner.run(project, plan, trusted=args.trusted, no_wait=args.no_wait, unattended=args.unattended or not is_interactive(),
                           pull_isolation_image=args.pull_isolation_image, require_plan_approval=gate)
     if args.command == "watch":
         from . import state

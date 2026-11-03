@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 from .profile import validate
-from .util import WorkflowError, common_dir, contained, read_json, user_data, run, write_json
+from .util import WorkflowError, common_dir, contained, read_json, same_path, user_data, run, write_json
 from .migration import configuration, migrate as migrate_project, CURRENT, LEGACY
 
 def marker(path):
@@ -35,7 +35,7 @@ class Project:
         return contained(self.root, self.repository(name)["path"])
 
     def accepts(self, start: Path) -> bool:
-        if start == self.root:
+        if same_path(start, self.root):
             return True
         active_common = common_dir(start)
         for repo in self.profile["repositories"]:
@@ -86,7 +86,7 @@ def resolve(start: Path | str = ".", explicit: Path | str | None = None, *, migr
                 owner = load(Path(allocation['configuration_root']), migrate=False)
                 target = factory_projects.joinpath(*parts[:4])
                 if (owner.profile['project']['id'] == project_id and owns(owner, repository, target)
-                        and (not explicit or Path(explicit).expanduser().resolve() == owner.root)):
+                        and (not explicit or same_path(Path(explicit).expanduser(), owner.root))):
                     return owner
                 raise WorkflowError('Factory worktree does not match its recorded project ownership')
     def accept(root, reference=None):
@@ -115,7 +115,7 @@ def resolve(start: Path | str = ".", explicit: Path | str | None = None, *, migr
         return project
     common = common_dir(start)
     metadata = run(["git", "rev-parse", "--git-dir"], start, check=False)
-    is_worktree = bool(common and metadata.returncode == 0 and (start / metadata.stdout.strip()).resolve() != common)
+    is_worktree = bool(common and metadata.returncode == 0 and not same_path(start / metadata.stdout.strip(), common))
     if explicit:
         project = accept(Path(explicit))
         if project is None:

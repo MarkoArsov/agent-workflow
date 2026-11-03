@@ -1,11 +1,14 @@
 import json
 import tomllib
-from tests.helpers import WorkspaceTest
+from tests.helpers import InProcessCli, WorkspaceTest
 from plovi.setup import apply, propose
 from plovi.util import WorkflowError
 
 
-class PolicyTests(WorkspaceTest):
+class PolicyTests(InProcessCli, WorkspaceTest):
+    SUBPROCESS_TESTS = frozenset({"test_policy_show_reports_effective_value_and_source",
+                                  "test_set_requires_review_and_preserves_unrelated_crlf_comments"})
+
     def project_fixture(self):
         root = self.repo("app")
         return self.setup_project(root)

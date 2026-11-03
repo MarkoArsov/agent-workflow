@@ -1,0 +1,166 @@
+{
+  "advisories": [
+    {
+      "reason": "explicit-route-below-recommended-band",
+      "stage": "implement"
+    },
+    {
+      "reason": "explicit-route-below-recommended-band",
+      "stage": "specify"
+    }
+  ],
+  "details": {
+    "implement": {
+      "configured_default_source": "unknown",
+      "effort_mapping": {
+        "reason": "explicit-route",
+        "reviewed": "high",
+        "selected": null
+      },
+      "effort_mode": "demanding",
+      "eligibility": [],
+      "eligibility_truncated": 0,
+      "fact_sources": {
+        "complexity": "built-in",
+        "kind": "task",
+        "risk": "task",
+        "size": "task",
+        "test_files": "task",
+        "test_lines": "task",
+        "uncertain": "task"
+      },
+      "facts": {
+        "complexity": "routine",
+        "kind": "code",
+        "risk": "standard",
+        "size": "large",
+        "test_files": 12,
+        "test_lines": 450,
+        "uncertain": true
+      },
+      "lineage_slack": 1,
+      "ordered_routes": [
+        {
+          "model": "gpt-6.1-sol",
+          "provider": "codex"
+        },
+        {
+          "model": "opus",
+          "provider": "claude"
+        }
+      ],
+      "prior_lineages": [],
+      "providers": [
+        "claude",
+        "codex"
+      ],
+      "required_band": "deep",
+      "required_capabilities": [],
+      "requirement_reason": "consequential-or-complex",
+      "route_source": "legacy-explicit-route",
+      "suggestions": [],
+      "unresolved": []
+    },
+    "specify": {
+      "configured_default_source": "unknown",
+      "effort_mapping": {
+        "reason": "explicit-route",
+        "reviewed": "high",
+        "selected": null
+      },
+      "effort_mode": "demanding",
+      "eligibility": [],
+      "eligibility_truncated": 0,
+      "fact_sources": {
+        "complexity": "built-in",
+        "kind": "task",
+        "risk": "task",
+        "size": "task",
+        "test_files": "task",
+        "test_lines": "task",
+        "uncertain": "task"
+      },
+      "facts": {
+        "complexity": "routine",
+        "kind": "code",
+        "risk": "standard",
+        "size": "large",
+        "test_files": 12,
+        "test_lines": 450,
+        "uncertain": true
+      },
+      "lineage_slack": 1,
+      "ordered_routes": [
+        {
+          "model": "gpt-6.1-sol",
+          "provider": "codex"
+        },
+        {
+          "model": "opus",
+          "provider": "claude"
+        }
+      ],
+      "prior_lineages": [],
+      "providers": [
+        "claude",
+        "codex"
+      ],
+      "required_band": "deep",
+      "required_capabilities": [],
+      "requirement_reason": "consequential-or-complex",
+      "route_source": "legacy-explicit-route",
+      "suggestions": [],
+      "unresolved": []
+    }
+  },
+  "evaluator_version": "1.2.0",
+  "notice": "No model catalogue; retaining configured routes. Run update-models when convenient.",
+  "provenance": {
+    "catalogue": "9aecf438c3f923ce02f488be25cae648068d632535d5ec4d38b0fa6abb6b055f",
+    "facts": {
+      "kind": "code",
+      "repository_count": 1,
+      "risk": "standard",
+      "size": "large",
+      "stages": [
+        "specify",
+        "implement"
+      ],
+      "test_files": 12,
+      "test_lines": 450,
+      "uncertain": true
+    },
+    "policy": "3c7d03f86602c435d0771f98e34a76bebfd100cc00bbd8ea18722b2b0ce10aa7",
+    "registry": "906caf9f74c729ddf882cba34d3fdf9b45082cc375ca45bca1882dcb955622e2",
+    "settings": "67535511623c2adec7f55518c96306aba6da5791b7a6dd875a6e5905ce55bf34"
+  },
+  "reasons": {
+    "implement": "explicit-route",
+    "specify": "explicit-route"
+  },
+  "routes": {
+    "implement": [
+      {
+        "model": "gpt-6.1-sol",
+        "provider": "codex"
+      },
+      {
+        "model": "opus",
+        "provider": "claude"
+      }
+    ],
+    "specify": [
+      {
+        "model": "gpt-6.1-sol",
+        "provider": "codex"
+      },
+      {
+        "model": "opus",
+        "provider": "claude"
+      }
+    ]
+  },
+  "schema_version": 1,
+  "snapshot_hash": "89dc2a158e336579c64e98f183039f30710a07551ee598e4d8b9c15d43f4c8aa",
+  "unresolved": []
+}

@@ -2,7 +2,7 @@
 from __future__ import annotations
 from pathlib import Path
 from .state import lock
-from .util import WorkflowError, contained, common_dir, git, identifier, read_json, write_json
+from .util import WorkflowError, contained, common_dir, git, identifier, read_json, same_path, write_json
 
 
 def receipt_path(project, task):
@@ -112,7 +112,7 @@ def start(project, task, *, repositories=None, base=None, resume=False):
                     from .state import directory as state_directory
                     for other in path.parent.glob('*.json'):
                         receipt = read_json(other, {})
-                        if any(Path(item.get('path', '')).resolve() == root.resolve()
+                        if any(item.get('path') and same_path(item['path'], root)
                                for item in receipt.get('repositories', [])):
                             other_task = receipt.get('task')
                             status = read_json(state_directory(project, other_task) / 'state.json', {}).get('status')

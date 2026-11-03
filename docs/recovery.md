@@ -145,8 +145,11 @@ A feature branch without a PR can be checked with **Run workflow** in GitHub Act
 New updates cancel superseded verification runs for that PR or branch; documentation
 publishing uses a separate concurrency group.
 
-The six `core` jobs run isolated tests on Linux, macOS, and Windows with Python 3.11
-and 3.14. The `audit` job checks generated documentation and public content once,
+The `smoke` job runs first, in under two minutes. It compiles the sources, runs
+the smoke tier of tests and checks generated documentation. Every other job waits
+for it, so a basic break fails fast. The `core` jobs then run every test in
+parallel workers: Linux with Python 3.11 and 3.14, macOS with 3.14, and Windows
+with 3.14 in three shards. The `audit` job checks public content once,
 including all fetched reachable history. The `docs` job checks the built site.
 `windows-install` installs the checked-out source in Windows PowerShell 5.1 and
 reinstalls it in PowerShell 7 using temporary child environments. This proves local
@@ -154,7 +157,10 @@ installation, discovery stability, and the installed command; it does not prove
 remote archive availability. Keep the documented remote bootstrap release smoke
 check separate.
 
-Read the failing step first. A failed test or audit stays blocking; there is no
+Read the failing step first. The job summary lists failing tests and the ten
+slowest. A test that hangs fails after 120 seconds and prints the stack of every
+thread, so the log shows where it stopped. The tests its worker had not reached
+are listed as not run. A failed test or audit stays blocking; there is no
 blanket retry or success override. Failed jobs retain their diagnostic logs as
 artifacts for seven days and add a short job summary. These logs come from isolated
 checks, not from a dump of the runner's credentials or environment.
@@ -167,7 +173,12 @@ inside a final `Co-Authored-By` trailer block. That exception does not apply to 
 file content or to other addresses, and a supplied private denylist still takes
 precedence. Investigate an unexpected finding before changing the policy.
 
-To reproduce the shared audit locally:
+The **Nightly** workflow runs every operating system with Python 3.11 and 3.14
+each night, and from **Run workflow**. A nightly failure on 3.11 that pull requests
+did not catch is a real defect; reproduce it with that Python version and
+`python3 scripts/run_tests.py --jobs auto`.
+
+To reproduce the generated-documentation and history checks locally:
 
 ```sh
 python3 scripts/generate_docs.py --check

@@ -5,7 +5,7 @@ import math
 import fnmatch
 from pathlib import Path
 from .profile import BASE_STAGES, PROVIDERS, validate_command
-from .util import WorkflowError, contained, digest, identifier, json_text, read_json
+from .util import WorkflowError, contained, digest, identifier, is_absolute_anywhere, json_text, read_json
 
 PUBLISH = {"commit-and-push", "draft-pr"}
 PHASES = {"setup", "red", "green"}
@@ -85,7 +85,7 @@ def validate(value, project):
             if not row.get("paths"):
                 raise WorkflowError(f"{name}: writable paths are required")
         for pattern in row.get("paths", []) + row.get("test_paths", []):
-            if not isinstance(pattern, str) or Path(pattern).is_absolute() or ".." in Path(pattern).parts:
+            if not isinstance(pattern, str) or is_absolute_anywhere(pattern) or ".." in Path(pattern).parts:
                 raise WorkflowError("Task paths must stay inside their repository")
     if not any(x["access"] == "write" for x in repositories):
         raise WorkflowError("Select at least one writable repository")
@@ -145,7 +145,7 @@ def validate(value, project):
         if key not in value.get("plan_files", []):
             raise WorkflowError(f"Full plans must include {key}")
     for name in value["plan_files"]:
-        if Path(name).is_absolute() or ".." in Path(name).parts:
+        if is_absolute_anywhere(name) or ".." in Path(name).parts:
             raise WorkflowError("Plan files must be relative to the manifest")
     if PUBLISH.intersection(stages):
         delivery = value.get("delivery", {})
@@ -207,7 +207,7 @@ def validate(value, project):
                 or not entry["argv"] or not all(isinstance(arg, str) and re.fullmatch(SAFE_ARGUMENT, arg) for arg in entry["argv"])):
             raise WorkflowError("allowed_commands: each entry needs an argv list of plain arguments, without spaces or shell syntax")
         cwd = entry.get("cwd", ".")
-        if not isinstance(cwd, str) or Path(cwd).is_absolute() or ".." in Path(cwd).parts:
+        if not isinstance(cwd, str) or is_absolute_anywhere(cwd) or ".." in Path(cwd).parts:
             raise WorkflowError("allowed_commands: cwd must stay inside the repository")
     return value
 

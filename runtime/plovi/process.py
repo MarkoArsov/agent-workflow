@@ -46,8 +46,8 @@ def spawn(argv, **options):
     anything it starts later joins the same job.
     """
     if not WINDOWS:
-        return subprocess.Popen(executable(argv), start_new_session=True, **options)
-    process = subprocess.Popen(executable(argv), **options,
+        return subprocess.Popen(resolve(argv, options.get("env")), start_new_session=True, **options)
+    process = subprocess.Popen(resolve(argv, options.get("env")), **options,
                                creationflags=subprocess.CREATE_NEW_PROCESS_GROUP | 0x4)  # CREATE_SUSPENDED
     job = _kernel32.CreateJobObjectW(None, None)
     if not job or not _kernel32.AssignProcessToJobObject(job, int(process._handle)):
@@ -58,12 +58,14 @@ def spawn(argv, **options):
     _ntdll.NtResumeProcess(int(process._handle))
     return process
 
-def executable(argv):
-    """Windows finds only .exe files by bare name; agent CLIs are often .cmd shims."""
+def resolve(argv, env=None):
+    """Find a bare command on the child's PATH. Windows CreateProcess finds only .exe files, and CLIs are often .cmd shims."""
     argv = [str(x) for x in argv]
-    if WINDOWS and argv and not Path(argv[0]).suffix:
-        argv[0] = shutil.which(argv[0]) or argv[0]
+    if argv and not os.path.dirname(argv[0]):
+        argv[0] = shutil.which(argv[0], path=(env if env is not None else os.environ).get("PATH")) or argv[0]
     return argv
+
+executable = resolve
 
 class Reader:
     """Read a child's output with a bounded wait. Windows pipes are not selectable, so use a thread there."""

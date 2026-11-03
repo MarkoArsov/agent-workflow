@@ -10,47 +10,67 @@ concurrency:
 permissions:
   contents: read
 jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      - name: Compile, run the smoke tier and check generated documentation
+        shell: bash
+        run: |
+          set -o pipefail
+          python -m compileall -q runtime scripts tests 2>&1 | tee "$RUNNER_TEMP/smoke.log"
+          python scripts/run_tests.py --tier smoke --jobs auto --summary "$GITHUB_STEP_SUMMARY" 2>&1 | tee -a "$RUNNER_TEMP/smoke.log"
+          python scripts/generate_docs.py --check 2>&1 | tee -a "$RUNNER_TEMP/smoke.log"
+      - name: Summarize failure
+        if: failure()
+        shell: bash
+        run: echo 'Smoke checks failed, so the full matrix did not start. Read the failing command above or download the smoke log.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Preserve smoke failure log
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: smoke
+          path: ${{ runner.temp }}/smoke.log
+          retention-days: 7
   core:
     name: core (${{ matrix.os }}, ${{ matrix.python }}${{ matrix.shards && format(', batch {0}/{1}', matrix.shard, matrix.shards) || '' }})
-    timeout-minutes: 15
+    needs: smoke
+    timeout-minutes: 25
     strategy:
       fail-fast: false
+      # Python 3.11 on macOS and Windows runs nightly (nightly.yml).
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-        python: ["3.11", "3.14"]
-        shard: [1]
         include:
+          - os: ubuntu-latest
+            python: "3.11"
+            jobs: auto
+          - os: ubuntu-latest
+            python: "3.14"
+            jobs: auto
+          - os: macos-latest
+            python: "3.14"
+            jobs: auto
           - os: windows-latest
+            python: "3.14"
             shard: 1
             shards: 3
-          - os: windows-latest
-            python: "3.11"
-            shard: 2
-            shards: 3
-          - os: windows-latest
-            python: "3.11"
-            shard: 3
-            shards: 3
+            jobs: 2
           - os: windows-latest
             python: "3.14"
             shard: 2
             shards: 3
+            jobs: 2
           - os: windows-latest
             python: "3.14"
             shard: 3
             shards: 3
-          # macOS runners take about as long as the whole step allows, so they also run in batches.
-          - os: macos-latest
-            shard: 1
-            shards: 2
-          - os: macos-latest
-            python: "3.11"
-            shard: 2
-            shards: 2
-          - os: macos-latest
-            python: "3.14"
-            shard: 2
-            shards: 2
+            jobs: 2
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7
@@ -60,25 +80,27 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
       - name: Run isolated unit tests
-        timeout-minutes: 12
+        timeout-minutes: 20
         shell: bash
         run: |
           set -o pipefail
-          python scripts/run_tests.py --shard ${{ matrix.shard }} --shards ${{ matrix.shards || 1 }} --timings "$RUNNER_TEMP/test-timings.json" 2>&1 | tee "$RUNNER_TEMP/tests.log"
+          python scripts/run_tests.py --shard ${{ matrix.shard || 1 }} --shards ${{ matrix.shards || 1 }} --jobs ${{ matrix.jobs }} --timings "$RUNNER_TEMP/test-timings.json" --results-dir "$RUNNER_TEMP/test-results" --summary "$GITHUB_STEP_SUMMARY" 2>&1 | tee "$RUNNER_TEMP/tests.log"
       - name: Summarize failure
         if: failure()
         shell: bash
-        run: echo 'Unit tests failed. Read the failing test above or download the test log artifact.' >> "$GITHUB_STEP_SUMMARY"
-      - name: Preserve test log and timings
+        run: echo 'Unit tests failed. The failing tests are listed above; download the test log artifact for tracebacks and per-test timeout stacks.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Preserve test log, worker results and timings
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: tests-${{ matrix.os }}-${{ matrix.python }}-${{ matrix.shard }}
+          name: tests-${{ matrix.os }}-${{ matrix.python }}-${{ matrix.shard || 1 }}
           path: |
             ${{ runner.temp }}/tests.log
             ${{ runner.temp }}/test-timings.json
+            ${{ runner.temp }}/test-results/
           retention-days: 7
   audit:
+    needs: smoke
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -89,11 +111,10 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
-      - name: Check generated documentation and public history
+      - name: Check public history
         shell: bash
         run: |
           set -o pipefail
-          python scripts/generate_docs.py --check 2>&1 | tee "$RUNNER_TEMP/generated-docs.log"
           python scripts/check_public_content.py --history 2>&1 | tee "$RUNNER_TEMP/public-content.log"
       - name: Summarize failure
         if: failure()
@@ -104,11 +125,10 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: repository-audit
-          path: |
-            ${{ runner.temp }}/generated-docs.log
-            ${{ runner.temp }}/public-content.log
+          path: ${{ runner.temp }}/public-content.log
           retention-days: 7
   windows-install:
+    needs: smoke
     runs-on: windows-latest
     timeout-minutes: 10
     steps:
@@ -181,6 +201,7 @@ jobs:
           path: ${{ runner.temp }}/windows-install.log
           retention-days: 7
   docs:
+    needs: smoke
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:

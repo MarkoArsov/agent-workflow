@@ -9,12 +9,12 @@ from tests.helpers import PACKAGE, WorkspaceTest
 
 
 class CIWorkflowTests(WorkspaceTest):
-    def workflow(self):
-        return (PACKAGE / '.github/workflows/verify.yml').read_text()
+    def workflow(self, name='verify'):
+        return (PACKAGE / f'.github/workflows/{name}.yml').read_text()
 
-    def job(self, name):
+    def job(self, name, workflow='verify'):
         match = re.search(r'^  ' + re.escape(name) + r':\n(.*?)(?=^  [\w-]+:|\Z)',
-                          self.workflow(), re.M | re.S)
+                          self.workflow(workflow), re.M | re.S)
         self.assertIsNotNone(match, name)
         return match[1]
 
@@ -35,13 +35,11 @@ class CIWorkflowTests(WorkspaceTest):
         self.assertNotIn('fetch-depth: 0', self.job('core'))
         self.assertIn('fetch-depth: 0', self.job('audit'))
         self.assertIn('--history', self.job('audit'))
-        self.assertIn('os: [ubuntu-latest, macos-latest, windows-latest]', self.job('core'))
-        self.assertIn('python: ["3.11", "3.14"]', self.job('core'))
         self.assertNotIn('continue-on-error', text)
         self.assertNotIn('contents: write', text)
 
     def test_failed_jobs_retain_logs_with_timeouts(self):
-        for name in ['core', 'audit', 'windows-install', 'docs']:
+        for name in ['smoke', 'core', 'audit', 'windows-install', 'docs']:
             with self.subTest(job=name):
                 job = self.job(name)
                 self.assertRegex(job, r'timeout-minutes: \d+')
@@ -50,28 +48,54 @@ class CIWorkflowTests(WorkspaceTest):
                 self.assertIn('retention-days: 7', job)
         self.assertIn('pipefail', self.job('core'))
 
-    def test_windows_batches_cover_both_python_versions_and_keep_diagnostics(self):
-        core = self.job('core')
-        self.assertIn('shard: [1]', core)
-        self.assertRegex(core, r'os: windows-latest\s+shard: 1\s+shards: 3')
-        for version in ('3.11', '3.14'):
-            for shard in (2, 3):
-                self.assertRegex(core, r'os: windows-latest\s+python: "' + re.escape(version)
-                                 + r'"\s+shard: ' + str(shard) + r'\s+shards: 3')
-        self.assertIn('python scripts/run_tests.py', core)
-        self.assertIn('--shard ${{ matrix.shard }}', core)
-        self.assertIn('--shards ${{ matrix.shards || 1 }}', core)
-        self.assertIn('--timings "$RUNNER_TEMP/test-timings.json"', core)
-        self.assertRegex(core, r'name: Run isolated unit tests\s+timeout-minutes: 12')
-        self.assertIn('if: always()', core)
-        self.assertIn('name: tests-${{ matrix.os }}-${{ matrix.python }}-${{ matrix.shard }}', core)
-        self.assertIn('${{ runner.temp }}/test-timings.json', core)
+    def matrix(self, workflow):
+        entries = re.findall(r'- os: (\S+)\n\s+python: "([\d.]+)"\n(?:\s+shard: (\d)\n\s+shards: (\d)\n)?\s+jobs: (\w+)',
+                             self.job('core', workflow))
+        return sorted(entries)
 
-    def test_macos_batches_cover_both_python_versions(self):
+    def test_pull_request_matrix_and_nightly_matrix(self):
+        windows = lambda version: [('windows-latest', version, str(n), '3', '2') for n in (1, 2, 3)]
+        self.assertEqual(self.matrix('verify'), sorted([
+            ('macos-latest', '3.14', '', '', 'auto'), ('ubuntu-latest', '3.11', '', '', 'auto'),
+            ('ubuntu-latest', '3.14', '', '', 'auto'), *windows('3.14')]))
+        self.assertEqual(self.matrix('nightly'), sorted([
+            *[(os, version, '', '', 'auto') for os in ('ubuntu-latest', 'macos-latest') for version in ('3.11', '3.14')],
+            *windows('3.11'), *windows('3.14')]))
+        nightly = self.workflow('nightly')
+        self.assertIn('cron: "17 2 * * *"', nightly)
+        self.assertIn('workflow_dispatch:', nightly)
+        self.assertIn('contents: read', nightly)
+
+    def test_nightly_runs_the_same_test_steps_as_core(self):
+        steps = lambda workflow: self.job('core', workflow).split('    steps:\n', 1)[1]
+        self.assertEqual(steps('nightly'), steps('verify'))
+        self.assertIn("format(', batch {0}/{1}', matrix.shard, matrix.shards)", self.job('core', 'nightly'))
+
+    def test_smoke_gates_every_other_job(self):
+        smoke = self.job('smoke')
+        self.assertIn('timeout-minutes: 5', smoke)
+        self.assertIn('python -m compileall -q runtime scripts tests', smoke)
+        self.assertIn('python scripts/run_tests.py --tier smoke --jobs auto', smoke)
+        self.assertIn('python scripts/generate_docs.py --check', smoke)
+        for name in ['core', 'audit', 'windows-install', 'docs']:
+            with self.subTest(job=name):
+                self.assertRegex(self.job(name), r'(?m)^    needs: smoke$')
+
+    def test_core_runs_parallel_shards_and_keeps_diagnostics(self):
         core = self.job('core')
-        self.assertRegex(core, r'os: macos-latest\s+shard: 1\s+shards: 2')
-        for version in ('3.11', '3.14'):
-            self.assertRegex(core, r'os: macos-latest\s+python: "' + re.escape(version) + r'"\s+shard: 2\s+shards: 2')
+        self.assertIn('python scripts/run_tests.py', core)
+        self.assertIn('--shard ${{ matrix.shard || 1 }}', core)
+        self.assertIn('--shards ${{ matrix.shards || 1 }}', core)
+        self.assertIn('--jobs ${{ matrix.jobs }}', core)
+        self.assertIn('--timings "$RUNNER_TEMP/test-timings.json"', core)
+        self.assertIn('--results-dir "$RUNNER_TEMP/test-results"', core)
+        self.assertIn('--summary "$GITHUB_STEP_SUMMARY"', core)
+        self.assertRegex(core, r'name: Run isolated unit tests\s+timeout-minutes: 20')
+        self.assertRegex(core, r'(?m)^    timeout-minutes: 25$')
+        self.assertIn('if: always()', core)
+        self.assertIn('name: tests-${{ matrix.os }}-${{ matrix.python }}-${{ matrix.shard || 1 }}', core)
+        self.assertIn('${{ runner.temp }}/test-timings.json', core)
+        self.assertIn('${{ runner.temp }}/test-results/', core)
         self.assertIn("format(', batch {0}/{1}', matrix.shard, matrix.shards)", core)
 
     def smoke_code(self):

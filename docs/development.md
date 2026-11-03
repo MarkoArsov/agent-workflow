@@ -32,7 +32,7 @@ Python 3.11+ runs the installer, runtime, and tests with the standard library.
 The checkout uses an installer-owned layout rather than a pip distribution.
 
 ~~~sh
-python3 -m unittest discover -s tests -v
+python3 scripts/run_tests.py --jobs auto
 python3 scripts/generate_docs.py --check
 python3 scripts/check_public_content.py --history
 python3 -m venv .venv
@@ -45,13 +45,42 @@ python3 -m venv .venv
 The E2E fixture needs permission to listen on localhost.
 Tests must use their isolated HOME and provider configuration; never test installation against your real settings.
 
-CI runs the full suite on Linux and macOS. Each Windows Python version runs the
-same suite in three deterministic batches on separate runners, so long installation
-and migration checks fit within the existing job limit. No tests are omitted.
-To reproduce one batch, run `python3 scripts/run_tests.py --shard 1 --shards 3`.
-Use `--list` to inspect its test IDs. CI retains each batch's log and per-test
-timings for seven days, including successful runs. A test-step deadline leaves
-time for those artifacts to upload before the job deadline.
+### Run tests quickly
+
+`scripts/run_tests.py` runs the suite in worker processes. Plain
+`python3 -m unittest discover -s tests -v` still works and runs everything serially.
+
+| Command | What it runs |
+|---|---|
+| `--jobs auto` | Every test, in up to 8 workers (one per CPU). `--jobs N` picks the count. |
+| `--changed` | Tests that import a changed `runtime/plovi` module or were changed themselves, plus the smoke tier. Compares with `origin/main`, else `main`; `--base REF` picks another. |
+| `--tier smoke` | The fast modules listed in `tests/tiers.json`. |
+| `--per-test-timeout 30` | Fails a test that runs longer than 30 seconds. The default is 120, or `PLOVI_TEST_TIMEOUT`. |
+| `--shard 1 --shards 3` | One deterministic third of the tests, as a CI batch runs them. Combines with `--jobs`. |
+| `--list` | The selected test IDs, without running them. |
+
+While you fix something, run `--changed`. Before a pull request, run `--jobs auto`.
+When only documentation or task plans changed, `--changed` selects no tests and
+says to run the docs checks. A workflow change selects the CI workflow tests, and
+any other file selects the tests that name it. A change to `tests/helpers.py`, a
+fixture, or a file no test names selects every test.
+
+Each worker runs whole modules. A run balances them using the timings it records
+in `.plovi/local/test-timings.json`, which Git ignores. Slow modules, listed in
+`tests/tiers.json`, start first. Each worker prints its output when it finishes.
+All failures follow at the end, with the ten slowest tests.
+
+A test that exceeds its timeout prints the stack of every thread and fails. Its
+worker stops, and the tests it had not reached are reported as not run. The other
+workers carry on. A worker that exits without results fails the run and names
+its modules.
+
+CI runs a smoke job first: it compiles the sources, runs the smoke tier and checks
+generated documentation. The full matrix starts only when smoke passes. Pull
+requests run Ubuntu with Python 3.11 and 3.14, macOS with 3.14, and Windows with
+3.14 in three shards. A nightly workflow also runs macOS and Windows with 3.11.
+CI keeps each job's log, worker results and per-test timings for seven days,
+including successful runs.
 
 The optional local host check, `python3 scripts/host_smoke.py`, validates installed command interfaces and exercises Claude plugin lifecycle in a temporary configuration. It does not generate model responses or publish anything.
 

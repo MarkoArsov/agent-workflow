@@ -5,8 +5,9 @@ import json
 import os
 import re
 import subprocess
+import sys
 import tempfile
-from pathlib import Path
+from pathlib import Path, PurePosixPath, PureWindowsPath
 
 class WorkflowError(Exception):
     """An actionable configuration or execution failure."""
@@ -59,9 +60,32 @@ def identifier(value: str) -> str:
         raise WorkflowError(f"Invalid identifier: {value!r}")
     return value
 
-def run(argv, cwd: Path, *, check=True, timeout=60, env=None):
+def is_interactive(stream=None) -> bool:
+    """Whether a person can answer on this stream. Windows reports the NUL device as a TTY; ask the console instead."""
+    stream = sys.stdin if stream is None else stream
     try:
-        result = subprocess.run([str(x) for x in argv], cwd=cwd, text=True,
+        if os.name != "nt":
+            return stream.isatty()
+        import ctypes
+        import msvcrt
+        mode = ctypes.c_uint32()
+        handle = msvcrt.get_osfhandle(stream.fileno())
+        return bool(ctypes.windll.kernel32.GetConsoleMode(ctypes.c_void_p(handle), ctypes.byref(mode)))
+    except Exception:
+        return False
+
+def is_absolute_anywhere(value: str) -> bool:
+    """True for a path that is absolute, rooted or drive-qualified on any platform."""
+    return (PurePosixPath(value).is_absolute() or PureWindowsPath(value).is_absolute()
+            or bool(PureWindowsPath(value).drive) or value.startswith(("\\", "/")))
+
+def same_path(a, b) -> bool:
+    return os.path.normcase(os.path.realpath(a)) == os.path.normcase(os.path.realpath(b))
+
+def run(argv, cwd: Path, *, check=True, timeout=60, env=None):
+    from .process import resolve
+    try:
+        result = subprocess.run(resolve(argv, env), cwd=cwd, text=True,
                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                 timeout=timeout, env=env)
     except (OSError, subprocess.TimeoutExpired) as exc:

@@ -8,7 +8,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from tests.helpers import PACKAGE, WorkspaceTest
+from tests.helpers import PACKAGE, WorkspaceTest, remove_tree
 
 
 class FactoryCheckoutTests(WorkspaceTest):
@@ -57,8 +57,7 @@ class FactoryCheckoutTests(WorkspaceTest):
         )
         self.git(tmp, "commit", "--allow-empty", "-m", message)
         self.git(tmp, "push", "origin", "HEAD")
-        import shutil
-        shutil.rmtree(tmp)
+        remove_tree(tmp)
         return self.git(bare, "rev-parse", "refs/heads/main")
 
     def _checkout_path(self, result, repo_id="app"):
