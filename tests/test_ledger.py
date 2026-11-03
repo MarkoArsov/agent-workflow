@@ -47,6 +47,7 @@ SAMPLES = {
     "pause.requested": ({"run_id": RUN}, []),
     "cancel.requested": ({"run_id": RUN}, []),
     "project.unregistered": ({"root": "/fixture/app"}, []),
+    "checkpoint.migrated": ({"binding_sha256": "f" * 64}, ["binding_sha256"]),
 }
 
 
@@ -267,6 +268,29 @@ class LedgerTests(ControlPlaneMixin, WorkspaceTest):
             self.append("task.created", {"branches": large})
         self.assertEqual(sum(len(p.read_bytes()) for p in self.month_files()), size)
 
+    def test_recorder_writes_provider_usage_cost_red_proof_and_files_changed(self):
+        from plovi import ledger
+        manifest = {"task": "sample", "stages": ["implement-tests", "implement"], "repositories": [{"id": "app", "branch": "codex/sample"}]}
+        recorder = ledger.Recorder(self.project, manifest)
+        state = {"run_id": RUN, "status": "running", "completed": [], "manifest_path": "plans/pipeline.json", "plan_sha256": "a" * 64}
+        recorder.started(state)
+        recorder.attempt(state, {"id": 0, "stage": "implement", "classification": "complete", "route": {"provider": "claude"},
+                                 "usage": {"input_tokens": 120, "output_tokens": 45, "cache_read_input_tokens": 9}, "cost_usd": 0.25}, "a/0.json")
+        recorder.attempt(state, {"id": 1, "stage": "implement", "classification": "complete", "route": {"provider": "codex"},
+                                 "usage": None, "cost_usd": None}, "a/1.json")
+        state["delivery"] = {"app": {"commit": "c" * 40, "pushed": True, "intent": {"paths": ["a.py", "b.py", "c.py"]},
+                                     "pr": "https://example.invalid/pull/3"}}
+        recorder.saved(state)
+        events = {e["type"]: e for e in self.task_events()}
+        self.assertIs(events["run.started"]["data"]["red_proof"], True)
+        attempts = [e["data"] for e in self.task_events() if e["type"] == "attempt.finished"]
+        self.assertEqual([(a["provider"], a.get("usage"), a.get("cost_usd")) for a in attempts],
+                         [("claude", {"input_tokens": 120, "output_tokens": 45}, 0.25), ("codex", None, None)])
+        self.assertEqual(events["pr.opened"]["data"]["files_changed"], 3)
+        waived = ledger.Recorder(self.project, dict(manifest, approved_no_red_reason="Red is shown by the fixture"))
+        self.assertFalse(ledger.red_proof(waived.manifest))
+        self.assertFalse(ledger.red_proof({"stages": ["implement", "review"]}))
+
 
 class LedgerCliTests(ControlPlaneMixin, HardeningTest):
     def test_runner_transitions_are_listed_by_events(self):
@@ -301,3 +325,4 @@ class LedgerCliTests(ControlPlaneMixin, HardeningTest):
         self.assertTrue(text.strip())
         with self.assertRaises(ValueError):
             json.loads(text)
+

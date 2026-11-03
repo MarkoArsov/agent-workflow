@@ -64,31 +64,34 @@ The person name comes from `git config user.name` in the project root, else `loc
 |---|---|---|
 | `task.created` | `branches`, `issue`?, `title`? | `plovi task start` allocates a task. |
 | `task.claimed` | `run_id` | The runner owns the task. |
-| `run.started` | `run_id`, `manifest`, `plan_sha256` | A runner invocation starts. |
+| `run.started` | `run_id`, `manifest`, `plan_sha256`, `red_proof`? | A runner invocation starts; `red_proof` is true when the plan demonstrates a failing test first. |
 | `stage.started` | `run_id`, `stage` | A stage begins. |
-| `attempt.finished` | `run_id`, `stage`, `attempt`, `classification`, `path` | A provider attempt ends; `path` is its attempt file. |
+| `attempt.finished` | `run_id`, `stage`, `attempt`, `classification`, `path`, `kind`?, `provider`?, `usage`?, `cost_usd`? | A provider attempt ends; `path` is its attempt file. `usage` holds `input_tokens` and `output_tokens` when the provider reports them. |
 | `stage.finished` | `run_id`, `stage`, `result` | A stage passes, or stops as `failed`, `escalated` or `cancelled`. |
-| `question.asked` | `run_id`, `stage`, `question` | A stage needs your answer. |
+| `question.asked` | `run_id`, `stage`, `question`, `next`? | A stage needs your answer. |
 | `question.answered` | `run_id` | `plovi answer` continues the task. |
 | `plan.proposed` | `plan_sha256`, `manifest` | `plovi validate-plan` accepts a plan, once per plan hash. |
 | `plan.approved` | `plan_sha256`, `auto`, `manifest`? | You approve a plan, or an explicit launch approves it (`auto: true`). |
-| `approval.requested` | `run_id`, `kind`, `fingerprint` | A diff crosses the size or protected-path limits. |
+| `approval.requested` | `run_id`, `kind`, `fingerprint`, `next`? | A diff crosses the size or protected-path limits. |
 | `approval.granted` | `run_id`, `kind`, `fingerprint` | `plovi approve --size` or `--paths` accepts that diff. |
-| `escalation.raised` | `run_id`, `stage`, `kind`, `detail` | A run stops for a person's decision. |
-| `run.paused` | `run_id`?, `status`?, `reason`?, `resets_at`? | The runner pauses before the next stage, or at a provider usage limit (`reason: usage_limit`, reset as Unix time). |
+| `escalation.raised` | `run_id`, `stage`, `kind`, `detail`, `next`? | A run stops for a person's decision. |
+| `run.paused` | `run_id`?, `status`?, `reason`?, `resets_at`?, `next`? | The runner pauses before the next stage, or at a provider usage limit (`reason: usage_limit`, reset as Unix time). |
 | `run.resumed` | `run_id`?, `status`?, `retry`? | `resume`, `retry`, `answer`, `approve` or `pipeline` continues a task. |
 | `run.interrupted` | `run_id`?, `status`? | plovi finds a run that stopped without a result, once per run. |
 | `run.cancelled` | `run_id`?, `status`? | The runner stops after a cancel request. |
 | `run.finished` | `run_id`, `status`, `error`? | A runner invocation stops: `complete`, `failed`, `escalated`, `needs_input` or `needs_approval`. |
 | `delivery.committed` | `repository`, `commit` | Delivery commits the task changes. |
 | `delivery.pushed` | `repository`, `branch` | Delivery pushes the task branch. |
-| `pr.opened` | `repository`, `url` | Delivery opens a draft pull request. |
+| `pr.opened` | `repository`, `url`, `files_changed`? | Delivery opens a draft pull request; `files_changed` counts the delivered files. |
 | `policy.changed` | `diff` | `plovi policy set` writes `plovi.toml`. |
 | `project.registered` | `root` | `plovi projects add` or `setup --apply` registers a project. |
 | `project.unregistered` | `root`? | `plovi projects remove` forgets a project. |
 | `state.checkpoint` | `run_id`, `state_sha256`, `keys` | The saved task state changed. |
 | `pause.requested` | `run_id`? | `plovi pause` asks the runner to stop at the next stage. |
 | `cancel.requested` | `run_id`? | `plovi cancel` asks the runner to stop. |
+| `checkpoint.migrated` | `binding_sha256` | `plovi migrate --apply` moves a legacy test checkpoint onto the current plan. |
+
+`next` on a stop event is the command that continues the task. [`plovi stats`](stability-gate.md) reads these events.
 
 The same table lives in `runtime/plovi/ledger.py`, and a test keeps the schema, the code and this page in step.
 

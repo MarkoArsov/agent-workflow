@@ -52,6 +52,10 @@ class LegacyMigrationTests(HardeningTest):
         self.assertEqual(repeated.returncode, 0, repeated.stderr)
         self.assertTrue(json.loads(repeated.stdout)['reused'])
         self.assertEqual(len(self.calls()), 2)
+        from plovi import ledger
+        migrated = [e for e in ledger.events(self.project, {'kind': 'task', 'id': 'sample'}) if e['type'] == 'checkpoint.migrated']
+        self.assertEqual([(e['actor']['kind'], e['data']['binding_sha256']) for e in migrated],
+                         [('person', saved['binding_sha256'])], 'one person-actor event, none for the repeated no-op')
         # Continuing implementation still sees the renewed frozen set.
         write_json(self.scenario, [{}, {}, {'writes': {'app.py': 'VALUE = 2\n'}}, {}])
         resumed = self.task_cli('resume', 'sample')
