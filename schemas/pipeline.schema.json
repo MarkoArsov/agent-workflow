@@ -401,6 +401,14 @@
         }
       }
     },
+    "protected_paths": {
+      "type": "array",
+      "description": "Protected paths (within paths.protected) this plan changes; plan approval approves them.",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
     "corrections": {
       "type": "object",
       "additionalProperties": false,
@@ -419,6 +427,18 @@
           "type": "integer",
           "minimum": 0,
           "maximum": 2
+        },
+        "same_session_rounds": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10,
+          "default": 2
+        },
+        "challenges": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10,
+          "default": 3
         }
       }
     }

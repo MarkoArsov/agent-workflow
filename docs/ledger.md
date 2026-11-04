@@ -75,7 +75,7 @@ The person name comes from `git config user.name` in the project root, else `loc
 | `approval.requested` | `run_id`, `kind`, `fingerprint`, `next`? | A diff crosses the size or protected-path limits. |
 | `approval.granted` | `run_id`, `kind`, `fingerprint` | `plovi approve --size` or `--paths` accepts that diff. |
 | `escalation.raised` | `run_id`, `stage`, `kind`, `detail`, `next`? | A run stops for a person's decision. |
-| `run.paused` | `run_id`?, `status`?, `reason`?, `resets_at`?, `next`? | The runner pauses before the next stage, or at a provider usage limit (`reason: usage_limit`, reset as Unix time). |
+| `run.paused` | `run_id`?, `status`?, `reason`?, `resets_at`?, `next`?, `budget`? | The runner pauses before the next stage, at a provider usage limit (`reason: usage_limit`, reset as Unix time), at a task budget (`reason: budget`), or when the plan changed mid-stage (`reason: plan_changed`). |
 | `run.resumed` | `run_id`?, `status`?, `retry`? | `resume`, `retry`, `answer`, `approve` or `pipeline` continues a task. |
 | `run.interrupted` | `run_id`?, `status`? | plovi finds a run that stopped without a result, once per run. |
 | `run.cancelled` | `run_id`?, `status`? | The runner stops after a cancel request. |
@@ -90,6 +90,11 @@ The person name comes from `git config user.name` in the project root, else `loc
 | `pause.requested` | `run_id`? | `plovi pause` asks the runner to stop at the next stage. |
 | `cancel.requested` | `run_id`? | `plovi cancel` asks the runner to stop. |
 | `checkpoint.migrated` | `binding_sha256` | `plovi migrate --apply` moves a legacy test checkpoint onto the current plan. |
+| `plan.rebound` | `run_id`, `old`, `new` | The run continues with an approved plan revision, or `resume --rebind` binds one. `old` and `new` are binding hashes. |
+| `commits.adopted` | `repository`, `commits`, `author`? | Resume adopts linear commits on the task branch that the task's own Git identity made. |
+| `limits.exceeded` | `run_id`, `files`, `lines`, `limit` | The diff passed `max_changed_files` or `max_changed_lines` but stayed under the ceiling, so the run continued. |
+| `receipt.rederived` | `repository`, `path`? | A missing or changed allocation receipt matched this task's ledger, so the runner rewrote it. |
+| `provider.circuit_open` | `run_id`, `provider`, `classification` | A permanent provider failure, such as authentication, skips that provider for the rest of the run. |
 
 `next` on a stop event is the command that continues the task. [`plovi stats`](stability-gate.md) reads these events.
 

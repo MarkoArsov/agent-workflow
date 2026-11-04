@@ -45,7 +45,7 @@ specify → implement-tests? → implement → review? → commit-and-push? → 
 | Verify mechanically | A confident report may still be wrong. | The orchestrator runs the named checks itself and parses their output. |
 | Write it once | Asking a model to redo a mechanical step spends tokens and can give a different answer each time. | If a step can be a script, it is one. Verification, status, watching, and delivery are deterministic local scripts that cost no tokens; models are kept for judgement. |
 | Bind green evidence to the diff | Evidence goes stale when the code changes. | Green results carry a fingerprint of the files. Delivery re-runs the checks if anything changed since. |
-| Stop only on safety | Treating every finding as a stop turns automation into babysitting. | Scope, secret, frozen-test, verification, and delivery-guard failures stop the work. Review notes and advisory rules do not. |
+| Fail closed at the edges, recover in the middle | Two of three substantial runs once stopped on plovi's own gates, not on the work. | Publishing, secrets, writes outside the task's repositories, destructive commands, spending caps and merging stay fail-closed. Between an approved plan and a verified diff, plovi fixes failing checks and challenges premature stops in the same session; a stop is rare, explained, and resumable with one command. |
 | Separate implementation from publishing | Correct code and permission to publish are different decisions. | A run can finish without committing, pushing, or opening a pull request. |
 | Every external action needs its own authorization | A broad "go ahead" can turn into messages and tracker changes nobody asked for. | Selecting `commit-and-push` and `draft-pr` authorizes exactly those actions. Comments, reviews, messages, and tracker updates each need their own approval. |
 | One orchestrator per project | Concurrent orchestrators fight over the same files and hide each other's evidence. | An operating-system lock admits one orchestrator per project. |
@@ -82,7 +82,9 @@ And nothing else. Routine retries, local setup, and review findings never become
 | Review findings (advisory) | Secret material or a blocking rule finding |
 | Advisory rule findings | Edits outside the declared paths, or to a read-only repository |
 | One route for every stage (allowed) | A named check fails, or red or green evidence is missing |
-| Usage the provider didn't report (kept as unknown) | A frozen test changed, or a stage touched your pre-existing changes |
+| Usage the provider didn't report (kept as unknown) | A frozen test changed, a check ran fewer tests, or a stage touched your pre-existing changes |
+| A diff over the size limit but under the ceiling (in the PR evidence) | A diff over the ceiling, or an unlisted protected path |
+| A recoverable stop or failing check (fixed in the same session first) | A stop-list reason, or a task budget ran out |
 | | A check command modified source files |
 | | Stale green evidence fails its re-run before delivery |
 | | A delivery guard trips: base branch, unrelated staged changes, or a moved HEAD |

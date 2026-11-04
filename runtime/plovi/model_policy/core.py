@@ -142,7 +142,7 @@ def validate_facts(facts):
         raise ValueError('Task facts require stages')
     if len(facts['stages']) != len(set(facts['stages'])):
         raise ValueError('Task stages must be unique')
-    if set(facts) - (FACT_FIELDS | {'stages', 'repository_count', 'required_capabilities', 'demanding_stages', 'routes', 'suggested_routes', 'stage_facts', 'route_origins'}):
+    if set(facts) - (FACT_FIELDS | {'stages', 'repository_count', 'required_capabilities', 'demanding_stages', 'routes', 'suggested_routes', 'stage_facts', 'route_origins', 'available_providers'}):
         raise ValueError('Unknown task fact field')
     _validate_fact_values(facts)
     for field in ('required_capabilities', 'demanding_stages'):
@@ -364,6 +364,12 @@ def evaluate(registry, policy, catalogue, settings, facts):
                     output["unresolved"].append({"stage": stage, "reason": "configured-default-below-required-band"})
             else:
                 selected, reason = [], "no-reviewed-available-route"
+        if reason in {"explicit-route", "retained-configured-default"}:
+            # Configured and pinned chains still never propose a provider that is not installed.
+            kept = [r for r in selected if invalid(r) != "known-unavailable"]
+            if kept != selected:
+                output["advisories"].append({"stage": stage, "reason": "uninstalled-provider-skipped"})
+                selected = kept
         problems = [invalid(r) for r in selected if invalid(r)]
         if problems or not selected:
             output["unresolved"].append({"stage": stage, "reason": problems[0] if problems else reason})

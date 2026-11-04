@@ -187,9 +187,21 @@ def validate(value, project):
         request = checkpoint.get("fixture_request")
         if request is not None and (not isinstance(request, dict) or request.get("status") != "test_fixture_repair" or not request.get("reason") or not isinstance(request.get("test_paths"), list) or not isinstance(request.get("checks"), list)):
             raise WorkflowError("Checkpoint fixture repair requires explicit reason, test paths and setup checks")
+    declared = value.get("protected_paths", [])
+    if not isinstance(declared, list) or any(not isinstance(x, str) or not x or x.startswith("/") or ".." in x.split("/") for x in declared):
+        raise WorkflowError("protected_paths must be a list of repository-relative globs")
+    from .policy import effective
+    protected = effective(project, value)["values"]["paths"]["protected"]
+    outside = [glob for glob in declared if not matches(glob, protected)]
+    if outside:
+        raise WorkflowError(f"protected_paths {outside} are not protected by paths.protected; list only protected paths the plan changes")
     corrections = value.get("corrections", {})
-    if not isinstance(corrections, dict) or set(corrections) - {"fixture_rounds", "max_known_cost_usd", "contract_review_rounds"}:
+    if not isinstance(corrections, dict) or set(corrections) - {"fixture_rounds", "max_known_cost_usd", "contract_review_rounds",
+                                                                 "same_session_rounds", "challenges"}:
         raise WorkflowError("Invalid correction limits")
+    for key in ("same_session_rounds", "challenges"):
+        if key in corrections and (type(corrections[key]) is not int or not 0 <= corrections[key] <= 10):
+            raise WorkflowError(f"{key} must be between zero and ten")
     contract_rounds = corrections.get("contract_review_rounds", 0)
     if type(contract_rounds) is not int or not 0 <= contract_rounds <= 2:
         raise WorkflowError("contract_review_rounds must be between zero and two")

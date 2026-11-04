@@ -260,7 +260,7 @@ Risk: **low**. Changes a task or the registry.
 Continue a paused, failed or interrupted task without repeating finished stages.
 
 ```sh
-plovi resume TASK [--rebind] [--reason TEXT]
+plovi resume TASK [--rebind] [--budget-minutes N] [--budget-attempts N] [--budget-cost USD] [--reason TEXT]
 ```
 
 Risk: **low**. Changes a task or the registry.
@@ -270,6 +270,9 @@ Risk: **low**. Changes a task or the registry.
 | `task` | yes | string | Task ID |
 | `rebind` | no | boolean | Accept a reviewed plan revision |
 | `upgrade_runtime` | no | boolean | Move the task to the current runtime; needs rebind |
+| `budget_minutes` | no | integer | Raise this task's time budget in minutes |
+| `budget_attempts` | no | integer | Raise this task's attempt budget |
+| `budget_cost` | no | number | Raise this task's known cost budget in US dollars |
 | `reason` | no | string | Why this change is made; recorded in the ledger |
 | `actor_agent` | no | string | Agent name; agents must always pass it |
 | `via` | no | string | Tool the agent acts through |

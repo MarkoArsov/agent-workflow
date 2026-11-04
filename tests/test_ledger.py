@@ -48,6 +48,13 @@ SAMPLES = {
     "cancel.requested": ({"run_id": RUN}, []),
     "project.unregistered": ({"root": "/fixture/app"}, []),
     "checkpoint.migrated": ({"binding_sha256": "f" * 64}, ["binding_sha256"]),
+    "plan.rebound": ({"run_id": RUN, "old": "a" * 64, "new": "b" * 64}, ["run_id", "old", "new"]),
+    "commits.adopted": ({"repository": "app", "commits": ["c" * 40], "author": {"kind": "person"}}, ["repository", "commits"]),
+    "limits.exceeded": ({"run_id": RUN, "files": 51, "lines": 3024, "limit": {"files": 40, "lines": 1500}},
+                        ["run_id", "files", "lines", "limit"]),
+    "receipt.rederived": ({"repository": "app", "path": "worktrees/sample/app"}, ["repository"]),
+    "provider.circuit_open": ({"run_id": RUN, "provider": "codex", "classification": "authentication"},
+                              ["run_id", "provider", "classification"]),
 }
 
 

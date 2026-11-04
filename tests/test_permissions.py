@@ -5,6 +5,10 @@ from plovi import runner, state
 
 
 class PermissionTests(HardeningTest):
+    def restricted(self):
+        """Opt into restricted unattended runs; since #47 they use the profile's mode by default."""
+        self.policy("execution.unattended_permission_mode", '"restricted"')
+
     def run_child(self, *flags):
         self.plan["repositories"][0]["branch"] = "feature/sample"
         self.save_plan()
@@ -12,8 +16,9 @@ class PermissionTests(HardeningTest):
         self.assertEqual(response.returncode, 0, response.stdout + response.stderr)
         return state.read(self.project, "sample")
 
-    def test_non_tty_defaults_to_restricted_codex(self):
+    def test_non_tty_restricted_policy_uses_restricted_codex(self):
         self.fixture([{}])
+        self.restricted()
         self.run_child()
         argv = self.calls()[0]["argv"]
         self.assertIn("workspace-write", argv)
@@ -33,12 +38,13 @@ class PermissionTests(HardeningTest):
 
     def test_policy_can_explicitly_allow_unattended_trusted(self):
         root = self.fixture([{}])
-        (root / "plovi.toml").write_text('[execution]\nunattended_permission_mode = "trusted"\n')
+        self.policy("execution.unattended_permission_mode", '"trusted"')
         self.run_child()
         self.assertIn("--dangerously-bypass-approvals-and-sandbox", self.calls()[0]["argv"])
 
     def test_cursor_non_tty_uses_enabled_sandbox(self):
         self.fixture([{}])
+        self.restricted()
         self.plan["routes"] = {"default": [{"provider": "cursor", "model": "fixture"}]}
         self.project.profile["agents"] = ["cursor"]
         from plovi.util import write_json
@@ -50,6 +56,7 @@ class PermissionTests(HardeningTest):
 
     def test_claude_derives_narrow_tools_for_configured_checks(self):
         self.fixture([{}])
+        self.restricted()
         self.plan["routes"] = {"default": [{"provider": "claude", "model": "fixture"}]}
         self.project.profile["agents"] = ["claude"]
         from plovi.util import write_json
@@ -65,6 +72,7 @@ class PermissionTests(HardeningTest):
 
     def test_explicit_claude_allowlist_is_preserved(self):
         self.fixture([{}])
+        self.restricted()
         self.plan["routes"] = {"default": [{"provider": "claude", "model": "fixture"}]}
         self.project.profile["agents"] = ["claude"]
         self.project.profile["execution"]["provider_settings"] = {"claude": {"allowed_tools": ["Read", "Grep"]}}
@@ -76,6 +84,7 @@ class PermissionTests(HardeningTest):
 
     def test_unsafe_check_encoding_requires_explicit_claude_tools(self):
         self.fixture([{}])
+        self.restricted()
         self.plan["routes"] = {"default": [{"provider": "claude", "model": "fixture"}]}
         self.project.profile["agents"] = ["claude"]
         self.plan["checks"][0]["command"]["argv"] = ["echo", "danger);*"]

@@ -33,7 +33,7 @@ TYPES = {
     "approval.requested": (("run_id", "kind", "fingerprint"), ("next",)),
     "approval.granted": (("run_id", "kind", "fingerprint"), ()),
     "escalation.raised": (("run_id", "stage", "kind", "detail"), ("next",)),
-    "run.paused": ((), ("run_id", "status", "reason", "resets_at", "next")),
+    "run.paused": ((), ("run_id", "status", "reason", "resets_at", "next", "budget")),
     "run.resumed": ((), ("run_id", "status", "retry")),
     "run.interrupted": ((), ("run_id", "status")),
     "run.cancelled": ((), ("run_id", "status")),
@@ -48,6 +48,11 @@ TYPES = {
     "cancel.requested": ((), ("run_id",)),
     "project.unregistered": ((), ("root",)),
     "checkpoint.migrated": (("binding_sha256",), ()),
+    "plan.rebound": (("run_id", "old", "new"), ()),
+    "commits.adopted": (("repository", "commits"), ("author",)),
+    "limits.exceeded": (("run_id", "files", "lines", "limit"), ()),
+    "receipt.rederived": (("repository",), ("path",)),
+    "provider.circuit_open": (("run_id", "provider", "classification"), ()),
 }
 # Free text that may carry provider output or person input: redacted and bounded.
 TEXT_FIELDS = {"question": TEXT_LIMIT, "detail": TEXT_LIMIT, "title": 300, "error": TEXT_LIMIT, "diff": 16000}
@@ -507,7 +512,8 @@ class Recorder:
                 "pending_input": json_text(state.get("pending_input")) if state.get("pending_input") else None,
                 "approvals": {(a.get("kind"), a.get("fingerprint")) for a in state.get("pending_approvals") or []},
                 "escalation": json_text(state.get("escalation")) if state.get("escalation") else None,
-                "delivery": json.loads(json.dumps(state.get("delivery") or {}))}
+                "delivery": json.loads(json.dumps(state.get("delivery") or {})),
+                "advisory": (state.get("diff_advisory") or {}).get("fingerprint")}
 
     def started(self, state, *, resumed=False):
         run_id = state["run_id"]
@@ -534,6 +540,23 @@ class Recorder:
             data["cost_usd"] = entry["cost_usd"]
         self._append("attempt.finished", data)
 
+    @staticmethod
+    def _next(state, data):
+        from .progress import next_command
+        command = next_command(state)
+        return dict(data, next=command) if command else data
+
+    def event(self, kind, data, reason=None, actor=None):
+        """Record a runner decision that is not a state transition, such as an automatic rebind."""
+        if self.disabled:
+            return None
+        try:
+            return append(self.project, {"subject": dict(self.subject), "type": kind, "actor": dict(actor or RUNNER),
+                                         "reason": reason or REASONS.get(kind, "The runner recorded a decision"), "data": data})
+        except (WorkflowError, OSError) as exc:
+            self._disable(exc)
+            return None
+
     def saved(self, state):
         if self.disabled:
             return
@@ -545,14 +568,19 @@ class Recorder:
             if stage not in before["completed"]:
                 self._append("stage.finished", {"run_id": run_id, "stage": stage, "result": "passed"})
         if now["pending_input"] and now["pending_input"] != before["pending_input"]:
-            self._append("question.asked", {"run_id": run_id, "stage": state.get("stage") or "",
-                                            "question": state["pending_input"].get("question", "")})
+            self._append("question.asked", self._next(state, {"run_id": run_id, "stage": state.get("stage") or "",
+                                                              "question": state["pending_input"].get("question", "")}))
         for kind, fingerprint in sorted(now["approvals"] - before["approvals"], key=str):
-            self._append("approval.requested", {"run_id": run_id, "kind": kind, "fingerprint": fingerprint})
+            self._append("approval.requested", self._next(state, {"run_id": run_id, "kind": kind, "fingerprint": fingerprint}))
         if now["escalation"] and now["escalation"] != before["escalation"]:
             escalation = state["escalation"]
-            self._append("escalation.raised", {"run_id": run_id, "stage": escalation.get("stage") or state.get("stage") or "",
-                                               "kind": escalation.get("kind", ""), "detail": str(escalation.get("reason", ""))})
+            # The escalation is saved before its status changes; its next command is the escalated one.
+            self._append("escalation.raised", self._next(dict(state, status="escalated"), {"run_id": run_id, "stage": escalation.get("stage") or state.get("stage") or "",
+                                               "kind": escalation.get("kind", ""), "detail": str(escalation.get("reason", ""))}))
+        if now["advisory"] and now["advisory"] != before.get("advisory"):
+            advisory = state["diff_advisory"]
+            self._append("limits.exceeded", {"run_id": run_id, "files": advisory["files"], "lines": advisory["lines"],
+                                             "limit": advisory["limit"]})
         for name, progress in now["delivery"].items():
             old = before["delivery"].get(name, {})
             if progress.get("commit") and progress.get("commit") != old.get("commit"):
@@ -576,7 +604,9 @@ class Recorder:
                     data["reason"] = state["pause_reason"]
                 if state.get("resets_at") is not None:
                     data["resets_at"] = state["resets_at"]
-                self._append("run.paused", data)
+                if state.get("budget"):
+                    data["budget"] = dict(state["budget"])
+                self._append("run.paused", self._next(state, data))
             elif status == "cancelled":
                 self._append("run.cancelled", {"run_id": run_id, "status": status})
             elif status in self.STOPS:
@@ -610,6 +640,11 @@ REASONS = {
     "delivery.committed": "The runner committed the task changes",
     "delivery.pushed": "The runner pushed the task branch",
     "pr.opened": "The runner opened a pull request",
+    "plan.rebound": "The runner continued with the approved plan revision",
+    "commits.adopted": "The runner adopted commits on the task branch",
+    "limits.exceeded": "The diff passed the size limit but stayed under the ceiling",
+    "receipt.rederived": "The runner rewrote the task's allocation receipt from the ledger",
+    "provider.circuit_open": "The runner skips this provider for the rest of the run",
 }
 
 

@@ -45,11 +45,21 @@ def freeze(source, store=None):
     return receipt
 
 
+def enabled(project):
+    """New tasks pin a runtime snapshot only when policy asks (execution.runtime_pin, default false)."""
+    from . import policy
+    try:
+        return bool(policy.effective(project)['values']['execution']['runtime_pin'])
+    except WorkflowError:
+        return False
+
+
 def dispatch(project, task, argv, *, source, create=False, upgrade=False):
     path = directory(project,task)/'runtime.json'
     with lock(path.with_suffix('.lock'),wait=True):
         saved = read_json(path)
-        if upgrade or (saved is None and create):
+        # Existing pins stay until an explicit --upgrade-runtime; new tasks follow the installed runtime.
+        if upgrade or (saved is None and create and enabled(project)):
             with ExitStack() as ownership:
                 try:
                     ownership.enter_context(lock(path.parent/'launch.lock'))

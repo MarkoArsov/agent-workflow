@@ -2,7 +2,7 @@
 from __future__ import annotations
 from pathlib import Path
 from .state import lock
-from .util import WorkflowError, contained, common_dir, git, identifier, read_json, same_path, write_json
+from .util import WorkflowError, contained, common_dir, git, identifier, read_json, run, same_path, write_json
 
 
 def receipt_path(project, task):
@@ -28,6 +28,19 @@ def _validate_checkout(project, row):
     return str(target)
 
 
+def remote_base(root, repo):
+    """The fetched remote base commit, so unpushed local commits on the base never enter a task; None to use local."""
+    import sys
+    remote, branch = repo.get('remote') or 'origin', repo['base_branch']
+    fetched = run(['git', 'fetch', '--quiet', remote, branch], root, check=False, timeout=120)
+    if fetched.returncode == 0:
+        resolved = run(['git', 'rev-parse', '--verify', f'{remote}/{branch}^{{commit}}'], root, check=False)
+        if resolved.returncode == 0:
+            return resolved.stdout.strip()
+    print(f'Could not fetch {remote}/{branch}; starting from local {branch}.', file=sys.stderr)
+    return None
+
+
 def owned_checkout(project, task, repository, branch):
     """Return only a validated, complete allocation, or None for legacy manifests."""
     from .factory import receipt as factory_receipt
@@ -39,18 +52,61 @@ def owned_checkout(project, task, repository, branch):
                 raise WorkflowError('Manifest repository/branch differs from its factory allocation')
             return row['path']
     saved = read_json(receipt_path(project, task))
-    if saved is None:
+    try:
+        if saved is None:
+            return rederive(project, task, repository, branch)
+        if saved.get('task') != task or saved.get('configuration_root') != str(project.root) or not saved.get('complete'):
+            raise WorkflowError('Task allocation is incomplete; resume task start before execution')
+        row = next((r for r in saved['repositories'] if r['repository'] == repository), None)
+        if row is None or branch != row['branch']:
+            raise WorkflowError('Task manifest branch/repository differs from its owned allocation')
+        expected = (project.repo_path(repository) if row.get('strategy') in {'current-checkout', 'feature-branch'} else
+                    contained(project.root, project.profile['git']['worktree_directory']) / task / repository)
+        if row['path'] != str(expected):
+            raise WorkflowError('Task worktree directory changed; inspect its ownership before execution')
+        return _validate_checkout(project, row)
+    except WorkflowError:
+        if saved is not None and rederive(project, task, repository, branch):
+            return owned_checkout(project, task, repository, branch)
+        raise
+
+
+def rederive(project, task, repository, branch):
+    """Rewrite a missing or changed receipt when this task's ledger shows it created exactly this branch and worktree.
+
+    Returns the checkout path, or None when the ledger doesn't match (a legacy task without a receipt).
+    A branch or worktree another task's receipt owns still stops.
+    """
+    from . import ledger
+    subject = {'kind': 'task', 'id': task}
+    events = ledger.events(project, subject=subject)
+    created = [e for e in events if e['type'] == 'task.created']
+    if not created or not any(e['type'] == 'task.claimed' for e in events):
         return None
-    if saved.get('task') != task or saved.get('configuration_root') != str(project.root) or not saved.get('complete'):
-        raise WorkflowError('Task allocation is incomplete; resume task start before execution')
-    row = next((r for r in saved['repositories'] if r['repository'] == repository), None)
-    if row is None or branch != row['branch']:
-        raise WorkflowError('Task manifest branch/repository differs from its owned allocation')
-    expected = (project.repo_path(repository) if row.get('strategy') in {'current-checkout', 'feature-branch'} else
-                contained(project.root, project.profile['git']['worktree_directory']) / task / repository)
-    if row['path'] != str(expected):
-        raise WorkflowError('Task worktree directory changed; inspect its ownership before execution')
-    return _validate_checkout(project, row)
+    if created[-1]['data'].get('branches', {}).get(repository) != branch:
+        return None
+    target = contained(project.root, project.profile['git']['worktree_directory']) / task / repository
+    for other in receipt_path(project, task).parent.glob('*.json'):
+        value = read_json(other, {})
+        if value.get('task') in (None, task):
+            continue
+        if any(row.get('branch') == branch or (row.get('path') and same_path(row['path'], target))
+               for row in value.get('repositories', [])):
+            raise WorkflowError(f"Branch {branch} or its worktree belongs to task {value['task']}; inspect ownership before execution")
+    repo = project.repository(repository)
+    row = {'repository': repository, 'branch': branch, 'base': repo['base_branch'], 'path': str(target),
+           'strategy': 'worktree', 'ready': True}
+    _validate_checkout(project, row)
+    row['base_commit'] = git(target, 'merge-base', 'HEAD', repo['base_branch'])
+    path = receipt_path(project, task)
+    saved = read_json(path, {}) or {}
+    rows = [r for r in saved.get('repositories', []) if r.get('repository') != repository] + [row]
+    write_json(path, {'schema_version': 1, 'task': task, 'configuration_root': str(project.root), 'complete': True,
+                      'repositories': rows})
+    ledger.append(project, {'subject': subject, 'type': 'receipt.rederived', 'actor': dict(ledger.RUNNER),
+                            'reason': ledger.REASONS['receipt.rederived'],
+                            'data': {'repository': repository, 'path': str(target.relative_to(project.root))}})
+    return str(target)
 
 
 def start(project, task, *, repositories=None, base=None, resume=False):
@@ -129,7 +185,10 @@ def start(project, task, *, repositories=None, base=None, resume=False):
                 selected_base = base or repo['base_branch']
                 if selected_base.startswith('-'):
                     raise WorkflowError('Invalid base ref')
-                commit = git(root, 'rev-parse', '--verify', selected_base + '^{commit}')
+                commit = None
+                if base is None and strategy == 'worktree':
+                    commit = remote_base(root, repo)
+                commit = commit or git(root, 'rev-parse', '--verify', selected_base + '^{commit}')
                 rows.append({'repository': name, 'branch': branch, 'base': selected_base,
                              'base_commit': commit, 'path': str(target), 'strategy': strategy, 'ready': False})
             saved = {'schema_version': 1, 'task': task, 'configuration_root': str(project.root),

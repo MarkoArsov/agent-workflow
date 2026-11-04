@@ -104,6 +104,61 @@ def read_events(root,cursor=0):
         return rows,result
 
 
+def next_command(state):
+    """The exact command that continues a stopped task, or None while it runs or after it completes."""
+    task = state.get('task', 'TASK'); status = state.get('status')
+    if state.get('next_command'):
+        return state['next_command']
+    if status == 'needs_input':
+        return f'plovi answer {task} --file ANSWER'
+    if status == 'needs_approval':
+        pending = next(iter(state.get('pending_approvals') or []), None) or state.get('approval') or {}
+        flag = '--size' if pending.get('kind') == 'size' else '--paths'
+        return f"plovi approve {task} {flag} --approve {pending.get('fingerprint', 'FINGERPRINT')}"
+    if status == 'escalated':
+        return f'plovi retry {task} --note DECISION'
+    if status == 'paused' and state.get('pause_reason') == 'budget' and state.get('budget'):
+        which, limit = state['budget']['which'], state['budget']['limit']
+        raised = round(limit * 2, 2) if which == 'cost' else int(limit) * 2
+        return f'plovi resume {task} --budget-{which} {raised}'
+    if status in {'failed', 'interrupted', 'cancelled', 'paused'}:
+        return f'plovi resume {task}'
+    return None
+
+
+def _amount(value):
+    return '-' if value is None else f'{value / 1000:.0f}k' if value >= 1000 else str(value)
+
+
+def _duration(seconds):
+    seconds = int(round(seconds))
+    return f'{seconds // 60}m {seconds % 60:02d}s' if seconds >= 60 else f'{seconds}s'
+
+
+def stages(state):
+    """Per-stage time, attempt kinds, tokens and cost from the attempt records, in stage order."""
+    rows = {}
+    for attempt in state.get('attempts', []):
+        row = rows.setdefault(attempt['stage'], {'stage': attempt['stage'], 'seconds': 0.0, 'attempts': 0, 'fix_rounds': 0,
+                                                 'challenges': 0, 'nudges': 0, 'tokens_in': None, 'tokens_out': None,
+                                                 'cost_usd': None})
+        row['seconds'] += float(attempt.get('duration_s', attempt.get('duration_seconds')) or 0)
+        key = {'fix-round': 'fix_rounds', 'challenge': 'challenges', 'nudge': 'nudges'}.get(attempt.get('kind'), 'attempts')
+        row[key] += 1
+        for field in ('tokens_in', 'tokens_out', 'cost_usd'):
+            if attempt.get(field) is not None:
+                row[field] = (row[field] or 0) + attempt[field]
+    for row in rows.values():
+        row['seconds'] = round(row['seconds'], 1)
+    return list(rows.values())
+
+
+def stage_line(row):
+    cost = 'cost unknown' if row['cost_usd'] is None else f"cost ${row['cost_usd']:.2f}"
+    return (f"{row['stage']}  {_duration(row['seconds'])}  attempts {row['attempts']} · fix rounds {row['fix_rounds']} · "
+            f"challenges {row['challenges']}  tokens {_amount(row['tokens_in'])}/{_amount(row['tokens_out'])}  {cost}")
+
+
 def summary(state):
     keys=('task','run_id','status','stage','completed','pending_input','escalation','pending_approvals','error','activity','activity_at','heartbeat_at','started_at','provider','model','repair_round','tool_active','tool_started_at','check','passed','updated_at')
     value={'type':'summary','schema_version':1,**{k:state[k] for k in keys if state.get(k) is not None}}
@@ -117,6 +172,13 @@ def summary(state):
         if state.get('resets_at') is not None:value['resets_at']=state['resets_at']
         value['next_action']='Wait for the provider usage limit to reset, then plovi resume '+task
     elif status=='paused':value['next_action']='plovi resume '+task
+    command=next_command(state)
+    if command:value['next']=command
+    # A published summary has stage rows but no attempt records; summarizing it again keeps them.
+    rows=stages(state) if 'attempts' in state else state.get('stages')
+    if rows:value['stages']=rows
+    if state.get('pause_reason'):value['pause_reason']=state['pause_reason']
+    if state.get('budget'):value['budget']=state['budget']
     return value
 
 
@@ -129,10 +191,13 @@ def human(value):
         text+=f" | {value.get('activity','activity')} {max(0,int(now-value['activity_at']))}s ago"
     if value.get('tool_active'):text+=f" | tool running {max(0,int(now-value.get('tool_started_at',now)))}s"
     if value.get('check'):text+=' | check '+str(value['check'])+(' passed' if value.get('passed') is True else '')
+    for row in value.get('stages',[]):text+='\n'+stage_line(row)
     reason=(value.get('escalation') or {}).get('reason') or value.get('error')
+    if value.get('budget'):
+        budget=value['budget'];reason=f"Budget reached: {budget['which']} ({budget['used']} of {budget['limit']})."
     if reason:text+='\n'+clean(str(reason))
     if value.get('pending_input'):text+='\n'+clean(str(value['pending_input'].get('question','')))
-    if value.get('next_action'):text+='\nNext: '+value['next_action']
+    if value.get('next') or value.get('next_action'):text+='\nNext: '+(value.get('next') or value['next_action'])
     return text
 
 

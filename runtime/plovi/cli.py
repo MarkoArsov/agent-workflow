@@ -91,6 +91,10 @@ def parser():
         if name in ("resume", "answer", "retry", "approve"):
             command.add_argument("--rebind", action="store_true")
             command.add_argument("--upgrade-runtime", action="store_true")
+        if name == "resume":
+            command.add_argument("--budget-minutes", type=int, help="Raise this task's time budget")
+            command.add_argument("--budget-attempts", type=int, help="Raise this task's attempt budget")
+            command.add_argument("--budget-cost", type=float, help="Raise this task's known cost budget in US dollars")
         if name == "retry":
             command.add_argument("--note", type=Path)
         if name == "approve":

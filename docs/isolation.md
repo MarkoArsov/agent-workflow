@@ -1,14 +1,16 @@
 ---
 title: Isolated execution
-description: Independent factory checkouts and an optional container boundary.
+description: Task worktrees by default, opt-in factory checkouts and an optional container boundary.
 question: How do I keep unattended work away from my checkout?
 ---
 
 # Isolated execution
 
-New detached, unattended and non-TTY CLI runs use factory checkouts. Interactive
-runs keep each repository's configured strategy. Choose `factory` during setup to
-use it interactively too. Resume always keeps the saved allocation.
+Every run uses each repository's configured checkout strategy: the task's own worktree
+by default. Factory checkouts are opt-in: set `isolation.checkout = "factory"` in
+`plovi.toml` to give detached, unattended and non-TTY runs independent factory checkouts,
+or choose `factory` during setup to use them interactively too. Resume always keeps the
+saved allocation.
 
 ## Factory checkouts
 
@@ -50,7 +52,9 @@ Cleanup preserves mirrors, branches, receipts and evidence and never queries a t
 ## Experimental container mode
 
 Container execution supports macOS and Linux with a local Docker or Podman engine.
-It requires factory-owned checkouts, including for interactive runs. An existing
+It requires factory-owned checkouts, including for interactive runs: set
+`isolation.checkout = "factory"`, or validation stops with "Container mode needs
+isolation.checkout = "factory"". An existing
 local allocation needs a fresh task; resume never relocates or remounts it.
 
 Review these values together in `plovi.toml`:

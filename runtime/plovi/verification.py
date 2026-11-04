@@ -57,6 +57,12 @@ def parse(check, output, code, phase="green"):
             for key, pattern in (("failures", r"failures=(\d+)"), ("errors", r"errors=(\d+)"), ("skipped", r"skipped=(\d+)")):
                 match = re.search(pattern, output)
                 counts[key] = int(match[1]) if match else 0
+    if parser == "pytest" and (success or assertion):
+        found = {key: int(m[1]) for key in ("passed", "failed", "skipped", "error")
+                 for m in [re.search(r"\b(\d+) " + key + r"(?:s|ed)?\b", output)] if m}
+        if found:
+            counts = {"tests": sum(found.values()), "failures": found.get("failed", 0),
+                      "errors": found.get("error", 0), "skipped": found.get("skipped", 0)}
     return {"passed": not failures, "problems": failures, "parser": parser, "counts": counts,
             "phase": phase, "identities": check.get("identities", [])}
 

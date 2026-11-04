@@ -115,6 +115,8 @@ class WorkspaceTest(unittest.TestCase):
                     "GIT_AUTHOR_NAME": "Fixture", "GIT_AUTHOR_EMAIL": "fixture@example.invalid",
                     "GIT_COMMITTER_NAME": "Fixture", "GIT_COMMITTER_EMAIL": "fixture@example.invalid",
                     "PYTHONDONTWRITEBYTECODE": "1", "PLOVI_PACKAGE": str(PACKAGE),
+                    # Same-session challenges wait 20 s and more between rounds; tests never wait.
+                    "PLOVI_CHALLENGE_BACKOFF_SECONDS": "0",
                     # UTC0 means UTC to both POSIX and the Windows C runtime, which requires an offset.
                     "TZ": "UTC0"}
         if os.name == "nt":
@@ -130,6 +132,17 @@ class WorkspaceTest(unittest.TestCase):
         self.patch = unittest.mock.patch.dict(os.environ, self.env, clear=True)
         self.patch.start()
         self.addCleanup(self.patch.stop)
+
+    def policy(self, dotted, raw):
+        """Set one reviewed key in the fixture's plovi.toml (which opts into factory checkouts), as plovi policy set does."""
+        from plovi import policy
+        edit = policy.plan_edit(self.project, dotted, raw)
+        if edit["changed"]:
+            (self.project.root / "plovi.toml").write_text(edit["result"])
+
+    def default_policy(self):
+        """Drop the fixture's factory opt-in to exercise plovi's own defaults."""
+        (self.project.root / "plovi.toml").unlink(missing_ok=True)
 
     def git(self, root, *args, check=True):
         return subprocess.run(["git", "-C", str(root), *args], env=self.env, text=True, capture_output=True, check=check).stdout.strip()
@@ -209,9 +222,10 @@ class WorkspaceTest(unittest.TestCase):
         return load(path)
 
     def cli(self, *args, cwd=None, check=True):
+        # The child writes UTF-8 (PYTHONUTF8 on Windows, C.UTF-8 elsewhere); decode it the same way.
         return subprocess.run([sys.executable, str(PACKAGE / "bin/plovi"), *map(str, args)],
                               cwd=cwd or PACKAGE, env=self.env, stdin=subprocess.DEVNULL,
-                              text=True, capture_output=True, check=check)
+                              text=True, encoding="utf-8", capture_output=True, check=check)
 
     def cli_inproc(self, *args, cwd=None, check=True):
         """Run plovi.cli.main in this process like cli(): same environment, no stdin, captured output."""

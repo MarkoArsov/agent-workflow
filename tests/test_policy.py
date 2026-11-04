@@ -21,7 +21,8 @@ class PolicyTests(InProcessCli, WorkspaceTest):
                        "max_changed_files": 40, "max_changed_lines": 1500,
                        "size_exempt": ["**/package-lock.json", "**/*.lock"]},
             "paths": {"protected": [".github/workflows/**", "**/migrations/**"]},
-            "execution": {"unattended_permission_mode": "restricted", "tracking_mode": "auto"},
+            # Unattended runs use the profile's permission mode (#47); restricted stays selectable.
+            "execution": {"unattended_permission_mode": "profile", "tracking_mode": "auto"},
             "autonomy": {"level": "assisted"}, "grants": {}})
         value["limits"]["size_exempt"].append("other")
         self.assertNotIn("other", policy.defaults()["limits"]["size_exempt"])
@@ -47,6 +48,30 @@ class PolicyTests(InProcessCli, WorkspaceTest):
                 policy.validate(value)
         for level in ("assisted", "ready", "auto"):
             policy.validate({"autonomy": {"level": level}})
+
+    def test_recovery_keys_have_documented_defaults_and_bounds(self):
+        from plovi import policy
+        values = policy.effective(self.project_fixture())["values"]
+        self.assertEqual(values["corrections"], {"same_session_rounds": 2, "challenges": 3})
+        self.assertEqual(values["budgets"], {"task_minutes": 120, "task_attempts": 10, "task_cost_usd": 0})
+        self.assertEqual((values["limits"]["ceiling_factor"], values["execution"]["runtime_pin"],
+                          values["isolation"]["checkout"]), (4, False, "task-worktree"))
+        for value in ({"corrections": {"same_session_rounds": 0, "challenges": 0}}, {"budgets": {"task_cost_usd": 2.5}},
+                      {"budgets": {"task_cost_usd": 0}}, {"limits": {"ceiling_factor": 1}},
+                      {"execution": {"unattended_permission_mode": "restricted"}}, {"isolation": {"checkout": "factory"}}):
+            with self.subTest(value=value):
+                policy.validate(value)
+        for value in ({"corrections": {"challenges": -1}}, {"corrections": {"same_session_rounds": 11}},
+                      {"budgets": {"task_cost_usd": -1}}, {"budgets": {"task_cost_usd": True}}, {"budgets": {"task_minutes": 0}},
+                      {"limits": {"ceiling_factor": 0}}, {"execution": {"runtime_pin": "no"}}, {"isolation": {"checkout": "clone"}}):
+            with self.subTest(value=value), self.assertRaises(WorkflowError):
+                policy.validate(value)
+
+    def test_container_mode_needs_factory_checkouts(self):
+        from plovi import policy
+        with self.assertRaisesRegex(WorkflowError, 'Container mode needs isolation.checkout = "factory"'):
+            policy.validate({"isolation": {"mode": "container", "image": "plovi-test"}})
+        policy.validate({"isolation": {"mode": "container", "image": "plovi-test", "checkout": "factory"}})
 
     def test_malformed_toml_names_file(self):
         from plovi import policy

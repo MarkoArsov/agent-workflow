@@ -229,15 +229,22 @@ def retry(args):
     return _continue(project, saved, args, legacy, retry=True, note=text)
 
 
+BUDGET = {"budget_minutes": {"type": "integer", "minimum": 1, "description": "Raise this task's time budget in minutes"},
+          "budget_attempts": {"type": "integer", "minimum": 1, "description": "Raise this task's attempt budget"},
+          "budget_cost": {"type": "number", "minimum": 0, "description": "Raise this task's known cost budget in US dollars"}}
+
+
 @register("resume", "Continue a paused, failed or interrupted task without repeating finished stages",
-          "plovi resume TASK [--rebind] [--reason TEXT]", arguments={**TASK, **CONTINUE},
-          required=("task",), mutates=True, risk="low")
+          "plovi resume TASK [--rebind] [--budget-minutes N] [--budget-attempts N] [--budget-cost USD] [--reason TEXT]",
+          arguments={**TASK, **CONTINUE, **BUDGET}, required=("task",), mutates=True, risk="low")
 def resume(args):
     project = project_for(args)
     saved = saved_state(project, args["task"])
     plans.self_approve(project, _plan(project, saved), args, "resume")
     _resumed(project, saved, args, "resume")
-    return _continue(project, saved, args, ["resume", saved["task"]])
+    budgets = {name: args[f"budget_{name}"] for name in ("minutes", "attempts", "cost") if args.get(f"budget_{name}") is not None}
+    legacy = ["resume", saved["task"]] + [part for name, value in budgets.items() for part in (f"--budget-{name}", str(value))]
+    return _continue(project, saved, args, legacy, **({"budgets": budgets} if budgets else {}))
 
 
 def _supports_pause(project, task):

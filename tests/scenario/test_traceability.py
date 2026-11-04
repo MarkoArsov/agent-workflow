@@ -36,9 +36,9 @@ class TraceabilityTests(WorkspaceTest):
         for row in steps.SCENARIO_STEPS:
             self.assertTrue(row["test"].startswith(f"ScenarioTests.test_{row['id']}_"), row)
 
-    def test_this_issue_marks_only_finished_owners_done(self):
+    def test_only_finished_owners_are_done(self):
         done = sorted(number for number, value in steps.load_owners().items() if value == "done")
-        self.assertEqual(done, [18, 46, 49])
+        self.assertEqual(done, [18, 46, 47, 49])
 
     def test_an_unowned_step_fails_validation(self):
         rows = [{"id": "A1", "text": "Owned", "owners": [49], "test": "Fixture.check_A1_owned"},

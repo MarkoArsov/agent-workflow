@@ -19,8 +19,11 @@ prompt = sys.argv[-1] if Path(sys.argv[0]).name == "agent" else sys.stdin.read()
 calls.append({"argv": sys.argv, "prompt": prompt, "pid": os.getpid(), "cwd": str(Path.cwd())})
 calls_path.write_text(json.dumps(calls))
 step = data[min(len(calls) - 1, len(data) - 1)]
-session = step.get("session", "fixture-session-" + str(len(calls)))
-print(json.dumps({"type": "thread.started", "thread_id": session}), flush=True)
+# A resumed call continues the session it names: Codex `exec resume ID -`, Claude and Cursor `--resume ID`.
+resumed = sys.argv[sys.argv.index("--resume") + 1] if "--resume" in sys.argv else sys.argv[-2] if "resume" in sys.argv else None
+session = step.get("session", resumed or "fixture-session-" + str(len(calls)))
+if not step.get("no_session"):
+    print(json.dumps({"type": "thread.started", "thread_id": session}), flush=True)
 if step.get("barrier_port"):
     # The test releases both children only after observing both active sessions.
     with socket.create_connection(("127.0.0.1", step["barrier_port"]), timeout=120) as barrier:
@@ -53,7 +56,12 @@ if step.get("usage_limit"):
                       "api_error": "usage_limit_reached", "result": "You've hit your 5-hour limit",
                       "rate_limit_info": {"status": "rejected", "resetsAt": step["usage_limit"], "rateLimitType": "five_hour"}}), flush=True)
     raise SystemExit(1)
-report = step.get("report", {"status": "complete", "summary": "Fixture stage"})
-print(json.dumps({"type": "item.completed", "item": {"type": "agent_message", "text": json.dumps(report)}}))
+if step.get("auth_failure"):
+    print(json.dumps({"type": "error", "message": "401 Unauthorized: authentication failed; run login"}), flush=True)
+    raise SystemExit(1)
+# "text" sends a raw agent message (terminal markers); "no_report" ends without any report.
+if not step.get("no_report"):
+    text = step["text"] if "text" in step else json.dumps(step.get("report", {"status": "complete", "summary": "Fixture stage"}))
+    print(json.dumps({"type": "item.completed", "item": {"type": "agent_message", "text": text}}))
 print(json.dumps({"type": "turn.completed", "usage": {"input_tokens": 10, "output_tokens": 5}}))
 

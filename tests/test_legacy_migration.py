@@ -10,7 +10,8 @@ class LegacyMigrationTests(HardeningTest):
     def stopped(self, *, baseline_case=False):
         self.fixture([
             {'writes': {'test_app.py': 'import unittest\nfrom app import VALUE\nclass Behavior(unittest.TestCase):\n def test_behavior(self): self.assertEqual(VALUE, 2)\n'}},
-            {'report': {'status': 'spec_conflict', 'reason': 'Reviewed fixture upgrade is needed'}},
+            # A requirements stop for a person; since #47 a bare fixture reason would be challenged in the same session.
+            {'report': {'status': 'spec_conflict', 'reason': 'Reviewed fixture upgrade is needed [stop:behaviour]'}},
         ], stages=['implement-tests', 'implement', 'review'])
         if baseline_case:
             checkout = Path(self.project.root)
@@ -125,7 +126,8 @@ class LegacyMigrationTests(HardeningTest):
         self.reviewed_merge();self.save_plan()
         result = self.task_cli('migrate', 'sample', '--apply')
         self.assertNotEqual(result.returncode, 0)
-        self.assertIn('repair commit', result.stderr)
+        # Since #47 an unapproved merge stops with the task-ownership message.
+        self.assertIn('were not made by this task', result.stderr)
         self.assertEqual(len(self.calls()), 2)
 
     def test_fixture_correction_uses_independent_routes_without_reauthoring(self):

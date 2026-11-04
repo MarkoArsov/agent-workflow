@@ -63,6 +63,7 @@ class InboxTests(InProcessCli, ControlPlaneMixin, HardeningTest):
 
     def run_until(self, status, steps):
         self.fixture(steps, stages=["implement"])
+        self.policy("limits.ceiling_factor", "1")  # Approval items appear at the limit (#47 default: 4x).
         self.save_plan()
         result = runner.run(self.project, self.plan, unattended=False)
         self.assertEqual(result["status"], status)

@@ -6,7 +6,8 @@ import os
 from pathlib import Path
 import re
 import shutil
-from ..util import WorkflowError, read_json, run
+import sys
+from ..util import WorkflowError, is_interactive, read_json, run
 
 BINARIES = {"codex": "codex", "claude": "claude", "cursor": "agent"}
 
@@ -56,6 +57,13 @@ def command(route, execution, *, session=None, prompt=None):
             argv += [prompt]
     return argv
 
+def installed(route, context=None):
+    """Whether a route's provider command resolves; container runs carry their harnesses in the image."""
+    if not route or (context or {}).get("mode") == "container":
+        return True
+    return shutil.which(BINARIES[route["provider"]]) is not None
+
+
 def claude_environment(project, cwd, *, inherited=None):
     """Honor an optional project-local, private Claude identity guard."""
     from ..identity import assert_unchanged
@@ -77,7 +85,10 @@ def claude_environment(project, cwd, *, inherited=None):
                  "CLAUDE_CODE_OAUTH_TOKEN", "CLAUDE_CODE_USE_BEDROCK",
                  "CLAUDE_CODE_USE_VERTEX", "CLAUDE_CODE_USE_FOUNDRY")
     if any(env.get(name) for name in overrides):
-        raise WorkflowError("Claude account verification cannot use credential or backend overrides; remove them and retry")
+        message = "Claude account verification cannot use credential or backend overrides; remove them and retry"
+        if not is_interactive():
+            raise WorkflowError(message)  # Unattended runs never continue with an override plovi didn't choose.
+        print("Warning: " + message, file=sys.stderr)
     env["CLAUDE_CONFIG_DIR"] = directory
     try:
         result = run([BINARIES["claude"], "auth", "status"], cwd, timeout=15, env=env, check=False)
@@ -126,6 +137,12 @@ class Events:
         self.error = None
         self.usage_limited = False
         self.resets_at = None
+        self.turn_count = 0
+
+    @property
+    def turns(self):
+        """Assistant turns the provider reported, or None when its stream had none."""
+        return self.turn_count or None
 
     def line(self, line):
         try:
@@ -141,12 +158,15 @@ class Events:
             item = event.get("item", {})
             if item.get("type") == "agent_message":
                 self.text.append(item.get("text", ""))
+                self.turn_count += 1
             if item.get("type") in {"command_execution", "mcp_tool_call"}:
                 return "tool-end"
         if kind == "item.started" and event.get("item", {}).get("type") in {"command_execution", "mcp_tool_call"}:
             return "tool-start"
         if kind == "assistant":
             message = event.get("message", {})
+            if any(block.get("type") == "text" for block in message.get("content", [])):
+                self.turn_count += 1
             for block in message.get("content", []):
                 if block.get("type") == "text":
                     self.text.append(block.get("text", ""))
@@ -199,7 +219,29 @@ class Events:
             checked = _checked_report(value)
             if checked is not _NOT_A_REPORT:
                 return checked
+        # Terminal markers replace the JSON report: the final message's last lines decide.
+        last = self.terminal_result if self.terminal_result is not None else (self.text[-1] if self.text else "")
+        return _marker_report(last)
+
+
+_STAGE_OK = re.compile(r"^PLOVI_STAGE_OK:[ \t]*([A-Za-z0-9_-]+)[ \t]*$")
+
+
+def _marker_report(text):
+    """PLOVI_STAGE_OK: <stage> as the last non-empty line, or PLOVI_INPUT_REQUIRED followed by numbered questions."""
+    lines = [line.rstrip() for line in (text or "").strip().splitlines()]
+    if not lines:
         return None
+    done = _STAGE_OK.match(lines[-1].strip())
+    if done:
+        summary = "\n".join(lines[:-1]).strip()
+        return {"status": "complete", "summary": summary or "Stage complete", "stage": done.group(1)}
+    for index, line in enumerate(lines):
+        if line.strip() == "PLOVI_INPUT_REQUIRED":
+            questions = "\n".join(lines[index + 1:]).strip()
+            if re.match(r"^\d+[.)]\s+\S", questions):
+                return {"status": "needs_input", "question": questions}
+    return None
 
 
 _STATUSES = {"complete", "needs_input", "blocked", "spec_conflict", "impossible", "test_fixture_repair"}
@@ -234,9 +276,9 @@ def classify(result, events):
         text = "\n".join(line for line in result["output"].splitlines() if not line.lstrip().startswith("{"))[-4000:]
     if re.search(r"(?i)usage.limit|hit your [\w-]+ limit", text):
         return "usage_limit"
-    if re.search(r"(?i)unauthorized|authentication|invalid.api.key|not.logged.in", text):
+    if re.search(r"(?i)unauthorized|authentication|invalid.api.key|not.logged.in|account (?:is )?(?:disabled|suspended|deactivated)", text):
         return "authentication"
-    if re.search(r"(?i)quota|insufficient.*credit", text):
+    if re.search(r"(?i)quota|insufficient.*credit|billing|payment required", text):
         return "quota"
     if re.search(r"(?i)model.*(?:not.found|not.available|unsupported|does.not.exist)", text):
         return "model"
