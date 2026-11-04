@@ -203,7 +203,26 @@ class ScenarioTests(WorkspaceTest):
 
     @owned_by(48)
     def test_P3_plan_checks_validated(self):
-        self.fail("not implemented")
+        from plovi import manifest
+        project = self.project("hobby")
+        started = self.cli("--project", project.root, "task", "start", "sample", check=False)
+        self.assertEqual(started.returncode, 0, started.stderr)
+        plan = self.plan(project, ["implement", "review"])
+        # A success pattern the tool never prints: the plan can't pass, so it is never proposed.
+        plan["checks"][1]["success_pattern"] = "^docs passed$"
+        write_json(Path(plan["_path"]), {k: v for k, v in plan.items() if not k.startswith("_")})
+        failed = self.cli("--project", project.root, "validate-plan", plan["_path"], "--run-checks", check=False)
+        self.assertEqual(failed.returncode, 1, failed.stderr)
+        self.assertIn('docs: unparseable: exit 0 but success_pattern "^docs passed$" never appeared.', failed.stdout)
+        self.assertNotIn("plan.proposed", [e["type"] for e in self.events(project)])
+        plan["checks"][1].pop("success_pattern")
+        write_json(Path(plan["_path"]), {k: v for k, v in plan.items() if not k.startswith("_")})
+        passed = self.cli("--project", project.root, "validate-plan", plan["_path"], "--run-checks", check=False)
+        self.assertEqual(passed.returncode, 0, passed.stdout + passed.stderr)
+        validated = manifest.load(plan["_path"], project)
+        self.assertIn("planning-checks.json", validated["plan_files"])
+        proposed = [e["data"] for e in self.events(project) if e["type"] == "plan.proposed"]
+        self.assertEqual([p["plan_sha256"] for p in proposed], [manifest.plan_sha256(validated)])
 
     @owned_by(21)
     def test_P4_auto_approved_plan_builds(self):
@@ -278,13 +297,15 @@ class ScenarioTests(WorkspaceTest):
 
     @owned_by(49, 48)
     def test_D0_push_and_pr(self):
-        # #48 adds: every claim in the PR's verification section matches a check plovi ran.
+        # Every claim in the PR's verification section matches a check plovi ran (#48).
+        import re
         from plovi import runner
         project = self.project("hobby")
         self.git(project.root, "switch", "--quiet", "-c", "plovi/sample")
         state_path = self.install_github_fake()
         self.provider([{"writes": {"app.py": "VALUE = 1  # delivered\n"}}])
-        plan = self.plan(project, ["implement", "commit-and-push", "draft-pr"], files={"body.md": "Scenario plan body.\n"},
+        body = "Scenario plan body.\n\nBuilt with `mkdocs build --strict`.\n"
+        plan = self.plan(project, ["implement", "commit-and-push", "draft-pr"], files={"body.md": body},
                          extra={"delivery": {"commit_message": "Deliver the scenario change", "title": "Scenario change",
                                              "body_file": "body.md"},
                                 "plan_files": PLAN_FILES + ["body.md"],
@@ -298,9 +319,13 @@ class ScenarioTests(WorkspaceTest):
         self.assertEqual(len(pulls), 1)
         pull = next(iter(pulls.values()))
         self.assertEqual((pull["head"], pull["base"], pull["draft"]), ("plovi/sample", "main", True))
-        self.assertIn("## Evidence", pull["body"])
-        self.assertIn("behavior", pull["body"])
+        self.assertIn("## Verification (from plovi's evidence)", pull["body"])
         self.assertIn("Scenario plan body.", pull["body"])
+        section = pull["body"].split("<!-- plovi:evidence:end -->")[0]
+        listed = re.findall(r"^- ([\w-]+): (?:passed|failed), `", section, re.M)
+        self.assertEqual(sorted(listed), sorted(row["id"] for row in result["green"]["checks"]))
+        self.assertEqual(sorted(listed), ["behavior", "docs"])
+        self.assertIn("### Mentioned but not run by plovi\n\n- `mkdocs build --strict`", section)
         opened = [e["data"] for e in self.events(project) if e["type"] == "pr.opened"]
         self.assertEqual(opened[0]["files_changed"], 1)
 

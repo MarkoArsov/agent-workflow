@@ -83,6 +83,7 @@ The person name comes from `git config user.name` in the project root, else `loc
 | `delivery.committed` | `repository`, `commit` | Delivery commits the task changes. |
 | `delivery.pushed` | `repository`, `branch` | Delivery pushes the task branch. |
 | `pr.opened` | `repository`, `url`, `files_changed`? | Delivery opens a draft pull request; `files_changed` counts the delivered files. |
+| `delivery.unverified_claims` | `repository`, `count`, `commands` | The PR body mentions check or build commands plovi never ran for this task; the PR lists them under "Mentioned but not run by plovi". |
 | `policy.changed` | `diff` | `plovi policy set` writes `plovi.toml`. |
 | `project.registered` | `root` | `plovi projects add` or `setup --apply` registers a project. |
 | `project.unregistered` | `root`? | `plovi projects remove` forgets a project. |

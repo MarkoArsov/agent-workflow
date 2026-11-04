@@ -10,7 +10,7 @@ Generated from `tests/scenario/steps.py` and `tests/scenario/owners.json` by `sc
 
 !!! summary "In one minute"
     - The target: tag issues, set a project up once, and let plovi plan, build and deliver them while you watch and steer.
-    - 9 of 33 steps are done: every owning issue has landed and the step's test runs in CI.
+    - 11 of 33 steps are done: every owning issue has landed and the step's test runs in CI.
     - A pending step's test is skipped with the issues it waits for. Each owning issue writes the test and marks itself done.
     - [The stability gate](../stability-gate.md) counts these steps in G5.
 
@@ -24,13 +24,13 @@ Generated from `tests/scenario/steps.py` and `tests/scenario/owners.json` by `sc
 | I4 | Dependencies and path overlaps hold an issue back with a visible reason | #21 | `tests/scenario/test_target_scenario.py` `ScenarioTests.test_I4_blocked_because` | pending |
 | P1 | Headless specify answers its own questions with recommended answers and records assumptions | #21 | `tests/scenario/test_target_scenario.py` `ScenarioTests.test_P1_headless_assumptions_recorded` | pending |
 | P2 | A stop-list question stops with grouped questions; one answer resumes the same session | #21 | `tests/scenario/test_target_scenario.py` `ScenarioTests.test_P2_stop_list_asks_once` | pending |
-| P3 | Plan checks are validated with `validate-plan --run-checks` before approval | #48 | `tests/scenario/test_target_scenario.py` `ScenarioTests.test_P3_plan_checks_validated` | pending |
+| P3 | Plan checks are validated with `validate-plan --run-checks` before approval | #48 | `tests/scenario/test_target_scenario.py` `ScenarioTests.test_P3_plan_checks_validated` | done |
 | P4 | An auto-approved plan goes straight into the pipeline | #21 | `tests/scenario/test_target_scenario.py` `ScenarioTests.test_P4_auto_approved_plan_builds` | pending |
 | B1 | The hobby stage list runs exactly implement and review | #49 | `tests/scenario/test_target_scenario.py` `ScenarioTests.test_B1_hobby_stages` | done |
 | B2 | The product stage list runs implement-tests, implement, review and a custom stage | #49 | `tests/scenario/test_target_scenario.py` `ScenarioTests.test_B2_product_stages_with_custom` | done |
 | B3 | A recoverable blocked report, one failing-check round, a missing report and a 2× diff-budget overshoot complete without a person | #47 | `tests/scenario/test_target_scenario.py` `ScenarioTests.test_B3_recovers_in_the_middle` | done |
 | B4 | A usage limit pauses with the reset time, and resume keeps partial edits | #18 | `tests/scenario/test_target_scenario.py` `ScenarioTests.test_B4_usage_limit_pause_resume` | done |
-| D0 | Push and open a PR whose verification section comes only from plovi's evidence | #49, #48 | `tests/scenario/test_target_scenario.py` `ScenarioTests.test_D0_push_and_pr` | pending |
+| D0 | Push and open a PR whose verification section comes only from plovi's evidence | #49, #48 | `tests/scenario/test_target_scenario.py` `ScenarioTests.test_D0_push_and_pr` | done |
 | D1 | The PR's CI readiness is tracked | #23 | `tests/scenario/test_target_scenario.py` `ScenarioTests.test_D1_readiness_tracked` | pending |
 | D2 | A CI failure is fixed on the same PR | #23 | `tests/scenario/test_target_scenario.py` `ScenarioTests.test_D2_ci_failure_fixed_same_pr` | pending |
 | D3 | Accepted review comments are fixed | #23 | `tests/scenario/test_target_scenario.py` `ScenarioTests.test_D3_review_comment_fixed` | pending |

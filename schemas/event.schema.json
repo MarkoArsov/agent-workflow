@@ -79,6 +79,7 @@
         "delivery.committed",
         "delivery.pushed",
         "pr.opened",
+        "delivery.unverified_claims",
         "policy.changed",
         "project.registered",
         "state.checkpoint",

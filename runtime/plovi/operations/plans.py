@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from .. import ledger, manifest as contracts, state
 from ..util import WorkflowError, file_hash, read_json
-from . import record, task_subject
+from . import record, register, task_subject
 
 
 def approved(project, task, sha):
@@ -88,3 +88,32 @@ def describe(project, plan):
     return {"operation": "approve", "kind": "plan", "task": plan["task"], "plan_sha256": sha, "digest": sha,
             "manifest": plan["_path"], "plan_files": files, "approved": approved(project, plan["task"], sha),
             "next": f"plovi approve {plan['task']} --plan --approve {sha}"}
+
+
+@register("validate-plan", "Check a full pipeline's contract; with run_checks, run every named check once in the task checkout",
+          "plovi validate-plan MANIFEST [--run-checks] [--json]",
+          arguments={"manifest": {"type": "string", "description": "Path to the plan's pipeline.json"},
+                     "run_checks": {"type": "boolean", "description": "Run every named check once and classify it"},
+                     "json": {"type": "boolean", "description": "Print JSON"}},
+          required=("manifest",), mutates=True, risk="low")
+def validate_plan(args):
+    """Specify and headless planning (#21) call this before presenting or auto-approving a plan."""
+    from .. import plan_checks, runner
+    from .tasks import project_for
+    from . import Text
+    project = project_for(args)
+    plan = contracts.load(args["manifest"], project)
+    runner.binding(project, plan)
+    if not args.get("run_checks"):
+        propose(project, plan, args)
+        return {"valid": True, "task": plan["task"]}
+    rows = plan_checks.run(project, plan)
+    valid = all(row["result"] == "ran" for row in rows)
+    if valid:
+        propose(project, contracts.load(args["manifest"], project), args)
+    if args.get("json"):
+        value = {"valid": valid, "task": plan["task"], "checks": rows, "results": str(Path(plan["_directory"]) / plan_checks.RESULTS)}
+        return value if valid else dict(value, status="failed")
+    text = Text(plan_checks.table(plan["task"], rows))
+    text.exit_code = 0 if valid else 1
+    return text

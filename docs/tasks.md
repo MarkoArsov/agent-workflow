@@ -104,12 +104,16 @@ Rebinding archives the previous inputs and invalidates the affected stages. Chan
 Specify runs validation and preflight before calling the contract ready. Repeat them at execution handoff if inputs or the environment changed; a normal run preflights again.
 
 ~~~sh
-plovi validate-plan ai-plans/csv-export/pipeline.json
+plovi validate-plan ai-plans/csv-export/pipeline.json --run-checks
 plovi preflight ai-plans/csv-export/pipeline.json
 plovi run ai-plans/csv-export/pipeline.json --dry-run
 ~~~
 
 `validate-plan` checks the contract and that every plan file is complete.
+With `--run-checks` it also runs every named check once in the task checkout and fails the plan
+when a check can't run or its output can't be understood, with one fix line per check. Specify
+repairs the plan until every check runs, and shows you the table with the plan. See
+[validate checks when you plan](verification.md#validate-checks-when-you-plan).
 `preflight` also checks repositories, effective skills, rules, environments, connectors, and that each provider CLI is installed and supports the flags the route needs.
 `run --dry-run` prints the same preflight report without starting anything.
 For a project install, use `.plovi/bin/plovi`.

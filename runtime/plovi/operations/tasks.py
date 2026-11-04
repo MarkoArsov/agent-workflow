@@ -323,10 +323,6 @@ def before_launch(project, args):
         _resumed(project, saved, args, "pipeline")
 
 
-def after_validation(project, plan, args):
-    plans.propose(project, plan, args)
-
-
 def task_started(project, result, args):
     branches = result.get("branches") or {name: project.profile["git"]["branch_template"].format(task=result["task"])
                                           for name in result.get("checkouts", {})}

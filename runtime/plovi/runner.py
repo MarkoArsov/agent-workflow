@@ -189,6 +189,7 @@ def rebind_state(project, manifest, state, root, old, bound, bound_hash, custom)
                                if name in state["completed"]}
     if "implement-tests" not in state["completed"]:
         state.pop("red_test_files", None); state.pop("frozen_tests", None); state.pop("test_counts", None)
+        state.pop("skip_counts", None)
     state.pop("green", None); state.pop("pending_input", None); state.pop("retained_output", None)
     state["binding_sha256"] = bound_hash
 
@@ -393,8 +394,9 @@ def frozen_changed(manifest, state, observed):
 
 def accept_evidence(project, manifest, stage, state, evidence):
     for check in evidence.get("checks", []):
-        if (check.get("counts") or {}).get("tests") is not None:
+        if (check.get("counts") or {}).get("tests") is not None and not check.get("filtered"):
             state.setdefault("test_counts", {})[check["id"]] = check["counts"]["tests"]
+            state.setdefault("skip_counts", {})[check["id"]] = check.get("skipped", 0)
     if stage == "implement-tests":
         observed = git_ops.snapshot(project, state["checkouts"])
         state["red_test_files"] = test_files(manifest, observed)
@@ -433,11 +435,17 @@ def verify_stage(project, manifest, stage, state, before, *, custom=None, cancel
             contracts.matches(path, row.get("test_paths", []))
             for row in manifest["repositories"] for path in cumulative.get(row["id"], [])):
         problems.append("implement-tests changed no declared test_paths")
+    options = check_options(state, after, cancel)
     setup_evidence = []
     if stage == "implement-tests" and any("setup" in c.get("phases", []) for c in manifest["checks"]):
-        setup_evidence = verification.run_checks(project, manifest, state["checkouts"], phase="setup", cancel=cancel)
-    evidence = setup_evidence + verification.run_checks(project, manifest, state["checkouts"], phase=phase,
-                                       names=custom.get("checks") if custom else None, cancel=cancel)
+        setup_evidence = verification.run_checks(project, manifest, state["checkouts"], phase="setup", **options)
+    not_run = []
+    if phase == "red" or custom:
+        evidence = setup_evidence + verification.run_checks(project, manifest, state["checkouts"], phase=phase,
+                                                            names=custom.get("checks") if custom else None, **options)
+    else:
+        green, not_run = verification.run_green(project, manifest, state["checkouts"], **options)
+        evidence = setup_evidence + green
     if stage != "implement-tests":
         # Fail closed when a check runs fewer tests than before this stage: a test was deleted.
         for check in evidence:
@@ -446,13 +454,25 @@ def verify_stage(project, manifest, stage, state, before, *, custom=None, cancel
             if before_count is not None and now is not None and now < before_count:
                 problems.append(f"{check['id']} ran {now} tests, fewer tests than the {before_count} it ran before {stage}; "
                                 "restore the removed tests")
+            # Skips are advisory (#48), but a stage that skips more tests than before weakened them.
+            skipped_before = state.get("skip_counts", {}).get(check["id"])
+            if skipped_before is not None and now is not None and check.get("skipped", 0) > skipped_before:
+                problems.append(f"{check['id']} skipped {check['skipped']} tests, more than the {skipped_before} it skipped "
+                                f"before {stage}; remove the new skips")
     final = git_ops.snapshot(project, state["checkouts"])
     git_ops.guard(after, final, manifest, stage, custom=custom)
     if git_ops.fingerprint(final) != git_ops.fingerprint(after):
         raise WorkflowError("Verification commands changed repository files; fix their output/cleanup configuration")
-    return {"passed": not problems and all(x["passed"] for x in evidence) and not any(x["enforcement"] == "blocking" for x in findings),
-            "problems": problems, "checks": evidence, "rules": findings, "fingerprint": git_ops.fingerprint(final), "changes": changed,
-            "test_edits": test_edits}
+    return {"passed": not problems and not not_run and all(x["passed"] for x in evidence)
+                      and not any(x["enforcement"] == "blocking" for x in findings),
+            "problems": problems, "checks": evidence, "not_run": not_run, "rules": findings,
+            "fingerprint": git_ops.fingerprint(final), "changes": changed, "test_edits": test_edits}
+
+
+def check_options(state, snapshot, cancel):
+    """Reuse passing check results for this diff, and order loop checks by their last durations."""
+    return {"cancel": cancel, "cache": state.setdefault("check_cache", {}), "fingerprint": git_ops.fingerprint(snapshot),
+            "durations": state.setdefault("check_durations", {})}
 
 def publish_guard(project, manifest, state, cancel):
     current = git_ops.snapshot(project, state["checkouts"])
@@ -462,10 +482,10 @@ def publish_guard(project, manifest, state, cancel):
         raise WorkflowError("Blocking rule/secret finding prevents publication")
     last = state.get("green")
     if not last or last["fingerprint"] != git_ops.fingerprint(current):
-        checks = verification.run_checks(project, manifest, state["checkouts"], cancel=cancel)
+        checks, not_run = verification.run_green(project, manifest, state["checkouts"], **check_options(state, current, cancel))
         after = git_ops.snapshot(project, state["checkouts"])
         git_ops.guard(current, after, manifest, "publish")
-        if git_ops.fingerprint(current) != git_ops.fingerprint(after) or not all(x["passed"] for x in checks):
+        if git_ops.fingerprint(current) != git_ops.fingerprint(after) or not_run or not all(x["passed"] for x in checks):
             raise WorkflowError("Current diff does not have passing verification")
         state["green"] = {"fingerprint": git_ops.fingerprint(after), "checks": checks}
     if state.get("green") is None:

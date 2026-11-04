@@ -219,11 +219,15 @@ def deliver(project, manifest, state, save, *, pull_requests=False):
                 crash_after("push")
             progress["pushed"] = True; save()
         if pull_requests:
-            from .evidence import evidence_markdown
-            body = evidence_markdown(state, manifest) + "\n\n" + contained(Path(manifest["_directory"]), manifest["delivery"]["body_file"]).read_text()
-            progress["pr"] = draft_pr(root, repo, branch, manifest["delivery"]["title"], body)
+            from .evidence import evidence_markdown, unverified_claims
+            written = contained(Path(manifest["_directory"]), manifest["delivery"]["body_file"]).read_text()
+            evidence = evidence_markdown(state, manifest, written)
+            claims = unverified_claims(state, written, manifest.get("checks", []))
+            if claims:
+                progress["unverified_claims"] = {"count": len(claims), "commands": claims}
+            progress["pr"] = draft_pr(root, repo, branch, manifest["delivery"]["title"], evidence + "\n\n" + written)
             crash_after("pr")
-            progress["evidence_digest"] = digest(evidence_markdown(state, manifest))
+            progress["evidence_digest"] = digest(evidence)
             save()
     return state.get("delivery", {})
 

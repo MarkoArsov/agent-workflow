@@ -26,7 +26,7 @@ permissions, checks, and saved evidence. Run `plovi --help` for the complete lis
 <div class="cli-command"><code>plovi commands [--json]</code><p>List every operation, its arguments, whether it changes anything and its risk.</p></div>
 <div class="cli-command"><code>plovi inspect</code><p>Show the project profile and effective skill sources.</p></div>
 <div class="cli-command"><code>plovi skill list</code><p>List the skills available in this project.</p></div>
-<div class="cli-command"><code>plovi validate-plan PLAN</code><p>Check a full pipeline's requirements, paths, stages and routes.</p></div>
+<div class="cli-command"><code>plovi validate-plan PLAN [--run-checks]</code><p>Check a full pipeline's requirements, paths, stages and routes. Add <code>--run-checks</code> to run every named check once in the task checkout.</p></div>
 <div class="cli-command"><code>plovi preflight PLAN</code><p>Check readiness before starting a full pipeline.</p></div>
 <div class="cli-command"><code>plovi migrate TASK [--apply]</code><p>Preview or apply a reviewed legacy test checkpoint, renew its proof, and leave implementation stopped.</p></div>
 <div class="cli-command"><code>plovi pipeline PLAN|TASK</code><p>Start or safely resume an approved task with a pinned runtime. Reuse an active worker and attach tracking in the current terminal. Add <code>--no-watch</code> for a tracking descriptor.</p></div>
@@ -43,7 +43,7 @@ permissions, checks, and saved evidence. Run `plovi --help` for the complete lis
 Validate the approved full plan and check readiness before running it.
 
 ```sh
-plovi validate-plan ai-plans/example/pipeline.json
+plovi validate-plan ai-plans/example/pipeline.json --run-checks
 plovi preflight ai-plans/example/pipeline.json
 plovi pipeline ai-plans/example/pipeline.json
 ```

@@ -548,6 +548,13 @@ renewed approval. A lane/model choice is not implementation approval.
    approved_no_red_reason and where red is demonstrated instead under the existing
    contract; do not silently bypass a green check or promise compile-blocked handoff.
    Documentation changes can use actual build/link checks.
+   Name existing repository commands instead of new argv where possible. Use focused
+   `loop` checks (one test module or file) for the implement loop and full `final`
+   checks for the whole suite. Name the project's documented interpreter for docs
+   builds. Set `expected_seconds` for checks over 30 s. Don't set `success_pattern`
+   unless the tool's exit code can't be trusted. Use the package's
+   templates/pr-body.md for `delivery.body_file`: plovi writes the PR's verification
+   section from its evidence, so the body has none.
 
 7. Select only necessary stages in fixed order. Full-lane test changes use
    implement-tests before implement. Review is independent when selected; explain
@@ -573,7 +580,10 @@ renewed approval. A lane/model choice is not implementation approval.
 
 ## Establish readiness and stop
 
-10. For a full plan run validate-plan, then preflight. A successful validate-plan
+10. For a full plan run `plovi validate-plan <manifest> --run-checks` after writing
+    pipeline.json. It runs every named check once in the task checkout. Repair the
+    plan until every check is `ran`, and show its table with the plan; never present
+    a plan whose checks fail it. Then run preflight. A successful validate-plan
     records `plan.proposed` once per plan hash, so the plan appears in the person's
     inbox until it is approved or started. Report actual results, scope,
     check mappings, permission mode, routes and selected delivery actions. A prose

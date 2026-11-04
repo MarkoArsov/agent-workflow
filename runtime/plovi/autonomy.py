@@ -111,8 +111,9 @@ def commands(project, manifest):
 
 
 def loop_checks(manifest):
-    """Checks the implementing session runs while it works: every green-phase check until #48 adds `when`."""
-    return [check for check in manifest.get("checks", []) if "green" in check.get("phases", ["green"])]
+    """Checks the implementing session runs while it works: green checks whose `when` includes loop (#48)."""
+    from .manifest import when
+    return [check for check in manifest.get("checks", []) if "green" in check.get("phases", ["green"]) and "loop" in when(check)]
 
 
 def backoff(challenge, *, environ=None):

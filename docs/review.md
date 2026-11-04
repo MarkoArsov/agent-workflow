@@ -55,7 +55,19 @@ The orchestrator owns commit, push, and draft pull request mechanics. Selecting 
 Repositories are independent. If one push fails after another succeeds, `status` records the partial result per repository, and `resume` continues from the recorded commits and pushes.
 Draft pull requests stay drafts: the orchestrator never marks one ready, adds reviewers, or posts comments.
 
-The draft body is the approved body file from the plan. Evidence isn't attached automatically yet; `pr-preflight` checks the body for testing claims the evidence doesn't support.
+### The PR's verification section
+
+The draft body starts with plovi's own section, "Verification (from plovi's evidence)", followed by
+the approved body file from the plan. Only the runner writes that section: it lists each check plovi
+ran with its command, result, time and skips, then the stages, attempts, diff size and fingerprint.
+When the body changes on a later push, plovi replaces only its own section.
+
+Start the body file from `templates/pr-body.md`, which has no verification or testing section. If
+the body mentions a check or build command in backticks, such as `mkdocs build --strict`, that plovi
+didn't run for this task, the section lists it under "Mentioned but not run by plovi", and the
+ledger records `delivery.unverified_claims`. A command counts as run when its words start a command
+plovi ran, ignoring the interpreter: `mkdocs build` matches `.venv/bin/python -m mkdocs build --strict`.
+`pr-preflight` still checks hand-written PRs for testing claims the evidence doesn't support.
 
 <!-- checkpoints: REV-1, REV-2 -->
 

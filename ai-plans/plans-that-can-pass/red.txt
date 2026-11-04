@@ -1,0 +1,100 @@
+## Commit 1: contract fields and parsing (before the change)
+ERROR: test_generic_checks_need_no_success_pattern (tests.test_verification_v2.ContractFieldTests.test_generic_checks_need_no_success_pattern)
+plovi.util.WorkflowError: behavior: generic checks need an explicit success_pattern
+ERROR: test_exit_code_authoritative_without_pattern (tests.test_verification_v2.ParseTests.test_exit_code_authoritative_without_pattern)
+KeyError: 'success_pattern'
+FAIL: test_patterns_must_compile (tests.test_verification_v2.ContractFieldTests.test_patterns_must_compile)
+AssertionError: WorkflowError not raised
+FAIL: test_when_expected_seconds_and_skips_validated (tests.test_verification_v2.ContractFieldTests.test_when_expected_seconds_and_skips_validated) (bad={'when': []})
+AssertionError: WorkflowError not raised
+FAIL: test_when_expected_seconds_and_skips_validated (tests.test_verification_v2.ContractFieldTests.test_when_expected_seconds_and_skips_validated) (bad={'when': ['sometimes']})
+AssertionError: WorkflowError not raised
+FAIL: test_when_expected_seconds_and_skips_validated (tests.test_verification_v2.ContractFieldTests.test_when_expected_seconds_and_skips_validated) (bad={'when': 'loop'})
+AssertionError: WorkflowError not raised
+FAIL: test_when_expected_seconds_and_skips_validated (tests.test_verification_v2.ContractFieldTests.test_when_expected_seconds_and_skips_validated) (bad={'expected_seconds': 0})
+AssertionError: WorkflowError not raised
+FAIL: test_when_expected_seconds_and_skips_validated (tests.test_verification_v2.ContractFieldTests.test_when_expected_seconds_and_skips_validated) (bad={'expected_seconds': 1.5})
+AssertionError: WorkflowError not raised
+FAIL: test_when_expected_seconds_and_skips_validated (tests.test_verification_v2.ContractFieldTests.test_when_expected_seconds_and_skips_validated) (bad={'expected_seconds': True})
+AssertionError: WorkflowError not raised
+FAIL: test_when_expected_seconds_and_skips_validated (tests.test_verification_v2.ContractFieldTests.test_when_expected_seconds_and_skips_validated) (bad={'skips': 'never'})
+AssertionError: WorkflowError not raised
+FAIL: test_environment_skip_is_advisory (tests.test_verification_v2.ParseTests.test_environment_skip_is_advisory)
+AssertionError: False is not true : ['skipped/pending checks need an explicit plan justification']
+FAIL: test_skipped_identity_fails (tests.test_verification_v2.ParseTests.test_skipped_identity_fails)
+AssertionError: 'planned test test_docker was skipped' not found in ['skipped/pending checks need an explicit plan justification']
+FAIL: test_skips_fail_when_check_says_so (tests.test_verification_v2.ParseTests.test_skips_fail_when_check_says_so)
+AssertionError: '1 skipped; this check sets skips = "fail"' not found in ['skipped/pending checks need an explicit plan justification']
+Ran 8 tests in 1.876s
+FAILED (failures=11, errors=2)
+
+## Commit 2: check selection, identity-only red, reuse (before the change)
+ERROR: test_checks_with_green_phase_run_whole_in_red (tests.test_verification_v2.SelectionTests.test_checks_with_green_phase_run_whole_in_red)
+KeyError: 'filtered'
+ERROR: test_failed_result_not_reused (tests.test_verification_v2.SelectionTests.test_failed_result_not_reused)
+TypeError: run_checks() got an unexpected keyword argument 'cache'
+ERROR: test_loop_and_final_selection (tests.test_verification_v2.SelectionTests.test_loop_and_final_selection)
+ImportError: cannot import name 'run_green' from 'plovi.verification' (<checkout>/runtime/plovi/verification.py)
+ERROR: test_loop_checks_ordered_by_expected_seconds (tests.test_verification_v2.SelectionTests.test_loop_checks_ordered_by_expected_seconds)
+ImportError: cannot import name 'run_green' from 'plovi.verification' (<checkout>/runtime/plovi/verification.py)
+ERROR: test_loop_stops_at_first_failure_and_final_waits (tests.test_verification_v2.SelectionTests.test_loop_stops_at_first_failure_and_final_waits)
+ImportError: cannot import name 'run_green' from 'plovi.verification' (<checkout>/runtime/plovi/verification.py)
+ERROR: test_red_identity_filter_falls_back_to_whole_command (tests.test_verification_v2.SelectionTests.test_red_identity_filter_falls_back_to_whole_command)
+KeyError: 'filtered'
+ERROR: test_red_runs_only_identities_for_unittest (tests.test_verification_v2.SelectionTests.test_red_runs_only_identities_for_unittest)
+KeyError: 'filtered'
+ERROR: test_same_argv_and_fingerprint_reused (tests.test_verification_v2.SelectionTests.test_same_argv_and_fingerprint_reused)
+TypeError: run_checks() got an unexpected keyword argument 'cache'
+FAIL: test_red_filter_works_with_discover (tests.test_verification_v2.SelectionTests.test_red_filter_works_with_discover)
+AssertionError: False is not true : ['expected test identity is absent from output', 'expected tests did not produce the assertion failures', 'no observed assertion-level failure']
+Ran 9 tests in 6.539s
+FAILED (failures=1, errors=8)
+(test_red_filter_works_with_discover also had a wrong fixture argv, -v before discover; fixed in the test before the change landed)
+
+## Commit 3: validate-plan --run-checks (before the change)
+ERROR: test_operation_registered_for_headless_planning (tests.test_plan_checks.PlanCheckTests.test_operation_registered_for_headless_planning)
+FAIL: test_bad_cwd (tests.test_plan_checks.PlanCheckTests.test_bad_cwd)
+FAIL: test_bad_pattern_is_invalid_input (tests.test_plan_checks.PlanCheckTests.test_bad_pattern_is_invalid_input)
+FAIL: test_dotnet_compile_error_is_ran (tests.test_plan_checks.PlanCheckTests.test_dotnet_compile_error_is_ran)
+FAIL: test_exit_codes (tests.test_plan_checks.PlanCheckTests.test_exit_codes)
+FAIL: test_failed_validation_records_no_proposal (tests.test_plan_checks.PlanCheckTests.test_failed_validation_records_no_proposal)
+FAIL: test_generic_without_pattern_ran_whatever_the_exit_code (tests.test_plan_checks.PlanCheckTests.test_generic_without_pattern_ran_whatever_the_exit_code)
+FAIL: test_missing_tool_python_module (tests.test_plan_checks.PlanCheckTests.test_missing_tool_python_module)
+FAIL: test_missing_tool_unknown_executable (tests.test_plan_checks.PlanCheckTests.test_missing_tool_unknown_executable)
+FAIL: test_modifies_files (tests.test_plan_checks.PlanCheckTests.test_modifies_files)
+FAIL: test_no_receipt_refuses (tests.test_plan_checks.PlanCheckTests.test_no_receipt_refuses)
+FAIL: test_pytest_missing_file_is_ran (tests.test_plan_checks.PlanCheckTests.test_pytest_missing_file_is_ran)
+FAIL: test_ran_failing_assertion (tests.test_plan_checks.PlanCheckTests.test_ran_failing_assertion)
+FAIL: test_ran_missing_test_module (tests.test_plan_checks.PlanCheckTests.test_ran_missing_test_module)
+FAIL: test_ran_passing_unittest (tests.test_plan_checks.PlanCheckTests.test_ran_passing_unittest)
+FAIL: test_results_bound_into_plan_hash (tests.test_plan_checks.PlanCheckTests.test_results_bound_into_plan_hash)
+FAIL: test_runs_in_task_checkout (tests.test_plan_checks.PlanCheckTests.test_runs_in_task_checkout)
+FAIL: test_timeout (tests.test_plan_checks.PlanCheckTests.test_timeout)
+FAIL: test_unparseable_generic_pattern_never_matches (tests.test_plan_checks.PlanCheckTests.test_unparseable_generic_pattern_never_matches)
+FAIL: test_unparseable_unittest_without_result_line (tests.test_plan_checks.PlanCheckTests.test_unparseable_unittest_without_result_line)
+Ran 21 tests in 13.523s
+FAILED (failures=19, errors=1)
+Every failure: plovi: error: unrecognized arguments: --run-checks; KeyError: 'validate-plan' for the operation.
+
+## Commit 4: claim only what ran (before the change)
+ERROR: test_body_lists_mentioned_but_unrun_commands (tests.test_pr_claims.ClaimTests.test_body_lists_mentioned_but_unrun_commands)
+TypeError: evidence_markdown() takes 2 positional arguments but 3 were given
+ERROR: test_interpreter_prefix_counts_as_run (tests.test_pr_claims.ClaimTests.test_interpreter_prefix_counts_as_run) (written='mkdocs build')
+TypeError: evidence_markdown() takes 2 positional arguments but 3 were given
+ERROR: test_interpreter_prefix_counts_as_run (tests.test_pr_claims.ClaimTests.test_interpreter_prefix_counts_as_run) (written='python -m mkdocs build --strict')
+TypeError: evidence_markdown() takes 2 positional arguments but 3 were given
+ERROR: test_interpreter_prefix_counts_as_run (tests.test_pr_claims.ClaimTests.test_interpreter_prefix_counts_as_run) (written='python3.11 -m mkdocs build --strict')
+TypeError: evidence_markdown() takes 2 positional arguments but 3 were given
+ERROR: test_interpreter_prefix_counts_as_run (tests.test_pr_claims.ClaimTests.test_interpreter_prefix_counts_as_run)
+TypeError: evidence_markdown() takes 2 positional arguments but 3 were given
+ERROR: test_no_flag_when_all_mentioned_commands_ran (tests.test_pr_claims.ClaimTests.test_no_flag_when_all_mentioned_commands_ran)
+TypeError: evidence_markdown() takes 2 positional arguments but 3 were given
+ERROR: test_template_has_no_verification_section (tests.test_pr_claims.ClaimTests.test_template_has_no_verification_section)
+FileNotFoundError: [Errno 2] No such file or directory: '<checkout>/templates/pr-body.md'
+FAIL: test_evidence_lists_each_check_command_result_and_duration (tests.test_pr_claims.ClaimTests.test_evidence_lists_each_check_command_result_and_duration)
+AssertionError: "## Verification (from plovi's evidence)" not found in '<!-- plovi:evidence:start -->\n## Evidence\n\n- behavior: behavior: unknown (counts unknown)\n- Attempts used: 0\n- Changed files: unknown; lines: u
+FAIL: test_unverified_claims_ledger_event (tests.test_pr_claims.DeliveredClaimTests.test_unverified_claims_ledger_event)
+AssertionError: "## Verification (from plovi's evidence)" not found in "<!-- plovi:evidence:start -->\n## Evidence\n\n- behavior: behavior: passed (\\{'tests': 1, 'failures': 0, 'errors': 0, 'skipped': 0\\})\n- implement
+Ran 6 tests in 8.558s
+FAILED (failures=2, errors=7)
+

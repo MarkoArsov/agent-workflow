@@ -148,4 +148,4 @@ def call(name, args):
 
 
 def _load():
-    from . import commands as _commands, inbox as _inbox, policy as _policy, projects as _projects, stats as _stats, tasks as _tasks  # noqa: F401
+    from . import commands as _commands, inbox as _inbox, plans as _plans, policy as _policy, projects as _projects, stats as _stats, tasks as _tasks  # noqa: F401

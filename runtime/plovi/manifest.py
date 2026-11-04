@@ -101,8 +101,7 @@ def validate(value, project):
         validate_command(command)
         if check.get("parser", "generic") not in PARSERS:
             raise WorkflowError(f"{name}: unknown check parser")
-        if check.get("parser", "generic") == "generic" and not check.get("success_pattern", command.get("success_pattern")):
-            raise WorkflowError(f"{name}: generic checks need an explicit success_pattern")
+        validate_check_fields(name, check, command)
         phases = check.get("phases", ["green"])
         if set(phases) - PHASES or not phases:
             raise WorkflowError("Checks require red and/or green phases")
@@ -222,6 +221,34 @@ def validate(value, project):
         if not isinstance(cwd, str) or is_absolute_anywhere(cwd) or ".." in Path(cwd).parts:
             raise WorkflowError("allowed_commands: cwd must stay inside the repository")
     return value
+
+WHEN = ("loop", "final")
+SKIPS = {"advisory", "fail"}
+
+
+def validate_check_fields(name, check, command):
+    """Optional check fields from #48: when, expected_seconds, skips, and patterns that compile."""
+    for key, value in (("success_pattern", check.get("success_pattern", command.get("success_pattern"))),
+                       ("failure_pattern", check.get("failure_pattern"))):
+        if value is None:
+            continue
+        try:
+            re.compile(value)
+        except (re.error, TypeError) as exc:
+            raise WorkflowError(f"{name}: {key} does not compile ({exc}); fix the regular expression or remove it")
+    when = check.get("when", list(WHEN))
+    if not isinstance(when, list) or not when or len(set(when)) != len(when) or set(when) - set(WHEN):
+        raise WorkflowError(f"{name}: when must list loop, final or both")
+    seconds = check.get("expected_seconds")
+    if seconds is not None and (type(seconds) is not int or seconds < 1):
+        raise WorkflowError(f"{name}: expected_seconds must be a positive whole number")
+    if check.get("skips", "advisory") not in SKIPS:
+        raise WorkflowError(f"{name}: skips must be \"advisory\" or \"fail\"")
+
+
+def when(check):
+    return check.get("when", list(WHEN))
+
 
 def command_for(project, check):
     command = check.get("command")

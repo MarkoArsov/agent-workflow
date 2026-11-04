@@ -38,7 +38,7 @@ class TraceabilityTests(WorkspaceTest):
 
     def test_only_finished_owners_are_done(self):
         done = sorted(number for number, value in steps.load_owners().items() if value == "done")
-        self.assertEqual(done, [18, 46, 47, 49])
+        self.assertEqual(done, [18, 46, 47, 48, 49])
 
     def test_an_unowned_step_fails_validation(self):
         rows = [{"id": "A1", "text": "Owned", "owners": [49], "test": "Fixture.check_A1_owned"},

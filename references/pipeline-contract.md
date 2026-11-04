@@ -7,8 +7,10 @@ plan files complete alongside the manifest.
 Substantive work defaults to this full contract. Manual is an explicit user choice
 or a clearly trivial low-risk edit, with its reason recorded. A missing route keeps
 the full contract a draft; it is not a reason to silently select manual execution.
-Run validate-plan and preflight before reporting a contract ready, distinguishing
-their actual results from planned checks. Specification still ends at approval.
+Run `validate-plan --run-checks` and preflight before reporting a contract ready,
+distinguishing their actual results from planned checks. `--run-checks` runs every
+named check once in the task checkout and writes planning-checks.json beside the
+manifest, which it adds to `plan_files` so plan approval covers it. Specification still ends at approval.
 The plan hash covers the manifest and every plan file; any edit after approval
 needs a new approval before a background worker starts it.
 
@@ -84,7 +86,18 @@ maps to an ordered array of provider/model objects; default is the fallback key
 for an unspecified stage. A reasoning setting is optional.
 
 Checks can name a repository command by string instead of repeating its object.
-Generic checks need success_pattern and, for red evidence, failure_pattern.
+Exit codes decide green: exit 0, no parser failures, and every identity present.
+`success_pattern` is optional; when set it must also match. Generic red evidence
+needs failure_pattern. Patterns must compile.
+
+Optional check fields: `when` is `["loop"]`, `["final"]` or both (the default).
+The implement loop runs loop checks cheapest first and stops at the first failure;
+final checks run once every loop check passes. `expected_seconds` (a whole number)
+orders loop checks; without it plovi uses the last recorded duration. `skips` is
+`"advisory"` (the default) or `"fail"`. Skips fail a check only when a declared
+identity is skipped, `skips` is `"fail"`, or a stage skips more tests than before.
+A red-only unittest or pytest check runs just its identities with `-k`. Passing
+results are reused for the same check, argv, phase and diff.
 Expected red test identities must appear as failed assertions. When implement-tests
 cannot fail on assertions before product changes, declare no red checks and set
 approved_no_red_reason to where red is demonstrated instead; its checks then run green. Commands that modify
@@ -92,7 +105,9 @@ source invalidate their own evidence.
 
 Selecting commit-and-push requires delivery.commit_message and an explicit non-base
 branch on every writable repository. Selecting draft-pr additionally requires
-delivery.title and delivery.body_file, relative to the plan directory. This selects
+delivery.title and delivery.body_file, relative to the plan directory. Start the body
+from templates/pr-body.md: plovi puts its verification section above it, and lists
+any check or build command the body mentions that it never ran. This selects
 only those actions, not reviewer requests or tracker updates.
 
 Custom stage definitions come from the project's stages.json and are included by

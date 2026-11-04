@@ -26,6 +26,7 @@ class VerificationTests(WorkspaceTest):
                 self.assertTrue(parse(check, output, 0)["passed"])
                 self.assertFalse(parse(check, output, 1)["passed"])
         self.assertFalse(parse({"parser": "unittest"}, "Agent says all tests passed", 0)["passed"])
-        self.assertFalse(parse({"parser": "pytest"}, "1 passed, 1 skipped", 0)["passed"])
+        # Since #48 skips are advisory unless the check sets skips = "fail" or skips a planned identity.
+        self.assertFalse(parse({"parser": "pytest", "skips": "fail"}, "1 passed, 1 skipped", 0)["passed"])
         self.assertFalse(parse({"parser": "generic", "success_pattern": "ok"}, "ok\nImportError: fixture", 0)["passed"])
 
