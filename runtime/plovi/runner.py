@@ -587,6 +587,25 @@ def recover_resume(project, manifest, state, root, *, rebind=False, replay=True)
     return adopted
 
 
+BUDGETS = (("minutes", "task_minutes"), ("attempts", "task_attempts"), ("cost", "task_cost_usd"))
+
+
+def budget_exceeded(state, kind, active_seconds):
+    """(which, limit, used) for the first per-task budget reached before another attempt, or None."""
+    values = (state.get("policy") or {}).get("values", {})
+    overrides = state.get("budget_overrides", {})
+    limits = {name: overrides.get(name, policy.setting(values, "budgets", key)) for name, key in BUDGETS}
+    attempts = sum(1 for a in state.get("attempts", []) if a.get("kind") != "nudge")
+    cost = sum(a.get("cost_usd") or 0 for a in state.get("attempts", []))
+    if active_seconds > limits["minutes"] * 60:
+        return "minutes", limits["minutes"], round(active_seconds / 60, 1)
+    if kind != "nudge" and attempts >= limits["attempts"]:
+        return "attempts", limits["attempts"], attempts
+    if limits["cost"] and cost >= limits["cost"]:
+        return "cost", limits["cost"], round(cost, 4)
+    return None
+
+
 def task_email(checkout):
     """The email this checkout commits as: Git's author identity from its config and environment."""
     result = git_ops.run(["git", "var", "GIT_AUTHOR_IDENT"], Path(checkout), check=False)
@@ -594,7 +613,7 @@ def task_email(checkout):
     return match.group(1) if result.returncode == 0 and match else None
 
 
-def run(project, manifest, *, resume=False, answer=None, rebind=False, trusted=False, unattended=None, no_wait=False, retry=False, note=None, approval=None, pull_isolation_image=False, require_plan_approval=False):
+def run(project, manifest, *, resume=False, answer=None, rebind=False, trusted=False, unattended=None, no_wait=False, retry=False, note=None, approval=None, pull_isolation_image=False, require_plan_approval=False, budgets=None):
     root = journal.directory(project, manifest["task"])
     root.mkdir(parents=True, exist_ok=True)
     with journal.lock(root / "runner.lock"):
@@ -603,11 +622,12 @@ def run(project, manifest, *, resume=False, answer=None, rebind=False, trusted=F
             require(project, manifest, read_json(root / "state.json", {}))
         return _run_locked(project, manifest, root, resume=resume, answer=answer, rebind=rebind, trusted=trusted,
                            unattended=unattended, no_wait=no_wait, retry=retry, note=note, approval=approval,
-                           pull_isolation_image=pull_isolation_image, require_plan_approval=require_plan_approval)
+                           pull_isolation_image=pull_isolation_image, require_plan_approval=require_plan_approval,
+                           budgets=budgets)
 
 
 def _run_locked(project, manifest, root, *, resume, answer, rebind, trusted, unattended, no_wait, retry, note, approval, pull_isolation_image,
-                require_plan_approval=False):
+                require_plan_approval=False, budgets=None):
     contracts.validate(manifest, project)
     prior = read_json(root / 'state.json', {})
     checkout_strategies = factory.strategies(project, manifest, unattended=not is_interactive() if unattended is None else unattended, prior=prior)
@@ -709,7 +729,9 @@ def _run_locked(project, manifest, root, *, resume, answer, rebind, trusted, una
         state["execution"] = execution
         state["policy"] = bound.get("policy", {"values": policy.defaults(), "sources": {}, "legacy": True})
         state.pop("error", None)
-        state.pop("pause_reason", None); state.pop("resets_at", None); state.pop("next_command", None)
+        state.pop("pause_reason", None); state.pop("resets_at", None); state.pop("next_command", None); state.pop("budget", None)
+        if budgets:
+            state.setdefault("budget_overrides", {}).update(budgets)
         state["pid"] = os.getpid()
         state["bound_rules"] = [json.loads(value) for name, value in bound.get("rules", {}).items() if name.endswith(".json")]
         write_json(root / "binding.json", bound)
@@ -733,7 +755,10 @@ def _run_locked(project, manifest, root, *, resume, answer, rebind, trusted, una
         previous_summary = {}
         from . import ledger
         recorder = ledger.Recorder(project, manifest)
+        invocation_started, prior_active = time.time(), float(state.get("active_seconds", 0))
+        active_time = lambda: prior_active + time.time() - invocation_started
         def save():
+            state["active_seconds"] = round(active_time(), 1)
             # Observers treat a stop status in state.json as the end of the run, so the
             # ledger is written first and state.json is the last write under the lock.
             journal.save(root, state, before_publish=lambda: recorder.saved(state))
@@ -879,6 +904,14 @@ def _run_locked(project, manifest, root, *, resume, answer, rebind, trusted, una
                                 state["status"] = "cancelled"; save(); return state
                             index = len(state["attempts"])
                             kind = follow[1] if follow else "attempt"
+                            agent_stage = not (definition and definition.get("command"))
+                            exceeded = budget_exceeded(state, kind, active_time())
+                            if exceeded:
+                                # A safe point: nothing runs until the person raises the budget for this task.
+                                which, limit, used = exceeded
+                                state["status"] = "paused"; state["pause_reason"] = "budget"
+                                state["budget"] = {"which": which, "limit": limit, "used": used}
+                                save(); return state
                             if definition and definition.get("command"):
                                 command = definition["command"]
                                 main_repo = next(r["id"] for r in manifest["repositories"] if r["access"] == "write")
@@ -921,10 +954,15 @@ def _run_locked(project, manifest, root, *, resume, answer, rebind, trusted, una
                                 classification = providers.classify(result, events)
                             if classification != "cancellation_failure": state.pop("child_pid", None)
                             session_id = events.session or (follow[2] if follow else None)
+                            from .ledger import usage as token_usage
+                            tokens = token_usage(events.usage) or {}
                             entry = {"id": index, "run_id": state["run_id"], "stage": stage, "route": route, "kind": kind,
                                      "classification": classification,
                                      "session": events.session, "usage": events.usage, "cost_usd": events.cost_usd,
                                      "exit_code": result["exit_code"], "duration_seconds": result["duration_seconds"],
+                                     "duration_s": float(result["duration_seconds"] or 0), "turns": events.turns,
+                                     "tokens_in": tokens.get("input_tokens"), "tokens_out": tokens.get("output_tokens"),
+                                     "prompt_bytes": len(prompt.encode("utf-8")) if agent_stage else None,
                                      "report": redact_report(report) if report else None}
                             follow = None
                             current = git_ops.snapshot(project, state["checkouts"])

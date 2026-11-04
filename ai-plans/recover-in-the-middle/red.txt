@@ -121,3 +121,14 @@ Ran 15 tests in 14.836s
 FAILED (failures=5, errors=3)
 Note: test_new_tasks_unpinned_existing_pins_kept and test_unpinned_task_follows_installed_runtime were written after the runtime-pin change, so they have no recorded red.
 
+== Step 10: visibility and budgets (before the change)
+ERROR: test_minutes_budget_pauses_before_the_next_attempt (tests.test_visibility.BudgetTests.test_minutes_budget_pauses_before_the_next_attempt)
+KeyError: 'budget'
+ERROR: test_task_budget_pauses_with_inbox_item_and_override_resumes (tests.test_visibility.BudgetTests.test_task_budget_pauses_with_inbox_item_and_override_resumes)
+KeyError: 'pause_reason'
+ERROR: test_attempt_records_kind_time_turns_tokens (tests.test_visibility.VisibilityTests.test_attempt_records_kind_time_turns_tokens)
+KeyError: 'turns'
+ERROR: test_status_shows_per_stage_summary_and_next_command (tests.test_visibility.VisibilityTests.test_status_shows_per_stage_summary_and_next_command)
+Ran 5 tests in 7.709s
+FAILED (errors=4)
+

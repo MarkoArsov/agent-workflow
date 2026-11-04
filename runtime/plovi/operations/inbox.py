@@ -67,6 +67,15 @@ def _items(project):
             reason = "The provider usage limit was reached." + (f" It resets at {reset}." if reset else "")
             items["usage_limit"] = (event, reason + " Resume the task after that.",
                                     [{"label": "Resume the task", "operation": "resume", "args": {"task": task}}])
+        elif kind == "run.paused" and data.get("reason") == "budget":
+            budget = data.get("budget") or {}
+            reason = (f"Budget reached: {budget['which']} ({budget.get('used')} of {budget.get('limit')})."
+                      if budget.get("which") else "Budget reached.")
+            items["budget"] = (event, reason + " Raise it for this task to continue.",
+                               [{"label": "Resume with a higher budget", "operation": "resume", "args": {"task": task}}])
+        elif kind == "run.paused" and data.get("reason") == "plan_changed":
+            items["plan_changed"] = (event, "The plan changed while the task ran. Approve the revision, then resume.",
+                                     [{"label": "Resume the task", "operation": "resume", "args": {"task": task}}])
         elif kind == "run.interrupted":
             items["interrupted"] = (event, "The runner stopped without recording a result.",
                                     [{"label": "Resume the task", "operation": "resume", "args": {"task": task}}])

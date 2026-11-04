@@ -33,7 +33,7 @@ TYPES = {
     "approval.requested": (("run_id", "kind", "fingerprint"), ("next",)),
     "approval.granted": (("run_id", "kind", "fingerprint"), ()),
     "escalation.raised": (("run_id", "stage", "kind", "detail"), ("next",)),
-    "run.paused": ((), ("run_id", "status", "reason", "resets_at", "next")),
+    "run.paused": ((), ("run_id", "status", "reason", "resets_at", "next", "budget")),
     "run.resumed": ((), ("run_id", "status", "retry")),
     "run.interrupted": ((), ("run_id", "status")),
     "run.cancelled": ((), ("run_id", "status")),
@@ -603,6 +603,8 @@ class Recorder:
                     data["reason"] = state["pause_reason"]
                 if state.get("resets_at") is not None:
                     data["resets_at"] = state["resets_at"]
+                if state.get("budget"):
+                    data["budget"] = dict(state["budget"])
                 self._append("run.paused", self._next(state, data))
             elif status == "cancelled":
                 self._append("run.cancelled", {"run_id": run_id, "status": status})

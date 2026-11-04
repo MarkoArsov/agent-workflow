@@ -137,6 +137,12 @@ class Events:
         self.error = None
         self.usage_limited = False
         self.resets_at = None
+        self.turn_count = 0
+
+    @property
+    def turns(self):
+        """Assistant turns the provider reported, or None when its stream had none."""
+        return self.turn_count or None
 
     def line(self, line):
         try:
@@ -152,12 +158,15 @@ class Events:
             item = event.get("item", {})
             if item.get("type") == "agent_message":
                 self.text.append(item.get("text", ""))
+                self.turn_count += 1
             if item.get("type") in {"command_execution", "mcp_tool_call"}:
                 return "tool-end"
         if kind == "item.started" and event.get("item", {}).get("type") in {"command_execution", "mcp_tool_call"}:
             return "tool-start"
         if kind == "assistant":
             message = event.get("message", {})
+            if any(block.get("type") == "text" for block in message.get("content", [])):
+                self.turn_count += 1
             for block in message.get("content", []):
                 if block.get("type") == "text":
                     self.text.append(block.get("text", ""))
