@@ -18,7 +18,7 @@ class EvidenceTests(HardeningTest):
         body = evidence_markdown(saved, self.plan)
         self.assertEqual(body, evidence_markdown(saved, self.plan))
         self.assertEqual(saved, before)
-        for expected in ("Evidence", "behavior", "implement", "codex", "fixture-model", "Use offline fixtures"):
+        for expected in ("Verification (from plovi's evidence)", "behavior", "implement", "codex", "fixture-model", "Use offline fixtures"):
             self.assertIn(expected, body)
         # A report summary is not proof of a test count.
         self.assertNotIn("1000 tests passed", body)
@@ -45,7 +45,7 @@ class EvidenceTests(HardeningTest):
         first = json.loads(gh_path.read_text())
         self.assertIn("Reviewer notes stay here.", first["prs"][0]["body"])
         self.assertIn("Plan body.", first["prs"][0]["body"])
-        self.assertEqual(first["prs"][0]["body"].count("## Evidence"), 1)
+        self.assertEqual(first["prs"][0]["body"].count("## Verification"), 1)
         github.draft_pr(self.project.root, repo, "feature/sample", "Fixture", body)
         calls = json.loads(gh_path.read_text())["calls"]
         self.assertEqual(sum(c["argv"][:2] == ["pr", "edit"] for c in calls), 1)

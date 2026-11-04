@@ -298,7 +298,7 @@ class ScenarioTests(WorkspaceTest):
         self.assertEqual(len(pulls), 1)
         pull = next(iter(pulls.values()))
         self.assertEqual((pull["head"], pull["base"], pull["draft"]), ("plovi/sample", "main", True))
-        self.assertIn("## Evidence", pull["body"])
+        self.assertIn("## Verification (from plovi's evidence)", pull["body"])
         self.assertIn("behavior", pull["body"])
         self.assertIn("Scenario plan body.", pull["body"])
         opened = [e["data"] for e in self.events(project) if e["type"] == "pr.opened"]

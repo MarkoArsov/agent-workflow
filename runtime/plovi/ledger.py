@@ -41,6 +41,7 @@ TYPES = {
     "delivery.committed": (("repository", "commit"), ()),
     "delivery.pushed": (("repository", "branch"), ()),
     "pr.opened": (("repository", "url"), ("files_changed",)),
+    "delivery.unverified_claims": (("repository", "count", "commands"), ()),
     "policy.changed": (("diff",), ()),
     "project.registered": (("root",), ()),
     "state.checkpoint": (("run_id", "state_sha256", "keys"), ()),
@@ -594,6 +595,10 @@ class Recorder:
                 if (progress.get("intent") or {}).get("paths") is not None:
                     data["files_changed"] = len(progress["intent"]["paths"])
                 self._append("pr.opened", data)
+            claims = progress.get("unverified_claims")
+            if claims and claims != old.get("unverified_claims"):
+                self._append("delivery.unverified_claims", {"repository": name, "count": claims["count"],
+                                                            "commands": claims["commands"]})
         status = now["status"]
         if status != before["status"]:
             if status in {"failed", "escalated", "cancelled"} and state.get("stage") and state["stage"] not in now["completed"]:
@@ -640,6 +645,7 @@ REASONS = {
     "delivery.committed": "The runner committed the task changes",
     "delivery.pushed": "The runner pushed the task branch",
     "pr.opened": "The runner opened a pull request",
+    "delivery.unverified_claims": "The PR body mentions commands plovi never ran",
     "plan.rebound": "The runner continued with the approved plan revision",
     "commits.adopted": "The runner adopted commits on the task branch",
     "limits.exceeded": "The diff passed the size limit but stayed under the ceiling",

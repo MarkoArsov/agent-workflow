@@ -76,3 +76,25 @@ Ran 21 tests in 13.523s
 FAILED (failures=19, errors=1)
 Every failure: plovi: error: unrecognized arguments: --run-checks; KeyError: 'validate-plan' for the operation.
 
+## Commit 4: claim only what ran (before the change)
+ERROR: test_body_lists_mentioned_but_unrun_commands (tests.test_pr_claims.ClaimTests.test_body_lists_mentioned_but_unrun_commands)
+TypeError: evidence_markdown() takes 2 positional arguments but 3 were given
+ERROR: test_interpreter_prefix_counts_as_run (tests.test_pr_claims.ClaimTests.test_interpreter_prefix_counts_as_run) (written='mkdocs build')
+TypeError: evidence_markdown() takes 2 positional arguments but 3 were given
+ERROR: test_interpreter_prefix_counts_as_run (tests.test_pr_claims.ClaimTests.test_interpreter_prefix_counts_as_run) (written='python -m mkdocs build --strict')
+TypeError: evidence_markdown() takes 2 positional arguments but 3 were given
+ERROR: test_interpreter_prefix_counts_as_run (tests.test_pr_claims.ClaimTests.test_interpreter_prefix_counts_as_run) (written='python3.11 -m mkdocs build --strict')
+TypeError: evidence_markdown() takes 2 positional arguments but 3 were given
+ERROR: test_interpreter_prefix_counts_as_run (tests.test_pr_claims.ClaimTests.test_interpreter_prefix_counts_as_run)
+TypeError: evidence_markdown() takes 2 positional arguments but 3 were given
+ERROR: test_no_flag_when_all_mentioned_commands_ran (tests.test_pr_claims.ClaimTests.test_no_flag_when_all_mentioned_commands_ran)
+TypeError: evidence_markdown() takes 2 positional arguments but 3 were given
+ERROR: test_template_has_no_verification_section (tests.test_pr_claims.ClaimTests.test_template_has_no_verification_section)
+FileNotFoundError: [Errno 2] No such file or directory: '<checkout>/templates/pr-body.md'
+FAIL: test_evidence_lists_each_check_command_result_and_duration (tests.test_pr_claims.ClaimTests.test_evidence_lists_each_check_command_result_and_duration)
+AssertionError: "## Verification (from plovi's evidence)" not found in '<!-- plovi:evidence:start -->\n## Evidence\n\n- behavior: behavior: unknown (counts unknown)\n- Attempts used: 0\n- Changed files: unknown; lines: u
+FAIL: test_unverified_claims_ledger_event (tests.test_pr_claims.DeliveredClaimTests.test_unverified_claims_ledger_event)
+AssertionError: "## Verification (from plovi's evidence)" not found in "<!-- plovi:evidence:start -->\n## Evidence\n\n- behavior: behavior: passed (\\{'tests': 1, 'failures': 0, 'errors': 0, 'skipped': 0\\})\n- implement
+Ran 6 tests in 8.558s
+FAILED (failures=2, errors=7)
+

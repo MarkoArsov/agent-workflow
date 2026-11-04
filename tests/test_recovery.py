@@ -66,7 +66,7 @@ class RecoveryTests(HardeningTest):
                              for event in commands), 1)
         journal = json.loads(gh.read_text())
         self.assertEqual(sum(c["argv"][:2] == ["pr", "create"] for c in journal["calls"]), 1)
-        self.assertIn("Evidence", journal["prs"][0]["body"])
+        self.assertIn("Verification (from plovi's evidence)", journal["prs"][0]["body"])
         self.assertEqual(saved["delivery"]["app"]["pr"], journal["prs"][0]["url"])
 
     def test_abrupt_exit_after_commit_adopts_exact_commit(self):
