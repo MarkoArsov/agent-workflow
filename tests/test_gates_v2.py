@@ -173,7 +173,7 @@ class ReceiptTests(HardeningTest):
         receipt = tasks.receipt_path(project, "first")
         saved = receipt.read_text(); receipt.unlink()
         path = tasks.owned_checkout(project, "first", "app", "feature/first")
-        self.assertTrue(path.endswith("first/app"), path)
+        self.assertEqual(__import__("pathlib").Path(path).parts[-2:], ("first", "app"))
         self.assertEqual(json_rows(receipt.read_text()), json_rows(saved))
         events = [e for e in ledger.events(project) if e["type"] == "receipt.rederived"]
         self.assertEqual([e["data"]["repository"] for e in events], ["app"])

@@ -222,9 +222,10 @@ class WorkspaceTest(unittest.TestCase):
         return load(path)
 
     def cli(self, *args, cwd=None, check=True):
+        # The child writes UTF-8 (PYTHONUTF8 on Windows, C.UTF-8 elsewhere); decode it the same way.
         return subprocess.run([sys.executable, str(PACKAGE / "bin/plovi"), *map(str, args)],
                               cwd=cwd or PACKAGE, env=self.env, stdin=subprocess.DEVNULL,
-                              text=True, capture_output=True, check=check)
+                              text=True, encoding="utf-8", capture_output=True, check=check)
 
     def cli_inproc(self, *args, cwd=None, check=True):
         """Run plovi.cli.main in this process like cli(): same environment, no stdin, captured output."""
