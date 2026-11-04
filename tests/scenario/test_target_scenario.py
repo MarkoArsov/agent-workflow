@@ -237,7 +237,27 @@ class ScenarioTests(WorkspaceTest):
 
     @owned_by(47)
     def test_B3_recovers_in_the_middle(self):
-        self.fail("not implemented")
+        from plovi import ledger, runner, stats
+        project = self.project("hobby")
+        limit = 2
+        plan = self.plan(project, ["implement", "review"], extra={"limits": {
+            "attempts_per_route": 1, "timeout_seconds": 20, "inactivity_seconds": 10, "tool_timeout_seconds": 10,
+            "max_changed_files": limit}})
+        self.provider([
+            {"report": {"status": "blocked", "reason": "network timeout while installing packages"}},
+            {"writes": {"app.py": "VALUE = 2\n"}, "no_report": True},
+            {"no_report": True},
+            {"writes": {"app.py": "VALUE = 1\n# fixed\n", "a.py": "A = 1\n", "b.py": "B = 1\n", "c.py": "C = 1\n"}},
+            {}])
+        result = runner.run(project, plan, unattended=False)
+        self.assertEqual(result["status"], "complete")
+        kinds = [(a["stage"], a["kind"]) for a in result["attempts"]]
+        self.assertEqual(kinds, [("implement", "attempt"), ("implement", "challenge"), ("implement", "nudge"),
+                                 ("implement", "fix-round"), ("review", "attempt")])
+        self.assertEqual((result["diff_advisory"]["files"], result["diff_advisory"]["limit"]["files"]), (2 * limit, limit))
+        events = self.events(project)
+        self.assertEqual([e for e in events if e["actor"]["kind"] == "person"], [], "no person stepped in")
+        self.assertEqual(stats.runs(ledger.events(project))[0]["interventions"], [])
 
     @owned_by(18)
     def test_B4_usage_limit_pause_resume(self):
@@ -385,7 +405,22 @@ class ScenarioTests(WorkspaceTest):
 
     @owned_by(47)
     def test_V7_status_explains_stop_and_cost(self):
-        self.fail("not implemented")
+        from plovi import runner
+        project = self.project("hobby")
+        plan = self.plan(project, ["implement", "review"])
+        reason = "A person must decide which export format users get"
+        self.provider([{"writes": {"app.py": "VALUE = 1\n# done\n"}}, {"report": {"status": "blocked", "reason": reason}}])
+        self.assertEqual(runner.run(project, plan, unattended=False)["status"], "escalated")
+        text = self.task_cli(project, "status", "sample", check=False).stdout
+        lines = text.splitlines()
+        self.assertTrue(any(line.startswith("implement ") and "attempts 1" in line and "tokens 10/5" in line
+                            and "cost unknown" in line for line in lines), text)
+        self.assertIn(reason, text)
+        self.assertEqual(lines[-1], "Next: plovi retry sample --note DECISION")
+        data = json.loads(self.task_cli(project, "status", "sample", "--json", check=False).stdout)
+        self.assertEqual([row["stage"] for row in data["stages"]], ["implement", "review"])
+        raised = [e for e in self.events(project) if e["type"] == "escalation.raised"]
+        self.assertEqual([e["data"]["next"] for e in raised], [data["next"]])
 
     # ---- X: measure ------------------------------------------------------------------------------
 

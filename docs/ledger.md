@@ -75,7 +75,7 @@ The person name comes from `git config user.name` in the project root, else `loc
 | `approval.requested` | `run_id`, `kind`, `fingerprint`, `next`? | A diff crosses the size or protected-path limits. |
 | `approval.granted` | `run_id`, `kind`, `fingerprint` | `plovi approve --size` or `--paths` accepts that diff. |
 | `escalation.raised` | `run_id`, `stage`, `kind`, `detail`, `next`? | A run stops for a person's decision. |
-| `run.paused` | `run_id`?, `status`?, `reason`?, `resets_at`?, `next`? | The runner pauses before the next stage, or at a provider usage limit (`reason: usage_limit`, reset as Unix time). |
+| `run.paused` | `run_id`?, `status`?, `reason`?, `resets_at`?, `next`?, `budget`? | The runner pauses before the next stage, at a provider usage limit (`reason: usage_limit`, reset as Unix time), at a task budget (`reason: budget`), or when the plan changed mid-stage (`reason: plan_changed`). |
 | `run.resumed` | `run_id`?, `status`?, `retry`? | `resume`, `retry`, `answer`, `approve` or `pipeline` continues a task. |
 | `run.interrupted` | `run_id`?, `status`? | plovi finds a run that stopped without a result, once per run. |
 | `run.cancelled` | `run_id`?, `status`? | The runner stops after a cancel request. |

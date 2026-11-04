@@ -10,7 +10,7 @@ Generated from `tests/scenario/steps.py` and `tests/scenario/owners.json` by `sc
 
 !!! summary "In one minute"
     - The target: tag issues, set a project up once, and let plovi plan, build and deliver them while you watch and steer.
-    - 7 of 33 steps are done: every owning issue has landed and the step's test runs in CI.
+    - 9 of 33 steps are done: every owning issue has landed and the step's test runs in CI.
     - A pending step's test is skipped with the issues it waits for. Each owning issue writes the test and marks itself done.
     - [The stability gate](../stability-gate.md) counts these steps in G5.
 
@@ -28,7 +28,7 @@ Generated from `tests/scenario/steps.py` and `tests/scenario/owners.json` by `sc
 | P4 | An auto-approved plan goes straight into the pipeline | #21 | `tests/scenario/test_target_scenario.py` `ScenarioTests.test_P4_auto_approved_plan_builds` | pending |
 | B1 | The hobby stage list runs exactly implement and review | #49 | `tests/scenario/test_target_scenario.py` `ScenarioTests.test_B1_hobby_stages` | done |
 | B2 | The product stage list runs implement-tests, implement, review and a custom stage | #49 | `tests/scenario/test_target_scenario.py` `ScenarioTests.test_B2_product_stages_with_custom` | done |
-| B3 | A recoverable blocked report, one failing-check round, a missing report and a 2× diff-budget overshoot complete without a person | #47 | `tests/scenario/test_target_scenario.py` `ScenarioTests.test_B3_recovers_in_the_middle` | pending |
+| B3 | A recoverable blocked report, one failing-check round, a missing report and a 2× diff-budget overshoot complete without a person | #47 | `tests/scenario/test_target_scenario.py` `ScenarioTests.test_B3_recovers_in_the_middle` | done |
 | B4 | A usage limit pauses with the reset time, and resume keeps partial edits | #18 | `tests/scenario/test_target_scenario.py` `ScenarioTests.test_B4_usage_limit_pause_resume` | done |
 | D0 | Push and open a PR whose verification section comes only from plovi's evidence | #49, #48 | `tests/scenario/test_target_scenario.py` `ScenarioTests.test_D0_push_and_pr` | pending |
 | D1 | The PR's CI readiness is tracked | #23 | `tests/scenario/test_target_scenario.py` `ScenarioTests.test_D1_readiness_tracked` | pending |
@@ -47,7 +47,7 @@ Generated from `tests/scenario/steps.py` and `tests/scenario/owners.json` by `sc
 | V4 | Project settings changed in the app | #22 | Playwright `app/e2e/scenario.spec.ts › "V4 …"`, checked by `tests/scenario/test_target_scenario.py` `ScenarioTests.test_V4_app_settings` | pending |
 | V5 | Take over a task and hand it back | #25 | `tests/scenario/test_target_scenario.py` `ScenarioTests.test_V5_take_over_hand_back` | pending |
 | V6 | Stop all automation at once: `plovi pause --schedules` and `plovi pause --merges` | #20, #23 | `tests/scenario/test_target_scenario.py` `ScenarioTests.test_V6_pause_all_automation` | pending |
-| V7 | Status explains why a task stopped, what it cost and the next command | #47 | `tests/scenario/test_target_scenario.py` `ScenarioTests.test_V7_status_explains_stop_and_cost` | pending |
+| V7 | Status explains why a task stopped, what it cost and the next command | #47 | `tests/scenario/test_target_scenario.py` `ScenarioTests.test_V7_status_explains_stop_and_cost` | done |
 | X1 | `plovi stats --gate` measures stability | #49 | `tests/scenario/test_target_scenario.py` `ScenarioTests.test_X1_stats_gate` | done |
 
 To own a step, see [Scenario tests: how to own a step](../development.md#scenario-tests-how-to-own-a-step).

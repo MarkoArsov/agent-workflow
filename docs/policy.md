@@ -38,9 +38,11 @@ bytes. `doctor` reports missing policy and values duplicated in the profile.
 | `limits.attempts_per_stage` | 2 attempts per route |
 | `limits.max_changed_files` | 40 |
 | `limits.max_changed_lines` | 1500 added plus removed lines |
+| `limits.ceiling_factor` | 4; up to this many times the limits a diff is advisory, beyond it needs approval |
 | `limits.size_exempt` | `["**/package-lock.json", "**/*.lock"]` |
 | `paths.protected` | `[".github/workflows/**", "**/migrations/**"]` |
-| `execution.unattended_permission_mode` | `"restricted"` |
+| `execution.unattended_permission_mode` | `"profile"`: the profile's mode (setup chooses trusted); or `"restricted"`, `"trusted"` |
+| `execution.runtime_pin` | `false`; new tasks follow the installed runtime, `true` pins each new task |
 | `execution.tracking_mode` | `"auto"` |
 | `execution.require_plan_approval` | `true`; background workers need an approved plan hash |
 | `autonomy.level` | `"assisted"` |
@@ -51,10 +53,20 @@ bytes. `doctor` reports missing policy and values duplicated in the profile.
 | `isolation.network` | `"on"` |
 | `isolation.mount_harness_config` | `[]`, opt-in provider IDs |
 | `isolation.api_key_env` | `[]`, explicit environment names |
+| `isolation.checkout` | `"task-worktree"`; `"factory"` gives unattended runs factory checkouts (container mode needs it) |
+| `corrections.same_session_rounds` | 2; same-session fixes of failing checks before a fresh attempt (0 turns them off) |
+| `corrections.challenges` | 3; same-session challenges of a premature stop (0 turns them off) |
+| `budgets.task_minutes` | 120 minutes of active runner time per task |
+| `budgets.task_attempts` | 10 attempts per task, every kind but nudges |
+| `budgets.task_cost_usd` | 0, no cap; counts only cost providers report |
 
 `ready` and `auto` are accepted autonomy values; they do not enable additional
 actions. Slot limits are reserved configuration, not a scheduler. Unknown keys,
 unsupported grants, invalid types and repository-escaping globs are errors.
+
+A plan's `corrections` may set the two `corrections.*` keys for one task, and a plan's
+`protected_paths` lists protected globs its approval approves. `plovi resume TASK
+--budget-minutes N` (and `--budget-attempts`, `--budget-cost`) raises a budget for that task.
 
 Precedence is per key: explicit plan limits, explicit TOML keys, corresponding
 profile values, built-ins. `attempts_per_stage` maps to `attempts_per_route`; it

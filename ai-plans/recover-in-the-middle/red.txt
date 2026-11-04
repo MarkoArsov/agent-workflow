@@ -132,3 +132,7 @@ ERROR: test_status_shows_per_stage_summary_and_next_command (tests.test_visibili
 Ran 5 tests in 7.709s
 FAILED (errors=4)
 
+== Step 11: scenario steps B3 and V7
+Before this change both were harness stubs that failed with 'not implemented'.
+On the earlier runner the B3 run escalates at its recoverable block, and stop events carry no next command for V7.
+

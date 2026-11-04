@@ -52,10 +52,12 @@ and an optional repository-relative `cwd`. The commands are part of the plan, so
 approving the plan approves them. They become exact `Bash(...)` entries in
 Claude's allowlist; trusted mode is unchanged.
 
-Detached and non-TTY runs default to restricted. An explicit
-`execution.unattended_permission_mode = "trusted"` in [policy](policy.md), or
-`run --trusted`, opts in to trusted unattended work. Interactive runs keep the
-profile mode. Preflight and run state show the mode and source; detach and resume
+Detached and non-TTY runs use the project profile's permission mode
+(`execution.unattended_permission_mode = "profile"`, the default); setup chooses
+`trusted`. Set `"restricted"` in [policy](policy.md) to restrict unattended work, or
+`"trusted"` to always trust it; `run --trusted` trusts one run. Interactive runs keep the
+profile mode. Trusted is not a sandbox: it relies on configured access and the runner's
+outcome checks, not operating-system containment. Preflight and run state show the mode and source; detach and resume
 retain the decision. Runner-owned checks and selected delivery actions keep their
 existing contracts; provider tool restrictions do not restrict those commands.
 
@@ -82,6 +84,11 @@ A provider completion without a valid final report stops for inspection rather
 than automatically repeating the attempt. Use the reported retry command only
 after inspecting the retained output.
 
+An unattended run stops when a credential or backend override variable, such as
+`ANTHROPIC_API_KEY` or `ANTHROPIC_BASE_URL`, is set while the account guard is configured,
+because plovi builds that environment. An interactive run prints the same message as a
+warning and continues.
+
 ## Routes
 
 A route names the provider, model, and optional reasoning setting. A stage can have an ordered fallback list.
@@ -106,9 +113,9 @@ Cursor effort belongs in its supported model expression.
 <!-- checkpoints: EXE-1, EXE-4, ORG-3 -->
 
 !!! note "What changes for your workflow"
-    Unattended runs use restricted controls by default. Review policy or pass
-    `--trusted` for a deliberate exception. Extend Claude's explicit allowlist
-    when a configured check cannot be encoded safely.
+    Unattended runs use your project's permission mode, trusted by default. Set
+    `execution.unattended_permission_mode = "restricted"` to restrict them, and extend
+    Claude's explicit allowlist when a configured check cannot be encoded safely.
 
 ## Private provider selection
 
@@ -131,9 +138,10 @@ Public task evidence contains no expected email or private config directory.
 
 ## Factory and container execution
 
-New unattended CLI runs use independent factory checkouts even when interactive
-setup chose a shared checkout. Interactive runs preserve their configured strategy;
-explicit factory supports interactive use. The Python API uses the same non-TTY detection unless its caller explicitly
+Unattended CLI runs use each repository's configured checkout strategy, which is the
+task's own worktree by default. Set `isolation.checkout = "factory"` to give unattended
+runs independent factory checkouts; an explicit `factory` strategy also works
+interactively. The Python API uses the same non-TTY detection unless its caller explicitly
 selects interactive or unattended execution. Resume keeps the recorded allocation
 and permission decision.
 

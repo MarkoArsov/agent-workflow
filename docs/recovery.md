@@ -22,12 +22,28 @@ Go back to `specify` only when your answer would change behavior, scope, a publi
 
 ## These do not stop the task
 
-- Review findings. They are advisory unless a deterministic guard backs them.
-- Advisory rule findings. They are recorded with the stage evidence.
-- Using one provider and model for every stage.
+plovi fails closed at the edges and recovers in the middle. Between an approved plan and
+a verified diff, these continue without you:
+
+- **Failing checks.** Implement continues the same provider session with the failing
+  output, up to `corrections.same_session_rounds` times (2), before a fresh attempt.
+- **A premature stop.** A `blocked`, `spec_conflict`, `impossible` or `needs_input`
+  report for a recoverable reason is challenged in the same session, up to
+  `corrections.challenges` times (3). See [same-session recovery](#same-session-recovery).
+- **A missing report.** The stage gets one nudge, then the checks decide.
+- **A diff over the size limit** but under `limits.ceiling_factor` (4) times it. The PR
+  evidence shows how far over it went.
+- **Protected paths the approved plan lists** in `protected_paths`.
+- **An approved plan revision.** It rebinds at the next stage boundary.
+- **Your own commits on the task branch**, and the edits of an interrupted attempt. Resume
+  adopts them.
+- Review findings and advisory rule findings, which are recorded with the evidence.
 - Usage or cost the provider didn't report. It stays unknown.
 
-These still do: edits outside the declared paths, secret material or a blocking rule, a changed frozen test, a failed named check once attempts run out, and delivery guards.
+These still stop: edits outside the declared paths, secret material or a blocking rule,
+a changed frozen test or a check that runs fewer tests, a stop-list reason, a protected
+path the plan doesn't list, a diff over the ceiling, a task budget, a failed check once
+rounds and attempts run out, and delivery guards. Every stop names its next command.
 See [stop or flag](principles.md#stop-or-flag).
 
 ## Choose the next step
@@ -39,8 +55,18 @@ See [stop or flag](principles.md#stop-or-flag).
 | `starting`, `running` | A worker owns the task; inspect its last activity. | Keep watching, or `watch` if you left. Don't start a duplicate; the task lock would refuse it anyway. |
 | `needs_input` | A stage needs a decision only you can make. | Answer the saved question with `answer --file`. |
 | `failed` | A safety, verification, or delivery check failed, or attempts ran out. | Read `error` and the latest evidence. Fix the cause, then `resume`. |
+| `escalated` | A stop-list reason, or challenges ran out. | Read the reason, then `retry TASK --note DECISION`. |
+| `needs_approval` | The diff passed the ceiling or touched an unlisted protected path. | Approve with the command status shows, or revise the plan. |
+| `paused` | You paused it, a provider usage limit hit, a task budget ran out, or the plan changed mid-stage. | Run the `Next:` command status shows. |
 | `cancelled` | You asked the orchestrator to stop. | `resume` when ready. |
 | `complete` | Every selected stage finished and the final guard passed. | Review the diff, evidence, and delivery state. |
+
+`plovi status TASK` prints one line per stage, the last stop's reason and the exact next command:
+
+```text
+implement  12m 40s  attempts 1 · fix rounds 2 · challenges 1  tokens 410k/38k  cost unknown
+Next: plovi retry sample --note DECISION
+```
 
 ## If something failed
 
@@ -54,11 +80,13 @@ Read the failing command or provider result before retrying.
 | Timeout, inactivity, or a stalled tool | Inspect the attempt's output and the dependency's health. Don't raise limits indefinitely to hide a repeated failure. |
 | A named check failed | Fix the underlying code, test, or local setup within scope. Never weaken the check to make it pass. |
 | Scope violation | The changes are kept for inspection. Undo only the unauthorized edits, or revise the plan. |
-| A frozen test changed | Restore it. If the test or requirement was wrong, revise the plan completely and `resume --rebind`; red proof runs again. |
+| A frozen test changed | Restore it. Only the files holding the plan's red tests are frozen; helpers and other tests may change. If the test or requirement was wrong, revise the plan completely; red proof runs again. |
+| A check ran fewer tests | A test was deleted. Restore it; plovi never completes a stage with fewer tests. |
 | A stage touched your pre-existing changes | Keep your changes separate from the task, then `resume`. |
 | A check command modified source files | Fix the command's output or cleanup configuration so checks leave the checkout unchanged. |
 | Partial delivery | Inspect the per-repository delivery state. `resume` continues without recreating successful commits or pushes. |
-| Plan, profile, or skills changed | Review the complete revision, then `resume --rebind`. |
+| The plan changed | An approved revision rebinds at the next stage boundary. A change while a stage ran pauses it; `resume` continues on the new plan. |
+| Profile, skills, or policy changed | Review the complete revision, then `resume --rebind`. |
 | The task discovered a missing product decision | Revise the plan with `specify` before continuing. |
 
 The orchestrator retries temporary problems and resumes saved progress. It does not silently change the approved route, or ignore a failed check.
@@ -189,11 +217,42 @@ The history audit checks every locally reachable ref. Fetch the relevant remote
 history before comparing local and CI results. Scan a release tree or built site
 separately when verifying those deliverables.
 
+## Same-session recovery
+
+When a stage reports `blocked`, `spec_conflict`, `impossible` or `needs_input`, plovi
+checks the reason in this order:
+
+1. **The stop list.** These always reach you and are never challenged: `behaviour`,
+   `public-contract`, `data-loss`, `security`, `money`, `external-action`, `oversize`,
+   `untrusted-author` and `undeclared-protected-path`. An agent marks one with
+   `[stop:<key>]`; the marker wins over keywords.
+2. **Recoverable categories.** A transient failure, a project command to run, generated
+   code to refresh, a test helper or fixture to fix (implement and review only), work a
+   later stage owns, or a local permission question. plovi continues the same session
+   with a challenge, waiting 20 s, then 40 s, up to 300 s.
+3. **Anything else** is a genuine question or escalation, as before.
+
+After `corrections.challenges` challenges the stage escalates, and status keeps each
+challenge's reason and time. Each continuation is an attempt record with its `kind`:
+`attempt`, `fix-round`, `challenge` or `nudge`. Reports are optional: an agent may end
+with `PLOVI_STAGE_OK: <stage>`, or `PLOVI_INPUT_REQUIRED` followed by numbered questions.
+
+## Task budgets
+
+`budgets.task_minutes` (120, active runner time), `budgets.task_attempts` (10, every kind
+but nudges) and `budgets.task_cost_usd` (0, no cap; counts reported cost only) pause a
+task before its next attempt. The inbox shows "Budget reached". Raise the cap for that
+task only:
+
+```sh
+plovi resume TASK --budget-attempts 20
+```
+
 ## Escalations and interruptions
 
-`blocked`, `spec_conflict` and `impossible` stop after one attempt with status
-`escalated`. Status retains the reason, stage, route and session, and shows the
-retry command. Ordinary resume cannot clear an escalation.
+A stop-list reason, or a recoverable stop whose challenges ran out, stops with status
+`escalated`. Status retains the reason, stage, route and session, and shows the retry
+command. Ordinary resume cannot clear an escalation.
 
 ```sh
 plovi retry TASK --note decision.txt
@@ -209,7 +268,12 @@ then adopts only the exact expected tree, message, paths and single parent. It
 reconciles the remote branch and matching open PR after a crash. Foreign changes
 or failed remote queries stop recovery. Never force push to repair recovery.
 
-`needs_approval` retains size and protected-path requirements. See [policy](policy.md).
+`needs_approval` retains the size ceiling and undeclared protected-path requirements.
+See [policy](policy.md).
+
+Resume adopts linear commits on the task branch that the task worktree's own Git
+identity made (`commits.adopted`). Commits by someone else, merges or rewritten history
+stop and name the commits; approve them with `recovery.approved_commits`.
 
 !!! note "What changes for your workflow"
     Check `plovi inbox` first. Use retry for an escalation, answer for a question,

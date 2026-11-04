@@ -140,3 +140,16 @@ Scenario steps this PR marks done: **B3** (`test_B3_recovers_in_the_middle`) and
 `codex/gpt-6.1-sol`, then `claude/opus`, for specify and implement, with advisory
 `explicit-route-below-recommended-band` and the notice "No model catalogue". Snapshot:
 `model-selection.json`. This session (Claude Opus) implements; no route change.
+
+## Decisions made during implementation
+
+These follow from the approved scope; each is in the commit that made it.
+
+| # | Where | Decision |
+|---|---|---|
+| K | 5.7 runtime pin | An unpinned task follows the installed plovi: a binding that differs only in package-owned parts (package version, package references, package skills) is adopted on resume without a rebind and recorded in `runtime_updates`. Profile, project skill, rule and explicit policy changes still need `resume --rebind`. Existing tasks keep the built-in policy defaults they were bound with. |
+| L | 5.3 plan revisions | A revision is a change to the plan on disk after the run started. Output an attempt wrote under the old plan is never replayed into the new one. |
+| M | 5.6 receipts | Re-derivation covers the `task start` receipt (the default checkout). Factory receipts keep their current behaviour; factory checkouts are opt-in. |
+| N | 6.1 evaluator | `plovi models evaluate` discovers installed providers when the facts don't name them; the evaluator also drops uninstalled providers from configured and pinned chains, with the advisory `uninstalled-provider-skipped`. |
+| O | 5.9 tests | The shared runner fixture opts into factory checkouts through its reviewed `plovi.toml`, because its non-interactive tests were written for them; the new defaults have their own tests. |
+| P | 8 budgets | `task_minutes` counts active runner time across invocations, so time waiting for your answer doesn't count. |

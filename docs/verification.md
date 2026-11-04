@@ -42,6 +42,19 @@ After `implement-tests` is verified, the orchestrator records the hashes of ever
 Implementation and review cannot rewrite, add, or delete those tests to make them pass; a change stops the run.
 A wrong requirement or test needs a complete plan revision, `resume --rebind`, and renewed red proof.
 
+## Frozen scope and test edits
+
+After implement-tests, plovi freezes only the test files it wrote that contain a red
+identity, such as `test_behavior`. When none matches, it freezes every test file that
+stage wrote. Implement and review may change other files under `test_paths`: helpers,
+fixtures and other tests. Those edits are listed as `test_edits` in the stage evidence,
+and review is asked to check they don't weaken any assertion.
+
+A check that runs fewer tests than it did before the stage fails closed: a test was
+deleted. `unittest` and `pytest` output report test counts; other parsers have none, so
+their frozen red files are the guard. A skipped test still fails its check unless the
+plan gives `approved_skip_reason`.
+
 ## Green evidence
 
 Every required outcome maps to at least one named check with a green phase.

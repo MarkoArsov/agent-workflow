@@ -2,6 +2,26 @@
 
 ## Unreleased
 
+- Recover in the middle (#47). Failing checks continue the same provider session
+  first (`corrections.same_session_rounds`, default 2). A premature `blocked`,
+  `spec_conflict`, `impossible` or `needs_input` for a recoverable reason is challenged
+  in the same session (`corrections.challenges`, default 3); stop-list reasons still
+  reach you. Reports are optional: `PLOVI_STAGE_OK: <stage>` or `PLOVI_INPUT_REQUIRED`
+  replace the JSON report, and a missing report gets one nudge before the checks decide.
+- Only test files that hold a red identity freeze; other test edits are listed for
+  review, and a check that runs fewer tests fails closed.
+- Size limits are advisory up to `limits.ceiling_factor` (4) times; plans may list
+  `protected_paths`; approved plan revisions rebind at the next stage boundary; resume
+  adopts the task's own commits, interrupted edits and re-derivable receipts.
+- New defaults: unattended runs use the profile's permission mode (trusted from setup)
+  in the task worktree; factory checkouts (`isolation.checkout`) and runtime pins
+  (`execution.runtime_pin`) are opt-in; `task start` branches from the fetched remote
+  base.
+- Only installed providers are proposed or run; authentication and billing failures
+  skip a provider for the rest of the run.
+- `plovi status TASK` shows time, attempts, fix rounds, challenges, tokens and cost per
+  stage and the exact next command; per-task `budgets.*` pause a task, and
+  `plovi resume --budget-*` raises them.
 - Add the append-only ledger: one event per task transition and changing command,
   with actor and reason, stored per project under user data. `state.json` becomes a
   cache that `plovi rebuild-state TASK` restores from state checkpoints.

@@ -574,7 +574,8 @@ class Recorder:
             self._append("approval.requested", self._next(state, {"run_id": run_id, "kind": kind, "fingerprint": fingerprint}))
         if now["escalation"] and now["escalation"] != before["escalation"]:
             escalation = state["escalation"]
-            self._append("escalation.raised", self._next(state, {"run_id": run_id, "stage": escalation.get("stage") or state.get("stage") or "",
+            # The escalation is saved before its status changes; its next command is the escalated one.
+            self._append("escalation.raised", self._next(dict(state, status="escalated"), {"run_id": run_id, "stage": escalation.get("stage") or state.get("stage") or "",
                                                "kind": escalation.get("kind", ""), "detail": str(escalation.get("reason", ""))}))
         if now["advisory"] and now["advisory"] != before.get("advisory"):
             advisory = state["diff_advisory"]
