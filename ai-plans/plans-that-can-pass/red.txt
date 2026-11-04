@@ -28,3 +28,26 @@ AssertionError: '1 skipped; this check sets skips = "fail"' not found in ['skipp
 Ran 8 tests in 1.876s
 FAILED (failures=11, errors=2)
 
+## Commit 2: check selection, identity-only red, reuse (before the change)
+ERROR: test_checks_with_green_phase_run_whole_in_red (tests.test_verification_v2.SelectionTests.test_checks_with_green_phase_run_whole_in_red)
+KeyError: 'filtered'
+ERROR: test_failed_result_not_reused (tests.test_verification_v2.SelectionTests.test_failed_result_not_reused)
+TypeError: run_checks() got an unexpected keyword argument 'cache'
+ERROR: test_loop_and_final_selection (tests.test_verification_v2.SelectionTests.test_loop_and_final_selection)
+ImportError: cannot import name 'run_green' from 'plovi.verification' (<checkout>/runtime/plovi/verification.py)
+ERROR: test_loop_checks_ordered_by_expected_seconds (tests.test_verification_v2.SelectionTests.test_loop_checks_ordered_by_expected_seconds)
+ImportError: cannot import name 'run_green' from 'plovi.verification' (<checkout>/runtime/plovi/verification.py)
+ERROR: test_loop_stops_at_first_failure_and_final_waits (tests.test_verification_v2.SelectionTests.test_loop_stops_at_first_failure_and_final_waits)
+ImportError: cannot import name 'run_green' from 'plovi.verification' (<checkout>/runtime/plovi/verification.py)
+ERROR: test_red_identity_filter_falls_back_to_whole_command (tests.test_verification_v2.SelectionTests.test_red_identity_filter_falls_back_to_whole_command)
+KeyError: 'filtered'
+ERROR: test_red_runs_only_identities_for_unittest (tests.test_verification_v2.SelectionTests.test_red_runs_only_identities_for_unittest)
+KeyError: 'filtered'
+ERROR: test_same_argv_and_fingerprint_reused (tests.test_verification_v2.SelectionTests.test_same_argv_and_fingerprint_reused)
+TypeError: run_checks() got an unexpected keyword argument 'cache'
+FAIL: test_red_filter_works_with_discover (tests.test_verification_v2.SelectionTests.test_red_filter_works_with_discover)
+AssertionError: False is not true : ['expected test identity is absent from output', 'expected tests did not produce the assertion failures', 'no observed assertion-level failure']
+Ran 9 tests in 6.539s
+FAILED (failures=1, errors=8)
+(test_red_filter_works_with_discover also had a wrong fixture argv, -v before discover; fixed in the test before the change landed)
+

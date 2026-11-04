@@ -172,3 +172,13 @@ CI green is checked after a push you request separately.
 specify and implement (`explicit-route`, required band deep), with advisory
 `uninstalled-provider-skipped` and the notice "No model catalogue". Snapshot: `model-selection.json`.
 This session (Claude Opus) implements; no route change.
+
+## Decisions made during implementation
+
+These follow from the approved scope; each is in the commit that made it.
+
+| # | Where | Decision |
+|---|---|---|
+| O | B, identity-only red | Only **red-only** checks (phases without `green`) run their identities alone. A check with both red and green runs its whole command in red, because that run is the test-count and skip baseline #47's guards compare later stages against. Filtering it would silently disable "removing a test fails closed". |
+| P | Section 4, skips | Advisory skips would have dropped #47's "skipping a test fails closed". The runner now fails a stage when a check skips more tests than it did before that stage (same baseline as the test-count guard). Environment skips stay advisory because they are present before and after. |
+| Q | F, evidence | A check in both loop and final runs once; its evidence row is the run, not the reused copy. Reused rows say `reused`. The run state keeps at most 64 cached passing results, each with the last 4,000 characters of output. |

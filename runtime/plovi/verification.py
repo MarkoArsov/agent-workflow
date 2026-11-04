@@ -105,6 +105,41 @@ def command_environment(command, inherited=None):
             raise WorkflowError(f"Command requires environment variable {name}")
     return env
 
+PYTHON = re.compile(r"python(?:\d+(?:\.\d+)?)?(?:\.exe)?$", re.I)
+KEYWORDS = {"and", "or", "not"}
+
+
+def filtered_argv(check, argv):
+    """A red-only check's argv narrowed to its identities with -k, or None to run the whole command.
+
+    Checks that also run green keep their whole red run: it is the test-count and skip baseline
+    the runner's guards compare later stages against."""
+    identities = check.get("identities") or []
+    phases = check.get("phases", ["green"])
+    if "red" not in phases or "green" in phases or not identities or "-k" in argv:
+        return None
+    parser = check.get("parser", "generic")
+    program = Path(argv[0]).name if argv else ""
+    module = argv[2] if len(argv) > 2 and argv[1] == "-m" and PYTHON.search(program) else None
+    if parser == "unittest" and module == "unittest":
+        return [*argv, *(arg for name in identities for arg in ("-k", name))]
+    if parser == "pytest" and (module == "pytest" or re.fullmatch(r"pytest(?:\.exe)?", program, re.I)):
+        names = [re.split(r"::|\.", name)[-1] for name in identities]
+        if all(name.isidentifier() and name not in KEYWORDS for name in names):
+            return [*argv, "-k", " or ".join(names)]
+    return None
+
+
+def cache_key(check_id, argv, phase, fingerprint):
+    from .util import digest, json_text
+    return digest(json_text([check_id, [str(arg) for arg in argv], phase, fingerprint]))
+
+
+def planned_argv(project, definition, phase):
+    argv = command_for(project, definition)["argv"]
+    return (filtered_argv(definition, argv) if phase == "red" else None) or argv
+
+
 def check(project, definition, checkouts, *, phase="green", cancel=None, environment=None):
     from .progress import active
     reporter = active.get()
@@ -115,36 +150,106 @@ def check(project, definition, checkouts, *, phase="green", cancel=None, environ
     from .isolation import environment as identity_environment
     env = command_environment(command, environment)
     env = identity_environment(project, cwd, inherited=env) or env
-    result = execute(command["argv"], cwd, env=env,
-                     timeout=command.get("timeout_seconds", 300),
-                     inactivity=command.get("inactivity_seconds", command.get("timeout_seconds", 300)),
-                     cancel=cancel)
-    if result["reason"] == "cancellation_failure":
-        from .process import CleanupFailure
-        raise CleanupFailure(result.get("child_pid"))
     spec = dict(definition)
     if spec.get("parser", "generic") == "generic":
         spec.setdefault("success_pattern", command.get("success_pattern"))
-    evidence = parse(spec, result["output"], result["exit_code"], phase)
-    if result["reason"]:
-        evidence["passed"] = False
-        evidence["problems"].append(result["reason"])
-    if reporter: reporter.emit("check_finished", check=definition["id"], passed=evidence["passed"], kind=phase)
-    return evidence | result | {"id": definition["id"], "repository": definition["repository"],
-                                "command": redact(" ".join(command["argv"]))}
 
-def run_checks(project, manifest, checkouts, *, phase="green", names=None, cancel=None):
+    def attempt(argv):
+        result = execute(argv, cwd, env=env,
+                         timeout=command.get("timeout_seconds", 300),
+                         inactivity=command.get("inactivity_seconds", command.get("timeout_seconds", 300)),
+                         cancel=cancel)
+        if result["reason"] == "cancellation_failure":
+            from .process import CleanupFailure
+            raise CleanupFailure(result.get("child_pid"))
+        evidence = parse(spec, result["output"], result["exit_code"], phase)
+        if result["reason"]:
+            evidence["passed"] = False
+            evidence["problems"].append(result["reason"])
+        return evidence | result | {"command": redact(" ".join(str(arg) for arg in argv))}
+
+    narrowed = filtered_argv(definition, command["argv"]) if phase == "red" else None
+    evidence = attempt(narrowed or command["argv"])
+    if narrowed and not all(re.search(re.escape(name), evidence["output"]) for name in definition["identities"]):
+        # -k matches test IDs; an identity the filter missed gets the whole command once.
+        evidence = attempt(command["argv"])
+        narrowed = None
+    if reporter: reporter.emit("check_finished", check=definition["id"], passed=evidence["passed"], kind=phase)
+    return evidence | {"id": definition["id"], "repository": definition["repository"], "filtered": bool(narrowed)}
+
+
+def order(checks, durations=None):
+    """Cheapest first: expected_seconds, else the last recorded duration; unknown cost last, in manifest order."""
+    durations = durations or {}
+    def cost(item):
+        index, definition = item
+        value = definition.get("expected_seconds", durations.get(definition["id"]))
+        return (value is None, value or 0, index)
+    return [definition for _, definition in sorted(enumerate(checks), key=cost)]
+
+
+def run_checks(project, manifest, checkouts, *, phase="green", names=None, cancel=None, when=None,
+               cache=None, fingerprint=None, durations=None, fail_fast=False):
+    """Run the selected checks. Passing results are reused for the same check, argv, phase and fingerprint."""
+    from .manifest import when as check_when
     selected = [c for c in manifest["checks"] if (c["id"] in names if names is not None else phase in c.get("phases", ["green"]))]
-    if not selected:
+    if when is not None:
+        selected = order([c for c in selected if when in check_when(c)], durations)
+    elif not selected:
         raise WorkflowError(f"No {phase} checks selected")
     from contextlib import ExitStack
     from .environments import lease
+    results = []
     with ExitStack() as stack:
         environments = {}
         for definition in selected:
-            name = definition.get("environment")
-            if name and name not in environments:
-                environments[name] = stack.enter_context(lease(project, name, checkouts, cancel))
-        return [check(project, c, checkouts, phase=phase,
-                      cancel=environments[c["environment"]][1] if c.get("environment") else cancel,
-                      environment=environments[c["environment"]][0] if c.get("environment") else None) for c in selected]
+            key = cache_key(definition["id"], planned_argv(project, definition, phase), phase, fingerprint)
+            if cache is not None and fingerprint is not None and key in cache:
+                results.append(dict(cache[key], reused=True))
+            else:
+                name = definition.get("environment")
+                if name and name not in environments:
+                    environments[name] = stack.enter_context(lease(project, name, checkouts, cancel))
+                row = check(project, definition, checkouts, phase=phase,
+                            cancel=environments[name][1] if name else cancel,
+                            environment=environments[name][0] if name else None)
+                if durations is not None and row.get("duration_seconds") is not None:
+                    durations[definition["id"]] = row["duration_seconds"]
+                if cache is not None and fingerprint is not None and row["passed"]:
+                    remember(cache, key, row)
+                results.append(row)
+            if fail_fast and not results[-1]["passed"]:
+                break
+    return results
+
+
+CACHE_ENTRIES = 64
+CACHED_OUTPUT = 4000
+
+
+def remember(cache, key, row):
+    """Keep a bounded number of passing results, each with the tail of its output, in the run state."""
+    cache.pop(key, None)
+    cache[key] = dict(row, output=str(row.get("output") or "")[-CACHED_OUTPUT:])
+    while len(cache) > CACHE_ENTRIES:
+        cache.pop(next(iter(cache)))
+
+
+def run_green(project, manifest, checkouts, *, cancel=None, cache=None, fingerprint=None, durations=None):
+    """Loop checks cheapest first, stopping at the first failure; then final checks once they all pass.
+
+    Returns (results, not_run). A check in both sets runs once: its final run reuses the loop result."""
+    from .manifest import when as check_when
+    green = [c for c in manifest["checks"] if "green" in c.get("phases", ["green"])]
+    options = dict(cancel=cancel, cache=cache if cache is not None else {}, fingerprint=fingerprint or "unsaved",
+                   durations=durations)
+    loop = run_checks(project, manifest, checkouts, when="loop", fail_fast=True, **options)
+    if not all(row["passed"] for row in loop):
+        done = {row["id"] for row in loop}
+        planned = order([c for c in green if "loop" in check_when(c)], durations) + [c for c in green if "loop" not in check_when(c)]
+        return loop, [c["id"] for c in planned if c["id"] not in done]
+    final = run_checks(project, manifest, checkouts, when="final", **options)
+    merged = {row["id"]: row for row in loop}
+    # A check in both sets keeps the row from its loop run, not the reused copy of it.
+    merged.update({row["id"]: row for row in final if not (row.get("reused") and row["id"] in merged)})
+    return list(merged.values()), []

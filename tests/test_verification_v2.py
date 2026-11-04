@@ -78,3 +78,133 @@ class ContractFieldTests(HardeningTest):
             self.validate(parser="generic", phases=["green"], identities=[], success_pattern="Checked (")
         with self.assertRaisesRegex(WorkflowError, "failure_pattern does not compile"):
             self.validate(parser="generic", failure_pattern="[unclosed")
+
+
+RECORD = ("import os, sys; open(os.environ['CHECK_LOG'], 'a').write(sys.argv[1] + '\\n'); "
+          "sys.exit(int(sys.argv[2]) if len(sys.argv) > 2 else 0)")
+RED_MODULE = ("import unittest\nclass Red(unittest.TestCase):\n"
+              " def test_target(self):\n  '''Target behaviour'''\n  self.assertEqual(1, 2)\n"
+              " def test_other(self): self.assertEqual(1, 1)\n")
+
+
+class SelectionTests(HardeningTest):
+    def setUp(self):
+        super().setUp()
+        import os
+        self.root = self.fixture([])
+        self.log = self.root.parent / "checks.log"
+        os.environ["CHECK_LOG"] = str(self.log)
+        self.addCleanup(os.environ.pop, "CHECK_LOG", None)
+
+    def recorded(self, name, *, code=0, **fields):
+        import sys
+        return {"id": name, "repository": "app", "parser": "generic", "phases": ["green"],
+                "command": {"argv": [sys.executable, "-c", RECORD, name, str(code)], "timeout_seconds": 10}} | fields
+
+    def ran(self):
+        return self.log.read_text().split() if self.log.exists() else []
+
+    def use(self, *checks):
+        self.plan["checks"] = list(checks)
+        self.plan["outcomes"] = [{"id": "behavior", "checks": [checks[0]["id"]]}]
+
+    def green(self, **options):
+        from plovi.verification import run_green
+        return run_green(self.project, self.plan, {"app": str(self.root)}, **options)
+
+    def test_loop_and_final_selection(self):
+        self.use(self.recorded("quick", when=["loop"]), self.recorded("full", when=["final"]), self.recorded("both"))
+        rows, not_run = self.green(cache={}, fingerprint="f1")
+        self.assertEqual(self.ran(), ["quick", "both", "full"])
+        self.assertEqual(not_run, [])
+        # "both" ran once, in the loop; the final pass reused that run instead of repeating it.
+        self.assertEqual({row["id"]: row.get("reused", False) for row in rows}, {"quick": False, "both": False, "full": False})
+        from plovi.autonomy import loop_checks
+        self.assertEqual([c["id"] for c in loop_checks(self.plan)], ["quick", "both"])
+
+    def test_loop_checks_ordered_by_expected_seconds(self):
+        self.use(self.recorded("slow", expected_seconds=30), self.recorded("unmeasured"),
+                 self.recorded("measured"), self.recorded("fast", expected_seconds=1))
+        self.green(durations={"measured": 5.0})
+        self.assertEqual(self.ran(), ["fast", "measured", "slow", "unmeasured"])
+
+    def test_loop_stops_at_first_failure_and_final_waits(self):
+        self.use(self.recorded("broken", code=1, when=["loop"], expected_seconds=1),
+                 self.recorded("later", when=["loop"], expected_seconds=2), self.recorded("full", when=["final"]))
+        rows, not_run = self.green()
+        self.assertEqual(self.ran(), ["broken"])
+        self.assertEqual([row["id"] for row in rows], ["broken"])
+        self.assertEqual(not_run, ["later", "full"])
+
+    def test_same_argv_and_fingerprint_reused(self):
+        from plovi.verification import run_checks
+        self.use(self.recorded("quick"))
+        cache = {}
+        first = run_checks(self.project, self.plan, {"app": str(self.root)}, cache=cache, fingerprint="f1")
+        again = run_checks(self.project, self.plan, {"app": str(self.root)}, cache=cache, fingerprint="f1")
+        self.assertEqual(self.ran(), ["quick"])
+        self.assertTrue(again[0]["reused"])
+        self.assertEqual((again[0]["passed"], again[0]["command"]), (first[0]["passed"], first[0]["command"]))
+        run_checks(self.project, self.plan, {"app": str(self.root)}, cache=cache, fingerprint="f2")
+        self.plan["checks"][0]["command"]["argv"].append("extra")
+        run_checks(self.project, self.plan, {"app": str(self.root)}, cache=cache, fingerprint="f2")
+        self.assertEqual(self.ran(), ["quick", "quick", "quick"])
+
+    def test_failed_result_not_reused(self):
+        from plovi.verification import run_checks
+        self.use(self.recorded("broken", code=1))
+        cache = {}
+        for _ in range(2):
+            self.assertFalse(run_checks(self.project, self.plan, {"app": str(self.root)}, cache=cache, fingerprint="f1")[0]["passed"])
+        self.assertEqual(self.ran(), ["broken", "broken"])
+
+    def red_check(self, argv, identities):
+        import sys
+        (self.root / "test_red.py").write_text(RED_MODULE)
+        return {"id": "red", "repository": "app", "parser": "unittest", "phases": ["red"], "identities": identities,
+                "command": {"argv": [sys.executable, "-m", "unittest", *argv], "timeout_seconds": 30}}
+
+    def red(self, check):
+        from plovi.verification import run_checks
+        self.use(check)
+        return run_checks(self.project, self.plan, {"app": str(self.root)}, phase="red")[0]
+
+    def test_red_runs_only_identities_for_unittest(self):
+        result = self.red(self.red_check(["-v", "test_red"], ["test_target"]))
+        self.assertTrue(result["passed"], result["problems"])
+        self.assertTrue(result["filtered"])
+        self.assertIn("-k test_target", result["command"])
+        self.assertIn("Ran 1 test", result["output"])
+        self.assertNotIn("test_other", result["output"])
+
+    def test_red_filter_works_with_discover(self):
+        result = self.red(self.red_check(["discover", "-v", "-p", "test_red*.py"], ["test_target"]))
+        self.assertTrue(result["passed"], result["problems"])
+        self.assertTrue(result["filtered"])
+        self.assertIn("Ran 1 test", result["output"])
+
+    def test_red_identity_filter_falls_back_to_whole_command(self):
+        # The docstring line names the test in verbose output, but -k matches test IDs only.
+        result = self.red(self.red_check(["-v", "test_red"], ["Target behaviour"]))
+        self.assertFalse(result["filtered"])
+        self.assertNotIn("-k", result["command"])
+        self.assertIn("Ran 2 tests", result["output"])
+
+    def test_checks_with_green_phase_run_whole_in_red(self):
+        # Their red run is the test-count and skip baseline #47's guards compare against.
+        check = self.red_check(["-v", "test_red"], ["test_target"]) | {"phases": ["red", "green"]}
+        result = self.red(check)
+        self.assertFalse(result["filtered"])
+        self.assertIn("Ran 2 tests", result["output"])
+
+
+class RunnerReuseTests(HardeningTest):
+    def test_review_reuses_implement_results_for_the_same_diff(self):
+        from plovi import runner
+        self.fixture([{"writes": {"app.py": "VALUE = 1  # implemented\n"}}, {}], stages=["implement", "review"])
+        saved = runner.run(self.project, self.plan, unattended=False)
+        self.assertEqual(saved["status"], "complete", saved.get("error"))
+        implement, review = (saved["stage_evidence"][stage]["checks"][0] for stage in ("implement", "review"))
+        self.assertFalse(implement.get("reused", False))
+        self.assertTrue(review["reused"])
+        self.assertIn("behavior", saved["check_durations"])
