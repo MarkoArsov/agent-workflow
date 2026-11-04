@@ -96,6 +96,30 @@ def parse(check, output, code, phase="green"):
         result["approved_skip_reason"] = check["approved_skip_reason"]
     return result
 
+from contextlib import contextmanager
+
+
+@contextmanager
+def checks_context(project, plan, checkouts, saved=None):
+    """Run named checks the way the task's runs do: on the host, or in its container when isolation selects one."""
+    from . import isolation, policy
+    saved = saved or {}
+    cfg = saved.get("policy") or policy.effective(project, plan)
+    ctx = None
+    if isolation.configuration(cfg)["mode"] == "container":
+        ctx = isolation.build_execution_context(project, cfg, task=plan["task"], checkouts=checkouts,
+            trusted=saved.get("execution", project.profile["execution"])["permission_mode"] == "trusted",
+            frozen=saved.get("execution", {}).get("isolation"))
+        if ctx.get("mode") == "container":
+            isolation.verify_account(project, ctx)
+    token = isolation.active.set(ctx)
+    try:
+        yield ctx
+    finally:
+        try: isolation.cancel_containers(ctx)
+        finally: isolation.active.reset(token)
+
+
 def command_environment(command, inherited=None):
     env = dict(os.environ)
     env.update(inherited or {})

@@ -65,6 +65,10 @@ def parser():
             command.add_argument('--pull-isolation-image', action='store_true', help='Consent once to pulling the configured container image')
         if name in {"run", "validate-plan"}:
             actor_flags(command)
+        if name == "validate-plan":
+            command.add_argument("--run-checks", action="store_true",
+                                 help="Run every named check once in the task checkout; fail the plan when one can't pass")
+            command.add_argument("--json", action="store_true", help="Print JSON")
         if name == "run":
             command.add_argument("--no-wait", action="store_true")
             command.add_argument("--unattended", action="store_true", help=argparse.SUPPRESS)
@@ -202,7 +206,7 @@ def watch(project, task, *, seconds=None, json_output=False):
 
 
 OPERATIONS = {"status", "inbox", "events", "stats", "answer", "approve", "retry", "pause", "resume", "cancel",
-              "policy", "projects", "rebuild-state", "commands"}
+              "policy", "projects", "rebuild-state", "commands", "validate-plan"}
 
 
 def operation_name(args):
@@ -281,30 +285,11 @@ def execute(args):
             from . import verification, state
             saved = read_json(state.directory(project, plan["task"]) / "state.json", {})
             checkouts = saved.get("checkouts", {row["id"]: str(project.repo_path(row["id"])) for row in plan["repositories"]})
-            from . import isolation, policy
-            cfg = saved.get('policy') or policy.effective(project, plan)
-            requested = isolation.configuration(cfg)
-            ctx = None
-            if requested['mode'] == 'container':
-                ctx = isolation.build_execution_context(project, cfg, task=plan['task'], checkouts=checkouts,
-                    trusted=saved.get('execution', project.profile['execution'])['permission_mode'] == 'trusted',
-                    frozen=saved.get('execution', {}).get('isolation'))
-                if ctx.get('mode') == 'container':
-                    isolation.verify_account(project, ctx)
-            token = isolation.active.set(ctx)
-            try:
+            with verification.checks_context(project, plan, checkouts, saved):
                 if args.checks and set(args.checks) - {c['id'] for c in plan['checks']}:
                     raise WorkflowError('Unknown named check; choose IDs from the task contract')
                 checks = verification.run_checks(project, plan, checkouts, phase=args.phase, names=args.checks)
-            finally:
-                try: isolation.cancel_containers(ctx)
-                finally: isolation.active.reset(token)
             return {"status": "complete" if all(c["passed"] for c in checks) else "failed", "checks": checks}
-        if args.command == "validate-plan":
-            runner.binding(project, plan)
-            from .operations.tasks import after_validation
-            after_validation(project, plan, vars(args))
-            return {"valid": True, "task": plan["task"]}
         if args.command == "preflight" or args.dry_run:
             from . import policy
             from . import factory
