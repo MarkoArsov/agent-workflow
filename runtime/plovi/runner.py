@@ -189,6 +189,7 @@ def rebind_state(project, manifest, state, root, old, bound, bound_hash, custom)
                                if name in state["completed"]}
     if "implement-tests" not in state["completed"]:
         state.pop("red_test_files", None); state.pop("frozen_tests", None); state.pop("test_counts", None)
+        state.pop("skip_counts", None)
     state.pop("green", None); state.pop("pending_input", None); state.pop("retained_output", None)
     state["binding_sha256"] = bound_hash
 
@@ -393,8 +394,9 @@ def frozen_changed(manifest, state, observed):
 
 def accept_evidence(project, manifest, stage, state, evidence):
     for check in evidence.get("checks", []):
-        if (check.get("counts") or {}).get("tests") is not None:
+        if (check.get("counts") or {}).get("tests") is not None and not check.get("filtered"):
             state.setdefault("test_counts", {})[check["id"]] = check["counts"]["tests"]
+            state.setdefault("skip_counts", {})[check["id"]] = check.get("skipped", 0)
     if stage == "implement-tests":
         observed = git_ops.snapshot(project, state["checkouts"])
         state["red_test_files"] = test_files(manifest, observed)
@@ -446,6 +448,11 @@ def verify_stage(project, manifest, stage, state, before, *, custom=None, cancel
             if before_count is not None and now is not None and now < before_count:
                 problems.append(f"{check['id']} ran {now} tests, fewer tests than the {before_count} it ran before {stage}; "
                                 "restore the removed tests")
+            # Skips are advisory (#48), but a stage that skips more tests than before weakened them.
+            skipped_before = state.get("skip_counts", {}).get(check["id"])
+            if skipped_before is not None and now is not None and check.get("skipped", 0) > skipped_before:
+                problems.append(f"{check['id']} skipped {check['skipped']} tests, more than the {skipped_before} it skipped "
+                                f"before {stage}; remove the new skips")
     final = git_ops.snapshot(project, state["checkouts"])
     git_ops.guard(after, final, manifest, stage, custom=custom)
     if git_ops.fingerprint(final) != git_ops.fingerprint(after):

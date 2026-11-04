@@ -11,16 +11,42 @@ SETUP_ERROR = re.compile(r"ModuleNotFoundError|ImportError|SyntaxError|Indentati
                          r"command not found|No module named|error CS\d+|error: could not compile|"
                          r"ERROR collecting|Failed to load|Cannot find module|Bail out!", re.I)
 
+SKIP_COUNTS = {
+    "unittest": r"skipped=(\d+)",
+    "pytest": r"\b(\d+) skipped\b",
+    "dotnet": r"Skipped:\s*(\d+)",
+    "jest": r"Tests:[^\n]*?\b(\d+) skipped\b",
+}
+
+
+def skip_count(parser, output):
+    """Skipped, pending or todo tests the output reports; 0 when it reports none."""
+    if parser == "tap":
+        return len(re.findall(r"#\s*(?:SKIP|TODO)\b", output, re.I))
+    match = re.search(SKIP_COUNTS.get(parser, r"\b(\d+)\s+(?:skipped|pending|todo)\b"), output, re.I)
+    return int(match[1]) if match else 0
+
+
+def skipped_identities(identities, output):
+    """Planned tests named on a per-test line that says skipped (unittest -v, pytest -v)."""
+    return [name for name in identities
+            if re.search(r"^[^\n]*(?<![\w.])" + re.escape(name) + r"(?![\w])[^\n]*\b(?:skipped|SKIPPED)\b", output, re.M)]
+
+
 def parse(check, output, code, phase="green"):
+    """Green: exit 0, no parser failures, every identity present, and success_pattern when set.
+    Skips are advisory unless a planned identity was skipped or the check sets skips = "fail"."""
     parser = check.get("parser", "generic")
     failures = []
     if SETUP_ERROR.search(output):
         failures.append("setup/compile failure is not assertion evidence")
     if check.get("identities") and not all(re.search(re.escape(name), output) for name in check["identities"]):
         failures.append("expected test identity is absent from output")
-    skipped = bool(re.search(r"\b[1-9]\d*\s+(?:skipped|pending|todo)\b|skipped=[1-9]|#\s*(?:SKIP|TODO)\b", output, re.I))
-    if skipped and not check.get("approved_skip_reason"):
-        failures.append("skipped/pending checks need an explicit plan justification")
+    skipped = skip_count(parser, output)
+    for name in skipped_identities(check.get("identities", []), output):
+        failures.append(f"planned test {name} was skipped")
+    if skipped and check.get("skips") == "fail":
+        failures.append(f"{skipped} skipped; this check sets skips = \"fail\"")
     success = assertion = False
     if parser == "unittest":
         success = bool(re.search(r"Ran [1-9]\d* tests?", output) and re.search(r"^OK(?:\s|$)", output, re.M))
@@ -38,7 +64,8 @@ def parse(check, output, code, phase="green"):
         success = bool(re.search(r"^1\.\.[1-9]\d*", output, re.M)) and not re.search(r"^not ok", output, re.M)
         assertion = bool(re.search(r"^not ok", output, re.M) and re.search(r"expected:|operator:", output))
     else:
-        success = bool(re.search(check["success_pattern"], output, re.M))
+        pattern = check.get("success_pattern")
+        success = not pattern or bool(re.search(pattern, output, re.M))
         assertion = bool(check.get("failure_pattern") and re.search(check["failure_pattern"], output, re.M))
     if phase == "red":
         if parser == "unittest" and any(not re.search(r"^FAIL: " + re.escape(name) + r"(?:\s|\(|$)", output, re.M) for name in check.get("identities", [])):
@@ -63,8 +90,11 @@ def parse(check, output, code, phase="green"):
         if found:
             counts = {"tests": sum(found.values()), "failures": found.get("failed", 0),
                       "errors": found.get("error", 0), "skipped": found.get("skipped", 0)}
-    return {"passed": not failures, "problems": failures, "parser": parser, "counts": counts,
-            "phase": phase, "identities": check.get("identities", [])}
+    result = {"passed": not failures, "problems": failures, "parser": parser, "counts": counts,
+              "phase": phase, "identities": check.get("identities", []), "skipped": skipped}
+    if check.get("approved_skip_reason"):
+        result["approved_skip_reason"] = check["approved_skip_reason"]
+    return result
 
 def command_environment(command, inherited=None):
     env = dict(os.environ)

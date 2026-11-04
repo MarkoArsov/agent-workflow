@@ -1,0 +1,30 @@
+## Commit 1: contract fields and parsing (before the change)
+ERROR: test_generic_checks_need_no_success_pattern (tests.test_verification_v2.ContractFieldTests.test_generic_checks_need_no_success_pattern)
+plovi.util.WorkflowError: behavior: generic checks need an explicit success_pattern
+ERROR: test_exit_code_authoritative_without_pattern (tests.test_verification_v2.ParseTests.test_exit_code_authoritative_without_pattern)
+KeyError: 'success_pattern'
+FAIL: test_patterns_must_compile (tests.test_verification_v2.ContractFieldTests.test_patterns_must_compile)
+AssertionError: WorkflowError not raised
+FAIL: test_when_expected_seconds_and_skips_validated (tests.test_verification_v2.ContractFieldTests.test_when_expected_seconds_and_skips_validated) (bad={'when': []})
+AssertionError: WorkflowError not raised
+FAIL: test_when_expected_seconds_and_skips_validated (tests.test_verification_v2.ContractFieldTests.test_when_expected_seconds_and_skips_validated) (bad={'when': ['sometimes']})
+AssertionError: WorkflowError not raised
+FAIL: test_when_expected_seconds_and_skips_validated (tests.test_verification_v2.ContractFieldTests.test_when_expected_seconds_and_skips_validated) (bad={'when': 'loop'})
+AssertionError: WorkflowError not raised
+FAIL: test_when_expected_seconds_and_skips_validated (tests.test_verification_v2.ContractFieldTests.test_when_expected_seconds_and_skips_validated) (bad={'expected_seconds': 0})
+AssertionError: WorkflowError not raised
+FAIL: test_when_expected_seconds_and_skips_validated (tests.test_verification_v2.ContractFieldTests.test_when_expected_seconds_and_skips_validated) (bad={'expected_seconds': 1.5})
+AssertionError: WorkflowError not raised
+FAIL: test_when_expected_seconds_and_skips_validated (tests.test_verification_v2.ContractFieldTests.test_when_expected_seconds_and_skips_validated) (bad={'expected_seconds': True})
+AssertionError: WorkflowError not raised
+FAIL: test_when_expected_seconds_and_skips_validated (tests.test_verification_v2.ContractFieldTests.test_when_expected_seconds_and_skips_validated) (bad={'skips': 'never'})
+AssertionError: WorkflowError not raised
+FAIL: test_environment_skip_is_advisory (tests.test_verification_v2.ParseTests.test_environment_skip_is_advisory)
+AssertionError: False is not true : ['skipped/pending checks need an explicit plan justification']
+FAIL: test_skipped_identity_fails (tests.test_verification_v2.ParseTests.test_skipped_identity_fails)
+AssertionError: 'planned test test_docker was skipped' not found in ['skipped/pending checks need an explicit plan justification']
+FAIL: test_skips_fail_when_check_says_so (tests.test_verification_v2.ParseTests.test_skips_fail_when_check_says_so)
+AssertionError: '1 skipped; this check sets skips = "fail"' not found in ['skipped/pending checks need an explicit plan justification']
+Ran 8 tests in 1.876s
+FAILED (failures=11, errors=2)
+

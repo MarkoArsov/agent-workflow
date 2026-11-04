@@ -48,6 +48,8 @@ class FrozenScopeTests(HardeningTest):
                                {"writes": {"app.py": "VALUE = 2\n", "test_extra.py": SKIPPED}}, {}], discover=True)
         self.assertEqual(saved["status"], "failed")
         self.assertNotIn("implement", saved["completed"])
+        problems = saved["stage_evidence"]["implement"]["problems"]
+        self.assertTrue(any("more than the 0 it skipped before implement" in problem for problem in problems), problems)
 
 
 class CountTests(HardeningTest):
