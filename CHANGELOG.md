@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+- Plans that can pass (#48). `plovi validate-plan PLAN --run-checks` runs every named
+  check once in the task checkout and classifies it as `ran`, `missing-tool`, `bad-cwd`,
+  `unparseable`, `timeout` or `modifies-files`, with one fix line per failure. Results go
+  to `planning-checks.json`, which the plan hash covers. Specify runs it before presenting
+  a plan, and a plan whose checks can't run is never proposed.
+- Exit codes decide green; `success_pattern` is optional for every parser. Skips are
+  advisory unless a planned identity is skipped, the check sets `skips = "fail"`, or a
+  stage skips more tests than before.
+- Checks declare `when` (`loop`, `final`) and `expected_seconds`. The implement loop runs
+  loop checks cheapest first and stops at the first failure; final checks run once.
+  Passing results are reused for the same check, command, phase and diff, and red-only
+  unittest and pytest checks run just their identities.
+- The PR's only verification section is plovi's, "Verification (from plovi's evidence)".
+  Commands the PR body mentions that plovi never ran are listed under "Mentioned but not
+  run by plovi" and recorded as `delivery.unverified_claims`. Start bodies from
+  `templates/pr-body.md`.
 - Recover in the middle (#47). Failing checks continue the same provider session
   first (`corrections.same_session_rounds`, default 2). A premature `blocked`,
   `spec_conflict`, `impossible` or `needs_input` for a recoverable reason is challenged

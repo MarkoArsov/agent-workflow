@@ -11,6 +11,8 @@ question: What counts as proof?
     - Red evidence means the expected tests failed on assertions, not on a setup error. Those tests are then frozen.
     - Green evidence is parsed from real output and bound to a fingerprint of the files it describes.
     - Any later change makes that evidence stale. Delivery re-runs the checks first.
+    - Exit codes decide green. A success pattern is an optional extra assertion, and skips are advisory unless a planned test is skipped.
+    - `validate-plan --run-checks` runs every check once when the plan is written, so a check that can never pass is caught before any agent time is spent.
 
 ## A proposal, not a completion
 
@@ -52,8 +54,9 @@ and review is asked to check they don't weaken any assertion.
 
 A check that runs fewer tests than it did before the stage fails closed: a test was
 deleted. `unittest` and `pytest` output report test counts; other parsers have none, so
-their frozen red files are the guard. A skipped test still fails its check unless the
-plan gives `approved_skip_reason`.
+their frozen red files are the guard. In the same way, a check that skips more tests than it
+did before the stage fails closed: a test was skipped to get green. Skips that were already
+there, such as a test that needs Docker, stay advisory.
 
 ## Green evidence
 
@@ -67,13 +70,72 @@ The orchestrator executes each check with its argv, working directory, and timeo
 | `dotnet` | `Passed!` with `Failed: 0` and at least one pass | A failed test with an `Assert…`, `AssertionException`, or `Expected:` line |
 | `jest` | `Tests: … N passed`, and none failed | `Tests: … N failed`, with `Expected:` or `expect(` |
 | `tap` | A plan line `1..N`, and no `not ok` | `not ok` with `expected:` or `operator:` |
-| `generic` | Your `success_pattern` matches | Your `failure_pattern` matches |
+| `generic` | Exit code 0 | Your `failure_pattern` matches |
 
-A green check also needs exit code 0 and no assertion failure in its output.
-Skipped, pending, or todo tests fail a check unless the plan records `approved_skip_reason`.
-If the check declares `identities`, each must appear in the output.
+The exit code is authoritative. A green check needs exit code 0, no failures or errors from its
+parser, and every declared identity in the output. `success_pattern` is optional for every parser;
+when you set it, it must match as well. Set one only when the tool's exit code can't be trusted.
 
-For generic checks, use a precise marker tied to the check's outcome. A broad word such as "passed" is poor evidence.
+Skipped, pending and todo tests are counted and shown as `skipped: N` in the evidence. They fail
+a check only when a declared identity was skipped, when the check sets `skips = "fail"`, or when a
+stage skips more tests than before (see above). A skipped identity is found from per-test lines,
+so give checks with identities verbose output (`unittest -v`, `pytest -v`). `approved_skip_reason`
+is still accepted and shown in the evidence.
+
+## When checks run
+
+A check's optional `when` says where it runs: `["loop"]`, `["final"]`, or both (the default).
+
+- **The implement loop** runs `loop` checks after each attempt and each fix round, cheapest first,
+  and stops at the first failure. Order comes from `expected_seconds`, then the check's last
+  recorded duration, then the plan's order. Checks not reached are listed as `not_run`.
+- **Final verification** runs `final` checks once every loop check passes. A check in both sets
+  runs once.
+
+Use focused loop checks, such as one test module, and put the full suite in a final check. Set
+`expected_seconds` for checks that take more than 30 s.
+
+Passing results are reused for the same check, command, phase and diff fingerprint. A review that
+changes nothing reuses the implement stage's results instead of running the suite again, and
+reused rows say `reused`. Failed results always run again.
+
+### Red runs only the planned tests
+
+A red-only check (its phases don't include `green`) with identities runs just those tests. unittest
+gets one `-k IDENTITY` per identity, which also works with `discover`; pytest gets
+`-k "name or name"`. If an identity is missing from the narrowed output, the whole command runs
+once instead. A check with both red and green phases runs its whole command in red, because that
+run is the baseline the removed-test and skip guards compare against. Other parsers always run the
+whole command.
+
+## Validate checks when you plan
+
+```sh
+plovi validate-plan ai-plans/csv-export/pipeline.json --run-checks
+```
+
+`--run-checks` runs every named check once in the task checkout from `plovi task start`, never in
+your main checkout. Each check gets one result:
+
+| Result | Meaning |
+|---|---|
+| `ran` | The tool ran and its parser understood the output, whatever the test result. A missing test module counts: the plan's tests are written later. |
+| `missing-tool` | The command isn't on `PATH` or in the checkout, or `python -m X` has no module `X`. |
+| `bad-cwd` | The check's `cwd` doesn't exist in the repository. |
+| `unparseable` | The parser found no result line, or exit 0 but `success_pattern` never matched. |
+| `timeout` | The check ran past its `timeout_seconds`. |
+| `modifies-files` | The check changed files in the checkout. plovi reports it and doesn't clean up. |
+
+Every result except `ran` prints one fix line, for example:
+
+```text
+docs-build: missing-tool: python3 has no mkdocs. Use the project's documented interpreter (for example .venv/bin/python) or a named command that has it.
+```
+
+The results are saved to `planning-checks.json` beside the manifest and added to `plan_files`, so
+the plan hash, and so your approval, covers them. The command exits 0 when every check ran, 1 when
+one can't, and 2 for invalid input such as a pattern that doesn't compile. A plan whose checks
+fail isn't proposed in your inbox. Add `--json` for machine-readable output.
 
 ## What an evidence record contains
 
@@ -117,7 +179,7 @@ Verification commands must not change repository files; if they do, their eviden
 Ignored build output is fine; configure cleanup and ignore files so checks leave the checkout unchanged.
 
 Every verified stage records the fingerprint of the files it checked. Review and custom stages that change files produce new evidence.
-Before delivery, the orchestrator compares the latest green fingerprint with the current files. If they differ, it re-runs the checks and stops if they fail. It also re-runs the secret detector and blocking rules on the whole task diff.
+Before delivery, the orchestrator compares the latest green fingerprint with the current files. If they differ, it re-runs the loop and final checks and stops if they fail. It also re-runs the secret detector and blocking rules on the whole task diff.
 
 ## Behavior beyond unit tests
 

@@ -30,6 +30,7 @@ Every operation that changes something accepts `--reason`, `--actor-agent NAME` 
 | [`retry`](#retry) | yes | low | Retry an escalated task, optionally with a note for the agent |
 | [`stats`](#stats) | no | none | Report runs, interventions, stops, time, attempts and tokens from the ledger; --gate checks the stable-enough gate |
 | [`status`](#status) | no | none | Show one task's progress, or every task the ledger knows |
+| [`validate-plan`](#validate-plan) | yes | low | Check a full pipeline's contract; with run_checks, run every named check once in the task checkout |
 
 ## answer
 
@@ -330,6 +331,25 @@ Risk: **none**. Reads only.
 | `json` | no | boolean |  |
 | `verbose` | no | boolean |  |
 | `format` | no | text, json | Output format |
+
+## validate-plan
+
+Check a full pipeline's contract; with run_checks, run every named check once in the task checkout.
+
+```sh
+plovi validate-plan MANIFEST [--run-checks] [--json]
+```
+
+Risk: **low**. Changes a task or the registry.
+
+| Argument | Required | Format | Meaning |
+|---|---|---|---|
+| `manifest` | yes | string | Path to the plan's pipeline.json |
+| `run_checks` | no | boolean | Run every named check once and classify it |
+| `json` | no | boolean | Print JSON |
+| `reason` | no | string | Why this change is made; recorded in the ledger |
+| `actor_agent` | no | string | Agent name; agents must always pass it |
+| `via` | no | string | Tool the agent acts through |
 
 !!! note "What changes for your workflow"
     Agents read `plovi commands --json` first and use these operations instead of editing plovi files.

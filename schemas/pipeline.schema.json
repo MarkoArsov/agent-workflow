@@ -170,6 +170,30 @@
           "approved_skip_reason": {
             "type": "string"
           },
+          "when": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "enum": [
+                "loop",
+                "final"
+              ]
+            },
+            "description": "When the check runs: the implement loop, final verification, or both (default)."
+          },
+          "expected_seconds": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Expected run time; loop checks run cheapest first."
+          },
+          "skips": {
+            "enum": [
+              "advisory",
+              "fail"
+            ],
+            "description": "Whether any skipped test fails the check (default advisory)."
+          },
           "environment": {
             "type": "string",
             "description": "Named project environment started and cleaned up around checks."
