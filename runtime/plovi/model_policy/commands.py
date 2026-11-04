@@ -45,6 +45,9 @@ def execute(args, store, cwd):
         return {"workflow": store.workflow, "providers": {p: {"installed": r["installed"], "models": len(r["models"]), "requires_confirmation": [m["model"] for m in r["models"] if m["status"] == "needs-confirmation"], "notice": r.get("notice")} for p, r in result["providers"].items()}, "unreviewed_models": unknown, "errors": result["errors"], "defaults_changed": False}
     if args.action == "evaluate":
         facts = read(args.input) if args.input else {"stages": ["specify", "implement-tests", "implement", "review"]}
+        if "available_providers" not in facts:
+            from .storage import installed_providers
+            facts = dict(facts, available_providers=installed_providers())
         result = store.evaluate(facts, read(args.settings) if args.settings else None)
     elif args.action == "propose":
         if not args.scope:

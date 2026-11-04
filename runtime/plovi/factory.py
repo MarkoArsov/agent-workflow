@@ -159,7 +159,10 @@ def strategies(project, manifest, *, unattended=False, prior=None):
         # Legacy resume keeps its original semantics even on a non-TTY host.
         return prior.get('checkout_strategies', prior.get('execution', {}).get('checkout_strategies',
             {r['id']: project.repository(r['id'])['checkout_strategy'] for r in manifest['repositories']}))
-    return {r['id']: 'factory' if unattended else project.repository(r['id'])['checkout_strategy']
+    # Unattended runs use the task's own worktree unless policy opts into factory checkouts.
+    from .policy import effective
+    factory_checkouts = unattended and effective(project, manifest)['values']['isolation']['checkout'] == 'factory'
+    return {r['id']: 'factory' if factory_checkouts else project.repository(r['id'])['checkout_strategy']
             for r in manifest['repositories']}
 
 

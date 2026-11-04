@@ -2,7 +2,7 @@
 from __future__ import annotations
 from pathlib import Path
 from .state import lock
-from .util import WorkflowError, contained, common_dir, git, identifier, read_json, same_path, write_json
+from .util import WorkflowError, contained, common_dir, git, identifier, read_json, run, same_path, write_json
 
 
 def receipt_path(project, task):
@@ -26,6 +26,19 @@ def _validate_checkout(project, row):
     if target.resolve() not in registered_paths:
         raise WorkflowError('Task worktree is not registered at its owned path')
     return str(target)
+
+
+def remote_base(root, repo):
+    """The fetched remote base commit, so unpushed local commits on the base never enter a task; None to use local."""
+    import sys
+    remote, branch = repo.get('remote') or 'origin', repo['base_branch']
+    fetched = run(['git', 'fetch', '--quiet', remote, branch], root, check=False, timeout=120)
+    if fetched.returncode == 0:
+        resolved = run(['git', 'rev-parse', '--verify', f'{remote}/{branch}^{{commit}}'], root, check=False)
+        if resolved.returncode == 0:
+            return resolved.stdout.strip()
+    print(f'Could not fetch {remote}/{branch}; starting from local {branch}.', file=sys.stderr)
+    return None
 
 
 def owned_checkout(project, task, repository, branch):
@@ -172,7 +185,10 @@ def start(project, task, *, repositories=None, base=None, resume=False):
                 selected_base = base or repo['base_branch']
                 if selected_base.startswith('-'):
                     raise WorkflowError('Invalid base ref')
-                commit = git(root, 'rev-parse', '--verify', selected_base + '^{commit}')
+                commit = None
+                if base is None and strategy == 'worktree':
+                    commit = remote_base(root, repo)
+                commit = commit or git(root, 'rev-parse', '--verify', selected_base + '^{commit}')
                 rows.append({'repository': name, 'branch': branch, 'base': selected_base,
                              'base_commit': commit, 'path': str(target), 'strategy': strategy, 'ready': False})
             saved = {'schema_version': 1, 'task': task, 'configuration_root': str(project.root),

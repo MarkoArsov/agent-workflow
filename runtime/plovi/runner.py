@@ -82,7 +82,16 @@ def preflight(project, manifest, *, check_providers=True, execution=None, pull_i
         skill = custom.get(stage, {}).get("skill", stage)
         if skill not in bound["skills"]:
             raise WorkflowError(f"Missing effective skill: {skill}")
-        for route in contracts.route_for(project, manifest, stage):
+        configured = contracts.route_for(project, manifest, stage)
+        usable = [route for route in configured if not check_providers or providers.installed(route, context)]
+        for route in configured:
+            if route not in usable:
+                print(f"Skipping {route['provider']}/{route['model']} for {stage}: "
+                      f"{providers.BINARIES[route['provider']]} is not installed", file=sys.stderr)
+        if configured and not usable:
+            names = ", ".join(sorted({providers.BINARIES[r["provider"]] for r in configured}))
+            raise WorkflowError(f"No installed provider for {stage}: install {names} or choose another configured route")
+        for route in usable:
             key = json_text(route)
             if key not in seen and check_providers:
                 routes.append(providers.preflight(route, execution, project.root, project=project, context=context))
@@ -95,7 +104,7 @@ def preflight(project, manifest, *, check_providers=True, execution=None, pull_i
     if repair_ready and check_providers:
         for choices in repair_routes.values():
             for route in choices:
-                if json_text(route) not in seen:
+                if json_text(route) not in seen and providers.installed(route, context):
                     routes.append(providers.preflight(route, execution, project.root, project=project, context=context))
                     seen.add(json_text(route))
     runtime = read_json(journal.directory(project, manifest["task"]) / "runtime.json")
@@ -129,6 +138,17 @@ def preflight(project, manifest, *, check_providers=True, execution=None, pull_i
             "boundary": (context.get('boundary') or 'Experimental container boundary; delivery and guards run on host') if context else 'Provider controls plus post-stage path/evidence guards; trusted mode is not an OS sandbox.',
             "isolation": execution.get('isolation', {'mode': 'none'}),
             "side_effects": "Stage selection authorizes only the named delivery actions."}
+
+# Binding parts the installed package owns; an unpinned task follows them instead of stopping.
+PACKAGE_OWNED = ("package_version", "package_references")
+
+
+def package_free(value):
+    """A binding without the parts the installed plovi owns: its version, references and package skills."""
+    result = {k: v for k, v in value.items() if k not in PACKAGE_OWNED}
+    result["skills"] = {name: skill for name, skill in value.get("skills", {}).items() if skill.get("origin") != "package"}
+    return result
+
 
 def plan_only(old, new):
     """Whether two bindings differ only in the plan: its manifest, plan files and plan-set limits."""
@@ -647,10 +667,18 @@ def _run_locked(project, manifest, root, *, resume, answer, rebind, trusted, una
                 # a task's own generated package changes during delivery.
                 bound = old_bound
                 bound_hash = state["binding_sha256"]
+            if state["binding_sha256"] != bound_hash and not rebind and not (root / "runtime.json").exists():
+                old = read_json(root / "binding.json")
+                if package_free(old) == package_free(bound):
+                    # An unpinned task follows the installed plovi: its own package changes never need a rebind.
+                    state.setdefault("runtime_updates", []).append({"from": old.get("package_version"),
+                                                                    "to": bound.get("package_version"), "at": time.time()})
+                    state["binding_sha256"] = bound_hash
             if state["binding_sha256"] != bound_hash:
                 old = read_json(root / "binding.json")
                 # A revision of the plan alone continues on its own; profile, skill or policy changes need review.
-                automatic = not rebind and plan_only(old, bound)
+                unpinned = not (root / "runtime.json").exists()
+                automatic = not rebind and plan_only(package_free(old) if unpinned else old, package_free(bound) if unpinned else bound)
                 if not rebind and not automatic:
                     raise WorkflowError("Plan/profile/skills changed; inspect the revision and resume --rebind")
                 rebound.append((state["binding_sha256"], bound_hash, automatic))
@@ -727,6 +755,7 @@ def _run_locked(project, manifest, root, *, resume, answer, rebind, trusted, una
         save()
         # Plan revisions are edits to the plan on disk after this point.
         plan_disk = disk_plan_sha256(manifest)
+        circuits = set()
         if state.get("recovered_output_attempt") != prior.get("recovered_output_attempt"):
             reporter.emit("output_recovered", stage=state.get("active_stage"))
         try:
@@ -836,7 +865,8 @@ def _run_locked(project, manifest, root, *, resume, answer, rebind, trusted, una
                     next_route = False
                     if pending and route != pending["route"]:
                         continue
-                    if route and route["provider"] in limited:
+                    if route and (route["provider"] in limited or route["provider"] in circuits
+                                  or not providers.installed(route, execution_context)):
                         continue
                     attempts_allowed = limits.get("attempts_per_route", state["policy"]["values"]["limits"]["attempts_per_stage"])
                     for attempt in range(attempts_allowed + correction_limit):
@@ -1008,6 +1038,11 @@ def _run_locked(project, manifest, root, *, resume, answer, rebind, trusted, una
                                 if events.resets_at is not None:
                                     state["resets_at"] = events.resets_at
                                 save(); return state
+                            if classification in {"authentication", "quota"} and route["provider"] not in circuits:
+                                # A permanent account failure skips this provider for the rest of the run.
+                                circuits.add(route["provider"])
+                                recorder.event("provider.circuit_open", {"run_id": state["run_id"], "provider": route["provider"],
+                                                                         "classification": classification})
                             if classification in {"authentication", "quota", "model"}:
                                 next_route = True; break
                             if classification != "complete" or (report and report["status"] != "complete"):

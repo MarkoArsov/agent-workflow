@@ -46,6 +46,7 @@ class LaunchRecoveryTests(HardeningTest):
     def test_repeated_pipeline_start_reuses_worker_and_observer_is_read_only(self):
         from plovi import state
         self.fixture([{'sleep':3}])
+        self.policy("execution.runtime_pin", "true")  # Since #47 tasks pin a runtime only when policy asks.
         self.plan['repositories'][0]['branch']='feature/sample'
         self.save_plan()
         first=self.task_cli('pipeline',self.manifest_path,'--no-watch','--json',check=True)

@@ -6,8 +6,16 @@ from datetime import datetime, timezone
 import json
 import os
 from pathlib import Path
+import shutil
 import tempfile
 from .core import fingerprint, resolve_settings, validate_settings, validate_catalogue, evaluate
+
+# Provider command names, for discovering which providers are installed.
+BINARIES = {"codex": "codex", "claude": "claude", "cursor": "agent"}
+
+
+def installed_providers():
+    return [name for name, binary in BINARIES.items() if shutil.which(binary)]
 
 if os.name == "nt":
     import msvcrt
@@ -116,6 +124,14 @@ class Store:
                     if scope == "project" and self.project is None:
                         raise ValueError("Project preview requires a resolved project")
                     layers[idx] = validate_settings(overrides[scope])
+        # Facts may name the installed providers; routes for the others are never proposed.
+        facts = dict(facts)
+        available = facts.pop("available_providers", None)
+        if available is not None:
+            catalogue = dict(catalogue, providers=dict(catalogue.get("providers", {})))
+            for name in BINARIES:
+                if name not in available:
+                    catalogue["providers"][name] = dict(catalogue["providers"].get(name, {"models": []}), installed=False)
         result = evaluate(registry, policy, catalogue, self.effective(layers), facts)
         if notice:
             if not any(result['routes'].values()):

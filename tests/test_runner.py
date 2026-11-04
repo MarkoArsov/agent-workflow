@@ -16,6 +16,8 @@ class RunnerTests(WorkspaceTest):
         self.project = self.setup_project(root, {"agents": ["codex"],
             "repositories": [{"id": "app", "checkout_strategy": "current-checkout"}],
             "pipeline": {"routes": {"default": [{"provider": "codex", "model": "fixture-model"}]}}})
+        # Tests here grew up with factory checkouts for non-TTY runs; since #47 that is an explicit opt-in.
+        self.policy("isolation.checkout", '"factory"')
         self.git(root, "add", "."); self.git(root, "commit", "-m", "Configure fixture")
         # Non-TTY CLI runs use factory checkouts and therefore need a real base.
         remote = self.bare_remote("runner-base")

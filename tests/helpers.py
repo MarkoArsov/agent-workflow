@@ -133,6 +133,17 @@ class WorkspaceTest(unittest.TestCase):
         self.patch.start()
         self.addCleanup(self.patch.stop)
 
+    def policy(self, dotted, raw):
+        """Set one reviewed key in the fixture's plovi.toml (which opts into factory checkouts), as plovi policy set does."""
+        from plovi import policy
+        edit = policy.plan_edit(self.project, dotted, raw)
+        if edit["changed"]:
+            (self.project.root / "plovi.toml").write_text(edit["result"])
+
+    def default_policy(self):
+        """Drop the fixture's factory opt-in to exercise plovi's own defaults."""
+        (self.project.root / "plovi.toml").unlink(missing_ok=True)
+
     def git(self, root, *args, check=True):
         return subprocess.run(["git", "-C", str(root), *args], env=self.env, text=True, capture_output=True, check=check).stdout.strip()
 

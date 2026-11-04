@@ -18,9 +18,9 @@ class BackgroundRunTests(HardeningTest):
         self.git(working, "push", "origin", "main")
         return project, working
 
-    def start_task(self, project, task):
+    def start_task(self, project, task, base=None):
         from plovi import tasks
-        started = tasks.start(project, task)
+        started = tasks.start(project, task, base=base)
         checkout = Path(started["checkouts"]["app"])
         plan = checkout / project.profile["planning"]["directory"] / task / "pipeline.json"
         plan.parent.mkdir(parents=True, exist_ok=True)
@@ -56,7 +56,8 @@ class BackgroundRunTests(HardeningTest):
         from plovi.util import WorkflowError
         project, working = self.factory_project("local-base")
         self.git(working, "commit", "--allow-empty", "-m", "Local commit that was never pushed")
-        checkout, _ = self.start_task(project, "local-task")
+        # Since #47 task start uses the fetched remote base; an explicit local base still reaches the factory guard.
+        checkout, _ = self.start_task(project, "local-task", base="main")
         self.commit_plan(checkout)
         with self.assertRaises(WorkflowError) as raised:
             factory.allocate(project, "local-task", unattended=True)
@@ -110,7 +111,7 @@ class BackgroundRunTests(HardeningTest):
         self.assertEqual(len(loaded["allowed_commands"]), 2)
         with_claude = copy.deepcopy(loaded)
         with_claude["routes"] = {"default": [{"provider": "claude", "model": "fixture"}]}
-        (self.project.root / "plovi.toml").write_text('[execution]\nunattended_permission_mode = "restricted"\n')
+        self.policy("execution.unattended_permission_mode", '"restricted"')
         execution = policy.execution(self.project, with_claude, unattended=True)
         self.assertEqual(execution["permission_mode"], "restricted")
         tools = execution["provider_settings"]["claude"]["allowed_tools"]

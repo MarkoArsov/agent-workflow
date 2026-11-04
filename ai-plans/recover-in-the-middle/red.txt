@@ -99,3 +99,25 @@ AssertionError: WorkflowError not raised
 Ran 6 tests in 6.945s
 FAILED (failures=3, errors=3)
 
+== Step 8: defaults and provider availability (before the change)
+ERROR: test_account_guard_warns_interactive_blocks_unattended (tests.test_defaults_v2.AccountGuardTests.test_account_guard_warns_interactive_blocks_unattended)
+AttributeError: <module 'plovi.providers' from '<checkout>/runtime/plovi/providers/__init__.py'> does not have the attribute 'is_interactive'
+ERROR: test_missing_provider_route_skipped_with_warning (tests.test_provider_availability.AvailabilityTests.test_missing_provider_route_skipped_with_warning)
+plovi.util.WorkflowError: Install/authenticate codex or choose another configured route
+ERROR: test_permanent_failure_opens_provider_circuit (tests.test_provider_availability.AvailabilityTests.test_permanent_failure_opens_provider_circuit)
+plovi.util.WorkflowError: implement: route needs an enabled provider and explicit model
+FAIL: test_unattended_uses_task_worktree_by_default (tests.test_defaults_v2.CheckoutAndPinTests.test_unattended_uses_task_worktree_by_default)
+AssertionError: {'app': 'factory'} != {'app': 'worktree'}
+FAIL: test_task_start_falls_back_to_local_base_with_message (tests.test_defaults_v2.TaskBaseTests.test_task_start_falls_back_to_local_base_with_message)
+AssertionError: 'Could not fetch origin/main; starting from local main.' not found in ''
+FAIL: test_task_start_uses_remote_base (tests.test_defaults_v2.TaskBaseTests.test_task_start_uses_remote_base)
+AssertionError: '8bb1b8e2590e8a6cbdbdc31b562e3328b61df68b' != '2092ee07776c6912ba4901529f55590b267cd3f6'
+FAIL: test_evaluator_proposes_only_installed_providers (tests.test_provider_availability.AvailabilityTests.test_evaluator_proposes_only_installed_providers)
+AssertionError: 'claude' unexpectedly found in {'codex', 'claude'}
+FAIL: test_no_route_left_fails_preflight (tests.test_provider_availability.AvailabilityTests.test_no_route_left_fails_preflight)
+plovi.util.WorkflowError: implement: route needs an enabled provider and explicit model
+AssertionError: "No installed provider for implement" does not match "implement: route needs an enabled provider and explicit model"
+Ran 15 tests in 14.836s
+FAILED (failures=5, errors=3)
+Note: test_new_tasks_unpinned_existing_pins_kept and test_unpinned_task_follows_installed_runtime were written after the runtime-pin change, so they have no recorded red.
+

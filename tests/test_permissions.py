@@ -7,7 +7,7 @@ from plovi import runner, state
 class PermissionTests(HardeningTest):
     def restricted(self):
         """Opt into restricted unattended runs; since #47 they use the profile's mode by default."""
-        (self.project.root / "plovi.toml").write_text('[execution]\nunattended_permission_mode = "restricted"\n')
+        self.policy("execution.unattended_permission_mode", '"restricted"')
 
     def run_child(self, *flags):
         self.plan["repositories"][0]["branch"] = "feature/sample"
@@ -38,7 +38,7 @@ class PermissionTests(HardeningTest):
 
     def test_policy_can_explicitly_allow_unattended_trusted(self):
         root = self.fixture([{}])
-        (root / "plovi.toml").write_text('[execution]\nunattended_permission_mode = "trusted"\n')
+        self.policy("execution.unattended_permission_mode", '"trusted"')
         self.run_child()
         self.assertIn("--dangerously-bypass-approvals-and-sandbox", self.calls()[0]["argv"])
 

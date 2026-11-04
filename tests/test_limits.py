@@ -6,7 +6,7 @@ class LimitTests(HardeningTest):
     def fixture(self, steps, **kwargs):
         root = super().fixture(steps, **kwargs)
         # These tests cover the approval flow at the limit; since #47 the default stops only above 4x the limit.
-        (self.project.root / "plovi.toml").write_text("[limits]\nceiling_factor = 1\n")
+        self.policy("limits.ceiling_factor", "1")
         return root
 
     def changed_files(self, count, *, lines=1):

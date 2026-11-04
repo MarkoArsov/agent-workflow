@@ -184,7 +184,7 @@ class OperationCliTests(InProcessCli, ControlPlaneMixin, HardeningTest):
 
     def test_agent_actor_requires_digest_for_existing_approvals(self):
         self.fixture([{"writes": {f"change_{n}.py": "# change\n" for n in range(41)}}], stages=["implement"])
-        (self.project.root / "plovi.toml").write_text("[limits]\nceiling_factor = 1\n")  # Stop at the limit (#47 default: 4x).
+        self.policy("limits.ceiling_factor", "1")  # Stop at the limit (#47 default: 4x).
         self.save_plan()
         result = runner.run(self.project, self.plan, unattended=False)
         self.assertEqual(result["status"], "needs_approval")
