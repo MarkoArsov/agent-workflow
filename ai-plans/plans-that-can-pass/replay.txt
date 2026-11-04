@@ -1,0 +1,21 @@
+Replay of the #18 (control-plane) check layout with doubles: python3 replay.py PACKAGE [variant]
+macOS, Python 3.14. Stages: implement-tests, implement (one broken attempt plus one same-session
+fix round), review. 17 checks: 16 green (7 focused modules, an explicit-ID check, revision-red,
+compatibility-regressions over 12 modules, full-suite, 5 tool stand-ins) and revision-red in red.
+
+| Code                    | Variant   | Runner time | Check time | Check runs | Reused |
+|-------------------------|-----------|-------------|------------|------------|--------|
+| main at 50293d5         | as-is     | 46.1 s      | 42.8 s     | 49         | 0      |
+| codex/plans-that-can-pass | as-is   | 17.1 s      | 14.3 s     | 18         | 16     |
+| codex/plans-that-can-pass | with-when | 19.5 s    | 15.3 s     | 18         | 16     |
+
+Before: every verification ran all 16 green checks: the failing implement attempt, the fix
+round, and review (3 x 16 + 1 red = 49).
+After: the failing attempt stops at its first failing loop check. revision-red runs first,
+because its red run recorded a duration and the others have none yet. The fix round runs all 16,
+and review reuses all 16 for the unchanged diff (1 + 1 + 16 = 18 runs).
+Identity-only red does not apply to this manifest: its only red check, revision-red, also runs
+green, so it runs whole in red (decision O). Its red argv already named four test IDs.
+"with-when" (focused checks loop, suite and tools final) runs the same 18 checks here, because
+the failure is caught by the first loop check either way; it differs when a late loop check
+fails, since final checks then don't run at all.
